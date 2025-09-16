@@ -8,9 +8,9 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NODE_ENV === 'production' 
-      ? 'https://your-domain.vercel.app/api' 
-      : 'http://localhost:3001/api',
+      NEXT_PUBLIC_API_URL: process.env.NODE_ENV === 'production' 
+        ? 'https://mivvo-expertiz.vercel.app/api' 
+        : 'http://localhost:3001/api',
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
