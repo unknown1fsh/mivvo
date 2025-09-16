@@ -24,5 +24,6 @@
     }
   ],
   "installCommand": "npm install --prefix frontend && npm install --prefix backend",
-  "buildCommand": "npm run build --prefix frontend && npm run build --prefix backend"
+  "buildCommand": "npm run build --prefix frontend && npm run build --prefix backend",
+  "devCommand": "npm run dev:full"
 }
