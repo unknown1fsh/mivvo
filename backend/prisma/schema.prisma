@@ -1,0 +1,224 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  phone         String?
+  role          Role     @default(USER)
+  isActive      Boolean  @default(true) @map("is_active")
+  emailVerified Boolean  @default(false) @map("email_verified")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userCredits         UserCredits?
+  creditTransactions  CreditTransaction[]
+  vehicleReports      VehicleReport[]
+  payments           Payment[]
+
+  @@map("users")
+}
+
+model UserCredits {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique @map("user_id")
+  balance        Decimal  @default(0) @db.Decimal(10, 2)
+  totalPurchased Decimal  @default(0) @map("total_purchased") @db.Decimal(10, 2)
+  totalUsed      Decimal  @default(0) @map("total_used") @db.Decimal(10, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_credits")
+}
+
+model CreditTransaction {
+  id              Int                    @id @default(autoincrement())
+  userId          Int                    @map("user_id")
+  transactionType TransactionType        @map("transaction_type")
+  amount          Decimal                @db.Decimal(10, 2)
+  description     String?
+  referenceId     String?                @map("reference_id")
+  createdAt       DateTime               @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credit_transactions")
+}
+
+model VehicleReport {
+  id               Int                    @id @default(autoincrement())
+  userId           Int                    @map("user_id")
+  vehiclePlate     String?                @map("vehicle_plate")
+  vehicleBrand     String?                @map("vehicle_brand")
+  vehicleModel     String?                @map("vehicle_model")
+  vehicleYear      Int?                   @map("vehicle_year")
+  vehicleColor     String?                @map("vehicle_color")
+  mileage          Int?
+  reportType       ReportType             @map("report_type")
+  status           ReportStatus           @default(PENDING)
+  aiAnalysisData   Json?                  @map("ai_analysis_data")
+  expertNotes      String?                @map("expert_notes")
+  totalCost        Decimal                @map("total_cost") @db.Decimal(10, 2)
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  // Relations
+  user                User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleImages       VehicleImage[]
+  aiAnalysisResults   AiAnalysisResult[]
+
+  @@map("vehicle_reports")
+}
+
+model VehicleImage {
+  id           Int           @id @default(autoincrement())
+  reportId     Int           @map("report_id")
+  imageUrl     String        @map("image_url")
+  imageType    ImageType     @map("image_type")
+  fileSize     Int?          @map("file_size")
+  uploadDate   DateTime      @default(now()) @map("upload_date")
+  aiProcessed  Boolean       @default(false) @map("ai_processed")
+
+  // Relations
+  report VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_images")
+}
+
+model AiAnalysisResult {
+  id              Int      @id @default(autoincrement())
+  reportId        Int      @map("report_id")
+  analysisType    String   @map("analysis_type")
+  confidenceScore Decimal? @map("confidence_score") @db.Decimal(5, 2)
+  resultData      Json     @map("result_data")
+  processingTimeMs Int?    @map("processing_time_ms")
+  modelVersion    String?  @map("model_version")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  report VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("ai_analysis_results")
+}
+
+model ServicePricing {
+  id          Int           @id @default(autoincrement())
+  serviceName String        @map("service_name")
+  serviceType ServiceType   @map("service_type")
+  basePrice   Decimal       @map("base_price") @db.Decimal(10, 2)
+  currency    String        @default("TRY")
+  isActive    Boolean       @default(true) @map("is_active")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("service_pricing")
+}
+
+model SystemSetting {
+  id          Int      @id @default(autoincrement())
+  settingKey  String   @unique @map("setting_key")
+  settingValue String? @map("setting_value")
+  settingType SettingType @default(STRING) @map("setting_type")
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+model Payment {
+  id              Int             @id @default(autoincrement())
+  userId          Int             @map("user_id")
+  amount          Decimal         @db.Decimal(10, 2)
+  currency        String          @default("TRY")
+  paymentMethod   PaymentMethod   @map("payment_method")
+  paymentStatus   PaymentStatus   @default(PENDING) @map("payment_status")
+  paymentProvider String?         @map("payment_provider")
+  transactionId   String?         @map("transaction_id")
+  referenceNumber String?         @map("reference_number")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// Enums
+enum Role {
+  USER
+  ADMIN
+  EXPERT
+}
+
+enum TransactionType {
+  PURCHASE
+  USAGE
+  REFUND
+}
+
+enum ReportType {
+  FULL
+  PAINT_ANALYSIS
+  DAMAGE_ASSESSMENT
+  VALUE_ESTIMATION
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ImageType {
+  EXTERIOR
+  INTERIOR
+  ENGINE
+  DAMAGE
+  PAINT
+}
+
+enum ServiceType {
+  PAINT_ANALYSIS
+  DAMAGE_ASSESSMENT
+  VALUE_ESTIMATION
+  FULL_REPORT
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  BANK_TRANSFER
+  DIGITAL_WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
