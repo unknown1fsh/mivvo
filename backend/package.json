@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "tsc",
+    "postinstall": "prisma generate",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "test": "jest",
     "lint": "eslint src/**/*.ts",

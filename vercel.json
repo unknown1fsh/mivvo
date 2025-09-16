@@ -9,7 +9,7 @@
       "src": "backend/src/index.ts",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["backend/dist/**", "backend/prisma/schema.prisma"]
+        "includeFiles": ["backend/dist/**", "backend/prisma/schema.prisma", "backend/node_modules/.prisma/**"]
       }
     }
   ],
@@ -23,7 +23,6 @@
       "dest": "frontend/$1"
     }
   ],
-  "installCommand": "npm install --prefix frontend && npm install --prefix backend",
-  "buildCommand": "npm run build --prefix frontend && npm run build --prefix backend",
-  "devCommand": "npm run dev:full"
+  "installCommand": "npm install --prefix frontend && npm install --prefix backend && cd backend && npx prisma generate",
+  "buildCommand": "npm run build --prefix frontend && npm run build --prefix backend"
 }
