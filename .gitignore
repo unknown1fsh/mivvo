@@ -177,3 +177,4 @@ Thumbs.db
 
 # Uploads
 uploads/
+.vercel
