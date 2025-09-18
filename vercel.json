@@ -24,5 +24,8 @@
     }
   ],
   "installCommand": "npm install --prefix frontend && npm install --prefix backend && cd backend && npx prisma generate",
-  "buildCommand": "npm run build --prefix frontend && npm run build --prefix backend"
+  "buildCommand": "npm run build --prefix frontend && npm run vercel-build --prefix backend",
+  "env": {
+    "NODE_ENV": "production"
+  }
 }

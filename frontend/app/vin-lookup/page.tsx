@@ -260,7 +260,11 @@ export default function VINLookupPage() {
     setResult(null);
 
     try {
-      const response = await fetch('http://localhost:3001/api/vin/decode', {
+      const apiUrl = process.env.NODE_ENV === 'production' 
+        ? '/api/vin/decode' 
+        : 'http://localhost:3001/api/vin/decode';
+        
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -40,12 +40,28 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+const corsOptions = {
+  origin: function (origin: string | undefined, callback: Function) {
+    // Vercel production ortamında origin kontrolü
+    if (process.env.NODE_ENV === 'production') {
+      // Vercel'de tüm origin'lere izin ver
+      callback(null, true);
+    } else {
+      // Development'ta localhost'a izin ver
+      const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('CORS policy violation'));
+      }
+    }
+  },
   credentials: process.env.CORS_CREDENTIALS === 'true',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

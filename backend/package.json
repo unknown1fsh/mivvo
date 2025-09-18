@@ -8,6 +8,7 @@
     "build": "tsc",
     "postinstall": "prisma generate",
     "start": "cross-env NODE_ENV=production node dist/index.js",
+    "vercel-build": "npm run build && npm run postinstall",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
