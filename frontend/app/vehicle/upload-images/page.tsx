@@ -76,19 +76,26 @@ export default function UploadImagesPage() {
   const handleFiles = (files: File[]) => {
     const validFiles = files.filter(file => {
       const isValidType = file.type.startsWith('image/')
-      const isValidSize = file.size <= 10 * 1024 * 1024 // 10MB
+      const isValidSize = file.size <= 15 * 1024 * 1024 // 15MB
       
       if (!isValidType) {
         toast.error(`${file.name} geçerli bir resim dosyası değil!`)
         return false
       }
       if (!isValidSize) {
-        toast.error(`${file.name} çok büyük! Maksimum 10MB olmalı.`)
+        toast.error(`${file.name} çok büyük! Maksimum 15MB olmalı.`)
         return false
       }
       return true
     })
 
+    if (validFiles.length === 0) {
+      toast.error('Geçerli resim dosyası bulunamadı!')
+      return
+    }
+
+    setIsUploading(true)
+    
     validFiles.forEach(file => {
       const id = Math.random().toString(36).substr(2, 9)
       const preview = URL.createObjectURL(file)
@@ -105,6 +112,9 @@ export default function UploadImagesPage() {
       setUploadedImages(prev => [...prev, newImage])
       simulateUpload(id)
     })
+    
+    setIsUploading(false)
+    toast.success(`${validFiles.length} resim başarıyla yüklendi!`)
   }
 
   const simulateUpload = (id: string) => {
@@ -272,15 +282,25 @@ export default function UploadImagesPage() {
                         Resimleri buraya sürükleyin veya tıklayın
                       </h3>
                       <p className="text-gray-600 mb-4">
-                        JPG, PNG, WebP formatlarında, maksimum 10MB
+                        JPG, PNG, WebP formatlarında, maksimum 15MB
                       </p>
                       
                       <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="btn btn-primary"
+                        disabled={isUploading}
+                        className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <PhotoIcon className="w-5 h-5 mr-2" />
-                        Dosya Seç
+                        {isUploading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            Yükleniyor...
+                          </>
+                        ) : (
+                          <>
+                            <PhotoIcon className="w-5 h-5 mr-2" />
+                            Dosya Seç
+                          </>
+                        )}
                       </button>
                     </div>
                     

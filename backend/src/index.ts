@@ -14,6 +14,7 @@ import vehicleRoutes from './routes/vehicle';
 import paymentRoutes from './routes/payment';
 import adminRoutes from './routes/admin';
 import vinRoutes from './routes/vin';
+import paintAnalysisRoutes from './routes/paintAnalysis';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -94,6 +95,7 @@ app.use('/api/vehicle', vehicleRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/vin', vinRoutes);
+app.use('/api/paint-analysis', paintAnalysisRoutes);
 
 // Error handling middleware
 app.use(notFound);

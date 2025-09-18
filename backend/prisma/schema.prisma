@@ -237,3 +237,45 @@ model VINLookup {
 
   @@map("vin_lookups")
 }
+
+model PaintAnalysis {
+  id                Int      @id @default(autoincrement())
+  vehicleId         Int      @map("vehicle_id")
+  angle             String   // front, rear, left, right, top, interior
+  imagePath         String   @map("image_path")
+  imageName         String   @map("image_name")
+  analysisType      String   @default("paint") @map("analysis_type")
+  paintCondition    String   @map("paint_condition") // excellent, good, fair, poor
+  paintThickness    Int      @map("paint_thickness") // microns
+  colorMatch        Int      @map("color_match") // percentage
+  scratches         Int      // count
+  dents             Int      // count
+  rust              Boolean  @default(false)
+  oxidation         Int      // percentage
+  glossLevel        Int      @map("gloss_level") // percentage
+  overallScore      Int      @map("overall_score") // 0-100
+  recommendations   String[] // array of recommendations
+  confidence        Int      // percentage
+  technicalDetails  Json     @map("technical_details") // technical information
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("paint_analyses")
+}
+
+model Vehicle {
+  id                Int              @id @default(autoincrement())
+  make              String
+  model             String
+  year              Int
+  plate             String?          @unique
+  vin               String?          @unique
+  color             String?
+  mileage           Int?
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  paintAnalyses     PaintAnalysis[]
+
+  @@map("vehicles")
+}

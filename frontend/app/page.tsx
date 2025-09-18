@@ -16,7 +16,8 @@ import {
   StarIcon,
   UserGroupIcon,
   CogIcon,
-  TruckIcon
+  TruckIcon,
+  PaintBrushIcon
 } from '@heroicons/react/24/outline'
 
 export default function HomePage() {
@@ -149,6 +150,10 @@ export default function HomePage() {
               <div className="px-4 py-4 space-y-4">
                 <Link href="/" className="block text-gray-700 hover:text-blue-600 transition-colors">Ana Sayfa</Link>
                 <Link href="/services" className="block text-gray-700 hover:text-blue-600 transition-colors">Hizmetler</Link>
+                <Link href="/vehicle/paint-analysis" className="block text-gray-700 hover:text-purple-600 transition-colors flex items-center">
+                  <PaintBrushIcon className="w-4 h-4 mr-2" />
+                  Boya Analizi
+                </Link>
                 <Link href="/vin-lookup" className="block text-gray-700 hover:text-green-600 transition-colors flex items-center">
                   <TruckIcon className="w-4 h-4 mr-2" />
                   Şasi Sorgula
@@ -201,6 +206,10 @@ export default function HomePage() {
               <Link href="/register" className="btn btn-primary btn-lg group">
                 Hemen Başla
                 <ArrowRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Link>
+              <Link href="/vehicle/paint-analysis" className="btn bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white btn-lg flex items-center justify-center">
+                <PaintBrushIcon className="w-5 h-5 mr-2" />
+                Boya Analizi
               </Link>
               <Link href="/vin-lookup" className="btn bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white btn-lg flex items-center justify-center">
                 <TruckIcon className="w-5 h-5 mr-2" />

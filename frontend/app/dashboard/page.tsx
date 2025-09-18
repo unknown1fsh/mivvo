@@ -16,7 +16,8 @@ import {
   CogIcon,
   BellIcon,
   MagnifyingGlassIcon,
-  TruckIcon
+  TruckIcon,
+  PaintBrushIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
