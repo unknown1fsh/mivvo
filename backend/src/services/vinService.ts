@@ -161,15 +161,31 @@ export class VINService {
    */
   static async decodeVIN(vin: string): Promise<VINData | null> {
     try {
+      console.log('VIN Service: Starting decode for VIN:', vin);
+      
       // VIN formatını kontrol et
       if (!this.isValidVIN(vin)) {
         throw new Error('Geçersiz VIN formatı. VIN 17 haneli olmalıdır.');
       }
 
-      const response = await axios.get(`${this.NHTSA_API_URL}/${vin}?format=json`);
+      console.log('VIN Service: Making API call to NHTSA');
+      const response = await axios.get(`${this.NHTSA_API_URL}/${vin}?format=json`, {
+        timeout: 10000, // 10 saniye timeout
+        headers: {
+          'User-Agent': 'Mivvo-Expertiz/1.0'
+        }
+      });
+      
+      console.log('VIN Service: NHTSA API response received');
       
       if (response.data && response.data.Results && response.data.Results.length > 0) {
         const result = response.data.Results[0];
+        console.log('VIN Service: Processing result:', { 
+          vin: result.VIN, 
+          make: result.Make, 
+          model: result.Model,
+          errorCode: result.ErrorCode 
+        });
         
         // Hata kontrolü - Sadece kritik hataları kontrol et
         const errorCode = result.ErrorCode;
@@ -212,10 +228,14 @@ export class VINService {
       }
 
       return null;
-    } catch (error) {
-      console.error('VIN sorgulama hatası:', error);
-      throw error;
-    }
+        } catch (error) {
+          console.error('VIN Service: Error occurred:', error);
+          if (error instanceof Error) {
+            throw new Error(`VIN sorgulama hatası: ${error.message}`);
+          } else {
+            throw new Error('VIN sorgulama sırasında bilinmeyen hata oluştu');
+          }
+        }
   }
 
   /**

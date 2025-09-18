@@ -2,7 +2,22 @@ import { Request, Response } from 'express';
 import { VINService, VINData } from '../services/vinService';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+// Prisma Client'ı singleton olarak kullan
+let prisma: PrismaClient;
+
+try {
+  prisma = new PrismaClient();
+} catch (error) {
+  console.error('Prisma Client initialization error:', error);
+  // Fallback olarak yeni instance oluştur
+  prisma = new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    }
+  });
+}
 
 export class VINController {
   /**
@@ -10,9 +25,12 @@ export class VINController {
    */
   static async decodeVIN(req: Request, res: Response): Promise<void> {
     try {
+      console.log('VIN decode request received:', { body: req.body, headers: req.headers });
+      
       const { vin } = req.body;
 
       if (!vin) {
+        console.log('VIN missing in request body');
         res.status(400).json({
           success: false,
           message: 'VIN numarası gereklidir'
@@ -22,6 +40,7 @@ export class VINController {
 
       // VIN formatını kontrol et
       if (!VINService.isValidVIN(vin)) {
+        console.log('Invalid VIN format:', vin);
         res.status(400).json({
           success: false,
           message: 'Geçersiz VIN formatı. VIN 17 haneli olmalıdır.'
@@ -29,10 +48,30 @@ export class VINController {
         return;
       }
 
+      // Database bağlantısını test et
+      try {
+        await prisma.$connect();
+        console.log('Database connected successfully');
+      } catch (dbError) {
+        console.error('Database connection error:', dbError);
+        res.status(500).json({
+          success: false,
+          message: 'Veritabanı bağlantı hatası'
+        });
+        return;
+      }
+
       // Önce cache'den kontrol et
-      const cachedData = await prisma.vINLookup.findFirst({
-        where: { vin: vin.toUpperCase() }
-      });
+      let cachedData = null;
+      try {
+        cachedData = await prisma.vINLookup.findFirst({
+          where: { vin: vin.toUpperCase() }
+        });
+        console.log('Cache check completed:', cachedData ? 'Found' : 'Not found');
+      } catch (cacheError) {
+        console.error('Cache lookup error:', cacheError);
+        // Cache hatası varsa devam et, API'den sorgula
+      }
 
       if (cachedData) {
         res.json({
@@ -79,33 +118,41 @@ export class VINController {
         return;
       }
 
-      // Cache'e kaydet
-      await prisma.vINLookup.create({
-        data: {
-          vin: vinData.vin,
-          make: vinData.make,
-          model: vinData.model,
-          modelYear: vinData.modelYear,
-          manufacturer: vinData.manufacturer,
-          plantCountry: vinData.plantCountry,
-          vehicleType: vinData.vehicleType,
-          bodyClass: vinData.bodyClass,
-          engineCylinders: vinData.engineCylinders,
-          engineDisplacement: vinData.engineDisplacement,
-          fuelType: vinData.fuelType,
-          transmissionStyle: vinData.transmissionStyle,
-          driveType: vinData.driveType,
-          trim: vinData.trim,
-          series: vinData.series,
-          doors: vinData.doors,
-          windows: vinData.windows,
-          wheelBase: vinData.wheelBase,
-          gvwr: vinData.gvwr,
-          plantCity: vinData.plantCity,
-          plantState: vinData.plantState,
-          plantCompanyName: vinData.plantCompanyName
-        }
-      });
+      // Cache'e kaydet (hata varsa devam et)
+      try {
+        await prisma.vINLookup.create({
+          data: {
+            vin: vinData.vin,
+            make: vinData.make,
+            model: vinData.model,
+            modelYear: vinData.modelYear,
+            manufacturer: vinData.manufacturer,
+            plantCountry: vinData.plantCountry,
+            vehicleType: vinData.vehicleType,
+            bodyClass: vinData.bodyClass,
+            engineCylinders: vinData.engineCylinders,
+            engineDisplacement: vinData.engineDisplacement,
+            fuelType: vinData.fuelType,
+            transmissionStyle: vinData.transmissionStyle,
+            driveType: vinData.driveType,
+            trim: vinData.trim,
+            series: vinData.series,
+            doors: vinData.doors,
+            windows: vinData.windows,
+            wheelBase: vinData.wheelBase,
+            gvwr: vinData.gvwr,
+            plantCity: vinData.plantCity,
+            plantState: vinData.plantState,
+            plantCompanyName: vinData.plantCompanyName,
+            errorCode: vinData.errorCode,
+            errorText: vinData.errorText
+          }
+        });
+        console.log('VIN data cached successfully');
+      } catch (cacheSaveError) {
+        console.error('Cache save error:', cacheSaveError);
+        // Cache hatası varsa devam et, kullanıcıya sonucu göster
+      }
 
       res.json({
         success: true,
