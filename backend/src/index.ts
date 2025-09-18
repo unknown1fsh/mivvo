@@ -13,6 +13,7 @@ import userRoutes from './routes/user';
 import vehicleRoutes from './routes/vehicle';
 import paymentRoutes from './routes/payment';
 import adminRoutes from './routes/admin';
+import vinRoutes from './routes/vin';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -76,6 +77,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/vehicle', vehicleRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/vin', vinRoutes);
 
 // Error handling middleware
 app.use(notFound);

@@ -205,3 +205,33 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
+
+model VINLookup {
+  id                    Int      @id @default(autoincrement())
+  vin                   String   @unique
+  make                  String?
+  model                 String?
+  modelYear             String?  @map("model_year")
+  manufacturer          String?
+  plantCountry          String?  @map("plant_country")
+  vehicleType           String?  @map("vehicle_type")
+  bodyClass             String?  @map("body_class")
+  engineCylinders       String?  @map("engine_cylinders")
+  engineDisplacement    String?  @map("engine_displacement")
+  fuelType              String?  @map("fuel_type")
+  transmissionStyle     String?  @map("transmission_style")
+  driveType             String?  @map("drive_type")
+  trim                  String?
+  series                String?
+  doors                 String?
+  windows               String?
+  wheelBase             String?  @map("wheel_base")
+  gvwr                  String?
+  plantCity             String?  @map("plant_city")
+  plantState            String?  @map("plant_state")
+  plantCompanyName      String?  @map("plant_company_name")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("vin_lookups")
+}

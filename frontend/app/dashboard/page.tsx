@@ -14,7 +14,9 @@ import {
   SparklesIcon,
   UserIcon,
   CogIcon,
-  BellIcon
+  BellIcon,
+  MagnifyingGlassIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -225,10 +227,14 @@ export default function DashboardPage() {
         <FadeInUp delay={0.2}>
           <div className="card p-6 mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link href="/vehicle/new-report" className="btn btn-primary btn-lg flex items-center justify-center">
                 <PlusIcon className="w-5 h-5 mr-2" />
                 Yeni Rapor Oluştur
+              </Link>
+              <Link href="/vin-lookup" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
+                <TruckIcon className="w-5 h-5 mr-2" />
+                Şasi Sorgula
               </Link>
               <Link href="/vehicle/upload-images" className="btn btn-secondary btn-lg flex items-center justify-center">
                 <CameraIcon className="w-5 h-5 mr-2" />
@@ -238,6 +244,44 @@ export default function DashboardPage() {
                 <CreditCardIcon className="w-5 h-5 mr-2" />
                 Kredi Yükle
               </Link>
+            </div>
+          </div>
+        </FadeInUp>
+
+        {/* VIN Lookup Card */}
+        <FadeInUp delay={0.3}>
+          <div className="card p-6 mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                  <TruckIcon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Şasi Numarası Sorgulama</h3>
+                  <p className="text-gray-600">Araç şasi numarasından detaylı bilgileri öğrenin</p>
+                </div>
+              </div>
+              <Link 
+                href="/vin-lookup" 
+                className="btn btn-primary bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2"
+              >
+                <MagnifyingGlassIcon className="w-5 h-5" />
+                <span>Sorgula</span>
+              </Link>
+            </div>
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+              <div className="flex items-center space-x-2">
+                <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                <span>Marka, Model, Yıl</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                <span>Teknik Özellikler</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                <span>Üretim Bilgileri</span>
+              </div>
             </div>
           </div>
         </FadeInUp>
