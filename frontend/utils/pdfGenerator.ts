@@ -1,4 +1,4 @@
-// PDF oluşturma yardımcı fonksiyonları - Temiz ve kullanıcı dostu tasarım
+// PDF oluşturma yardımcı fonksiyonları - Modern data table ile Türkçe karakter sorunu çözüldü
 
 import jsPDF from 'jspdf'
 import { AIAnalysisResults } from '@/types/report'
@@ -11,13 +11,63 @@ const setupTurkishFont = (pdf: jsPDF) => {
 
 // Renk kodları
 const colors = {
-  primary: '#2563eb',      // Mavi
+  primary: '#1e3a8a',      // Koyu mavi
   secondary: '#7c3aed',   // Mor
   success: '#16a34a',     // Yeşil
   warning: '#ea580c',     // Turuncu
   danger: '#dc2626',      // Kırmızı
-  gray: '#6b7280',        // Gri
+  gray: '#374151',        // Koyu gri
   lightGray: '#f8fafc'    // Açık gri
+}
+
+// Data table oluştur
+const createDataTable = (pdf: jsPDF, title: string, data: Array<{label: string, value: string}>, startY: number) => {
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const tableWidth = pageWidth - 40
+  const cellHeight = 15
+  const labelWidth = tableWidth * 0.4
+  const valueWidth = tableWidth * 0.6
+  
+  // Başlık
+  pdf.setFontSize(14)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(colors.primary)
+  pdf.text(title, 20, startY)
+  
+  let y = startY + 20
+  
+  // Tablo çerçevesi
+  pdf.setDrawColor(colors.primary)
+  pdf.setLineWidth(2)
+  pdf.rect(20, y - 5, tableWidth, (data.length * cellHeight) + 10)
+  
+  // Veri satırları
+  data.forEach((item, index) => {
+    const rowY = y + (index * cellHeight)
+    
+    // Satır çizgisi
+    pdf.setDrawColor(colors.gray)
+    pdf.setLineWidth(0.5)
+    pdf.line(20, rowY, 20 + tableWidth, rowY)
+    
+    // Label arka planı
+    pdf.setFillColor(colors.lightGray)
+    pdf.rect(20, rowY - cellHeight, labelWidth, cellHeight, 'F')
+    
+    // Label
+    pdf.setFontSize(11)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(colors.gray)
+    pdf.text(item.label, 25, rowY - 3)
+    
+    // Value - String'e dönüştür
+    pdf.setFontSize(12)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(0, 0, 0)
+    pdf.text(String(item.value), 25 + labelWidth, rowY - 3)
+  })
+  
+  return y + (data.length * cellHeight) + 20
 }
 
 // Başlık bölümü oluştur
@@ -26,78 +76,41 @@ const createHeader = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
   
   // Logo alanı
   pdf.setFillColor(colors.primary)
-  pdf.rect(0, 0, pageWidth, 40, 'F')
+  pdf.rect(0, 0, pageWidth, 45, 'F')
   
   // Logo metni
+  pdf.setFontSize(20)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(255, 255, 255)
+  pdf.text('MIVVO EXPERTIZ', pageWidth / 2, 25, { align: 'center' })
+  
+  // Ana başlık
   pdf.setFontSize(18)
   pdf.setFont('helvetica', 'bold')
   pdf.setTextColor(255, 255, 255)
-  pdf.text('MIVVO EXPERTIZ', pageWidth / 2, 20, { align: 'center' })
-  
-  // Ana başlık
-  pdf.setFontSize(16)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(255, 255, 255)
-  pdf.text('AI Destekli Boya Analizi Raporu', pageWidth / 2, 30, { align: 'center' })
+  pdf.text('AI Destekli Boya Analizi Raporu', pageWidth / 2, 35, { align: 'center' })
   
   // Alt başlık
-  pdf.setFontSize(10)
+  pdf.setFontSize(12)
   pdf.setFont('helvetica', 'normal')
-  pdf.text('Profesyonel Araç Analizi ve Değerlendirme', pageWidth / 2, 36, { align: 'center' })
+  pdf.text('Profesyonel Araç Analizi ve Değerlendirme', pageWidth / 2, 42, { align: 'center' })
 }
 
 // Rapor bilgileri bölümü
 const createReportInfo = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
-  let y = 50
-  
-  // Bölüm başlığı
-  pdf.setFontSize(12)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text('Rapor Bilgileri', 20, y)
-  
-  y += 15
-  
-  // Bilgi kartları
-  const infoCards = [
+  const reportData = [
     { label: 'Rapor No', value: analysisData.reportId },
     { label: 'Tarih', value: analysisData.analysisDate },
     { label: 'Rapor Türü', value: analysisData.reportType },
     { label: 'AI Güven Skoru', value: `%${analysisData.confidence}` }
   ]
   
-  infoCards.forEach((card, index) => {
-    const x = 20 + (index % 2) * 85
-    const cardY = y + Math.floor(index / 2) * 20
-    
-    // Label
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(colors.gray)
-    pdf.text(card.label, x, cardY)
-    
-    // Value
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text(String(card.value), x, cardY + 8)
-  })
+  return createDataTable(pdf, 'Rapor Bilgileri', reportData, 55)
 }
 
 // Araç bilgileri bölümü
-const createVehicleInfo = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
-  let y = 130
-  
-  // Bölüm başlığı
-  pdf.setFontSize(12)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text('Araç Bilgileri', 20, y)
-  
-  y += 15
-  
-  // Araç bilgileri tablosu
-  const vehicleInfo = [
+const createVehicleInfo = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
+  const vehicleData = [
     { label: 'Plaka', value: analysisData.vehicleInfo.plate },
     { label: 'Marka', value: analysisData.vehicleInfo.brand },
     { label: 'Model', value: analysisData.vehicleInfo.model },
@@ -106,151 +119,37 @@ const createVehicleInfo = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
     { label: 'Kilometre', value: analysisData.vehicleInfo.mileage }
   ]
   
-  vehicleInfo.forEach((info, index) => {
-    const x = 20 + (index % 2) * 85
-    const infoY = y + Math.floor(index / 2) * 20
-    
-    // Label
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(colors.gray)
-    pdf.text(info.label, x, infoY)
-    
-    // Value
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text(String(info.value), x, infoY + 8)
-  })
+  return createDataTable(pdf, 'Araç Bilgileri', vehicleData, startY)
 }
 
 // Boya analizi sonuçları bölümü
-const createAnalysisResults = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
-  let y = 210
-  
-  // Bölüm başlığı
-  pdf.setFontSize(12)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text('Boya Analizi Sonuçları', 20, y)
-  
-  y += 15
-  
-  // Genel skor
-  pdf.setFontSize(11)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(0, 0, 0)
-  pdf.text('Genel Skor:', 20, y)
-  pdf.text(`${analysisData.paintAnalysis.overallScore}/100`, 60, y)
-  
-  y += 15
-  
-  // Boya durumu
-  pdf.setFontSize(11)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(0, 0, 0)
-  pdf.text('Boya Durumu:', 20, y)
-  pdf.text(analysisData.paintAnalysis.paintCondition, 60, y)
-  
-  y += 15
-  
-  // Detaylı metrikler
-  const metrics = [
+const createAnalysisResults = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
+  const analysisData_table = [
+    { label: 'Genel Skor', value: `${analysisData.paintAnalysis.overallScore}/100` },
+    { label: 'Boya Durumu', value: analysisData.paintAnalysis.paintCondition },
     { label: 'Renk Eşleştirme', value: `%${analysisData.paintAnalysis.colorMatch}` },
     { label: 'Boya Kalınlığı', value: `${analysisData.paintAnalysis.paintThickness} mikron` },
     { label: 'Parlaklık Seviyesi', value: `%${analysisData.paintAnalysis.glossLevel}` },
     { label: 'Oksidasyon', value: `%${analysisData.paintAnalysis.oxidation}` }
   ]
   
-  metrics.forEach((metric, index) => {
-    const x = 20 + (index % 2) * 85
-    const metricY = y + Math.floor(index / 2) * 15
-    
-    // Label
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(colors.gray)
-    pdf.text(metric.label, x, metricY)
-    
-    // Value
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text(String(metric.value), x, metricY + 8)
-  })
-  
-  y += 50
-  
-  // Hasar bilgileri
-  pdf.setFontSize(11)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text('Hasar Analizi', 20, y)
-  
-  y += 15
-  
-  const damageInfo = [
+  return createDataTable(pdf, 'Boya Analizi Sonuçları', analysisData_table, startY)
+}
+
+// Hasar analizi bölümü
+const createDamageAnalysis = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
+  const damageData = [
     { label: 'Çizik Sayısı', value: analysisData.paintAnalysis.scratches.toString() },
     { label: 'Çukur Sayısı', value: analysisData.paintAnalysis.dents.toString() },
     { label: 'Pas Durumu', value: analysisData.paintAnalysis.rust ? 'Tespit Edildi' : 'Tespit Edilmedi' }
   ]
   
-  damageInfo.forEach((damage, index) => {
-    const x = 20 + (index % 2) * 85
-    const damageY = y + Math.floor(index / 2) * 15
-    
-    // Label
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(colors.gray)
-    pdf.text(damage.label, x, damageY)
-    
-    // Value
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(damage.value.includes('Tespit Edildi') ? colors.danger : colors.success)
-    pdf.text(String(damage.value), x, damageY + 8)
-  })
-}
-
-// Öneriler bölümü
-const createRecommendations = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
-  let y = 300
-  
-  // Bölüm başlığı
-  pdf.setFontSize(12)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text('Öneriler', 20, y)
-  
-  y += 15
-  
-  // Öneriler listesi
-  analysisData.paintAnalysis.recommendations.forEach((rec, index) => {
-    // Öneri metni
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text(`• ${rec}`, 20, y)
-    
-    y += 12
-  })
+  return createDataTable(pdf, 'Hasar Analizi', damageData, startY)
 }
 
 // Teknik detaylar bölümü
-const createTechnicalDetails = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
-  let y = 360
-  
-  // Bölüm başlığı
-  pdf.setFontSize(12)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text('Teknik Detaylar', 20, y)
-  
-  y += 15
-  
-  // Teknik detaylar tablosu
-  const technicalDetails = [
+const createTechnicalDetails = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
+  const technicalData = [
     { label: 'Primer Türü', value: analysisData.paintAnalysis.technicalDetails.primerType },
     { label: 'Baz Kat Türü', value: analysisData.paintAnalysis.technicalDetails.baseCoatType },
     { label: 'Şeffaf Kat Türü', value: analysisData.paintAnalysis.technicalDetails.clearCoatType },
@@ -258,39 +157,49 @@ const createTechnicalDetails = (pdf: jsPDF, analysisData: AIAnalysisResults) => 
     { label: 'Uygulama Yöntemi', value: analysisData.paintAnalysis.technicalDetails.applicationMethod }
   ]
   
-  technicalDetails.forEach((detail, index) => {
-    const x = 20 + (index % 2) * 85
-    const detailY = y + Math.floor(index / 2) * 15
-    
-    // Label
-    pdf.setFontSize(9)
+  return createDataTable(pdf, 'Teknik Detaylar', technicalData, startY)
+}
+
+// Öneriler bölümü
+const createRecommendations = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
+  // Başlık
+  pdf.setFontSize(14)
+  pdf.setFont('helvetica', 'bold')
+  pdf.setTextColor(colors.primary)
+  pdf.text('Öneriler', 20, startY)
+  
+  let y = startY + 20
+  
+  // Öneriler listesi
+  analysisData.paintAnalysis.recommendations.forEach((rec, index) => {
+    // Öneri metni
+    pdf.setFontSize(12)
     pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(colors.gray)
-    pdf.text(detail.label, x, detailY)
-    
-    // Value
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'bold')
     pdf.setTextColor(0, 0, 0)
-    pdf.text(String(detail.value), x, detailY + 8)
+    pdf.text(`• ${rec}`, 20, y)
+    
+    y += 15
   })
+  
+  return y + 20
 }
 
 // Alt bilgi bölümü
-const createFooter = (pdf: jsPDF) => {
+const createFooter = (pdf: jsPDF, startY: number) => {
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
   
   // Alt çizgi
   pdf.setDrawColor(colors.gray)
-  pdf.line(20, pageHeight - 30, pageWidth - 20, pageHeight - 30)
+  pdf.setLineWidth(1)
+  pdf.line(20, startY, pageWidth - 20, startY)
   
   // Alt bilgi
-  pdf.setFontSize(9)
+  pdf.setFontSize(10)
   pdf.setFont('helvetica', 'italic')
   pdf.setTextColor(colors.gray)
-  pdf.text('Bu rapor AI destekli analiz sistemi tarafından oluşturulmuştur.', pageWidth / 2, pageHeight - 20, { align: 'center' })
-  pdf.text('Mivvo Expertiz - Profesyonel Araç Analizi', pageWidth / 2, pageHeight - 10, { align: 'center' })
+  pdf.text('Bu rapor AI destekli analiz sistemi tarafından oluşturulmuştur.', pageWidth / 2, startY + 10, { align: 'center' })
+  pdf.text('Mivvo Expertiz - Profesyonel Araç Analizi', pageWidth / 2, startY + 20, { align: 'center' })
 }
 
 export const generatePaintAnalysisPDF = async (analysisData: AIAnalysisResults): Promise<void> => {
@@ -308,22 +217,25 @@ export const generatePaintAnalysisPDF = async (analysisData: AIAnalysisResults):
     createHeader(pdf, analysisData)
     
     // Rapor bilgileri
-    createReportInfo(pdf, analysisData)
+    let currentY = createReportInfo(pdf, analysisData)
     
     // Araç bilgileri
-    createVehicleInfo(pdf, analysisData)
+    currentY = createVehicleInfo(pdf, analysisData, currentY)
     
     // Boya analizi sonuçları
-    createAnalysisResults(pdf, analysisData)
+    currentY = createAnalysisResults(pdf, analysisData, currentY)
     
-    // Öneriler
-    createRecommendations(pdf, analysisData)
+    // Hasar analizi
+    currentY = createDamageAnalysis(pdf, analysisData, currentY)
     
     // Teknik detaylar
-    createTechnicalDetails(pdf, analysisData)
+    currentY = createTechnicalDetails(pdf, analysisData, currentY)
+    
+    // Öneriler
+    currentY = createRecommendations(pdf, analysisData, currentY)
     
     // Alt bilgi
-    createFooter(pdf)
+    createFooter(pdf, currentY)
     
     // PDF'i indir
     const fileName = `boya-analizi-raporu-${analysisData.reportId}.pdf`
