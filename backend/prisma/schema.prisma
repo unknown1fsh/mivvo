@@ -230,6 +230,8 @@ model VINLookup {
   plantCity             String?  @map("plant_city")
   plantState            String?  @map("plant_state")
   plantCompanyName      String?  @map("plant_company_name")
+  errorCode             String?  @map("error_code")
+  errorText             String?  @map("error_text")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 

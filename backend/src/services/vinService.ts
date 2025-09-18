@@ -228,14 +228,14 @@ export class VINService {
       }
 
       return null;
-        } catch (error) {
-          console.error('VIN Service: Error occurred:', error);
-          if (error instanceof Error) {
-            throw new Error(`VIN sorgulama hatası: ${error.message}`);
-          } else {
-            throw new Error('VIN sorgulama sırasında bilinmeyen hata oluştu');
-          }
-        }
+    } catch (error) {
+      console.error('VIN Service: Error occurred:', error);
+      if (error instanceof Error) {
+        throw new Error(`VIN sorgulama hatası: ${error.message}`);
+      } else {
+        throw new Error('VIN sorgulama sırasında bilinmeyen hata oluştu');
+      }
+    }
   }
 
   /**
