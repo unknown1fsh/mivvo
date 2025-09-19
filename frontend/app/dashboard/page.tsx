@@ -15,7 +15,6 @@ import {
   UserIcon,
   CogIcon,
   BellIcon,
-  MagnifyingGlassIcon,
   TruckIcon,
   PaintBrushIcon,
   ArrowRightOnRectangleIcon
@@ -148,7 +147,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2">
+              <Link href="/dashboard" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                   <SparklesIcon className="w-5 h-5 text-white" />
                 </div>
@@ -284,43 +283,6 @@ export default function DashboardPage() {
           </div>
         </FadeInUp>
 
-        {/* VIN Lookup Card */}
-        <FadeInUp delay={0.3}>
-          <div className="card p-6 mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                  <TruckIcon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Şasi Numarası Sorgulama</h3>
-                  <p className="text-gray-600">Araç şasi numarasından detaylı bilgileri öğrenin</p>
-                </div>
-              </div>
-              <Link 
-                href="/vin-lookup" 
-                className="btn btn-primary bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2"
-              >
-                <MagnifyingGlassIcon className="w-5 h-5" />
-                <span>Sorgula</span>
-              </Link>
-            </div>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-              <div className="flex items-center space-x-2">
-                <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                <span>Marka, Model, Yıl</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                <span>Teknik Özellikler</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircleIcon className="w-4 h-4 text-green-500" />
-                <span>Üretim Bilgileri</span>
-              </div>
-            </div>
-          </div>
-        </FadeInUp>
 
         {/* Recent Reports */}
         <FadeInUp delay={0.4}>
@@ -348,7 +310,8 @@ export default function DashboardPage() {
                     key={report.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onDoubleClick={() => window.open(`/reports/${report.id}`, '_blank')}
                   >
                     <div className="flex items-center space-x-4">
                       {getStatusIcon(report.status)}
