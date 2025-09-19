@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
   ArrowLeftIcon,
-  CarIcon,
+  TruckIcon,
   CameraIcon,
   CloudArrowUpIcon,
   TrashIcon,
@@ -126,7 +126,7 @@ export default function AddVehiclePage() {
                 Garaja Dön
               </Link>
               <div className="flex items-center space-x-2">
-                <CarIcon className="w-6 h-6 text-blue-600" />
+                <TruckIcon className="w-6 h-6 text-blue-600" />
                 <span className="text-xl font-bold text-gray-900">Yeni Araç Ekle</span>
               </div>
             </div>
