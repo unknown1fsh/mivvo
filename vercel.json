@@ -7,10 +7,7 @@
     },
     {
       "src": "backend/src/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": ["backend/dist/**", "backend/prisma/schema.prisma", "backend/node_modules/.prisma/**"]
-      }
+      "use": "@vercel/node"
     }
   ],
   "routes": [
@@ -19,13 +16,12 @@
       "dest": "backend/src/index.ts"
     },
     {
+      "src": "/reports/(.*)",
+      "dest": "/frontend/reports/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "frontend/$1"
     }
-  ],
-  "installCommand": "npm install --prefix frontend && npm install --prefix backend && cd backend && npx prisma generate",
-  "buildCommand": "npm run build --prefix frontend && npm run vercel-build --prefix backend",
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
