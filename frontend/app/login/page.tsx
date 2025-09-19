@@ -35,7 +35,10 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
-      const success = await login(data)
+      const success = await login({
+        email: data.email,
+        password: data.password
+      })
       
       if (success) {
         router.push('/dashboard')

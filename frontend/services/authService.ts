@@ -9,44 +9,89 @@ export interface AuthResponse {
   refreshToken?: string
 }
 
-export interface LoginResponse extends AuthResponse {
+export interface LoginResponse {
+  success: boolean
   message: string
+  data: AuthResponse
 }
 
-export interface RegisterResponse extends AuthResponse {
+export interface RegisterResponse {
+  success: boolean
   message: string
+  data: AuthResponse
 }
 
 class AuthService {
   // Giriş yap
   async login(credentials: LoginCredentials): Promise<AuthResponse | null> {
+    console.log('🔐 Login başlatıldı:', { email: credentials.email })
+    
     try {
+      console.log('📤 API isteği gönderiliyor:', '/api/auth/login')
       const response = await apiClient.post<LoginResponse>('/api/auth/login', credentials)
+      
+      console.log('📥 API yanıtı alındı:', {
+        success: response.success,
+        hasData: !!response.data,
+        data: response.data
+      })
       
       if (response.success && response.data) {
         // Backend response'u doğru şekilde parse et
-        const backendData = response.data.data || response.data
+        const backendData = response.data
+        
+        console.log('✅ Backend verisi parse edildi:', {
+          hasToken: !!backendData.data?.token,
+          hasUser: !!backendData.data?.user,
+          tokenLength: backendData.data?.token?.length,
+          userEmail: backendData.data?.user?.email,
+          fullData: backendData
+        })
+        
+        // Backend'den gelen data yapısını kontrol et
+        const actualData = backendData.data
+        
+        console.log('🔍 Actual data kontrolü:', {
+          hasActualData: !!actualData,
+          hasActualToken: !!actualData.token,
+          hasActualUser: !!actualData.user,
+          actualData: actualData
+        })
         
         // Token ve user bilgilerini kontrol et
-        if (!backendData.token) {
+        if (!actualData.token) {
+          console.error('❌ Token bulunamadı!', { actualData })
           return null
         }
         
-        if (!backendData.user) {
+        if (!actualData.user) {
+          console.error('❌ User bilgisi bulunamadı!', { actualData })
           return null
         }
         
         // Token'ı localStorage'a kaydet
         if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_token', backendData.token)
-          localStorage.setItem('user', JSON.stringify(backendData.user))
+          console.log('💾 LocalStorage\'a kaydediliyor...')
+          localStorage.setItem('auth_token', actualData.token)
+          localStorage.setItem('user', JSON.stringify(actualData.user))
+          console.log('✅ LocalStorage\'a kaydedildi')
         }
         
-        return backendData
+        console.log('🎉 Login başarılı!')
+        return actualData
       } else {
+        console.error('❌ API yanıtı başarısız:', {
+          success: response.success,
+          data: response.data
+        })
         return null
       }
     } catch (error) {
+      console.error('💥 Login hatası:', error)
+      console.error('💥 Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      })
       return null
     }
   }
@@ -58,24 +103,25 @@ class AuthService {
       
       if (response.success && response.data) {
         // Backend response'u doğru şekilde parse et
-        const backendData = response.data.data || response.data
+        const backendData = response.data
+        const actualData = backendData.data
         
         // Token ve user bilgilerini kontrol et
-        if (!backendData.token) {
+        if (!actualData.token) {
           return null
         }
         
-        if (!backendData.user) {
+        if (!actualData.user) {
           return null
         }
         
         // Token'ı localStorage'a kaydet
         if (typeof window !== 'undefined') {
-          localStorage.setItem('auth_token', backendData.token)
-          localStorage.setItem('user', JSON.stringify(backendData.user))
+          localStorage.setItem('auth_token', actualData.token)
+          localStorage.setItem('user', JSON.stringify(actualData.user))
         }
         
-        return backendData
+        return actualData
       } else {
         return null
       }

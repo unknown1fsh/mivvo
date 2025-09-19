@@ -52,6 +52,17 @@ class ApiClient {
       requestHeaders.Authorization = `Bearer ${token}`
     }
 
+    console.log('🌐 API İsteği:', {
+      method,
+      url,
+      endpoint,
+      baseURL: this.baseURL,
+      hasToken: !!token,
+      tokenLength: token?.length,
+      headers: requestHeaders,
+      body: body ? (body instanceof FormData ? 'FormData' : body) : 'No body'
+    })
+
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout)
@@ -61,10 +72,13 @@ class ApiClient {
       if (body instanceof FormData) {
         delete requestHeaders['Content-Type']
         requestBody = body
+        console.log('📁 FormData kullanılıyor, Content-Type header kaldırıldı')
       } else if (body) {
         requestBody = JSON.stringify(body)
+        console.log('📝 JSON body hazırlandı:', body)
       }
 
+      console.log('🚀 Fetch isteği gönderiliyor...')
       const response = await fetch(url, {
         method,
         headers: requestHeaders,
@@ -74,9 +88,23 @@ class ApiClient {
 
       clearTimeout(timeoutId)
 
+      console.log('📡 Response alındı:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      })
+
       if (!response.ok) {
+        console.error('❌ HTTP Hatası:', {
+          status: response.status,
+          statusText: response.statusText,
+          url
+        })
+        
         // 401 hatası durumunda token'ı temizle
         if (response.status === 401) {
+          console.log('🔒 401 hatası - Token temizleniyor')
           if (typeof window !== 'undefined') {
             localStorage.removeItem('auth_token')
             localStorage.removeItem('user')
@@ -87,12 +115,20 @@ class ApiClient {
       }
 
       const data = await response.json()
+      console.log('✅ Response data parse edildi:', data)
+      
       return {
         success: true,
         data,
       }
     } catch (error) {
-      console.error('API Request Error:', error)
+      console.error('💥 API Request Error:', error)
+      console.error('💥 Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        url,
+        method
+      })
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Bilinmeyen hata',

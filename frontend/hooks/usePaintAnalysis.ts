@@ -39,6 +39,7 @@ export const usePaintAnalysis = () => {
       analysisDate: new Date().toLocaleDateString('tr-TR'),
       paintAnalysis,
       uploadedImages: uploadedImagesCount,
+      uploadedAudios: 0,
       confidence: Math.floor(Math.random() * 15) + 85 // 85-100%
     }
   }, [])

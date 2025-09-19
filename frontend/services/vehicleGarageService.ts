@@ -43,7 +43,13 @@ class VehicleGarageService {
     const response = await apiClient.get<VehicleGarage[]>('/api/vehicle-garage')
     
     if (response.success && response.data) {
-      return response.data as any
+      // Güvenli kontrol: data array olup olmadığını kontrol et
+      if (Array.isArray(response.data)) {
+        return response.data
+      } else {
+        console.error('Beklenmeyen veri formatı:', response.data)
+        return []
+      }
     }
     
     return []

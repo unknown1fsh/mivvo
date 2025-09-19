@@ -86,8 +86,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 // @access  Public
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
+  
+  console.log('🔐 Backend login başlatıldı:', { email, hasPassword: !!password });
 
   // Check if user exists
+  console.log('🔍 Kullanıcı aranıyor:', email);
   const user = await prisma.user.findUnique({
     where: { email },
     select: {
@@ -101,7 +104,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     },
   });
 
+  console.log('👤 Kullanıcı bulundu:', {
+    found: !!user,
+    isActive: user?.isActive,
+    userId: user?.id,
+    userEmail: user?.email
+  });
+
   if (!user || !user.isActive) {
+    console.error('❌ Kullanıcı bulunamadı veya aktif değil');
     res.status(401).json({
       success: false,
       message: 'Geçersiz email veya şifre.',
@@ -110,8 +121,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 
   // Check password
+  console.log('🔑 Şifre kontrol ediliyor...');
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+  console.log('🔑 Şifre kontrol sonucu:', { isValid: isPasswordValid });
+  
   if (!isPasswordValid) {
+    console.error('❌ Şifre yanlış');
     res.status(401).json({
       success: false,
       message: 'Geçersiz email veya şifre.',
@@ -120,19 +135,32 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   }
 
   // Generate token
+  console.log('🎫 Token oluşturuluyor...');
   const token = generateToken(user.id);
+  console.log('🎫 Token oluşturuldu:', { tokenLength: token.length });
 
   // Remove password from response
   const { passwordHash, ...userWithoutPassword } = user;
 
-  res.json({
+  const responseData = {
     success: true,
     message: 'Giriş başarılı.',
     data: {
       user: userWithoutPassword,
       token,
     },
+  };
+
+  console.log('✅ Login başarılı - Response hazırlanıyor:', {
+    success: responseData.success,
+    hasUser: !!responseData.data.user,
+    hasToken: !!responseData.data.token,
+    userEmail: responseData.data.user.email,
+    fullResponse: responseData
   });
+
+  console.log('📤 Response gönderiliyor:', JSON.stringify(responseData, null, 2));
+  res.json(responseData);
 };
 
 // @desc    Logout user

@@ -46,23 +46,42 @@ export const useAuth = (): AuthHook => {
   }, [checkAuthStatus])
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
+    console.log('🔑 useAuth login başlatıldı:', { email: credentials.email })
     setIsLoading(true)
+    
     try {
+      console.log('📞 authService.login çağrılıyor...')
       const authData = await authService.login(credentials)
       
+      console.log('📥 authService.login sonucu:', {
+        hasAuthData: !!authData,
+        hasUser: !!authData?.user,
+        hasToken: !!authData?.token,
+        userEmail: authData?.user?.email
+      })
+      
       if (authData) {
+        console.log('✅ Login başarılı - State güncelleniyor')
         setIsAuthenticated(true)
         setUser(authData.user)
         toast.success('Giriş başarılı!')
+        console.log('🎉 Login tamamlandı!')
         return true
       } else {
+        console.error('❌ Login başarısız - authData null')
         toast.error('Giriş başarısız! Email veya şifrenizi kontrol edin.')
         return false
       }
     } catch (error: any) {
+      console.error('💥 useAuth login hatası:', error)
+      console.error('💥 Error details:', {
+        message: error.message,
+        stack: error.stack
+      })
       toast.error(error.message || 'Giriş başarısız! Bir hata oluştu.')
       return false
     } finally {
+      console.log('🏁 useAuth login tamamlandı')
       setIsLoading(false)
     }
   }

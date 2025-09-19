@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -37,7 +37,8 @@ import { useAudioRecording } from '@/hooks/useAudioRecording'
 import { useAuth } from '@/hooks'
 
 // Services
-import { vehicleGarageService, VehicleGarage } from '@/services'
+import { vehicleGarageService } from '@/services'
+import { VehicleGarage } from '@/types'
 
 // Utils
 import toast from 'react-hot-toast'
@@ -53,7 +54,7 @@ const schema = yup.object({
 
 type FormData = yup.InferType<typeof schema>
 
-export default function NewReportPage() {
+function NewReportPageContent() {
   const searchParams = useSearchParams()
   const { isAuthenticated, isLoading: authLoading, requireAuth } = useAuth()
   const [selectedReportType, setSelectedReportType] = useState<ReportType | null>(null)
@@ -132,9 +133,9 @@ export default function NewReportPage() {
               setValue('vehiclePlate', vehicle.plate)
               setValue('vehicleBrand', vehicle.brand)
               setValue('vehicleModel', vehicle.model)
-              setValue('vehicleYear', vehicle.year.toString())
+              setValue('vehicleYear', vehicle.year)
               setValue('vehicleColor', vehicle.color || '')
-              setValue('mileage', vehicle.mileage?.toString() || '')
+              setValue('mileage', vehicle.mileage || 0)
             }
           }
         } catch (error) {
@@ -168,7 +169,7 @@ export default function NewReportPage() {
             make: data.vehicleBrand || 'Belirtilmemiş',
             model: data.vehicleModel || 'Belirtilmemiş',
             year: data.vehicleYear || 'Belirtilmemiş',
-            vin: data.vin || 'Belirtilmemiş'
+            vin: 'Belirtilmemiş'
           }
 
       let results
@@ -231,9 +232,9 @@ export default function NewReportPage() {
                 setValue('vehiclePlate', vehicle.plate)
                 setValue('vehicleBrand', vehicle.brand)
                 setValue('vehicleModel', vehicle.model)
-                setValue('vehicleYear', vehicle.year.toString())
+                setValue('vehicleYear', vehicle.year)
                 setValue('vehicleColor', vehicle.color || '')
-                setValue('mileage', vehicle.mileage?.toString() || '')
+                setValue('mileage', vehicle.mileage || 0)
               }
             }}
             onUseGarageToggle={(use) => {
@@ -256,6 +257,7 @@ export default function NewReportPage() {
               onNext={nextStep}
               onPrev={prevStep}
               selectedReportType={selectedReportType}
+              onAudiosChange={() => {}}
             />
           )
         } else {
@@ -286,6 +288,7 @@ export default function NewReportPage() {
               onNext={nextStep}
               onPrev={prevStep}
               selectedReportType={selectedReportType}
+              onAudiosChange={() => {}}
             />
           )
         } else {
@@ -383,5 +386,29 @@ export default function NewReportPage() {
         </>
       )}
     </div>
+  )
+}
+
+// Loading component
+function NewReportPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded mb-8"></div>
+          <div className="h-96 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Ana component Suspense ile sarmalanmış
+export default function NewReportPage() {
+  return (
+    <Suspense fallback={<NewReportPageLoading />}>
+      <NewReportPageContent />
+    </Suspense>
   )
 }

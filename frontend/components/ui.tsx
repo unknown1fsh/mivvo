@@ -181,3 +181,9 @@ export function LoadingSpinner({ size = 'md', className = '' }: LoadingSpinnerPr
     </div>
   )
 }
+
+// Export new components
+export { AnimatedCard } from './ui/AnimatedCard'
+export { InteractiveCard } from './ui/InteractiveCard'
+export { FloatingActionButton } from './ui/FloatingActionButton'
+export { LoadingSpinner as ModernLoadingSpinner, LoadingDots, LoadingPulse } from './ui/LoadingComponents'
