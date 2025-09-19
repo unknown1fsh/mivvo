@@ -113,6 +113,9 @@ app.use('/api/paint-analysis', paintAnalysisRoutes);
 app.use('/api/engine-sound-analysis', engineSoundAnalysisRoutes);
 app.use('/api/vehicle-garage', vehicleGarageRoutes);
 
+// Reports endpoint - frontend için alias
+app.use('/api/reports', userRoutes);
+
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);

@@ -15,12 +15,8 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   swcMinify: true,
-  // Enable static generation for dynamic routes
   trailingSlash: false,
-  // Ensure dynamic routes are properly handled
-  experimental: {
-    appDir: true,
-  },
+  // output: 'standalone', // Vercel için kaldırıldı
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

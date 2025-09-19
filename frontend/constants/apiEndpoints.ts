@@ -19,10 +19,10 @@ export const API_ENDPOINTS = {
     UPDATE: '/api/vehicle/:id'
   },
   REPORT: {
-    CREATE: '/api/report',
-    LIST: '/api/report',
-    DETAIL: '/api/report/:id',
-    PDF: '/api/report/:id/pdf'
+    CREATE: '/api/vehicle/reports',
+    LIST: '/api/user/reports',
+    DETAIL: '/api/vehicle/reports/:id',
+    PDF: '/api/vehicle/reports/:id/pdf'
   },
   PAINT_ANALYSIS: {
     ANALYZE: '/api/paint-analysis/analyze',
