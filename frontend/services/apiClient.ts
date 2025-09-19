@@ -56,16 +56,33 @@ class ApiClient {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout)
 
+      // FormData ise Content-Type header'ını kaldır
+      let requestBody: string | FormData | undefined
+      if (body instanceof FormData) {
+        delete requestHeaders['Content-Type']
+        requestBody = body
+      } else if (body) {
+        requestBody = JSON.stringify(body)
+      }
+
       const response = await fetch(url, {
         method,
         headers: requestHeaders,
-        body: body ? JSON.stringify(body) : undefined,
+        body: requestBody,
         signal: controller.signal,
       })
 
       clearTimeout(timeoutId)
 
       if (!response.ok) {
+        // 401 hatası durumunda token'ı temizle
+        if (response.status === 401) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('user')
+            localStorage.removeItem('refresh_token')
+          }
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 

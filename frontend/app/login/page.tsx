@@ -8,8 +8,7 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import toast from 'react-hot-toast'
-import { authAPI, setAuthToken } from '@/lib/api'
-import { useAuthStore } from '@/lib/stores'
+import { useAuth } from '@/hooks'
 import { useRouter } from 'next/navigation'
 
 const schema = yup.object({
@@ -23,7 +22,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { login } = useAuthStore()
+  const { login } = useAuth()
 
   const {
     register,
@@ -36,30 +35,13 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
-      const response = await authAPI.login(data.email, data.password)
+      const success = await login(data)
       
-      console.log('Login response:', response.data)
-      
-      // Store token and user data
-      const { token, user } = response.data
-      setAuthToken(token)
-      login(token, user)
-      
-      toast.success('Giriş başarılı!')
-      
-      // Redirect to dashboard
-      router.push('/dashboard')
-      
-    } catch (error: any) {
-      console.error('Login error:', error)
-      
-      if (error.response?.data?.message) {
-        toast.error(error.response.data.message)
-      } else if (error.response?.data?.error) {
-        toast.error(error.response.data.error)
-      } else {
-        toast.error('Giriş başarısız! Email ve şifrenizi kontrol edin.')
+      if (success) {
+        router.push('/dashboard')
       }
+    } catch (error) {
+      console.error('Login error:', error)
     } finally {
       setIsLoading(false)
     }

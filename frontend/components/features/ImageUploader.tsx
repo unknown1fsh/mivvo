@@ -15,6 +15,9 @@ interface ImageUploaderProps {
   removeImage: (id: string) => void
   onNext: () => void
   onPrev: () => void
+  useGlobalImages?: boolean
+  onUseGlobalImagesToggle?: (use: boolean) => void
+  selectedReportType?: { id: string; name: string; icon: string } | null
 }
 
 export const ImageUploader = ({
@@ -27,16 +30,53 @@ export const ImageUploader = ({
   handleFiles,
   removeImage,
   onNext,
-  onPrev
+  onPrev,
+  useGlobalImages = true,
+  onUseGlobalImagesToggle,
+  selectedReportType
 }: ImageUploaderProps) => {
   return (
     <div className="space-y-8">
       <div className="text-center">
+        {selectedReportType && (
+          <div className="mb-4">
+            <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              <span className="mr-2">{selectedReportType.icon}</span>
+              {selectedReportType.name}
+            </div>
+          </div>
+        )}
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Resim Yükleme</h1>
         <p className="text-gray-600">Araç resimlerini yükleyin</p>
       </div>
 
       <div className="space-y-6">
+        {/* Global Resimler Seçimi */}
+        {uploadedImages.length > 0 && onUseGlobalImagesToggle && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CheckCircleIcon className="w-5 h-5 text-blue-600" />
+                <span className="text-blue-800 font-medium">
+                  {uploadedImages.length} resim yüklü
+                </span>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="useGlobalImages"
+                  checked={useGlobalImages}
+                  onChange={(e) => onUseGlobalImagesToggle(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="useGlobalImages" className="ml-2 block text-sm text-gray-700">
+                  Bu rapor için global resimleri kullan
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Upload Area */}
         <div
           className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
@@ -65,10 +105,25 @@ export const ImageUploader = ({
             
             <div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Resimleri buraya sürükleyin veya tıklayın
+                {uploadedImages.length > 0 && useGlobalImages 
+                  ? 'Bu rapor için farklı resimler ekleyin' 
+                  : uploadedImages.length > 0 
+                    ? 'Daha fazla resim ekleyin' 
+                    : 'Resimleri buraya sürükleyin veya tıklayın'
+                }
               </h3>
               <p className="text-gray-600 mb-4">
                 JPG, PNG, WebP formatlarında, maksimum 15MB
+                {uploadedImages.length > 0 && !useGlobalImages && (
+                  <span className="block text-blue-600 font-medium mt-1">
+                    Yeni resimler mevcut resimlere eklenecek
+                  </span>
+                )}
+                {uploadedImages.length > 0 && useGlobalImages && (
+                  <span className="block text-orange-600 font-medium mt-1">
+                    Bu rapor için ayrı resimler yükleyebilirsiniz
+                  </span>
+                )}
               </p>
               
               <Button

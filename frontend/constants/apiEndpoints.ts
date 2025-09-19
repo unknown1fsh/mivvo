@@ -29,6 +29,24 @@ export const API_ENDPOINTS = {
     HISTORY: '/api/paint-analysis/history/:vehicleId',
     REPORT: '/api/paint-analysis/report/:analysisId'
   },
+  ENGINE_SOUND_ANALYSIS: {
+    ANALYZE: '/api/engine-sound-analysis/analyze',
+    HISTORY: '/api/engine-sound-analysis/history',
+    REPORT: '/api/engine-sound-analysis/:reportId',
+    DOWNLOAD: '/api/engine-sound-analysis/:reportId/download',
+    STATUS: '/api/engine-sound-analysis/:reportId/status'
+  },
+  VEHICLE_GARAGE: {
+    LIST: '/api/vehicle-garage',
+    GET: '/api/vehicle-garage/:id',
+    CREATE: '/api/vehicle-garage',
+    UPDATE: '/api/vehicle-garage/:id',
+    DELETE: '/api/vehicle-garage/:id',
+    UPLOAD_IMAGES: '/api/vehicle-garage/:vehicleId/images',
+    DELETE_IMAGE: '/api/vehicle-garage/:vehicleId/images/:imageId',
+    SET_DEFAULT: '/api/vehicle-garage/:id/set-default',
+    REPORTS: '/api/vehicle-garage/:id/reports'
+  },
   VIN: {
     LOOKUP: '/api/vin/lookup'
   }

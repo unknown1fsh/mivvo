@@ -64,6 +64,16 @@ export const useFileUpload = () => {
     toast.success(`${validFiles.length} resim başarıyla yüklendi!`)
   }, [])
 
+  const uploadFile = useCallback(async (file: File) => {
+    const validation = validateFile(file)
+    if (!validation.isValid) {
+      throw new Error(validation.error!)
+    }
+
+    const newImage = createImagePreview(file)
+    setUploadedImages(prev => [...prev, newImage])
+  }, [])
+
   const removeImage = useCallback((id: string) => {
     setUploadedImages(prev => {
       const image = prev.find(img => img.id === id)
@@ -79,15 +89,23 @@ export const useFileUpload = () => {
     setUploadedImages([])
   }, [uploadedImages])
 
+  const clearImages = useCallback(() => {
+    uploadedImages.forEach(revokeImagePreview)
+    setUploadedImages([])
+  }, [uploadedImages])
+
   return {
     uploadedImages,
+    setUploadedImages,
     dragActive,
     isUploading,
     fileInputRef,
     handleDrag,
     handleDrop,
     handleFiles,
+    uploadFile,
     removeImage,
-    clearAllImages
+    clearAllImages,
+    clearImages
   }
 }

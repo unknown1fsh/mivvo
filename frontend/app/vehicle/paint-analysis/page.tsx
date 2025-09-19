@@ -245,7 +245,7 @@ export default function PaintAnalysisPage() {
 
   const getCompletedAngles = () => {
     const completedAngles = new Set(images.map(img => img.angle))
-    return paintAngles.filter(angle => completedAngles.has(angle.id))
+    return paintAngles.filter(angle => completedAngles.has(angle.id as any))
   }
 
   const getOverallScore = () => {

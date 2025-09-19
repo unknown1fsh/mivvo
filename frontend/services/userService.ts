@@ -136,7 +136,7 @@ class UserService {
     const response = await apiClient.get(endpoint)
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
@@ -156,7 +156,7 @@ class UserService {
     const response = await apiClient.get('/user/credits')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
@@ -176,8 +176,8 @@ class UserService {
     
     return {
       success: response.success,
-      transactionId: response.data?.transactionId,
-      paymentUrl: response.data?.paymentUrl,
+      transactionId: (response.data as any)?.transactionId,
+      paymentUrl: (response.data as any)?.paymentUrl,
       error: response.error
     }
   }
@@ -222,7 +222,7 @@ class UserService {
     const response = await apiClient.get(endpoint)
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null

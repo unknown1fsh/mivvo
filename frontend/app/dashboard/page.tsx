@@ -17,11 +17,15 @@ import {
   BellIcon,
   MagnifyingGlassIcon,
   TruckIcon,
-  PaintBrushIcon
+  PaintBrushIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import { ProgressBar, LoadingSpinner } from '@/components/ui'
+import { authService } from '@/services/authService'
+import toast from 'react-hot-toast'
 
 interface VehicleReport {
   id: string
@@ -42,6 +46,7 @@ interface UserStats {
 }
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [reports, setReports] = useState<VehicleReport[]>([])
   const [stats, setStats] = useState<UserStats>({
     totalReports: 0,
@@ -50,8 +55,13 @@ export default function DashboardPage() {
     creditBalance: 0
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
+    // Kullanıcı bilgilerini al
+    const currentUser = authService.getCurrentUser()
+    setUser(currentUser)
+    
     // TODO: Fetch user data from API
     setTimeout(() => {
       setReports([
@@ -85,6 +95,17 @@ export default function DashboardPage() {
       setIsLoading(false)
     }, 1000)
   }, [])
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout()
+      toast.success('Başarıyla çıkış yapıldı')
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast.error('Çıkış yapılırken hata oluştu')
+    }
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -145,12 +166,22 @@ export default function DashboardPage() {
               <Link href="/settings" className="p-2 text-gray-400 hover:text-gray-600">
                 <CogIcon className="w-6 h-6" />
               </Link>
-              <Link href="/profile" className="flex items-center space-x-2">
+              <Link href="/profile" className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">
                 <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                   <UserIcon className="w-5 h-5 text-gray-600" />
                 </div>
-                <span className="text-sm font-medium text-gray-700">Kullanıcı</span>
+                <span className="text-sm font-medium text-gray-700">
+                  {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Kullanıcı'}
+                </span>
               </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 text-gray-600 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
+                title="Çıkış Yap"
+              >
+                <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Çıkış</span>
+              </button>
             </div>
           </div>
         </div>
@@ -236,6 +267,10 @@ export default function DashboardPage() {
               <Link href="/vin-lookup" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
                 <TruckIcon className="w-5 h-5 mr-2" />
                 Şasi Sorgula
+              </Link>
+              <Link href="/vehicle-garage" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white">
+                <TruckIcon className="w-5 h-5 mr-2" />
+                Araç Garajım
               </Link>
               <Link href="/vehicle/upload-images" className="btn btn-secondary btn-lg flex items-center justify-center">
                 <CameraIcon className="w-5 h-5 mr-2" />

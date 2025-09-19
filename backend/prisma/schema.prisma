@@ -24,6 +24,7 @@ model User {
   payments           Payment[]
   userCredits        UserCredits?
   vehicleReports     VehicleReport[]
+  vehicleGarage      VehicleGarage[]
 
   @@map("users")
 }
@@ -48,6 +49,7 @@ model CreditTransaction {
   amount          Decimal         @db.Decimal(10, 2)
   description     String?
   referenceId     String?         @map("reference_id")
+  reportId        Int?            @map("report_id")
   createdAt       DateTime        @default(now()) @map("created_at")
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -57,6 +59,7 @@ model CreditTransaction {
 model VehicleReport {
   id                Int                @id @default(autoincrement())
   userId            Int                @map("user_id")
+  vehicleGarageId   Int?               @map("vehicle_garage_id")
   vehiclePlate      String?            @map("vehicle_plate")
   vehicleBrand      String?            @map("vehicle_brand")
   vehicleModel      String?            @map("vehicle_model")
@@ -72,7 +75,9 @@ model VehicleReport {
   updatedAt         DateTime           @updatedAt @map("updated_at")
   aiAnalysisResults AiAnalysisResult[]
   vehicleImages     VehicleImage[]
+  vehicleAudios     VehicleAudio[]
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleGarage     VehicleGarage?     @relation(fields: [vehicleGarageId], references: [id])
 
   @@map("vehicle_reports")
 }
@@ -88,6 +93,21 @@ model VehicleImage {
   report      VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@map("vehicle_images")
+}
+
+model VehicleAudio {
+  id          Int           @id @default(autoincrement())
+  reportId    Int           @map("report_id")
+  audioPath   String        @map("audio_path")
+  audioName   String        @map("audio_name")
+  audioType   AudioType     @map("audio_type")
+  fileSize    Int?          @map("file_size")
+  duration    Int?          // seconds
+  uploadDate  DateTime      @default(now()) @map("upload_date")
+  aiProcessed Boolean       @default(false) @map("ai_processed")
+  report      VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_audios")
 }
 
 model AiAnalysisResult {
@@ -155,6 +175,7 @@ enum TransactionType {
   PURCHASE
   USAGE
   REFUND
+  DEBIT
 }
 
 enum ReportType {
@@ -162,6 +183,7 @@ enum ReportType {
   PAINT_ANALYSIS
   DAMAGE_ASSESSMENT
   VALUE_ESTIMATION
+  ENGINE_SOUND_ANALYSIS
 }
 
 enum ReportStatus {
@@ -179,11 +201,18 @@ enum ImageType {
   PAINT
 }
 
+enum AudioType {
+  ENGINE_SOUND
+  EXHAUST_SOUND
+  MECHANICAL_SOUND
+}
+
 enum ServiceType {
   PAINT_ANALYSIS
   DAMAGE_ASSESSMENT
   VALUE_ESTIMATION
   FULL_REPORT
+  ENGINE_SOUND_ANALYSIS
 }
 
 enum SettingType {
@@ -278,4 +307,44 @@ model Vehicle {
   paintAnalyses     PaintAnalysis[]
 
   @@map("vehicles")
+}
+
+model VehicleGarage {
+  id                Int                @id @default(autoincrement())
+  userId            Int                @map("user_id")
+  plate             String             @unique
+  brand             String
+  model             String
+  year              Int
+  color             String?
+  mileage           Int?
+  vin               String?            @unique
+  fuelType          String?            @map("fuel_type")
+  transmission      String?
+  engineSize        String?            @map("engine_size")
+  bodyType          String?            @map("body_type")
+  doors             Int?
+  seats             Int?
+  notes             String?
+  isDefault         Boolean            @default(false) @map("is_default")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleImages     VehicleGarageImage[]
+  reports           VehicleReport[]
+
+  @@map("vehicle_garage")
+}
+
+model VehicleGarageImage {
+  id                Int           @id @default(autoincrement())
+  vehicleGarageId   Int           @map("vehicle_garage_id")
+  imagePath         String        @map("image_path")
+  imageName         String        @map("image_name")
+  imageType         ImageType     @map("image_type")
+  fileSize          Int?          @map("file_size")
+  uploadDate        DateTime      @default(now()) @map("upload_date")
+  vehicleGarage     VehicleGarage @relation(fields: [vehicleGarageId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_garage_images")
 }

@@ -79,7 +79,7 @@ class ReportService {
     const response = await apiClient.get<Report>(`/reports/${reportId}`)
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
@@ -143,7 +143,7 @@ class ReportService {
     const response = await apiClient.get<ReportType[]>('/reports/types')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return []
@@ -160,7 +160,7 @@ class ReportService {
     const response = await apiClient.get('/reports/stats')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
@@ -177,7 +177,7 @@ class ReportService {
     const response = await apiClient.get('/reports/templates')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return []
@@ -211,7 +211,7 @@ class ReportService {
     const response = await apiClient.get<Report[]>('/reports/favorites')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return []
@@ -234,7 +234,7 @@ class ReportService {
     const response = await apiClient.get<Report[]>(`/reports/search?${searchParams.toString()}`)
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return []

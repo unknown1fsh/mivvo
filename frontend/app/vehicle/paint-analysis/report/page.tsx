@@ -9,7 +9,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ArrowLeftIcon,
-  DownloadIcon,
+  ArrowDownTrayIcon,
   PrinterIcon,
   ShareIcon,
   LightBulbIcon,
@@ -243,7 +243,7 @@ export default function PaintAnalysisReportPage() {
       pdf.text('Bu rapor Mivvo Expertiz AI teknolojisi kullanilarak olusturulmustur.', 20, 280)
       pdf.text('www.mivvo.com', pageWidth - 20, 280, { align: 'right' })
       
-      const fileName = `boya-analizi-${report.vehicleInfo.plaka}-${new Date().toISOString().split('T')[0]}.pdf`
+      const fileName = `boya-analizi-${report.vehicleInfo.plate}-${new Date().toISOString().split('T')[0]}.pdf`
       pdf.save(fileName)
       
     } catch (error) {
@@ -256,7 +256,10 @@ export default function PaintAnalysisReportPage() {
   if (!report) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" />
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-600">Rapor yükleniyor...</p>
+        </div>
       </div>
     )
   }
@@ -293,7 +296,7 @@ export default function PaintAnalysisReportPage() {
                   </>
                 ) : (
                   <>
-                    <DownloadIcon className="w-4 h-4 mr-2" />
+                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
                     PDF İndir
                   </>
                 )}

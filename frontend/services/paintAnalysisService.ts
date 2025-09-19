@@ -48,8 +48,7 @@ class PaintAnalysisService {
     return {
       success: response.success,
       data: response.data,
-      error: response.error,
-      reportId: response.data?.reportId
+      error: response.error
     }
   }
 
@@ -58,7 +57,7 @@ class PaintAnalysisService {
     const response = await apiClient.get<PaintAnalysisResult>(`/paint-analysis/${reportId}`)
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
@@ -69,7 +68,7 @@ class PaintAnalysisService {
     const response = await apiClient.get<AnalysisHistoryItem[]>('/paint-analysis/history')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return []
@@ -132,7 +131,7 @@ class PaintAnalysisService {
     const response = await apiClient.get('/paint-analysis/stats')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
@@ -149,7 +148,7 @@ class PaintAnalysisService {
     const response = await apiClient.get('/paint-analysis/types')
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return []
@@ -175,7 +174,7 @@ class PaintAnalysisService {
     })
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
@@ -190,7 +189,7 @@ class PaintAnalysisService {
     const response = await apiClient.get(`/paint-analysis/${reportId}/status`)
     
     if (response.success && response.data) {
-      return response.data
+      return response.data as any
     }
     
     return null
