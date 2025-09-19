@@ -1,7 +1,7 @@
 // API Client - Merkezi HTTP istemcisi
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://mivvo-expertiz.vercel.app/api'
+  ? 'https://mivvo-expertiz.vercel.app'
   : 'http://localhost:3001'
 
 interface ApiResponse<T = any> {

@@ -28,17 +28,29 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy for Vercel
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting
+// Rate limiting - Vercel için optimize edildi
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
   message: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.',
   standardHeaders: true,
   legacyHeaders: false,
+  // Vercel için skip successful requests
+  skipSuccessfulRequests: false,
+  // Vercel için skip failed requests
+  skipFailedRequests: false,
+  // Vercel için key generator
+  keyGenerator: (req) => {
+    // Vercel'de X-Forwarded-For header'ını kullan
+    return req.ip || req.connection.remoteAddress || 'unknown';
+  },
 });
 app.use(limiter);
 
