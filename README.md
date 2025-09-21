@@ -63,21 +63,25 @@ npm run install:all
 
 ### 3. Environment variables ayarlayın
 ```bash
-# Backend
-cp backend/env.example backend/.env
-# .env dosyasını düzenleyin
+# Backend environment setup
+cd backend
+cp env.example .env
+# ⚠️ .env dosyasını açıp YOUR_DB_PASSWORD yerine kendi DB şifrenizi yazın!
+
+# Frontend environment setup  
+cd ../frontend
+cp .env.example .env.local
 ```
 
 ### 4. Veritabanını kurun
 ```bash
-# MySQL'de veritabanı oluşturun
-mysql -u root -p
-CREATE DATABASE mivvo_expertiz;
+# PostgreSQL'de veritabanı oluşturun
+createdb mivvo_expertiz
 
 # Prisma migration'ını çalıştırın
 cd backend
 npx prisma generate
-npx prisma db push
+npx prisma migrate dev
 ```
 
 ### 5. Uygulamayı başlatın
@@ -186,25 +190,47 @@ mivvo/
 
 ## 🚀 Deployment
 
-### Vercel (Frontend)
+> ⚠️ **GÜVENLİK UYARISI**: Deployment öncesi mutlaka [VERCEL_SECURITY_GUIDE.md](VERCEL_SECURITY_GUIDE.md) dosyasını okuyun!
+
+### 🔒 Güvenli Vercel Deployment
+
+#### 1. Environment Kontrol
 ```bash
-npm run build:frontend
-vercel deploy
+# PowerShell (Windows)
+.\deploy-safe.ps1
+
+# Bash (Linux/Mac)
+./deploy-safe.sh
 ```
 
-### Railway/Heroku (Backend)
-```bash
-npm run build:backend
-# Railway/Heroku deployment
-```
-
-### Environment Variables
+#### 2. Vercel Dashboard Environment Variables
 ```env
-# Production
-DATABASE_URL="postgresql://..."
-JWT_SECRET="your-production-secret"
+# Production (Vercel'de ayarlanması gerekenler)
+DATABASE_URL="postgresql://username:12345@host/database"
+JWT_SECRET="production-super-secret-jwt-key"
 NODE_ENV="production"
+PORT="3001"
 ```
+
+#### 3. Deployment
+```bash
+# Güvenlik kontrolü sonrası
+vercel --prod
+```
+
+### 📊 Database Configuration
+
+| Environment | Database | Password | Dosya |
+|-------------|----------|----------|-------|
+| **Local Development** | PostgreSQL | `HOFKsXa1dsYTqmh6` | `backend/.env` |
+| **Vercel Production** | Vercel DB | `12345` | Dashboard |
+
+### ✅ Deployment Checklist
+- [ ] Local `.env` dosyası local DB kullanıyor
+- [ ] Vercel Dashboard'da production env variables ayarlı  
+- [ ] `.gitignore`'da `.env` dosyası mevcut
+- [ ] Güvenlik scripti çalıştırıldı
+- [ ] Production vs local şifreler ayrıştırıldı
 
 ## 🤝 Katkıda Bulunma
 
