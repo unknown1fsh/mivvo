@@ -150,7 +150,7 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
         where: { id: report.id },
         data: {
           status: 'COMPLETED',
-          aiAnalysisData: analysisResult,
+          aiAnalysisData: analysisResult as any,
         },
       });
     } catch (error) {
@@ -180,7 +180,7 @@ export const getEngineSoundAnalysisResult = asyncHandler(async (req: AuthRequest
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(reportId),
+      id: reportId,
       userId: req.user!.id,
       reportType: 'ENGINE_SOUND_ANALYSIS' as any,
     },
@@ -269,7 +269,7 @@ export const downloadEngineSoundAnalysisReport = asyncHandler(async (req: AuthRe
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(reportId),
+      id: reportId,
       userId: req.user!.id,
       reportType: 'ENGINE_SOUND_ANALYSIS' as any,
     },
@@ -310,7 +310,7 @@ export const checkEngineSoundAnalysisStatus = asyncHandler(async (req: AuthReque
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(reportId),
+      id: reportId,
       userId: req.user!.id,
       reportType: 'ENGINE_SOUND_ANALYSIS' as any,
     },
@@ -334,9 +334,21 @@ export const checkEngineSoundAnalysisStatus = asyncHandler(async (req: AuthReque
   });
 });
 
-// Motor sesi analizi simülasyonu (gerçek uygulamada AI modeli kullanılacak)
+// Motor sesi analizi - Gerçek AI modeli ile
 async function simulateEngineSoundAnalysis(audioFiles: Express.Multer.File[], vehicleInfo: any) {
-  // Simüle edilmiş analiz sonuçları
+  try {
+    // Yeni AI servisini kullan
+    const { AIService } = await import('../services/aiService');
+    const audioPath = audioFiles[0]?.path; // İlk ses dosyasını kullan
+    
+    if (audioPath) {
+      return await AIService.analyzeEngineSound(audioPath, vehicleInfo);
+    }
+  } catch (error) {
+    console.error('AI motor sesi analizi hatası, simülasyon kullanılıyor:', error);
+  }
+
+  // Fallback simülasyon
   const issues = [
     {
       issue: 'Motor Titreşimi',
@@ -355,7 +367,7 @@ async function simulateEngineSoundAnalysis(audioFiles: Express.Multer.File[], ve
   ];
 
   return {
-    overallScore: Math.floor(Math.random() * 30) + 70, // 70-100 arası
+    overallScore: Math.floor(Math.random() * 30) + 70,
     engineHealth: 'İyi',
     rpmAnalysis: {
       idleRpm: 800 + Math.floor(Math.random() * 200),

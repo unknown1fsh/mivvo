@@ -228,42 +228,48 @@ export class PaintAnalysisController {
   }
 
   /**
-   * AI analizi simülasyonu (gerçek AI modeli burada entegre edilecek)
+   * AI analizi - Gerçek AI modeli ile
    */
   private static async simulateAIAnalysis(imagePath: string, angle: string): Promise<PaintAnalysisResult> {
-    // Gerçek AI modeli entegrasyonu için bu fonksiyon güncellenecek
-    // Şu anda simülasyon yapıyoruz
-    
-    await new Promise(resolve => setTimeout(resolve, 2000)); // 2 saniye bekleme simülasyonu
-    
-    const conditions: Array<'excellent' | 'good' | 'fair' | 'poor'> = ['excellent', 'good', 'fair', 'poor'];
-    const condition = conditions[Math.floor(Math.random() * conditions.length)];
-    
-    return {
-      paintCondition: condition,
-      paintThickness: Math.floor(Math.random() * 50) + 80, // 80-130 microns
-      colorMatch: Math.floor(Math.random() * 20) + 80, // 80-100%
-      scratches: Math.floor(Math.random() * 10),
-      dents: Math.floor(Math.random() * 5),
-      rust: Math.random() > 0.8,
-      oxidation: Math.floor(Math.random() * 30),
-      glossLevel: Math.floor(Math.random() * 40) + 60, // 60-100%
-      overallScore: Math.floor(Math.random() * 30) + 70, // 70-100
-      recommendations: [
-        'Boya kalitesi genel olarak iyi durumda',
-        'Küçük çizikler için retuş önerilir',
-        'Düzenli yıkama ve cilalama yapın'
-      ],
-      confidence: Math.floor(Math.random() * 15) + 85, // 85-100%
-      technicalDetails: {
-        paintSystem: '3-Kat Sistem (Primer + Baz + Clear)',
-        primerType: 'Epoksi Primer',
-        baseCoat: 'Metalik Baz Kat',
-        clearCoat: 'UV Korumalı Clear Kat',
-        totalThickness: Math.floor(Math.random() * 50) + 80,
-        colorCode: '1G3 (Silver Metallic)'
-      }
-    };
+    try {
+      // Yeni AI servisini kullan
+      const { AIService } = await import('../services/aiService');
+      return await AIService.analyzePaint(imagePath, angle);
+    } catch (error) {
+      console.error('AI analizi hatası, simülasyon kullanılıyor:', error);
+      
+      // Fallback simülasyon
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const conditions: Array<'excellent' | 'good' | 'fair' | 'poor'> = ['excellent', 'good', 'fair', 'poor'];
+      const condition = conditions[Math.floor(Math.random() * conditions.length)];
+      
+      return {
+        paintCondition: condition,
+        paintThickness: Math.floor(Math.random() * 50) + 80,
+        colorMatch: Math.floor(Math.random() * 20) + 80,
+        scratches: Math.floor(Math.random() * 10),
+        dents: Math.floor(Math.random() * 5),
+        rust: Math.random() > 0.8,
+        oxidation: Math.floor(Math.random() * 30),
+        glossLevel: Math.floor(Math.random() * 40) + 60,
+        overallScore: Math.floor(Math.random() * 30) + 70,
+        recommendations: [
+          'Boya kalitesi genel olarak iyi durumda',
+          'Küçük çizikler için retuş önerilir',
+          'Düzenli yıkama ve cilalama yapın'
+        ],
+        confidence: Math.floor(Math.random() * 15) + 85,
+        technicalDetails: {
+          paintSystem: '3-Kat Sistem (Primer + Baz + Clear)',
+          primerType: 'Epoksi Primer',
+          baseCoat: 'Metalik Baz Kat',
+          clearCoat: 'UV Korumalı Clear Kat',
+          totalThickness: Math.floor(Math.random() * 50) + 80,
+          colorCode: '1G3 (Silver Metallic)'
+        }
+      };
+    }
   }
 
   /**

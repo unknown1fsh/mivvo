@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/a
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 300000, // 5 dakika timeout
   headers: {
     'Content-Type': 'application/json',
   },
@@ -14,7 +14,7 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('auth_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -31,7 +31,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      localStorage.removeItem('token')
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
       window.location.href = '/login'
     }
     return Promise.reject(error)
@@ -104,6 +105,7 @@ export const vehicleAPI = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 600000, // 10 dakika timeout for AI analysis
     })
   },
   
@@ -177,17 +179,18 @@ export const adminAPI = {
 
 // Utility functions
 export const setAuthToken = (token: string) => {
-  localStorage.setItem('token', token)
+  localStorage.setItem('auth_token', token)
   api.defaults.headers.Authorization = `Bearer ${token}`
 }
 
 export const removeAuthToken = () => {
-  localStorage.removeItem('token')
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('user')
   delete api.defaults.headers.Authorization
 }
 
 export const isAuthenticated = () => {
-  return !!localStorage.getItem('token')
+  return !!localStorage.getItem('auth_token')
 }
 
 export default api

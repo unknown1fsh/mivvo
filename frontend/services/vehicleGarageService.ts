@@ -47,7 +47,7 @@ class VehicleGarageService {
       if (Array.isArray(response.data)) {
         return response.data
       } else {
-        console.error('Beklenmeyen veri formatı:', response.data)
+        console.warn('Araç verisi beklenmeyen formatta:', response.data)
         return []
       }
     }

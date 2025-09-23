@@ -37,7 +37,7 @@ class ApiClient {
       method = 'GET',
       headers = {},
       body,
-      timeout = 10000
+      timeout = 120000 // 2 dakika timeout
     } = options
 
     const url = `${this.baseURL}${endpoint}`

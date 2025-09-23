@@ -235,7 +235,7 @@ export const getReportById = async (req: AuthRequest, res: Response): Promise<vo
   const { id } = req.params;
 
   const report = await prisma.vehicleReport.findUnique({
-    where: { id: parseInt(id) },
+    where: { id: id },
     include: {
       user: {
         select: {
@@ -272,7 +272,7 @@ export const updateReportStatus = async (req: AuthRequest, res: Response): Promi
   const { status, expertNotes } = req.body;
 
   const report = await prisma.vehicleReport.findUnique({
-    where: { id: parseInt(id) },
+    where: { id: id },
   });
 
   if (!report) {
@@ -284,7 +284,7 @@ export const updateReportStatus = async (req: AuthRequest, res: Response): Promi
   }
 
   const updatedReport = await prisma.vehicleReport.update({
-    where: { id: parseInt(id) },
+    where: { id: id },
     data: {
       status,
       expertNotes,

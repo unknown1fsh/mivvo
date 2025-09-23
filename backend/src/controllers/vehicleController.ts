@@ -137,7 +137,7 @@ export const getReport = async (req: AuthRequest, res: Response): Promise<void> 
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(id),
+      id: id,
       userId: req.user!.id,
     },
     include: {
@@ -170,7 +170,7 @@ export const uploadImages = async (req: AuthRequest, res: Response): Promise<voi
   // Verify report exists and belongs to user
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(id),
+      id: id,
       userId: req.user!.id,
     },
   });
@@ -188,7 +188,7 @@ export const uploadImages = async (req: AuthRequest, res: Response): Promise<voi
     images.map((imageUrl: string, index: number) =>
       prisma.vehicleImage.create({
         data: {
-          reportId: parseInt(id),
+          reportId: id,
           imageUrl,
           imageType: 'EXTERIOR', // Default type, can be enhanced
           uploadDate: new Date(),
@@ -212,7 +212,7 @@ export const getAnalysisResults = async (req: AuthRequest, res: Response): Promi
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(id),
+      id: id,
       userId: req.user!.id,
     },
   });
@@ -226,7 +226,7 @@ export const getAnalysisResults = async (req: AuthRequest, res: Response): Promi
   }
 
   const analysisResults = await prisma.aiAnalysisResult.findMany({
-    where: { reportId: parseInt(id) },
+    where: { reportId: id },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -244,7 +244,7 @@ export const downloadReport = async (req: AuthRequest, res: Response): Promise<v
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(id),
+      id: id,
       userId: req.user!.id,
     },
     include: {

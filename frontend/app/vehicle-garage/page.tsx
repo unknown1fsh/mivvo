@@ -48,11 +48,15 @@ export default function VehicleGaragePage() {
   const loadVehicles = async () => {
     try {
       setIsLoading(true)
-      const data = await vehicleGarageService.getVehicleGarage()
-      if (Array.isArray(data)) {
-        setVehicles(data)
+      const response = await vehicleGarageService.getVehicleGarage()
+      
+      // Response yapısını kontrol et
+      if (response && Array.isArray(response)) {
+        setVehicles(response)
+      } else if (response && response.data && Array.isArray(response.data)) {
+        setVehicles(response.data)
       } else {
-        console.error('Beklenmeyen veri formatı:', data)
+        console.warn('Araç verisi beklenmeyen formatta:', response)
         setVehicles([])
       }
     } catch (error) {

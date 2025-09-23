@@ -12,11 +12,11 @@ export const REPORT_TYPES: ReportType[] = [
     icon: '🎨'
   },
   {
-    id: 'DAMAGE_ASSESSMENT',
-    name: 'Hasar Değerlendirmesi',
+    id: 'DAMAGE_ANALYSIS',
+    name: 'Hasar Analizi',
     price: 35,
-    description: 'Araç hasarlarının tespiti ve değerlendirmesi',
-    features: ['Çarpışma hasarları', 'Çizik analizi', 'Onarım maliyeti'],
+    description: 'AI destekli kapsamlı hasar tespiti ve değerlendirmesi',
+    features: ['Çarpışma hasarları', 'Çizik analizi', 'Onarım maliyeti', 'Güvenlik riski değerlendirmesi'],
     icon: '🔧'
   },
   {
@@ -69,8 +69,8 @@ export const ENGINE_SOUND_ANALYSIS_STEPS: Step[] = [
   { id: 4, name: 'Özet', description: 'Bilgileri kontrol edin' },
 ]
 
-// Hasar değerlendirmesi için adımlar
-export const DAMAGE_ASSESSMENT_STEPS: Step[] = [
+// Hasar analizi için adımlar
+export const DAMAGE_ANALYSIS_STEPS: Step[] = [
   { id: 1, name: 'Rapor Türü', description: 'Analiz türünü seçin' },
   { id: 2, name: 'Araç Bilgileri', description: 'Araç detaylarını girin' },
   { id: 3, name: 'Resim Yükleme', description: 'Hasar resimlerini yükleyin' },
@@ -101,8 +101,8 @@ export const getStepsForReportType = (reportTypeId: string): Step[] => {
       return PAINT_ANALYSIS_STEPS
     case 'ENGINE_SOUND_ANALYSIS':
       return ENGINE_SOUND_ANALYSIS_STEPS
-    case 'DAMAGE_ASSESSMENT':
-      return DAMAGE_ASSESSMENT_STEPS
+    case 'DAMAGE_ANALYSIS':
+      return DAMAGE_ANALYSIS_STEPS
     case 'VALUE_ESTIMATION':
       return VALUE_ESTIMATION_STEPS
     case 'FULL_REPORT':

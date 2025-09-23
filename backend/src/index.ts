@@ -17,6 +17,9 @@ import vinRoutes from './routes/vin';
 import paintAnalysisRoutes from './routes/paintAnalysis';
 import engineSoundAnalysisRoutes from './routes/engineSoundAnalysis';
 import vehicleGarageRoutes from './routes/vehicleGarage';
+import aiAnalysisRoutes from './routes/aiAnalysis';
+import aiTestRoutes from './routes/aiTest';
+import damageAnalysisRoutes from './routes/damageAnalysis';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -82,6 +85,16 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Timeout middleware for AI analysis
+app.use((req, res, next) => {
+  // AI analizi için 10 dakika timeout
+  if (req.path.includes('/damage-analysis') || req.path.includes('/ai-analysis')) {
+    req.setTimeout(600000); // 10 dakika
+    res.setTimeout(600000); // 10 dakika
+  }
+  next();
+});
+
 // Logging middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -112,6 +125,9 @@ app.use('/api/vin', vinRoutes);
 app.use('/api/paint-analysis', paintAnalysisRoutes);
 app.use('/api/engine-sound-analysis', engineSoundAnalysisRoutes);
 app.use('/api/vehicle-garage', vehicleGarageRoutes);
+app.use('/api/ai-analysis', aiAnalysisRoutes);
+app.use('/api/ai-test', aiTestRoutes);
+app.use('/api/damage-analysis', damageAnalysisRoutes);
 
 // Reports endpoint - frontend için alias
 app.use('/api/reports', userRoutes);

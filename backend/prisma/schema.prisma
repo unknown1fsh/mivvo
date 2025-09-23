@@ -49,7 +49,7 @@ model CreditTransaction {
   amount          Decimal         @db.Decimal(10, 2)
   description     String?
   referenceId     String?         @map("reference_id")
-  reportId        Int?            @map("report_id")
+  reportId        String?         @map("report_id")
   createdAt       DateTime        @default(now()) @map("created_at")
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -57,7 +57,7 @@ model CreditTransaction {
 }
 
 model VehicleReport {
-  id                Int                @id @default(autoincrement())
+  id                String             @id @default(cuid())
   userId            Int                @map("user_id")
   vehicleGarageId   Int?               @map("vehicle_garage_id")
   vehiclePlate      String?            @map("vehicle_plate")
@@ -84,7 +84,7 @@ model VehicleReport {
 
 model VehicleImage {
   id          Int           @id @default(autoincrement())
-  reportId    Int           @map("report_id")
+  reportId    String        @map("report_id")
   imageUrl    String        @map("image_url")
   imageType   ImageType     @map("image_type")
   fileSize    Int?          @map("file_size")
@@ -97,7 +97,7 @@ model VehicleImage {
 
 model VehicleAudio {
   id          Int           @id @default(autoincrement())
-  reportId    Int           @map("report_id")
+  reportId    String        @map("report_id")
   audioPath   String        @map("audio_path")
   audioName   String        @map("audio_name")
   audioType   AudioType     @map("audio_type")
@@ -112,7 +112,7 @@ model VehicleAudio {
 
 model AiAnalysisResult {
   id               Int           @id @default(autoincrement())
-  reportId         Int           @map("report_id")
+  reportId         String        @map("report_id")
   analysisType     String        @map("analysis_type")
   confidenceScore  Decimal?      @map("confidence_score") @db.Decimal(5, 2)
   resultData       Json          @map("result_data")
