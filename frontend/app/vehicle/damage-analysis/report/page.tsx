@@ -650,11 +650,11 @@ export default function DamageAnalysisReportPage() {
                                 <p className="text-sm text-gray-700 mb-3 font-medium">{damage.description}</p>
                                 
                                 {/* Gemini'den gelen gerçek veriler */}
-                                {damage.partsAffected && damage.partsAffected.length > 0 && (
+                                {(damage as any).partsAffected && (damage as any).partsAffected.length > 0 && (
                                   <div className="mb-3">
                                     <div className="text-xs font-medium text-gray-600 mb-1">Etkilenen Parçalar:</div>
                                     <div className="flex flex-wrap gap-1">
-                                      {damage.partsAffected.map((part: string, partIndex: number) => (
+                                      {(damage as any).partsAffected.map((part: string, partIndex: number) => (
                                         <span key={partIndex} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                                           {part}
                                         </span>
@@ -663,14 +663,14 @@ export default function DamageAnalysisReportPage() {
                                   </div>
                                 )}
                                 
-                                {damage.area && (
+                                {(damage as any).area && (
                                   <div className="mb-3">
                                     <div className="text-xs font-medium text-gray-600 mb-1">Hasar Bölgesi:</div>
                                     <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-                                      {damage.area === 'front' ? 'Ön Bölge' :
-                                       damage.area === 'side' ? 'Yan Bölge' :
-                                       damage.area === 'rear' ? 'Arka Bölge' :
-                                       damage.area === 'mechanical' ? 'Mekanik Bölge' : damage.area}
+                                      {(damage as any).area === 'front' ? 'Ön Bölge' :
+                                       (damage as any).area === 'side' ? 'Yan Bölge' :
+                                       (damage as any).area === 'rear' ? 'Arka Bölge' :
+                                       (damage as any).area === 'mechanical' ? 'Mekanik Bölge' : (damage as any).area}
                                     </span>
                                   </div>
                                 )}

@@ -53,8 +53,8 @@ export default function VehicleGaragePage() {
       // Response yapısını kontrol et
       if (response && Array.isArray(response)) {
         setVehicles(response)
-      } else if (response && response.data && Array.isArray(response.data)) {
-        setVehicles(response.data)
+      } else if (response && (response as any).data && Array.isArray((response as any).data)) {
+        setVehicles((response as any).data)
       } else {
         console.warn('Araç verisi beklenmeyen formatta:', response)
         setVehicles([])

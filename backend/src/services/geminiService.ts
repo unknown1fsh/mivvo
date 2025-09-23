@@ -63,11 +63,17 @@ export class GeminiService {
   }
 
   /**
-   * Resmi base64'e çevir
+   * Resmi base64'e çevir (Base64 data URL destekli)
    */
   private static async convertImageToBase64(imagePath: string): Promise<string> {
     try {
-      // Resmi oku ve işle
+      // Eğer zaten Base64 data URL ise, sadece base64 kısmını al
+      if (imagePath.startsWith('data:')) {
+        const base64Data = imagePath.split(',')[1];
+        return base64Data;
+      }
+      
+      // Dosya yolu ise, dosyayı oku ve işle
       const imageBuffer = await fs.promises.readFile(imagePath);
       
       // Sharp ile resize et (Gemini için optimize)

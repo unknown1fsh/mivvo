@@ -453,8 +453,7 @@ export const getVehicleReports = asyncHandler(async (req: Request, res: Response
     },
     orderBy: { createdAt: 'desc' },
     include: {
-      vehicleImages: true,
-      vehicleAudios: true
+      vehicleImages: true
     }
   });
 

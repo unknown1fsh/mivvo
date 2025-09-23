@@ -137,7 +137,7 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
       transactionType: 'DEBIT' as any,
       amount: servicePricing.basePrice,
       description: 'Motor sesi analizi',
-      reportId: report.id,
+      referenceId: report.id.toString(),
     },
   });
 
@@ -165,7 +165,7 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
   res.status(201).json({
     success: true,
     data: {
-      reportId: report.id,
+      referenceId: report.id.toString(),
       status: 'PROCESSING',
       message: 'Motor sesi analizi başlatıldı. Analiz tamamlandığında bildirim alacaksınız.'
     }
@@ -180,7 +180,7 @@ export const getEngineSoundAnalysisResult = asyncHandler(async (req: AuthRequest
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: reportId,
+      id: parseInt(reportId),
       userId: req.user!.id,
       reportType: 'ENGINE_SOUND_ANALYSIS' as any,
     },
@@ -251,7 +251,7 @@ export const getEngineSoundAnalysisHistory = asyncHandler(async (req: AuthReques
     analysisDate: report.createdAt,
     overallScore: (report.aiAnalysisData as any)?.overallScore || 0,
     engineHealth: (report.aiAnalysisData as any)?.engineHealth || 'Bilinmiyor',
-    reportId: report.id,
+    referenceId: report.id.toString(),
     status: report.status,
   }));
 
@@ -269,7 +269,7 @@ export const downloadEngineSoundAnalysisReport = asyncHandler(async (req: AuthRe
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: reportId,
+      id: parseInt(reportId),
       userId: req.user!.id,
       reportType: 'ENGINE_SOUND_ANALYSIS' as any,
     },
@@ -285,7 +285,7 @@ export const downloadEngineSoundAnalysisReport = asyncHandler(async (req: AuthRe
 
   // PDF raporu oluştur (gerçek uygulamada PDF generator kullanılacak)
   const reportData = {
-    reportId: report.id,
+    referenceId: report.id.toString(),
     vehicleInfo: {
       make: report.vehicleBrand,
       model: report.vehicleModel,
@@ -310,7 +310,7 @@ export const checkEngineSoundAnalysisStatus = asyncHandler(async (req: AuthReque
 
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: reportId,
+      id: parseInt(reportId),
       userId: req.user!.id,
       reportType: 'ENGINE_SOUND_ANALYSIS' as any,
     },

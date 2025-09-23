@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -49,7 +49,6 @@ model CreditTransaction {
   amount          Decimal         @db.Decimal(10, 2)
   description     String?
   referenceId     String?         @map("reference_id")
-  reportId        String?         @map("report_id")
   createdAt       DateTime        @default(now()) @map("created_at")
   user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -57,7 +56,7 @@ model CreditTransaction {
 }
 
 model VehicleReport {
-  id                String             @id @default(cuid())
+  id                Int                @id @default(autoincrement())
   userId            Int                @map("user_id")
   vehicleGarageId   Int?               @map("vehicle_garage_id")
   vehiclePlate      String?            @map("vehicle_plate")
@@ -84,7 +83,7 @@ model VehicleReport {
 
 model VehicleImage {
   id          Int           @id @default(autoincrement())
-  reportId    String        @map("report_id")
+  reportId    Int           @map("report_id")
   imageUrl    String        @map("image_url")
   imageType   ImageType     @map("image_type")
   fileSize    Int?          @map("file_size")
@@ -97,7 +96,7 @@ model VehicleImage {
 
 model VehicleAudio {
   id          Int           @id @default(autoincrement())
-  reportId    String        @map("report_id")
+  reportId    Int           @map("report_id")
   audioPath   String        @map("audio_path")
   audioName   String        @map("audio_name")
   audioType   AudioType     @map("audio_type")
@@ -112,7 +111,7 @@ model VehicleAudio {
 
 model AiAnalysisResult {
   id               Int           @id @default(autoincrement())
-  reportId         String        @map("report_id")
+  reportId         Int           @map("report_id")
   analysisType     String        @map("analysis_type")
   confidenceScore  Decimal?      @map("confidence_score") @db.Decimal(5, 2)
   resultData       Json          @map("result_data")
@@ -175,7 +174,6 @@ enum TransactionType {
   PURCHASE
   USAGE
   REFUND
-  DEBIT
 }
 
 enum ReportType {
@@ -183,7 +181,6 @@ enum ReportType {
   PAINT_ANALYSIS
   DAMAGE_ASSESSMENT
   VALUE_ESTIMATION
-  ENGINE_SOUND_ANALYSIS
 }
 
 enum ReportStatus {
@@ -212,7 +209,6 @@ enum ServiceType {
   DAMAGE_ASSESSMENT
   VALUE_ESTIMATION
   FULL_REPORT
-  ENGINE_SOUND_ANALYSIS
 }
 
 enum SettingType {
@@ -233,38 +229,6 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
-}
-
-model VINLookup {
-  id                    Int      @id @default(autoincrement())
-  vin                   String   @unique
-  make                  String?
-  model                 String?
-  modelYear             String?  @map("model_year")
-  manufacturer          String?
-  plantCountry          String?  @map("plant_country")
-  vehicleType           String?  @map("vehicle_type")
-  bodyClass             String?  @map("body_class")
-  engineCylinders       String?  @map("engine_cylinders")
-  engineDisplacement    String?  @map("engine_displacement")
-  fuelType              String?  @map("fuel_type")
-  transmissionStyle     String?  @map("transmission_style")
-  driveType             String?  @map("drive_type")
-  trim                  String?
-  series                String?
-  doors                 String?
-  windows               String?
-  wheelBase             String?  @map("wheel_base")
-  gvwr                  String?
-  plantCity             String?  @map("plant_city")
-  plantState            String?  @map("plant_state")
-  plantCompanyName      String?  @map("plant_company_name")
-  errorCode             String?  @map("error_code")
-  errorText             String?  @map("error_text")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
-
-  @@map("vin_lookups")
 }
 
 model PaintAnalysis {
@@ -307,6 +271,38 @@ model Vehicle {
   paintAnalyses     PaintAnalysis[]
 
   @@map("vehicles")
+}
+
+model VINLookup {
+  id                    Int      @id @default(autoincrement())
+  vin                   String   @unique
+  make                  String?
+  model                 String?
+  modelYear             String?  @map("model_year")
+  manufacturer          String?
+  plantCountry          String?  @map("plant_country")
+  vehicleType           String?  @map("vehicle_type")
+  bodyClass             String?  @map("body_class")
+  engineCylinders       String?  @map("engine_cylinders")
+  engineDisplacement    String?  @map("engine_displacement")
+  fuelType              String?  @map("fuel_type")
+  transmissionStyle     String?  @map("transmission_style")
+  driveType             String?  @map("drive_type")
+  trim                  String?
+  series                String?
+  doors                 String?
+  windows               String?
+  wheelBase             String?  @map("wheel_base")
+  gvwr                  String?
+  plantCity             String?  @map("plant_city")
+  plantState            String?  @map("plant_state")
+  plantCompanyName      String?  @map("plant_company_name")
+  errorCode             String?  @map("error_code")
+  errorText             String?  @map("error_text")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("vin_lookups")
 }
 
 model VehicleGarage {
