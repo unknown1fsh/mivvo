@@ -88,7 +88,17 @@ const damageTypes = {
   rust: { label: 'Paslanma', icon: '🦠', color: 'text-red-600' },
   oxidation: { label: 'Oksidasyon', icon: '☀️', color: 'text-yellow-600' },
   crack: { label: 'Çatlak', icon: '💥', color: 'text-purple-600' },
-  break: { label: 'Kırık', icon: '💔', color: 'text-red-800' }
+  break: { label: 'Kırık', icon: '💔', color: 'text-red-800' },
+  // Gemini'den gelebilecek ek tipler
+  paint: { label: 'Boya Hasarı', icon: '🎨', color: 'text-pink-600' },
+  bumper: { label: 'Tampon Hasarı', icon: '🛡️', color: 'text-indigo-600' },
+  door: { label: 'Kapı Hasarı', icon: '🚪', color: 'text-cyan-600' },
+  window: { label: 'Cam Hasarı', icon: '🪟', color: 'text-slate-600' },
+  headlight: { label: 'Far Hasarı', icon: '💡', color: 'text-yellow-500' },
+  taillight: { label: 'Stop Lambası', icon: '🔴', color: 'text-red-500' },
+  mirror: { label: 'Ayna Hasarı', icon: '🪞', color: 'text-gray-600' },
+  wheel: { label: 'Tekerlek Hasarı', icon: '⚙️', color: 'text-gray-700' },
+  body: { label: 'Kaporta Hasarı', icon: '🚗', color: 'text-blue-700' }
 }
 
 export default function DamageAnalysisReportPage() {
@@ -624,9 +634,9 @@ export default function DamageAnalysisReportPage() {
                               <div key={damageIndex} className="p-4 bg-gray-50 rounded-lg">
                                 <div className="flex items-start justify-between mb-2">
                                   <div className="flex items-center space-x-2">
-                                    <span className="text-2xl">{damageTypes[damage.type].icon}</span>
-                                    <span className={`font-medium ${damageTypes[damage.type].color}`}>
-                                      {damageTypes[damage.type].label}
+                                    <span className="text-2xl">{damageTypes[damage.type]?.icon || '🔍'}</span>
+                                    <span className={`font-medium ${damageTypes[damage.type]?.color || 'text-gray-600'}`}>
+                                      {damageTypes[damage.type]?.label || damage.type}
                                     </span>
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                       damage.severity === 'high' ? 'bg-red-100 text-red-800' :
