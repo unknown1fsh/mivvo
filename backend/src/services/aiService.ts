@@ -1,5 +1,6 @@
 import { RealAIService } from './realAIService';
 import { GeminiService } from './geminiService';
+import { MultiAIService } from './multiAIService';
 
 // AI Model Interfaces
 export interface PaintAnalysisResult {
@@ -104,17 +105,17 @@ export class AIService {
   }
 
   /**
-   * Hasar tespiti - Sadece Gemini API ile
+   * Hasar tespiti - Multi AI Fallback sistemi ile
    */
   static async detectDamage(imagePath: string): Promise<PaintAnalysisResult['damageAreas']> {
     await this.initialize();
 
     try {
-      console.log('🔍 Google Gemini ile hasar tespiti yapılıyor...');
-      return await GeminiService.detectDamage(imagePath);
+      console.log('🔍 Multi AI Fallback sistemi ile hasar tespiti yapılıyor...');
+      return await MultiAIService.detectDamage(imagePath);
     } catch (error) {
-      console.error('❌ Gemini hasar tespiti hatası:', error);
-      throw error; // Gemini'den gelen detaylı hata mesajını direkt geçir
+      console.error('❌ Multi AI hasar tespiti hatası:', error);
+      throw error;
     }
   }
 

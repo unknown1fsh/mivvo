@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   DocumentTextIcon,
   ChartBarIcon,
@@ -83,22 +83,112 @@ const damageSeverities = {
 }
 
 const damageTypes = {
-  scratch: { label: 'Çizik', icon: '📏', color: 'text-blue-600' },
-  dent: { label: 'Göçük', icon: '🔨', color: 'text-orange-600' },
-  rust: { label: 'Paslanma', icon: '🦠', color: 'text-red-600' },
-  oxidation: { label: 'Oksidasyon', icon: '☀️', color: 'text-yellow-600' },
-  crack: { label: 'Çatlak', icon: '💥', color: 'text-purple-600' },
-  break: { label: 'Kırık', icon: '💔', color: 'text-red-800' },
+  scratch: { 
+    label: 'Çizik', 
+    icon: '📏', 
+    color: 'text-blue-600',
+    description: 'Yüzeyde oluşan ince çizikler',
+    severity: 'Orta'
+  },
+  dent: { 
+    label: 'Göçük', 
+    icon: '🔨', 
+    color: 'text-orange-600',
+    description: 'Metal yüzeyde oluşan çukur',
+    severity: 'Yüksek'
+  },
+  rust: { 
+    label: 'Paslanma', 
+    icon: '🦠', 
+    color: 'text-red-600',
+    description: 'Metal yüzeyde oluşan pas',
+    severity: 'Kritik'
+  },
+  oxidation: { 
+    label: 'Boya Bozulması', 
+    icon: '☀️', 
+    color: 'text-yellow-600',
+    description: 'Güneş ışığından kaynaklanan boya bozulması',
+    severity: 'Orta'
+  },
+  crack: { 
+    label: 'Çatlak', 
+    icon: '💥', 
+    color: 'text-purple-600',
+    description: 'Yüzeyde oluşan çatlak',
+    severity: 'Yüksek'
+  },
+  break: { 
+    label: 'Kırık', 
+    icon: '💔', 
+    color: 'text-red-800',
+    description: 'Parçada oluşan kırık',
+    severity: 'Kritik'
+  },
   // Gemini'den gelebilecek ek tipler
-  paint: { label: 'Boya Hasarı', icon: '🎨', color: 'text-pink-600' },
-  bumper: { label: 'Tampon Hasarı', icon: '🛡️', color: 'text-indigo-600' },
-  door: { label: 'Kapı Hasarı', icon: '🚪', color: 'text-cyan-600' },
-  window: { label: 'Cam Hasarı', icon: '🪟', color: 'text-slate-600' },
-  headlight: { label: 'Far Hasarı', icon: '💡', color: 'text-yellow-500' },
-  taillight: { label: 'Stop Lambası', icon: '🔴', color: 'text-red-500' },
-  mirror: { label: 'Ayna Hasarı', icon: '🪞', color: 'text-gray-600' },
-  wheel: { label: 'Tekerlek Hasarı', icon: '⚙️', color: 'text-gray-700' },
-  body: { label: 'Kaporta Hasarı', icon: '🚗', color: 'text-blue-700' }
+  paint: { 
+    label: 'Boya Hasarı', 
+    icon: '🎨', 
+    color: 'text-pink-600',
+    description: 'Boya yüzeyinde hasar',
+    severity: 'Orta'
+  },
+  bumper: { 
+    label: 'Tampon Hasarı', 
+    icon: '🛡️', 
+    color: 'text-indigo-600',
+    description: 'Tampon bölgesinde hasar',
+    severity: 'Orta'
+  },
+  door: { 
+    label: 'Kapı Hasarı', 
+    icon: '🚪', 
+    color: 'text-cyan-600',
+    description: 'Kapı panelinde hasar',
+    severity: 'Yüksek'
+  },
+  window: { 
+    label: 'Cam Hasarı', 
+    icon: '🪟', 
+    color: 'text-slate-600',
+    description: 'Cam yüzeyinde hasar',
+    severity: 'Orta'
+  },
+  headlight: { 
+    label: 'Far Hasarı', 
+    icon: '💡', 
+    color: 'text-yellow-500',
+    description: 'Far camında hasar',
+    severity: 'Orta'
+  },
+  taillight: { 
+    label: 'Stop Lambası', 
+    icon: '🔴', 
+    color: 'text-red-500',
+    description: 'Stop lambasında hasar',
+    severity: 'Orta'
+  },
+  mirror: { 
+    label: 'Ayna Hasarı', 
+    icon: '🪞', 
+    color: 'text-gray-600',
+    description: 'Yan aynada hasar',
+    severity: 'Düşük'
+  },
+  wheel: { 
+    label: 'Jant Hasarı', 
+    icon: '⚙️', 
+    color: 'text-gray-700',
+    description: 'Jant veya tekerlekte hasar',
+    severity: 'Orta'
+  },
+  body: { 
+    label: 'Kaporta Hasarı', 
+    icon: '🚗', 
+    color: 'text-blue-700',
+    description: 'Araç gövdesinde hasar',
+    severity: 'Yüksek'
+  }
 }
 
 export default function DamageAnalysisReportPage() {
@@ -107,6 +197,8 @@ export default function DamageAnalysisReportPage() {
   const [isPrinting, setIsPrinting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedDamage, setSelectedDamage] = useState<any>(null)
+  const [showDamagePopup, setShowDamagePopup] = useState(false)
 
   useEffect(() => {
     fetchReportData()
@@ -413,6 +505,16 @@ export default function DamageAnalysisReportPage() {
     }
   }
 
+  const showDamageLocation = (damage: any) => {
+    setSelectedDamage(damage)
+    setShowDamagePopup(true)
+  }
+
+  const closeDamagePopup = () => {
+    setShowDamagePopup(false)
+    setSelectedDamage(null)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -535,34 +637,54 @@ export default function DamageAnalysisReportPage() {
               <ExclamationTriangleIcon className="w-10 h-10 text-white" />
             </div>
             
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Hasar Analizi Raporu</h1>
-            <p className="text-gray-600 mb-6">Google Gemini AI ile hasar tespiti ve değerlendirmesi</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">🚗 Araç Hasar Raporu</h1>
+            <p className="text-gray-600 mb-6">Yapay zeka destekli detaylı hasar tespiti ve onarım önerileri</p>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              <div className="p-4 bg-red-50 rounded-lg">
-                <div className="text-3xl font-bold text-red-600 mb-1">{report.overallScore}/100</div>
-                <div className="text-sm text-gray-600">Hasar Skoru</div>
+              <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-xl border border-red-200">
+                <div className="text-4xl font-bold text-red-600 mb-2">{report.overallScore}/100</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Genel Durum</div>
+                <div className="text-xs text-gray-500">
+                  {report.overallScore >= 80 ? '✅ Çok İyi' : 
+                   report.overallScore >= 60 ? '⚠️ Orta' : 
+                   report.overallScore >= 40 ? '🔶 Dikkat' : '🚨 Acil'}
+                </div>
               </div>
               
-              <div className="p-4 bg-orange-50 rounded-lg">
-                <div className="text-3xl font-bold text-orange-600 mb-1">
+              <div className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                <div className="text-4xl font-bold text-orange-600 mb-2">
                   {damageSeverities[report.damageSeverity].label}
                 </div>
-                <div className="text-sm text-gray-600">Hasar Şiddeti</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Hasar Seviyesi</div>
+                <div className="text-xs text-gray-500">
+                  {report.damageSeverity === 'critical' ? '🚨 Acil müdahale gerekli' :
+                   report.damageSeverity === 'high' ? '⚠️ Önemli hasarlar var' :
+                   report.damageSeverity === 'medium' ? '🔶 Bazı hasarlar var' : '✅ Hasar az'}
+                </div>
               </div>
               
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <div className="text-3xl font-bold text-purple-600 mb-1">
+              <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                <div className="text-4xl font-bold text-purple-600 mb-2">
                   {report.summary.totalDamages}
                 </div>
-                <div className="text-sm text-gray-600">Toplam Hasar</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Tespit Edilen</div>
+                <div className="text-xs text-gray-500">
+                  {report.summary.totalDamages === 0 ? '✅ Hasar yok' : 
+                   report.summary.totalDamages <= 5 ? '🔶 Az hasar' :
+                   '⚠️ Çok hasar'}
+                </div>
               </div>
               
-              <div className="p-4 bg-green-50 rounded-lg">
-                <div className="text-3xl font-bold text-green-600 mb-1">
+              <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                <div className="text-4xl font-bold text-green-600 mb-2">
                   ₺{(report.summary.estimatedRepairCost || 0).toLocaleString('tr-TR')}
                 </div>
-                <div className="text-sm text-gray-600">Tahmini Onarım</div>
+                <div className="text-sm font-medium text-gray-700 mb-1">Onarım Bedeli</div>
+                <div className="text-xs text-gray-500">
+                  {(report.summary.estimatedRepairCost || 0) === 0 ? '✅ Ücretsiz' :
+                   (report.summary.estimatedRepairCost || 0) <= 5000 ? '🔶 Uygun' :
+                   '⚠️ Yüksek'}
+                </div>
               </div>
             </div>
           </div>
@@ -573,37 +695,42 @@ export default function DamageAnalysisReportPage() {
           <div className="lg:col-span-2">
             {/* Vehicle Information */}
             <FadeInUp delay={0.1}>
-              <div className="card p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Araç Bilgileri</h2>
+              <div className="card p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">🚗</span>
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Araç Bilgileri</h2>
+                </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Marka:</span>
-                      <span className="font-medium">{report.vehicleInfo.make}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded-lg border border-blue-100">
+                      <div className="text-sm text-gray-500 mb-1">Araç Markası</div>
+                      <div className="font-semibold text-lg text-gray-900">{report.vehicleInfo.make}</div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Model:</span>
-                      <span className="font-medium">{report.vehicleInfo.model}</span>
+                    <div className="bg-white p-4 rounded-lg border border-blue-100">
+                      <div className="text-sm text-gray-500 mb-1">Model</div>
+                      <div className="font-semibold text-lg text-gray-900">{report.vehicleInfo.model}</div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Yıl:</span>
-                      <span className="font-medium">{report.vehicleInfo.year}</span>
+                    <div className="bg-white p-4 rounded-lg border border-blue-100">
+                      <div className="text-sm text-gray-500 mb-1">Model Yılı</div>
+                      <div className="font-semibold text-lg text-gray-900">{report.vehicleInfo.year}</div>
                     </div>
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Plaka:</span>
-                      <span className="font-medium">{report.vehicleInfo.plate}</span>
+                  <div className="space-y-4">
+                    <div className="bg-white p-4 rounded-lg border border-blue-100">
+                      <div className="text-sm text-gray-500 mb-1">Plaka Numarası</div>
+                      <div className="font-semibold text-lg text-gray-900 bg-blue-100 px-3 py-1 rounded-full inline-block">{report.vehicleInfo.plate}</div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">VIN:</span>
-                      <span className="font-medium text-xs">{report.vehicleInfo.vin}</span>
+                    <div className="bg-white p-4 rounded-lg border border-blue-100">
+                      <div className="text-sm text-gray-500 mb-1">Şasi Numarası (VIN)</div>
+                      <div className="font-medium text-sm text-gray-600 font-mono">{report.vehicleInfo.vin}</div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Analiz Tarihi:</span>
-                      <span className="font-medium">{report.analysisDate}</span>
+                    <div className="bg-white p-4 rounded-lg border border-blue-100">
+                      <div className="text-sm text-gray-500 mb-1">Analiz Tarihi</div>
+                      <div className="font-semibold text-lg text-gray-900">{report.analysisDate}</div>
                     </div>
                   </div>
                 </div>
@@ -612,8 +739,16 @@ export default function DamageAnalysisReportPage() {
 
             {/* Detailed Damage Analysis */}
             <FadeInUp delay={0.2}>
-              <div className="card p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Detaylı Hasar Analizi</h2>
+              <div className="card p-6 mb-6 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200">
+                <div className="flex items-center mb-6">
+                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center mr-3">
+                    <span className="text-white text-lg">🔍</span>
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">Hasar Detayları</h2>
+                  <div className="ml-auto bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-medium">
+                    {report.summary.totalDamages} hasar tespit edildi
+                  </div>
+                </div>
                 
                 <StaggerContainer className="space-y-6">
                   {report.images.map((image, index) => (
@@ -631,41 +766,54 @@ export default function DamageAnalysisReportPage() {
                         {image.damageAreas.length > 0 ? (
                           <div className="space-y-4">
                             {image.damageAreas.map((damage, damageIndex) => (
-                              <div key={damageIndex} className="p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-2xl">{damageTypes[damage.type]?.icon || '🔍'}</span>
-                                    <span className={`font-medium ${damageTypes[damage.type]?.color || 'text-gray-600'}`}>
-                                      {damageTypes[damage.type]?.label || damage.type}
-                                    </span>
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                      damage.severity === 'high' ? 'bg-red-100 text-red-800' :
-                                      damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                      'bg-green-100 text-green-800'
-                                    }`}>
-                                      {damage.severity === 'high' ? 'Yüksek' :
-                                       damage.severity === 'medium' ? 'Orta' : 'Düşük'}
-                                    </span>
+                              <div key={damageIndex} className="p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between mb-4">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-red-100 rounded-lg flex items-center justify-center">
+                                      <span className="text-2xl">{damageTypes[damage.type]?.icon || '🔍'}</span>
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center space-x-2 mb-1">
+                                        <span className={`font-semibold text-lg ${damageTypes[damage.type]?.color || 'text-gray-600'}`}>
+                                          {damageTypes[damage.type]?.label || damage.type}
+                                        </span>
+                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                          damage.severity === 'high' ? 'bg-red-100 text-red-800 border border-red-200' :
+                                          damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+                                          'bg-green-100 text-green-800 border border-green-200'
+                                        }`}>
+                                          {damage.severity === 'high' ? '⚠️ Yüksek' :
+                                           damage.severity === 'medium' ? '🔶 Orta' : '✅ Düşük'}
+                                        </span>
+                                      </div>
+                                      <div className="text-sm text-gray-600">
+                                        {damageTypes[damage.type]?.description || 'Hasar tespit edildi'}
+                                      </div>
+                                    </div>
                                   </div>
                                   <div className="text-right">
-                                    <div className="font-bold text-green-600">
+                                    <div className="font-bold text-green-600 text-lg">
                                       ₺{(damage.estimatedRepairCost || 0).toLocaleString('tr-TR')}
                                     </div>
                                     <div className="text-xs text-gray-500">
-                                      %{damage.confidence} güven
+                                      %{damage.confidence} güvenilirlik
                                     </div>
                                   </div>
                                 </div>
                                 
-                                <p className="text-sm text-gray-700 mb-3 font-medium">{damage.description}</p>
+                                <div className="bg-gray-50 p-4 rounded-lg mb-3">
+                                  <p className="text-sm text-gray-700 font-medium">{damage.description}</p>
+                                </div>
                                 
-                                {/* Gemini'den gelen gerçek veriler */}
+                                {/* Etkilenen Parçalar */}
                                 {(damage as any).partsAffected && (damage as any).partsAffected.length > 0 && (
-                                  <div className="mb-3">
-                                    <div className="text-xs font-medium text-gray-600 mb-1">Etkilenen Parçalar:</div>
-                                    <div className="flex flex-wrap gap-1">
+                                  <div className="mb-4">
+                                    <div className="flex items-center mb-2">
+                                      <span className="text-sm font-medium text-gray-700 mr-2">🔧 Etkilenen Parçalar:</span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
                                       {(damage as any).partsAffected.map((part: string, partIndex: number) => (
-                                        <span key={partIndex} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                        <span key={partIndex} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full border border-blue-200">
                                           {part}
                                         </span>
                                       ))}
@@ -673,26 +821,36 @@ export default function DamageAnalysisReportPage() {
                                   </div>
                                 )}
                                 
+                                {/* Hasar Bölgesi */}
                                 {(damage as any).area && (
-                                  <div className="mb-3">
-                                    <div className="text-xs font-medium text-gray-600 mb-1">Hasar Bölgesi:</div>
-                                    <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-                                      {(damage as any).area === 'front' ? 'Ön Bölge' :
-                                       (damage as any).area === 'side' ? 'Yan Bölge' :
-                                       (damage as any).area === 'rear' ? 'Arka Bölge' :
-                                       (damage as any).area === 'mechanical' ? 'Mekanik Bölge' : (damage as any).area}
-                                    </span>
+                                  <div className="mb-4">
+                                    <div className="flex items-center mb-2">
+                                      <span className="text-sm font-medium text-gray-700 mr-2">📍 Hasar Konumu:</span>
+                                    </div>
+                                    <button
+                                      onClick={() => showDamageLocation(damage)}
+                                      className="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full border border-orange-200 hover:bg-orange-200 hover:border-orange-300 transition-colors cursor-pointer"
+                                    >
+                                      {(damage as any).area === 'front' ? '🚗 Ön Bölge' :
+                                       (damage as any).area === 'side' ? '🚪 Yan Bölge' :
+                                       (damage as any).area === 'rear' ? '🔙 Arka Bölge' :
+                                       (damage as any).area === 'mechanical' ? '⚙️ Mekanik Bölge' : 
+                                       `📍 ${(damage as any).area}`}
+                                    </button>
                                   </div>
                                 )}
                                 
-                                <div className="flex items-center space-x-4 text-xs text-gray-500">
-                                  <div className="flex items-center space-x-1">
-                                    <MapPinIcon className="w-3 h-3" />
-                                    <span>Konum: {damage.x}, {damage.y}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <EyeIcon className="w-3 h-3" />
-                                    <span>Boyut: {damage.width}x{damage.height}px</span>
+                                {/* Teknik Detaylar */}
+                                <div className="bg-gray-100 p-3 rounded-lg">
+                                  <div className="flex items-center justify-between text-xs text-gray-600">
+                                    <div className="flex items-center space-x-1">
+                                      <MapPinIcon className="w-3 h-3" />
+                                      <span>Koordinat: {damage.x}, {damage.y}</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                      <EyeIcon className="w-3 h-3" />
+                                      <span>Alan: {damage.width}×{damage.height}px</span>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -706,16 +864,21 @@ export default function DamageAnalysisReportPage() {
                         )}
                         
                         {image.recommendations.length > 0 && (
-                          <div className="mt-4 pt-4 border-t">
-                            <h4 className="text-sm font-medium text-gray-700 mb-2">Öneriler:</h4>
-                            <ul className="text-sm text-gray-600 space-y-1">
+                          <div className="mt-6 pt-4 border-t border-gray-200">
+                            <div className="flex items-center mb-3">
+                              <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
+                                <LightBulbIcon className="w-4 h-4 text-yellow-600" />
+                              </div>
+                              <h4 className="text-sm font-semibold text-gray-800">💡 Öneriler</h4>
+                            </div>
+                            <div className="space-y-2">
                               {image.recommendations.map((rec, i) => (
-                                <li key={i} className="flex items-start space-x-2">
-                                  <LightBulbIcon className="w-3 h-3 text-yellow-500 mt-1" />
-                                  <span>{rec}</span>
-                                </li>
+                                <div key={i} className="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                                  <span className="text-yellow-600 text-sm">•</span>
+                                  <span className="text-sm text-gray-700">{rec}</span>
+                                </div>
                               ))}
-                            </ul>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -769,57 +932,93 @@ export default function DamageAnalysisReportPage() {
           <div>
             {/* Critical Issues */}
             <FadeInUp delay={0.4}>
-              <div className="card p-6 mb-6">
-                <h3 className="text-lg font-semibold text-red-700 mb-4 flex items-center">
-                  <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
-                  Kritik Sorunlar
-                </h3>
-                
-                <div className="space-y-3">
-                  {report.summary.safetyConcerns.map((concern, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-3 bg-red-50 rounded-lg">
-                      <ExclamationTriangleIcon className="w-5 h-5 text-red-600 mt-0.5" />
-                      <span className="text-sm text-gray-700">{concern}</span>
-                    </div>
-                  ))}
+              <div className="card p-6 mb-6 bg-gradient-to-br from-red-50 to-orange-50 border border-red-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center mr-3">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-red-800">🚨 Acil Dikkat</h3>
                 </div>
+                
+                {report.summary.safetyConcerns.length > 0 ? (
+                  <div className="space-y-3">
+                    {report.summary.safetyConcerns.map((concern, index) => (
+                      <div key={index} className="flex items-start space-x-3 p-4 bg-white rounded-lg border border-red-200 shadow-sm">
+                        <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mt-0.5">
+                          <ExclamationTriangleIcon className="w-4 h-4 text-red-600" />
+                        </div>
+                        <span className="text-sm text-gray-700 font-medium">{concern}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                    </div>
+                    <p className="text-sm text-gray-600">✅ Kritik sorun tespit edilmedi</p>
+                  </div>
+                )}
               </div>
             </FadeInUp>
 
             {/* Summary */}
             <FadeInUp delay={0.5}>
-              <div className="card p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Özet Değerlendirme</h3>
+              <div className="card p-6 mb-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                    <ChartBarIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">📊 Genel Değerlendirme</h3>
+                </div>
                 
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Güçlü Yönler */}
                   <div>
-                    <h4 className="font-medium text-green-700 mb-2 flex items-center">
-                      <CheckCircleIcon className="w-4 h-4 mr-2" />
-                      Güçlü Yönler
-                    </h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {report.summary.strengths.map((strength, index) => (
-                        <li key={index} className="flex items-start space-x-2">
-                          <span className="text-green-500 mt-1">•</span>
-                          <span>{strength}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="flex items-center mb-3">
+                      <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-2">
+                        <CheckCircleIcon className="w-4 h-4 text-green-600" />
+                      </div>
+                      <h4 className="font-semibold text-green-700">✅ İyi Durumda Olanlar</h4>
+                    </div>
+                    {report.summary.strengths.length > 0 ? (
+                      <div className="space-y-2">
+                        {report.summary.strengths.map((strength, index) => (
+                          <div key={index} className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                            <span className="text-green-600 text-sm mt-0.5">✓</span>
+                            <span className="text-sm text-gray-700">{strength}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-2 text-gray-500 text-sm">
+                        Belirgin güçlü yön tespit edilmedi
+                      </div>
+                    )}
                   </div>
                   
+                  {/* Sorunlu Alanlar */}
                   <div>
-                    <h4 className="font-medium text-red-700 mb-2 flex items-center">
-                      <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
-                      Sorunlu Alanlar
-                    </h4>
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {report.summary.weaknesses.map((weakness, index) => (
-                        <li key={index} className="flex items-start space-x-2">
-                          <span className="text-red-500 mt-1">•</span>
-                          <span>{weakness}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="flex items-center mb-3">
+                      <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mr-2">
+                        <ExclamationTriangleIcon className="w-4 h-4 text-red-600" />
+                      </div>
+                      <h4 className="font-semibold text-red-700">⚠️ Dikkat Gerekenler</h4>
+                    </div>
+                    {report.summary.weaknesses.length > 0 ? (
+                      <div className="space-y-2">
+                        {report.summary.weaknesses.map((weakness, index) => (
+                          <div key={index} className="flex items-start space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                            <span className="text-red-600 text-sm mt-0.5">!</span>
+                            <span className="text-sm text-gray-700">{weakness}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-2 text-gray-500 text-sm">
+                        Belirgin sorun tespit edilmedi
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -827,45 +1026,97 @@ export default function DamageAnalysisReportPage() {
 
             {/* Recommendations */}
             <FadeInUp delay={0.6}>
-              <div className="card p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Öneriler</h3>
-                
-                <div className="space-y-3">
-                  {report.summary.recommendations.map((rec, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                      <LightBulbIcon className="w-5 h-5 text-blue-600 mt-0.5" />
-                      <span className="text-sm text-gray-700">{rec}</span>
-                    </div>
-                  ))}
+              <div className="card p-6 mb-6 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center mr-3">
+                    <LightBulbIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">💡 Öneriler & Aksiyonlar</h3>
                 </div>
+                
+                {report.summary.recommendations.length > 0 ? (
+                  <div className="space-y-3">
+                    {report.summary.recommendations.map((rec, index) => (
+                      <div key={index} className="flex items-start space-x-3 p-4 bg-white rounded-lg border border-green-200 shadow-sm">
+                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
+                          <LightBulbIcon className="w-4 h-4 text-green-600" />
+                        </div>
+                        <span className="text-sm text-gray-700 font-medium">{rec}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                      <LightBulbIcon className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <p className="text-sm text-gray-500">Henüz öneri bulunmuyor</p>
+                  </div>
+                )}
               </div>
             </FadeInUp>
 
             {/* Financial Impact */}
             <FadeInUp delay={0.7}>
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Mali Etki</h3>
+              <div className="card p-6 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">
+                <div className="flex items-center mb-4">
+                  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
+                    <CurrencyDollarIcon className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">💰 Mali Durum</h3>
+                </div>
                 
                 <div className="space-y-4">
-                  <div className="text-center p-4 bg-red-50 rounded-lg">
-                    <div className="text-2xl font-bold text-red-600 mb-1">
+                  {/* Onarım Maliyeti */}
+                  <div className="bg-white p-5 rounded-xl border border-purple-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-600">🔧 Onarım Bedeli</span>
+                      <span className="text-xs text-gray-500">
+                        {(report.summary.estimatedRepairCost || 0) === 0 ? '✅ Ücretsiz' :
+                         (report.summary.estimatedRepairCost || 0) <= 5000 ? '🔶 Uygun' :
+                         '⚠️ Yüksek'}
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-purple-600">
                       ₺{(report.summary.estimatedRepairCost || 0).toLocaleString('tr-TR')}
                     </div>
-                    <div className="text-sm text-gray-600">Tahmini Onarım Maliyeti</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Tahmini onarım maliyeti
+                    </div>
                   </div>
                   
-                  <div className="text-center p-4 bg-orange-50 rounded-lg">
-                    <div className="text-lg font-bold text-orange-600 mb-1">
+                  {/* Piyasa Değeri Etkisi */}
+                  <div className="bg-white p-5 rounded-xl border border-purple-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-600">📈 Piyasa Değeri</span>
+                      <span className="text-xs text-gray-500">
+                        {(report.summary.marketValueImpact || 0) <= 5 ? '✅ Az Etki' :
+                         (report.summary.marketValueImpact || 0) <= 15 ? '🔶 Orta Etki' :
+                         '⚠️ Yüksek Etki'}
+                      </span>
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600">
                       %{report.summary.marketValueImpact || 0}
                     </div>
-                    <div className="text-sm text-gray-600">Piyasa Değeri Etkisi</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Piyasa değerine etkisi
+                    </div>
                   </div>
                   
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-sm font-bold text-blue-600 mb-1">
+                  {/* Sigorta Durumu */}
+                  <div className="bg-white p-5 rounded-xl border border-purple-200 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-600">🛡️ Sigorta</span>
+                      <span className="text-xs text-gray-500">
+                        {report.summary.insuranceImpact === 'Değerlendirilecek' ? '🔍 İncelenecek' : '✅ Durum Belirli'}
+                      </span>
+                    </div>
+                    <div className="text-lg font-bold text-blue-600">
                       {report.summary.insuranceImpact || 'Değerlendirilecek'}
                     </div>
-                    <div className="text-xs text-gray-600">Sigorta Durumu</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      Sigorta şirketi durumu
+                    </div>
                   </div>
                 </div>
               </div>
@@ -873,6 +1124,154 @@ export default function DamageAnalysisReportPage() {
           </div>
         </div>
       </div>
+
+      {/* Hasar Konumu Popup */}
+      <AnimatePresence>
+        {showDamagePopup && selectedDamage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={closeDamagePopup}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">📍 Hasar Konumu Detayı</h3>
+                <button
+                  onClick={closeDamagePopup}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Araç Çizimi */}
+              <div className="mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="text-center mb-4">
+                    <div className="w-32 h-20 mx-auto bg-blue-100 rounded-lg relative border border-blue-300">
+                      {/* Araç çizimi - basit SVG */}
+                      <svg viewBox="0 0 200 120" className="w-full h-full">
+                        {/* Araç gövdesi */}
+                        <rect x="20" y="40" width="160" height="60" rx="8" fill="#3B82F6" stroke="#1D4ED8" strokeWidth="2"/>
+                        
+                        {/* Ön cam */}
+                        <rect x="30" y="45" width="60" height="25" rx="4" fill="#93C5FD"/>
+                        
+                        {/* Arka cam */}
+                        <rect x="110" y="45" width="60" height="25" rx="4" fill="#93C5FD"/>
+                        
+                        {/* Tekerlekler */}
+                        <circle cx="50" cy="110" r="12" fill="#374151"/>
+                        <circle cx="150" cy="110" r="12" fill="#374151"/>
+                        
+                        {/* Hasar noktası */}
+                        {selectedDamage && (
+                          <circle 
+                            cx={selectedDamage.x || 100} 
+                            cy={selectedDamage.y || 60} 
+                            r="8" 
+                            fill="#EF4444" 
+                            stroke="#DC2626" 
+                            strokeWidth="2"
+                            className="animate-pulse"
+                          >
+                            <title>Hasar Noktası</title>
+                          </circle>
+                        )}
+                      </svg>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">Araç Şematik Görünümü</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hasar Detayları */}
+              <div className="space-y-4">
+                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                  <h4 className="font-semibold text-red-800 mb-2">🔍 Hasar Bilgileri</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Hasar Türü:</span>
+                      <span className="font-medium">{damageTypes[selectedDamage.type]?.label || selectedDamage.type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Şiddet:</span>
+                      <span className={`font-medium ${
+                        selectedDamage.severity === 'high' ? 'text-red-600' :
+                        selectedDamage.severity === 'medium' ? 'text-yellow-600' :
+                        'text-green-600'
+                      }`}>
+                        {selectedDamage.severity === 'high' ? 'Yüksek' :
+                         selectedDamage.severity === 'medium' ? 'Orta' : 'Düşük'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Koordinat:</span>
+                      <span className="font-medium">{selectedDamage.x}, {selectedDamage.y}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Boyut:</span>
+                      <span className="font-medium">{selectedDamage.width}×{selectedDamage.height}px</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Güven:</span>
+                      <span className="font-medium">%{selectedDamage.confidence}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Etkilenen Parçalar */}
+                {selectedDamage.partsAffected && selectedDamage.partsAffected.length > 0 && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h4 className="font-semibold text-blue-800 mb-2">🔧 Etkilenen Parçalar</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedDamage.partsAffected.map((part: string, index: number) => (
+                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                          {part}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Onarım Maliyeti */}
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <h4 className="font-semibold text-green-800 mb-2">💰 Onarım Maliyeti</h4>
+                  <div className="text-2xl font-bold text-green-600">
+                    ₺{selectedDamage.estimatedRepairCost?.toLocaleString('tr-TR') || selectedDamage.repairCost?.toLocaleString('tr-TR') || '0'}
+                  </div>
+                  <p className="text-sm text-gray-600 mt-1">Tahmini onarım bedeli</p>
+                </div>
+
+                {/* Hasar Açıklaması */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-800 mb-2">📝 Açıklama</h4>
+                  <p className="text-sm text-gray-700">{selectedDamage.description}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeDamagePopup}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Kapat
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

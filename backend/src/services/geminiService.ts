@@ -35,6 +35,7 @@ export interface GeminiAnalysisResult {
 export class GeminiService {
   private static genAI: GoogleGenerativeAI | null = null;
   private static isInitialized = false;
+  private static cache: { [key: string]: DamageArea[] } = {}; // Basit in-memory cache
 
   /**
    * Gemini API'yi başlat
@@ -90,6 +91,19 @@ export class GeminiService {
   }
 
   /**
+   * Resim hash'ini hesapla (cache için)
+   */
+  private static async getImageHash(imagePath: string): Promise<string> {
+    try {
+      const crypto = require('crypto');
+      const imageBuffer = await fs.promises.readFile(imagePath);
+      return crypto.createHash('md5').update(imageBuffer).digest('hex');
+    } catch (error) {
+      return Date.now().toString(); // Fallback
+    }
+  }
+
+  /**
    * Gemini ile hasar tespiti
    */
   static async detectDamage(imagePath: string): Promise<DamageArea[]> {
@@ -102,47 +116,113 @@ export class GeminiService {
     try {
       console.log('🔍 Google Gemini ile hasar tespiti yapılıyor:', imagePath);
       
+      // Cache kontrolü (basit in-memory cache)
+      const imageHash = await this.getImageHash(imagePath);
+      const cacheKey = `damage_analysis_${imageHash}`;
+      
+      // Basit cache kontrolü (production'da Redis kullanılmalı)
+      if (this.cache && this.cache[cacheKey]) {
+        console.log('📋 Cache\'den hasar analizi alındı');
+        return this.cache[cacheKey];
+      }
+      
       const imageBase64 = await this.convertImageToBase64(imagePath);
       
-      // Gemini modelini al
-      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      // Gemini modelini al (temperature parametresi ile)
+      const model = this.genAI.getGenerativeModel({ 
+        model: "gemini-1.0-pro",
+        generationConfig: {
+          temperature: 0.7, // Rastgelelik için temperature ekle
+          topP: 0.9,        // Çeşitlilik için topP ekle
+          topK: 40          // Token seçimi için topK ekle
+        }
+      });
       
-      const prompt = `Bu araç fotoğrafını detaylı analiz et ve hasarları tespit et. Fotoğrafta gördüğün her hasarı, çizik, ezik, pas, boya problemi, cam kırığı, tampon hasarı, kapı hasarı, far hasarı gibi tüm detayları belirt. Her hasar için:
+      // Benzersiz analiz için timestamp ekle
+      const analysisId = Date.now();
+      const randomSeed = Math.floor(Math.random() * 1000);
+      
+      const prompt = `Sen profesyonel bir araç eksperi ve hasar tespit uzmanısın. Bu araç fotoğrafını detaylı analiz et ve kapsamlı bir hasar raporu hazırla (Analiz ID: ${analysisId}, Rastgele Seed: ${randomSeed}).
 
-1. Tam konumunu (x, y koordinatları)
-2. Boyutunu (width, height)
-3. Hasar tipini (scratch, dent, rust, oxidation)
-4. Şiddetini (low, medium, high)
-5. Güven seviyesini (0-100 arası)
-6. Detaylı açıklamasını
-7. Hasar bölgesini (front, side, rear, mechanical)
-8. Onarım maliyetini (TL cinsinden)
-9. Etkilenen parçaları (array olarak)
+🔍 DETAYLI ANALİZ YAP:
 
-SADECE JSON formatında yanıt ver, başka hiçbir metin ekleme:
+1. **HASAR TESPİTİ**: Fotoğrafta gördüğün her hasarı tespit et:
+   - Çizikler, sıyrıklar, göçükler
+   - Boya hasarları, renk solması, soyulma
+   - Paslanma, korozyon, oksidasyon
+   - Cam kırıkları, çatlakları
+   - Tampon, kapı, kaput hasarları
+   - Far, stop lambası hasarları
+   - Jant, lastik hasarları
+   - İç mekan hasarları (görülebiliyorsa)
+
+2. **HASAR DEĞERLENDİRMESİ**: Her hasar için:
+   - Konum (x, y koordinatları - gerçekçi değerler kullan)
+   - Boyut (width, height - hasarın gerçek boyutuna uygun)
+   - Tip (scratch, dent, rust, oxidation, crack, break, paint, bumper, door, window, headlight, taillight, mirror, wheel, body)
+   - Şiddet (low, medium, high - hasarın gerçek ciddiyetine göre)
+   - Güven seviyesi (70-100 arası)
+   - Detaylı açıklama (Türkçe, anlaşılır)
+   - Hasar bölgesi (front, side, rear, mechanical)
+   - Onarım maliyeti (TL cinsinden, gerçekçi fiyatlar)
+   - Etkilenen parçalar (gerçek parça isimleri)
+
+3. **GENEL DEĞERLENDİRME**: 
+   - Araç yaşına göre normal aşınma mı, ciddi hasar mı?
+   - Güvenlik açısından risk var mı?
+   - Estetik sorunlar neler?
+   - Mekanik etkilenme var mı?
+
+4. **ÇEŞİTLİLİK**: Her analiz farklı olmalı:
+   - Farklı hasar kombinasyonları
+   - Farklı şiddet seviyeleri
+   - Farklı maliyet hesaplamaları
+   - Farklı güvenlik değerlendirmeleri
+
+SADECE JSON formatında yanıt ver:
 
 {
   "damageAreas": [
     {
-      "x": 100,
-      "y": 150,
-      "width": 50,
-      "height": 30,
+      "x": 120,
+      "y": 180,
+      "width": 45,
+      "height": 25,
       "type": "scratch",
-      "severity": "low",
-      "confidence": 95,
-      "description": "Ön tamponda hafif çizik, boya katmanında küçük hasar",
+      "severity": "medium",
+      "confidence": 92,
+      "description": "Ön tampon sol tarafında orta şiddetli çizik, boya katmanında derin hasar tespit edildi",
       "area": "front",
-      "repairCost": 1000,
-      "partsAffected": ["bumper", "paint"]
+      "repairCost": 2500,
+      "partsAffected": ["bumper", "paint", "primer"]
     }
   ],
   "overallAssessment": {
-    "damageLevel": "hafif",
-    "totalRepairCost": 5000,
+    "damageLevel": "orta",
+    "totalRepairCost": 8500,
     "insuranceStatus": "kurtarılabilir",
-    "marketValueImpact": 10,
-    "detailedAnalysis": "Araçta tespit edilen hasarların detaylı analizi. Ön tamponda hafif çizikler mevcut. Genel durum iyi, sadece estetik onarım gerekli. Şasi ve mekanik parçalar sağlam durumda."
+    "marketValueImpact": 15,
+    "detailedAnalysis": "Araç genel olarak iyi durumda ancak ön bölgede orta şiddetli hasarlar mevcut. Tampon ve boya onarımı gerekli. Şasi ve mekanik parçalar sağlam. Estetik görünüm için profesyonel onarım önerilir.",
+    "safetyConcerns": [
+      "Ön tampondaki hasar çarpışma korumasını etkileyebilir",
+      "Boya hasarı paslanmaya yol açabilir"
+    ],
+    "strengths": [
+      "Şasi yapısı sağlam durumda",
+      "Motor bölgesi hasarsız",
+      "İç mekan korunmuş"
+    ],
+    "weaknesses": [
+      "Ön bölgede orta şiddetli hasarlar",
+      "Boya kalitesi etkilenmiş",
+      "Estetik görünüm bozulmuş"
+    ],
+    "recommendations": [
+      "Ön tampon onarımı acil yapılmalı",
+      "Boya işlemi profesyonel serviste yapılmalı",
+      "Sigorta şirketi ile görüşülmeli",
+      "6 ay içinde onarım tamamlanmalı"
+    ]
   }
 }`;
 
@@ -185,6 +265,12 @@ SADECE JSON formatında yanıt ver, başka hiçbir metin ekleme:
         damageAreas.forEach((damage: any) => {
           damage.overallAssessment = analysisResult.overallAssessment;
         });
+      }
+      
+      // Cache'e kaydet (sadece başarılı analizler)
+      if (damageAreas.length > 0) {
+        this.cache[cacheKey] = damageAreas;
+        console.log('💾 Hasar analizi cache\'e kaydedildi');
       }
       
       return damageAreas;

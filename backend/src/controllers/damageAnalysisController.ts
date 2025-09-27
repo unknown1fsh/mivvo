@@ -320,6 +320,15 @@ export class DamageAnalysisController {
       let marketValueImpact = 0;
       let detailedAnalysis = '';
       
+      // Sigorta durumu hesaplama fonksiyonu
+      const calculateInsuranceStatus = (overallScore: number, totalDamages: number, criticalDamages: number) => {
+        if (overallScore >= 85 && criticalDamages === 0) return 'Kapsam içinde';
+        if (overallScore >= 70 && criticalDamages <= 1) return 'Kısmen kapsam içinde';
+        if (overallScore >= 50 && criticalDamages <= 2) return 'Değerlendirilecek';
+        if (overallScore >= 30) return 'Kapsam dışı olabilir';
+        return 'Kapsam dışı';
+      };
+      
       // İlk damageArea'dan overallAssessment'i al
       for (const result of analysisResults) {
         if (result.damageAreas && result.damageAreas.length > 0 && result.damageAreas[0].overallAssessment) {
@@ -333,18 +342,50 @@ export class DamageAnalysisController {
         }
       }
       
+      // Sigorta durumunu hesapla
+      if (!geminiOverallAssessment || !geminiOverallAssessment.insuranceStatus) {
+        insuranceStatus = calculateInsuranceStatus(overallScore, totalDamages, criticalDamages);
+      }
+      
       // Eğer Gemini verisi yoksa manuel hesapla
       if (!geminiOverallAssessment) {
         estimatedRepairCost = analysisResults.reduce((sum: number, result: any) => {
           return sum + result.damageAreas.reduce((damageSum: number, damage: any) => {
-            const baseCost = damage.type === 'dent' ? 1500 : 
-                            damage.type === 'scratch' ? 300 :
-                            damage.type === 'rust' ? 800 :
-                            damage.type === 'oxidation' ? 400 : 500;
-            const severityMultiplier = damage.severity === 'high' ? 2 : damage.severity === 'medium' ? 1.5 : 1;
-            return damageSum + (baseCost * severityMultiplier);
+            // Daha gerçekçi onarım maliyetleri (TL cinsinden)
+            const baseCosts = {
+              'scratch': 800,      // Çizik onarımı
+              'dent': 2500,        // Göçük onarımı
+              'rust': 1200,        // Paslanma temizliği
+              'oxidation': 600,    // Oksidasyon temizliği
+              'crack': 3000,       // Çatlak onarımı
+              'break': 4000,       // Kırık onarımı
+              'paint': 1000,       // Boya onarımı
+              'bumper': 1800,      // Tampon onarımı
+              'door': 2200,        // Kapı onarımı
+              'window': 1500,      // Cam onarımı
+              'headlight': 800,    // Far onarımı
+              'taillight': 600,    // Stop lambası
+              'mirror': 400,       // Ayna onarımı
+              'wheel': 1200,       // Jant onarımı
+              'body': 2800         // Kaporta onarımı
+            };
+            
+            const baseCost = baseCosts[damage.type as keyof typeof baseCosts] || 1000;
+            
+            // Şiddete göre çarpan
+            const severityMultiplier = damage.severity === 'high' ? 2.5 : 
+                                     damage.severity === 'medium' ? 1.8 : 1.2;
+            
+            // Etkilenen parça sayısına göre çarpan
+            const partsMultiplier = damage.partsAffected ? 
+              Math.max(1, damage.partsAffected.length * 0.3) : 1;
+            
+            return damageSum + Math.round(baseCost * severityMultiplier * partsMultiplier);
           }, 0);
         }, 0);
+        
+        // İşçilik maliyeti ekle (%30)
+        estimatedRepairCost = Math.round(estimatedRepairCost * 1.3);
       }
 
       // Analiz sonucu oluştur
@@ -356,17 +397,11 @@ export class DamageAnalysisController {
         estimatedRepairCost: Math.round(estimatedRepairCost),
         analysisResults: analysisResults, // Bu satırı ekledik
         summary: {
-          strengths: geminiOverallAssessment ? 
-            [detailedAnalysis] : 
-            generateStrengths(analysisResults),
-          weaknesses: geminiOverallAssessment ? 
-            [`Hasar seviyesi: ${damageLevel}`] : 
-            generateWeaknesses(analysisResults),
-          recommendations: geminiOverallAssessment ? 
-            [`Sigorta durumu: ${insuranceStatus}`, `Piyasa değeri etkisi: %${marketValueImpact}`] : 
-            generateRecommendations(analysisResults, damageSeverity),
-          safetyConcerns: generateSafetyConcerns(analysisResults),
-          marketValueImpact: marketValueImpact
+          strengths: geminiOverallAssessment?.strengths || generateStrengths(analysisResults),
+          weaknesses: geminiOverallAssessment?.weaknesses || generateWeaknesses(analysisResults),
+          recommendations: geminiOverallAssessment?.recommendations || generateRecommendations(analysisResults, damageSeverity),
+          safetyConcerns: geminiOverallAssessment?.safetyConcerns || generateSafetyConcerns(analysisResults),
+          marketValueImpact: geminiOverallAssessment?.marketValueImpact || calculateMarketValueImpact(overallScore, analysisResults)
         },
         technicalDetails: {
           analysisMethod: 'Google Gemini AI Analizi',
@@ -463,30 +498,74 @@ export class DamageAnalysisController {
 function generateStrengths(analysisResults: any[]): string[] {
   const strengths = [];
   
-  if (analysisResults.every(result => result.damageAreas.length === 0)) {
+  // Hasar sayısına göre güçlü yönler
+  const totalDamages = analysisResults.reduce((sum, result) => sum + result.damageAreas.length, 0);
+  
+  if (totalDamages === 0) {
     strengths.push('Araç genel olarak hasarsız durumda');
+    strengths.push('Tüm yüzeyler korunmuş');
+  } else if (totalDamages <= 3) {
+    strengths.push('Genel olarak iyi durumda');
+    strengths.push('Sadece hafif hasarlar mevcut');
   }
   
-  if (analysisResults.every(result => !result.damageAreas.some((damage: any) => damage.type === 'rust'))) {
+  // Hasar türüne göre güçlü yönler
+  const hasRust = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'rust')
+  );
+  
+  if (!hasRust) {
     strengths.push('Paslanma problemi tespit edilmedi');
+    strengths.push('Metal yapı korunmuş');
   }
   
-  if (analysisResults.every(result => !result.damageAreas.some((damage: any) => damage.severity === 'high'))) {
+  const hasHighSeverity = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.severity === 'high')
+  );
+  
+  if (!hasHighSeverity) {
     strengths.push('Kritik hasar tespit edilmedi');
+    strengths.push('Yapısal bütünlük korunmuş');
   }
   
-  return strengths.length > 0 ? strengths : ['Motor bölgesi hasarsız', 'İç mekan korunmuş durumda'];
+  const hasCracks = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'crack')
+  );
+  
+  if (!hasCracks) {
+    strengths.push('Çatlak hasarı bulunmuyor');
+  }
+  
+  // Varsayılan güçlü yönler
+  if (strengths.length === 0) {
+    strengths.push('Motor bölgesi hasarsız');
+    strengths.push('İç mekan korunmuş durumda');
+    strengths.push('Şasi yapısı sağlam');
+  }
+  
+  return strengths;
 }
 
 function generateWeaknesses(analysisResults: any[]): string[] {
   const weaknesses = [];
   
+  // Hasar sayısına göre zayıflıklar
+  const totalDamages = analysisResults.reduce((sum, result) => sum + result.damageAreas.length, 0);
+  
+  if (totalDamages > 10) {
+    weaknesses.push('Çok sayıda hasar tespit edildi');
+  } else if (totalDamages > 5) {
+    weaknesses.push('Orta seviyede hasar yoğunluğu');
+  }
+  
+  // Hasar türüne göre zayıflıklar
   const hasHighSeverityDamage = analysisResults.some(result => 
     result.damageAreas.some((damage: any) => damage.severity === 'high')
   );
   
   if (hasHighSeverityDamage) {
     weaknesses.push('Kritik hasarlar tespit edildi');
+    weaknesses.push('Yapısal bütünlük etkilenmiş olabilir');
   }
   
   const hasRust = analysisResults.some(result => 
@@ -495,6 +574,7 @@ function generateWeaknesses(analysisResults: any[]): string[] {
   
   if (hasRust) {
     weaknesses.push('Paslanma problemi mevcut');
+    weaknesses.push('Korozyon riski artmış');
   }
   
   const hasCracks = analysisResults.some(result => 
@@ -503,16 +583,44 @@ function generateWeaknesses(analysisResults: any[]): string[] {
   
   if (hasCracks) {
     weaknesses.push('Çatlak hasarları tespit edildi');
+    weaknesses.push('Güvenlik riski oluşabilir');
   }
   
-  return weaknesses.length > 0 ? weaknesses : ['Hafif çizikler mevcut', 'Küçük göçükler var'];
+  const hasDents = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'dent')
+  );
+  
+  if (hasDents) {
+    weaknesses.push('Göçük hasarları mevcut');
+    weaknesses.push('Estetik görünüm etkilenmiş');
+  }
+  
+  const hasPaintDamage = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'paint' || damage.type === 'oxidation')
+  );
+  
+  if (hasPaintDamage) {
+    weaknesses.push('Boya kalitesi etkilenmiş');
+    weaknesses.push('Renk tutarlılığı bozulmuş');
+  }
+  
+  // Varsayılan zayıflıklar
+  if (weaknesses.length === 0 && totalDamages > 0) {
+    weaknesses.push('Hafif çizikler mevcut');
+    weaknesses.push('Küçük göçükler var');
+    weaknesses.push('Estetik onarım gerekebilir');
+  }
+  
+  return weaknesses;
 }
 
 function generateRecommendations(analysisResults: any[], damageSeverity: string): string[] {
   const recommendations = [];
   
+  // Hasar şiddetine göre öneriler
   if (damageSeverity === 'critical') {
     recommendations.push('Acil: Güvenlik riski oluşturan hasarlar onarılmalı');
+    recommendations.push('Araç kullanımı güvenlik açısından riskli olabilir');
   }
   
   const hasHighSeverityDamage = analysisResults.some(result => 
@@ -521,18 +629,58 @@ function generateRecommendations(analysisResults: any[], damageSeverity: string)
   
   if (hasHighSeverityDamage) {
     recommendations.push('Yüksek öncelikli hasarlar onarılmalı');
+    recommendations.push('3 ay içinde onarım tamamlanmalı');
   }
   
+  // Hasar türüne göre öneriler
   const hasRust = analysisResults.some(result => 
     result.damageAreas.some((damage: any) => damage.type === 'rust')
   );
   
   if (hasRust) {
     recommendations.push('Paslanma bölgeleri temizlenmeli ve koruyucu uygulanmalı');
+    recommendations.push('Korozyon önleyici işlem yapılmalı');
   }
   
+  const hasCracks = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'crack')
+  );
+  
+  if (hasCracks) {
+    recommendations.push('Çatlak hasarları acil onarılmalı');
+    recommendations.push('Güvenlik testi yapılmalı');
+  }
+  
+  const hasPaintDamage = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'paint' || damage.type === 'oxidation')
+  );
+  
+  if (hasPaintDamage) {
+    recommendations.push('Boya işlemi profesyonel serviste yapılmalı');
+    recommendations.push('Renk eşleştirmesi için uzman görüşü alınmalı');
+  }
+  
+  const hasDents = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'dent')
+  );
+  
+  if (hasDents) {
+    recommendations.push('Göçük onarımı için kaporta servisi gerekli');
+    recommendations.push('Boyasız onarım seçeneği değerlendirilmeli');
+  }
+  
+  // Genel öneriler
+  const totalDamages = analysisResults.reduce((sum, result) => sum + result.damageAreas.length, 0);
+  
+  if (totalDamages > 5) {
+    recommendations.push('Toplu onarım planı yapılmalı');
+    recommendations.push('Maliyet optimizasyonu için paket fiyat alınmalı');
+  }
+  
+  // Her zaman eklenen öneriler
   recommendations.push('Sigorta şirketi ile görüşme yapılmalı');
   recommendations.push('Profesyonel onarım servisi ile iletişime geçilmeli');
+  recommendations.push('Onarım sonrası kalite kontrolü yapılmalı');
   
   return recommendations;
 }
@@ -540,30 +688,129 @@ function generateRecommendations(analysisResults: any[], damageSeverity: string)
 function generateSafetyConcerns(analysisResults: any[]): string[] {
   const concerns = [];
   
+  // Çatlak hasarları
   const hasCracks = analysisResults.some(result => 
     result.damageAreas.some((damage: any) => damage.type === 'crack')
   );
   
   if (hasCracks) {
     concerns.push('Çatlak hasarları güvenlik riski oluşturabilir');
+    concerns.push('Yapısal bütünlük tehlikeye girebilir');
   }
   
+  // Yüksek şiddetli hasarlar
   const hasHighSeverityDamage = analysisResults.some(result => 
     result.damageAreas.some((damage: any) => damage.severity === 'high')
   );
   
   if (hasHighSeverityDamage) {
     concerns.push('Yüksek şiddetli hasarlar yapısal bütünlüğü etkileyebilir');
+    concerns.push('Çarpışma güvenliği azalmış olabilir');
   }
   
-  return concerns.length > 0 ? concerns : ['Genel güvenlik kontrolü önerilir'];
+  // Paslanma hasarları
+  const hasRust = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'rust')
+  );
+  
+  if (hasRust) {
+    concerns.push('Paslanma metal yapıyı zayıflatabilir');
+    concerns.push('Korozyon güvenlik parçalarını etkileyebilir');
+  }
+  
+  // Göçük hasarları
+  const hasDents = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'dent')
+  );
+  
+  if (hasDents) {
+    concerns.push('Göçük hasarları çarpışma korumasını etkileyebilir');
+  }
+  
+  // Cam hasarları
+  const hasWindowDamage = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'window')
+  );
+  
+  if (hasWindowDamage) {
+    concerns.push('Cam hasarları görüş açısını etkileyebilir');
+    concerns.push('Cam kırılma riski artmış olabilir');
+  }
+  
+  // Far hasarları
+  const hasHeadlightDamage = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => damage.type === 'headlight')
+  );
+  
+  if (hasHeadlightDamage) {
+    concerns.push('Far hasarları gece sürüş güvenliğini etkileyebilir');
+    concerns.push('Aydınlatma kalitesi azalmış olabilir');
+  }
+  
+  // Varsayılan güvenlik endişeleri
+  if (concerns.length === 0) {
+    const totalDamages = analysisResults.reduce((sum, result) => sum + result.damageAreas.length, 0);
+    
+    if (totalDamages > 0) {
+      concerns.push('Genel güvenlik kontrolü önerilir');
+      concerns.push('Hasar onarımı güvenlik açısından önemli');
+    } else {
+      concerns.push('Araç güvenlik açısından iyi durumda');
+    }
+  }
+  
+  return concerns;
 }
 
-function calculateMarketValueImpact(overallScore: number): number {
-  if (overallScore >= 75) return -25;
-  if (overallScore >= 50) return -15;
-  if (overallScore >= 25) return -8;
-  return -3;
+function calculateMarketValueImpact(overallScore: number, analysisResults: any[]): number {
+  // Hasar sayısına göre etki
+  const totalDamages = analysisResults.reduce((sum, result) => sum + result.damageAreas.length, 0);
+  
+  // Kritik hasar sayısı
+  const criticalDamages = analysisResults.reduce((sum, result) => 
+    sum + result.damageAreas.filter((damage: any) => damage.severity === 'high').length, 0
+  );
+  
+  // Hasar türüne göre etki
+  const hasStructuralDamage = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => 
+      damage.type === 'crack' || damage.type === 'break' || damage.type === 'rust'
+    )
+  );
+  
+  const hasPaintDamage = analysisResults.some(result => 
+    result.damageAreas.some((damage: any) => 
+      damage.type === 'paint' || damage.type === 'oxidation'
+    )
+  );
+  
+  // Temel etki hesaplama
+  let baseImpact = 0;
+  
+  if (overallScore >= 90) baseImpact = 2;      // Çok iyi
+  else if (overallScore >= 80) baseImpact = 5; // İyi
+  else if (overallScore >= 70) baseImpact = 8; // Orta
+  else if (overallScore >= 60) baseImpact = 12; // Kötü
+  else if (overallScore >= 50) baseImpact = 18; // Çok kötü
+  else baseImpact = 25;                         // Kritik
+  
+  // Hasar sayısına göre ek etki
+  if (totalDamages > 15) baseImpact += 8;
+  else if (totalDamages > 10) baseImpact += 5;
+  else if (totalDamages > 5) baseImpact += 3;
+  
+  // Kritik hasarlara göre ek etki
+  if (criticalDamages > 3) baseImpact += 10;
+  else if (criticalDamages > 1) baseImpact += 6;
+  else if (criticalDamages > 0) baseImpact += 3;
+  
+  // Yapısal hasarlara göre ek etki
+  if (hasStructuralDamage) baseImpact += 8;
+  
+  // Boya hasarlarına göre ek etki
+  if (hasPaintDamage) baseImpact += 4;
+  
+  return Math.min(baseImpact, 35); // Maksimum %35 etki
 }
 
 export { upload };
