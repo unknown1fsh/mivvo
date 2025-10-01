@@ -22,60 +22,12 @@ import {
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
+import { DamageAnalysisReportData, DamageSeverityLevel, DamageAnalysisImageArea } from '@/types/damageAnalysis'
 
-interface DamageAnalysisReport {
-  id: string
-  vehicleInfo: {
-    make: string
-    model: string
-    year: number
-    vin: string
-    plate: string
-  }
-  overallScore: number
-  damageSeverity: 'low' | 'medium' | 'high' | 'critical'
-  analysisDate: string
-  images: Array<{
-    angle: string
-    damageAreas: Array<{
-      x: number
-      y: number
-      width: number
-      height: number
-      type: 'scratch' | 'dent' | 'rust' | 'oxidation' | 'crack' | 'break'
-      severity: 'low' | 'medium' | 'high'
-      confidence: number
-      description: string
-      estimatedRepairCost: number
-    }>
-    totalDamageScore: number
-    recommendations: string[]
-  }>
-  summary: {
-    totalDamages: number
-    criticalDamages: number
-    estimatedRepairCost: number
-    insuranceImpact: string
-    safetyConcerns: string[]
-    strengths: string[]
-    weaknesses: string[]
-    recommendations: string[]
-    marketValueImpact: number
-  }
-  technicalDetails: {
-    analysisMethod: string
-    aiModel: string
-    confidence: number
-    processingTime: string
-    imageQuality: string
-  }
-}
 
-const damageSeverities = {
+const damageSeverities: Record<DamageSeverityLevel, { label: string; color: string; bg: string; score: string }> = {
   low: { label: 'Düşük', color: 'text-green-600', bg: 'bg-green-50', score: '0-25' },
   medium: { label: 'Orta', color: 'text-yellow-600', bg: 'bg-yellow-50', score: '26-50' },
   high: { label: 'Yüksek', color: 'text-orange-600', bg: 'bg-orange-50', score: '51-75' },
@@ -125,8 +77,8 @@ const damageTypes = {
     description: 'Parçada oluşan kırık',
     severity: 'Kritik'
   },
-  // Gemini'den gelebilecek ek tipler
-  paint: { 
+  // AI'den gelebilecek ek tipler
+  paint: {
     label: 'Boya Hasarı', 
     icon: '🎨', 
     color: 'text-pink-600',
@@ -192,12 +144,12 @@ const damageTypes = {
 }
 
 export default function DamageAnalysisReportPage() {
-  const [report, setReport] = useState<DamageAnalysisReport | null>(null)
+  const [report, setReport] = useState<DamageAnalysisReportData | null>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [isPrinting, setIsPrinting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedDamage, setSelectedDamage] = useState<any>(null)
+  const [selectedDamage, setSelectedDamage] = useState<DamageAnalysisImageArea | null>(null)
   const [showDamagePopup, setShowDamagePopup] = useState(false)
 
   useEffect(() => {
@@ -250,76 +202,65 @@ export default function DamageAnalysisReportPage() {
     }
   }
 
-  const transformBackendDataToFrontend = (backendData: any): DamageAnalysisReport => {
-    // Backend'den gelen veriyi frontend formatına çevir
-    const aiAnalysisData = backendData.aiAnalysisData || {}
-    console.log('🔍 Backend Data:', backendData)
-    console.log('🔍 AI Analysis Data:', aiAnalysisData)
-    console.log('🔍 Analysis Results:', aiAnalysisData.analysisResults)
-    console.log('🔍 Vehicle Images:', backendData.vehicleImages)
-    
+  const transformBackendDataToFrontend = (backendData: any): DamageAnalysisReportData => {
+    const aiAnalysisData = backendData?.aiAnalysisData ?? {}
+    const summary = aiAnalysisData?.summary ?? {}
+    const technical = aiAnalysisData?.technicalDetails ?? {}
+
     return {
-      id: backendData.id.toString(),
+      id: String(backendData?.id ?? ''),
       vehicleInfo: {
-        make: backendData.vehicleBrand || 'Bilinmiyor',
-        model: backendData.vehicleModel || 'Bilinmiyor',
-        year: backendData.vehicleYear || 2020,
-        vin: 'Bilinmiyor',
-        plate: backendData.vehiclePlate || 'Bilinmiyor'
+        make: backendData?.vehicleBrand ?? 'Bilinmiyor',
+        model: backendData?.vehicleModel ?? 'Bilinmiyor',
+        year: Number(backendData?.vehicleYear ?? new Date().getFullYear()),
+        vin: backendData?.vehicleVin ?? backendData?.vehicleInfo?.vin ?? 'Belirtilmemiş',
+        plate: backendData?.vehiclePlate ?? 'Belirtilmemiş'
       },
-      overallScore: aiAnalysisData.overallScore || 0,
-      damageSeverity: aiAnalysisData.damageSeverity || 'low',
-      analysisDate: new Date(backendData.createdAt).toLocaleDateString('tr-TR'),
-      images: transformImagesData(backendData.vehicleImages || [], aiAnalysisData.analysisResults || []),
-      summary: aiAnalysisData.summary || {
-        totalDamages: 0,
-        criticalDamages: 0,
-        estimatedRepairCost: 0,
-        insuranceImpact: 'Değerlendirilecek',
-        safetyConcerns: [],
-        strengths: [],
-        weaknesses: [],
-        recommendations: [],
-        marketValueImpact: 0
+      overallScore: Number(aiAnalysisData?.overallScore ?? 0),
+      damageSeverity: (aiAnalysisData?.damageSeverity ?? 'low') as DamageSeverityLevel,
+      analysisDate: backendData?.createdAt ? new Date(backendData.createdAt).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR'),
+      images: transformImagesData(backendData?.vehicleImages ?? [], aiAnalysisData?.analysisResults ?? []),
+      summary: {
+        totalDamages: Number(summary?.totalDamages ?? 0),
+        criticalDamages: Number(summary?.criticalDamages ?? 0),
+        estimatedRepairCost: Number(summary?.estimatedRepairCost ?? 0),
+        insuranceImpact: summary?.insuranceImpact ?? 'Değerlendirilecek',
+        safetyConcerns: Array.isArray(summary?.safetyConcerns) ? summary.safetyConcerns : [],
+        strengths: Array.isArray(summary?.strengths) ? summary.strengths : [],
+        weaknesses: Array.isArray(summary?.weaknesses) ? summary.weaknesses : [],
+        recommendations: Array.isArray(summary?.recommendations) ? summary.recommendations : [],
+        marketValueImpact: Number(summary?.marketValueImpact ?? 0)
       },
-        technicalDetails: aiAnalysisData.technicalDetails || {
-          analysisMethod: 'Google Gemini AI Analizi',
-          aiModel: 'Gemini 1.5 Flash',
-          confidence: 95,
-          processingTime: '2.5 saniye',
-          imageQuality: 'Yüksek (1024x1024)'
-        }
+      technicalDetails: {
+        analysisMethod: technical?.analysisMethod ?? 'AI destekli hasar analizi',
+        aiModel: technical?.aiModel ?? 'OpenAI',
+        confidence: Number(technical?.confidence ?? aiAnalysisData?.confidence ?? 85),
+        processingTime: technical?.processingTime ?? '3-5 saniye',
+        imageQuality: technical?.imageQuality ?? 'Yüksek çözünürlüklü (1024x1024)'
+      }
     }
   }
 
   const transformImagesData = (vehicleImages: any[], analysisResults: any[]) => {
-    // Backend'den gelen resim verilerini frontend formatına çevir
-    console.log('🔍 TransformImagesData - VehicleImages:', vehicleImages)
-    console.log('🔍 TransformImagesData - AnalysisResults:', analysisResults)
-    
     return vehicleImages.map((image, index) => {
-      // imageId ile eşleştir
       const analysisResult = analysisResults.find((result: any) => result.imageId === image.id) || {}
-      const damageAreas = analysisResult.damageAreas || []
-      console.log(`🔍 Image ${index} (ID: ${image.id}) - AnalysisResult:`, analysisResult)
-      console.log(`🔍 Image ${index} (ID: ${image.id}) - DamageAreas:`, damageAreas)
-      
+      const damageAreas = Array.isArray(analysisResult.damageAreas) ? analysisResult.damageAreas : []
+
       return {
         angle: getAngleFromImageType(image.imageType) || 'front',
-        damageAreas: damageAreas.map((damage: any) => ({
-          x: damage.x || 0,
-          y: damage.y || 0,
-          width: damage.width || 0,
-          height: damage.height || 0,
-          type: damage.type || 'scratch',
-          severity: damage.severity || 'low',
-          confidence: damage.confidence || 0,
-          description: damage.description || 'Hasar tespit edildi',
-          estimatedRepairCost: damage.repairCost || damage.estimatedRepairCost || 0,
-          partsAffected: damage.partsAffected || [],
-          area: damage.area || 'front'
+        damageAreas: damageAreas.map((damage: any, damageIndex: number): DamageAnalysisImageArea => ({
+          id: damage?.id ?? `damage-${index + 1}-${damageIndex + 1}`,
+          x: Number(damage?.x ?? 0),
+          y: Number(damage?.y ?? 0),
+          width: Number(damage?.width ?? 0),
+          height: Number(damage?.height ?? 0),
+          type: (damage?.type ?? 'scratch') as DamageAnalysisImageArea['type'],
+          severity: (damage?.severity ?? 'low') as DamageAnalysisImageArea['severity'],
+          confidence: Math.max(0, Math.min(100, Number(damage?.confidence ?? 75))),
+          description: typeof damage?.description === 'string' ? damage.description : 'Hasar tespit edildi',
+          estimatedRepairCost: Number(damage?.repairCost ?? damage?.estimatedRepairCost ?? 0)
         })),
-        totalDamageScore: analysisResult.totalDamageScore || 0,
+        totalDamageScore: Number(analysisResult.totalDamageScore ?? 0),
         recommendations: generateRecommendationsFromDamageAreas(damageAreas)
       }
     })
@@ -338,7 +279,7 @@ export default function DamageAnalysisReportPage() {
     const recommendations: string[] = []
     
     damageAreas.forEach(damage => {
-      // Gemini'den gelen gerçek verileri kullan
+      // OpenAI'den gelen gerçek verileri kullan
       if (damage.partsAffected && damage.partsAffected.length > 0) {
         recommendations.push(`${damage.description} - Etkilenen parçalar: ${damage.partsAffected.join(', ')}`)
       } else if (damage.severity === 'high') {
@@ -362,85 +303,11 @@ export default function DamageAnalysisReportPage() {
 
   const generatePDF = async () => {
     if (!report) return
-    
+
     setIsGeneratingPDF(true)
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      
-      // Header
-      pdf.setFillColor(220, 38, 38) // Red for damage analysis
-      pdf.rect(0, 0, pageWidth, 40, 'F')
-      
-      pdf.setTextColor(255, 255, 255)
-      pdf.setFontSize(20)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('HASAR ANALİZİ RAPORU', pageWidth / 2, 20, { align: 'center' })
-      
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text('Mivvo Expertiz - Gelişmiş Analiz Sistemi (OpenAI Quota Aşıldı)', pageWidth / 2, 30, { align: 'center' })
-      
-      // Vehicle Info
-      pdf.setTextColor(0, 0, 0)
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('ARAÇ BİLGİLERİ', 20, 50)
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`Marka: ${report.vehicleInfo.make}`, 20, 60)
-      pdf.text(`Model: ${report.vehicleInfo.model}`, 20, 65)
-      pdf.text(`Yıl: ${report.vehicleInfo.year}`, 20, 70)
-      pdf.text(`Plaka: ${report.vehicleInfo.plate}`, 20, 75)
-      pdf.text(`VIN: ${report.vehicleInfo.vin}`, 20, 80)
-      pdf.text(`Analiz Tarihi: ${report.analysisDate}`, 20, 85)
-      
-      // Damage Summary
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('HASAR ÖZETİ', 20, 100)
-      
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text(`Toplam Hasar: ${report.summary.totalDamages}`, 20, 110)
-      pdf.text(`Kritik Hasar: ${report.summary.criticalDamages}`, 20, 115)
-      pdf.text(`Tahmini Onarım Maliyeti: ₺${(report.summary.estimatedRepairCost || 0).toLocaleString('tr-TR')}`, 20, 120)
-      pdf.text(`Piyasa Değeri Etkisi: %${report.summary.marketValueImpact || 0}`, 20, 125)
-      
-      // Critical Issues
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('KRİTİK SORUNLAR', 20, 140)
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      report.summary.safetyConcerns.forEach((concern, index) => {
-        pdf.text(`• ${concern}`, 20, 150 + (index * 5))
-      })
-      
-      // Recommendations
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('ÖNERİLER', 20, 180)
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      report.summary.recommendations.forEach((rec, index) => {
-        pdf.text(`• ${rec}`, 20, 190 + (index * 5))
-      })
-      
-      // Footer
-      pdf.setFontSize(8)
-      pdf.setTextColor(107, 114, 128)
-      pdf.text('Bu rapor Mivvo Expertiz Gelişmiş Analiz Sistemi kullanılarak oluşturulmuştur (OpenAI quota aşıldı).', 20, 280)
-      pdf.text('www.mivvo.com', pageWidth - 20, 280, { align: 'right' })
-      
-      const fileName = `hasar-analizi-${report.vehicleInfo.plate}-${new Date().toISOString().split('T')[0]}.pdf`
-      pdf.save(fileName)
-      
+      await generateDamageAnalysisPDF(report)
       toast.success('PDF başarıyla oluşturuldu!')
-      
     } catch (error) {
       console.error('PDF oluşturma hatası:', error)
       toast.error('PDF oluşturulurken hata oluştu!')
@@ -448,6 +315,7 @@ export default function DamageAnalysisReportPage() {
       setIsGeneratingPDF(false)
     }
   }
+
 
   const handlePrint = async () => {
     setIsPrinting(true)
@@ -520,7 +388,7 @@ export default function DamageAnalysisReportPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600">Google Gemini AI ile analiz yapılıyor...</p>
+          <p className="text-gray-600">OpenAI Vision API ile analiz yapılıyor...</p>
           <p className="text-sm text-gray-500">Bu işlem 2-3 saniye sürebilir</p>
         </div>
       </div>
@@ -610,7 +478,7 @@ export default function DamageAnalysisReportPage() {
               <button
                 onClick={generatePDF}
                 disabled={isGeneratingPDF}
-                className="btn btn-primary"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isGeneratingPDF ? (
                   <>
@@ -900,7 +768,7 @@ export default function DamageAnalysisReportPage() {
                       <span className="font-medium">{report.technicalDetails.analysisMethod}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">AI Modeli:</span>
+                      <span className="text-gray-600">AI Provider:</span>
                       <span className="font-medium text-sm">{report.technicalDetails.aiModel}</span>
                     </div>
                     <div className="flex justify-between">

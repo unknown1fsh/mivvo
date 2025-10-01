@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AIService } from '../services/aiService';
+import { DamageDetectionResult } from '../services/damageDetectionService';
 
 const prisma = new PrismaClient();
 
@@ -73,19 +74,20 @@ export const damageDetection = asyncHandler(async (req: AuthRequest, res: Respon
     console.log('🤖 Gerçek AI ile hasar tespiti başlatılıyor...');
     
     // AI ile hasar tespiti
-    const damageAreas = await AIService.detectDamage(imagePath);
-    
-    console.log('✅ AI hasar tespiti tamamlandı:', damageAreas?.length || 0, 'hasar tespit edildi');
+    const damageAreas: DamageDetectionResult = await AIService.detectDamage(imagePath);
+    const areas = damageAreas?.damageAreas || [];
+    console.log('✅ AI hasar tespiti tamamlandı:', areas.length, 'hasar tespit edildi');
 
     // Genel analiz sonucu hesapla
-    const totalDamages = damageAreas?.length || 0;
-    const criticalDamages = damageAreas?.filter(d => d.severity === 'high').length || 0;
-    const severity = damageAreas && damageAreas.length > 0 ? 
-      Math.max(...damageAreas.map(d => d.severity === 'high' ? 3 : d.severity === 'medium' ? 2 : 1)) : 0;
-    
+    const totalDamages = areas.length;
+    const criticalDamages = areas.filter((d: any) => d.severity === 'high').length;
+    const severity = areas.length > 0
+      ? Math.max(...areas.map((d: any) => d.severity === 'high' ? 3 : d.severity === 'medium' ? 2 : 1))
+      : 0;
+
     // Genel skor hesapla
     const overallScore = totalDamages === 0 ? 95 : Math.max(10, 95 - (totalDamages * 15) - (criticalDamages * 25));
-    
+
     // Hasar şiddeti belirle
     let damageSeverity: 'low' | 'medium' | 'high' | 'critical';
     if (overallScore >= 90) damageSeverity = 'low';
@@ -94,14 +96,14 @@ export const damageDetection = asyncHandler(async (req: AuthRequest, res: Respon
     else damageSeverity = 'critical';
 
     // Tahmini onarım maliyeti
-    const estimatedRepairCost = damageAreas?.reduce((sum, damage) => {
+    const estimatedRepairCost = areas.reduce((sum: number, damage: any) => {
       const baseCost = damage.type === 'dent' ? 1500 : 
                       damage.type === 'scratch' ? 300 :
                       damage.type === 'rust' ? 800 :
                       damage.type === 'oxidation' ? 400 : 500;
       const severityMultiplier = damage.severity === 'high' ? 2 : damage.severity === 'medium' ? 1.5 : 1;
       return sum + (baseCost * severityMultiplier);
-    }, 0) || 0;
+    }, 0);
 
     res.json({
       success: true,

@@ -1,11 +1,11 @@
-// Boya analizi custom hook'u
+// Değer tahmini custom hook'u
 
 import { useState, useCallback } from 'react'
 import { VehicleInfo } from '@/types/vehicle'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
 
-export const usePaintAnalysis = () => {
+export const useValueEstimation = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   const performAnalysis = useCallback(async (vehicleInfo: VehicleInfo, uploadedImagesCount: number) => {
@@ -13,9 +13,9 @@ export const usePaintAnalysis = () => {
     
     try {
       // 1. Analizi başlat
-      toast.loading('Boya analizi başlatılıyor...', { id: 'paint-analysis' })
+      toast.loading('Değer tahmini başlatılıyor...', { id: 'value-estimation' })
       
-      const startResponse = await api.post('/paint-analysis/start', {
+      const startResponse = await api.post('/value-estimation/start', {
         vehicleInfo: {
           plate: vehicleInfo.plate,
           make: vehicleInfo.make,
@@ -29,11 +29,11 @@ export const usePaintAnalysis = () => {
       }
 
       const reportId = startResponse.data.data.reportId
-      console.log('✅ Boya analizi başlatıldı, Report ID:', reportId)
+      console.log('✅ Değer tahmini başlatıldı, Report ID:', reportId)
 
       // 2. Resimleri yükle (eğer varsa)
       if (uploadedImagesCount > 0) {
-        toast.loading('Resimler yükleniyor...', { id: 'paint-analysis' })
+        toast.loading('Resimler yükleniyor...', { id: 'value-estimation' })
         
         // Global resimlerden al
         const savedImages = localStorage.getItem('globalVehicleImages')
@@ -50,7 +50,7 @@ export const usePaintAnalysis = () => {
             }
           }
 
-          await api.post(`/paint-analysis/${reportId}/upload`, formData, {
+          await api.post(`/value-estimation/${reportId}/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           })
           
@@ -59,18 +59,18 @@ export const usePaintAnalysis = () => {
       }
 
       // 3. AI analizi gerçekleştir
-      toast.loading('OpenAI Vision API ile analiz ediliyor...', { id: 'paint-analysis' })
+      toast.loading('OpenAI ile piyasa analizi yapılıyor...', { id: 'value-estimation' })
       
-      const analyzeResponse = await api.post(`/paint-analysis/${reportId}/analyze`)
+      const analyzeResponse = await api.post(`/value-estimation/${reportId}/analyze`)
 
       if (!analyzeResponse.data.success) {
         throw new Error(analyzeResponse.data.message || 'Analiz gerçekleştirilemedi')
       }
 
-      console.log('✅ Boya analizi tamamlandı')
+      console.log('✅ Değer tahmini tamamlandı')
 
-      toast.dismiss('paint-analysis')
-      toast.success('🎨 Boya analizi raporu başarıyla oluşturuldu!')
+      toast.dismiss('value-estimation')
+      toast.success('💰 Değer tahmini raporu başarıyla oluşturuldu!')
       
       return {
         reportId,
@@ -79,9 +79,9 @@ export const usePaintAnalysis = () => {
       }
       
     } catch (error: any) {
-      console.error('❌ Boya analizi hatası:', error)
-      toast.dismiss('paint-analysis')
-      toast.error(error.response?.data?.message || error.message || 'Boya analizi başarısız oldu')
+      console.error('❌ Değer tahmini hatası:', error)
+      toast.dismiss('value-estimation')
+      toast.error(error.response?.data?.message || error.message || 'Değer tahmini başarısız oldu')
       throw error
     } finally {
       setIsAnalyzing(false)

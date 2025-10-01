@@ -1,248 +1,212 @@
-// PDF oluşturma yardımcı fonksiyonları - Modern data table ile Türkçe karakter sorunu çözüldü
-
-import jsPDF from 'jspdf'
+﻿import jsPDF from 'jspdf'
 import { AIAnalysisResults } from '@/types/report'
+import { ensureTurkishFont } from './pdfFonts'
 
-// Türkçe karakter desteği için font ayarları
-const setupTurkishFont = (pdf: jsPDF) => {
-  // Helvetica font'u Türkçe karakterleri destekler
-  pdf.setFont('helvetica', 'normal')
+const palette = {
+  midnight: '#0f172a',
+  navy: '#1e3a8a',
+  indigo: '#4c1d95',
+  cyan: '#06b6d4',
+  slate: '#475569',
+  muted: '#94a3b8',
+  surface: '#f8fafc',
+  border: '#e2e8f0',
+  accent: '#38bdf8',
 }
 
-// Renk kodları
-const colors = {
-  primary: '#1e3a8a',      // Koyu mavi
-  secondary: '#7c3aed',   // Mor
-  success: '#16a34a',     // Yeşil
-  warning: '#ea580c',     // Turuncu
-  danger: '#dc2626',      // Kırmızı
-  gray: '#374151',        // Koyu gri
-  lightGray: '#f8fafc'    // Açık gri
-}
+const mm = (value: number) => Number(value.toFixed(2))
 
-// Data table oluştur
-const createDataTable = (pdf: jsPDF, title: string, data: Array<{label: string, value: string}>, startY: number) => {
-  const pageWidth = pdf.internal.pageSize.getWidth()
-  const tableWidth = pageWidth - 40
-  const cellHeight = 15
-  const labelWidth = tableWidth * 0.4
-  const valueWidth = tableWidth * 0.6
-  
-  // Başlık
+const drawSectionTitle = (pdf: jsPDF, title: string, y: number) => {
+  ensureTurkishFont(pdf)
+  pdf.setTextColor(palette.navy)
   pdf.setFontSize(14)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text(title, 20, startY)
-  
-  let y = startY + 20
-  
-  // Tablo çerçevesi
-  pdf.setDrawColor(colors.primary)
-  pdf.setLineWidth(2)
-  pdf.rect(20, y - 5, tableWidth, (data.length * cellHeight) + 10)
-  
-  // Veri satırları
-  data.forEach((item, index) => {
-    const rowY = y + (index * cellHeight)
-    
-    // Satır çizgisi
-    pdf.setDrawColor(colors.gray)
-    pdf.setLineWidth(0.5)
-    pdf.line(20, rowY, 20 + tableWidth, rowY)
-    
-    // Label arka planı
-    pdf.setFillColor(colors.lightGray)
-    pdf.rect(20, rowY - cellHeight, labelWidth, cellHeight, 'F')
-    
-    // Label
-    pdf.setFontSize(11)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(colors.gray)
-    pdf.text(item.label, 25, rowY - 3)
-    
-    // Value - String'e dönüştür
-    pdf.setFontSize(12)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text(String(item.value), 25 + labelWidth, rowY - 3)
-  })
-  
-  return y + (data.length * cellHeight) + 20
+  pdf.text(title.toUpperCase(), 20, y)
+  pdf.setDrawColor(palette.border)
+  pdf.setLineWidth(0.6)
+  pdf.line(20, y + 2, pdf.internal.pageSize.getWidth() - 20, y + 2)
 }
 
-// Başlık bölümü oluştur
-const createHeader = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
-  const pageWidth = pdf.internal.pageSize.getWidth()
-  
-  // Logo alanı
-  pdf.setFillColor(colors.primary)
-  pdf.rect(0, 0, pageWidth, 45, 'F')
-  
-  // Logo metni
-  pdf.setFontSize(20)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(255, 255, 255)
-  pdf.text('MIVVO EXPERTIZ', pageWidth / 2, 25, { align: 'center' })
-  
-  // Ana başlık
-  pdf.setFontSize(18)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(255, 255, 255)
-  pdf.text('AI Destekli Boya Analizi Raporu', pageWidth / 2, 35, { align: 'center' })
-  
-  // Alt başlık
+const drawKeyValue = (pdf: jsPDF, label: string, value: string, x: number, y: number) => {
+  ensureTurkishFont(pdf)
+  pdf.setFontSize(10)
+  pdf.setTextColor(palette.muted)
+  pdf.text(label, x, y)
   pdf.setFontSize(12)
-  pdf.setFont('helvetica', 'normal')
-  pdf.text('Profesyonel Araç Analizi ve Değerlendirme', pageWidth / 2, 42, { align: 'center' })
+  pdf.setTextColor(palette.midnight)
+  pdf.text(value, x, y + 6)
 }
 
-// Rapor bilgileri bölümü
-const createReportInfo = (pdf: jsPDF, analysisData: AIAnalysisResults) => {
-  const reportData = [
-    { label: 'Rapor No', value: analysisData.reportId },
-    { label: 'Tarih', value: analysisData.analysisDate },
-    { label: 'Rapor Türü', value: analysisData.reportType },
-    { label: 'AI Güven Skoru', value: `%${analysisData.confidence}` }
-  ]
-  
-  return createDataTable(pdf, 'Rapor Bilgileri', reportData, 55)
-}
+const drawSummaryCard = (pdf: jsPDF, options: { x: number; y: number; title: string; value: string; helper?: string; background?: string }) => {
+  const { x, y, title, value, helper, background = '#ffffff' } = options
+  ensureTurkishFont(pdf)
+  pdf.setDrawColor(255, 255, 255)
+  pdf.setFillColor(background)
+  pdf.roundedRect(x, y, 55, 32, 4, 4, 'F')
+  pdf.setDrawColor(palette.border)
+  pdf.roundedRect(x, y, 55, 32, 4, 4, 'S')
 
-// Araç bilgileri bölümü
-const createVehicleInfo = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
-  const vehicleData = [
-    { label: 'Plaka', value: String(analysisData.vehicleInfo.plate) },
-    { label: 'Marka', value: String(analysisData.vehicleInfo.make) },
-    { label: 'Model', value: String(analysisData.vehicleInfo.model) },
-    { label: 'Yıl', value: String(analysisData.vehicleInfo.year) },
-    { label: 'VIN', value: String(analysisData.vehicleInfo.vin) }
-  ]
-  
-  return createDataTable(pdf, 'Araç Bilgileri', vehicleData, startY)
-}
+  pdf.setFontSize(9)
+  pdf.setTextColor(palette.muted)
+  pdf.text(title.toUpperCase(), x + 4, y + 8)
 
-// Boya analizi sonuçları bölümü
-const createAnalysisResults = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
-  const analysisData_table = [
-    { label: 'Genel Skor', value: `${analysisData.paintAnalysis.overallScore}/100` },
-    { label: 'Boya Durumu', value: analysisData.paintAnalysis.paintCondition },
-    { label: 'Renk Eşleştirme', value: `%${analysisData.paintAnalysis.colorMatching}` },
-    { label: 'Boya Kalınlığı', value: `${analysisData.paintAnalysis.paintThickness} mikron` },
-    { label: 'Parlaklık Seviyesi', value: `%${analysisData.paintAnalysis.glossLevel}` },
-    { label: 'Oksidasyon', value: `%${analysisData.paintAnalysis.oxidationLevel}` }
-  ]
-  
-  return createDataTable(pdf, 'Boya Analizi Sonuçları', analysisData_table, startY)
-}
-
-// Hasar analizi bölümü
-const createDamageAnalysis = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
-  const damageData = [
-    { label: 'Çizik Sayısı', value: analysisData.paintAnalysis.scratchCount.toString() },
-    { label: 'Çukur Sayısı', value: analysisData.paintAnalysis.dentCount.toString() },
-    { label: 'Pas Durumu', value: analysisData.paintAnalysis.rustDetected ? 'Tespit Edildi' : 'Tespit Edilmedi' }
-  ]
-  
-  return createDataTable(pdf, 'Hasar Analizi', damageData, startY)
-}
-
-// Teknik detaylar bölümü
-const createTechnicalDetails = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
-  const technicalData = [
-    { label: 'Primer Türü', value: 'Akrilik' },
-    { label: 'Baz Kat Türü', value: 'Su bazlı' },
-    { label: 'Şeffaf Kat Türü', value: 'Seramik' },
-    { label: 'UV Koruması', value: 'Var' },
-    { label: 'Uygulama Yöntemi', value: 'Robotik sprey' }
-  ]
-  
-  return createDataTable(pdf, 'Teknik Detaylar', technicalData, startY)
-}
-
-// Öneriler bölümü
-const createRecommendations = (pdf: jsPDF, analysisData: AIAnalysisResults, startY: number) => {
-  // Başlık
   pdf.setFontSize(14)
-  pdf.setFont('helvetica', 'bold')
-  pdf.setTextColor(colors.primary)
-  pdf.text('Öneriler', 20, startY)
-  
-  let y = startY + 20
-  
-  // Öneriler listesi
-  analysisData.paintAnalysis.recommendations.forEach((rec, index) => {
-    // Öneri metni
-    pdf.setFontSize(12)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text(`• ${rec}`, 20, y)
-    
-    y += 15
-  })
-  
-  return y + 20
+  pdf.setTextColor(palette.navy)
+  pdf.text(value, x + 4, y + 18)
+
+  if (helper) {
+    pdf.setFontSize(9)
+    pdf.setTextColor(palette.slate)
+    pdf.text(helper, x + 4, y + 26)
+  }
 }
 
-// Alt bilgi bölümü
-const createFooter = (pdf: jsPDF, startY: number) => {
+const splitParagraph = (pdf: jsPDF, text: string, x: number, y: number, maxWidth: number, lineHeight = 5) => {
+  ensureTurkishFont(pdf)
+  pdf.setFontSize(11)
+  pdf.setTextColor(palette.midnight)
+  const lines = pdf.splitTextToSize(text, maxWidth)
+  lines.forEach((line, index) => {
+    pdf.text(line, x, y + index * lineHeight)
+  })
+  return y + lines.length * lineHeight
+}
+
+const drawRecommendationList = (pdf: jsPDF, items: string[], startY: number) => {
+  let cursorY = startY
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const maxWidth = pageWidth - 40
+
+  items.forEach((item) => {
+    cursorY = splitParagraph(pdf, `• ${item}`, 24, cursorY, maxWidth)
+    cursorY += 2
+  })
+  return cursorY
+}
+
+const drawFooter = (pdf: jsPDF) => {
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
-  
-  // Alt çizgi
-  pdf.setDrawColor(colors.gray)
-  pdf.setLineWidth(1)
-  pdf.line(20, startY, pageWidth - 20, startY)
-  
-  // Alt bilgi
+  pdf.setDrawColor(palette.border)
+  pdf.setLineWidth(0.5)
+  pdf.line(20, pageHeight - 20, pageWidth - 20, pageHeight - 20)
+
+  ensureTurkishFont(pdf)
+  pdf.setFontSize(9)
+  pdf.setTextColor(palette.muted)
+  pdf.text('Bu rapor Mivvo Expertiz yapay zekâ analiz sistemince hazırlanmıştır.', pageWidth / 2, pageHeight - 13, { align: 'center' })
+  pdf.text('Gizlidir ve sadece yetkili kişi/kurumlarla paylaşılmalıdır.', pageWidth / 2, pageHeight - 8, { align: 'center' })
+}
+
+const drawHeader = (pdf: jsPDF, analysis: AIAnalysisResults) => {
+  const pageWidth = pdf.internal.pageSize.getWidth()
+  const gradientHeight = 58
+  pdf.setFillColor(palette.navy)
+  pdf.rect(0, 0, pageWidth, gradientHeight, 'F')
+  pdf.setFillColor(palette.indigo)
+  pdf.rect(pageWidth * 0.45, 0, pageWidth * 0.55, gradientHeight, 'F')
+
+  ensureTurkishFont(pdf)
+  pdf.setFontSize(22)
+  pdf.setTextColor(255, 255, 255)
+  pdf.text('MİVVO EXPERTİZ', 20, 24)
+
+  pdf.setFontSize(13)
+  pdf.text('AI Destekli Boya Analizi Raporu', 20, 36)
+
   pdf.setFontSize(10)
-  pdf.setFont('helvetica', 'italic')
-  pdf.setTextColor(colors.gray)
-  pdf.text('Bu rapor AI destekli analiz sistemi tarafından oluşturulmuştur.', pageWidth / 2, startY + 10, { align: 'center' })
-  pdf.text('Mivvo Expertiz - Profesyonel Araç Analizi', pageWidth / 2, startY + 20, { align: 'center' })
+  pdf.text(`Rapor No: ${analysis.reportId}`, 20, 46)
+  pdf.text(`Oluşturulma Tarihi: ${analysis.analysisDate}`, 20, 52)
+
+  // Sağ taraf
+  const severityBoxX = pageWidth - 80
+  pdf.setFillColor(255, 255, 255, 0.12)
+  pdf.roundedRect(severityBoxX, 16, 60, 32, 4, 4, 'F')
+  pdf.setFontSize(12)
+  pdf.text('AI Güven Skoru', severityBoxX + 5, 30)
+  pdf.setFontSize(20)
+  pdf.text(`${analysis.confidence}%`, severityBoxX + 5, 45)
 }
 
 export const generatePaintAnalysisPDF = async (analysisData: AIAnalysisResults): Promise<void> => {
-  try {
-    console.log('📄 PDF oluşturma başlatıldı:', analysisData)
-    
-    // PDF oluştur
-    const pdf = new jsPDF('p', 'mm', 'a4')
-    console.log('📄 PDF instance oluşturuldu')
-    
-    // Türkçe karakter desteği
-    setupTurkishFont(pdf)
-    
-    // Başlık
-    createHeader(pdf, analysisData)
-    
-    // Rapor bilgileri
-    let currentY = createReportInfo(pdf, analysisData)
-    
-    // Araç bilgileri
-    currentY = createVehicleInfo(pdf, analysisData, currentY)
-    
-    // Boya analizi sonuçları
-    currentY = createAnalysisResults(pdf, analysisData, currentY)
-    
-    // Hasar analizi
-    currentY = createDamageAnalysis(pdf, analysisData, currentY)
-    
-    // Teknik detaylar
-    currentY = createTechnicalDetails(pdf, analysisData, currentY)
-    
-    // Öneriler
-    currentY = createRecommendations(pdf, analysisData, currentY)
-    
-    // Alt bilgi
-    createFooter(pdf, currentY)
-    
-    // PDF'i indir
-    const fileName = `boya-analizi-raporu-${analysisData.reportId}.pdf`
-    pdf.save(fileName)
-    console.log('📄 PDF başarıyla indirildi:', fileName)
-    
-  } catch (error) {
-    console.error('❌ PDF oluşturma hatası:', error)
-    throw error
+  if (!analysisData.paintAnalysis) {
+    throw new Error('Boya analizi verisi bulunamadı')
   }
+
+  const pdf = new jsPDF('p', 'mm', 'a4')
+  ensureTurkishFont(pdf)
+
+  drawHeader(pdf, analysisData)
+
+  // Özet kartları
+  const { paintAnalysis } = analysisData
+  const startY = 70
+  drawSummaryCard(pdf, {
+    x: 20,
+    y: startY,
+    title: 'Genel Skor',
+    value: `${paintAnalysis.overallScore}/100`,
+    helper: 'Genel boya kondisyonu'
+  })
+  drawSummaryCard(pdf, {
+    x: 80,
+    y: startY,
+    title: 'Renk Eşleşmesi',
+    value: `%${paintAnalysis.colorMatching}`,
+    helper: 'Orijinal renkle uyum'
+  })
+  drawSummaryCard(pdf, {
+    x: 140,
+    y: startY,
+    title: 'Parlaklık Seviyesi',
+    value: `%${paintAnalysis.glossLevel}`,
+    helper: 'Yüzey parlaklığı'
+  })
+
+  // Rapor bilgileri
+  drawSectionTitle(pdf, 'RAPOR ÖZETİ', startY + 45)
+  drawKeyValue(pdf, 'Rapor Numarası', analysisData.reportId, 20, startY + 58)
+  drawKeyValue(pdf, 'Rapor Türü', analysisData.reportType, 90, startY + 58)
+  drawKeyValue(pdf, 'Analiz Tarihi', analysisData.analysisDate, 20, startY + 74)
+  drawKeyValue(pdf, 'Yüklenen Görseller', `${analysisData.uploadedImages} adet`, 90, startY + 74)
+
+  // Araç bilgileri
+  const vehicleInfoY = startY + 98
+  drawSectionTitle(pdf, 'ARAÇ BİLGİLERİ', vehicleInfoY)
+  const v = analysisData.vehicleInfo
+  drawKeyValue(pdf, 'Plaka', v.plate || 'Belirtilmedi', 20, vehicleInfoY + 13)
+  drawKeyValue(pdf, 'Marka', v.make || 'Belirtilmedi', 90, vehicleInfoY + 13)
+  drawKeyValue(pdf, 'Model', v.model || 'Belirtilmedi', 20, vehicleInfoY + 29)
+  drawKeyValue(pdf, 'Model Yılı', String(v.year || 'Belirtilmedi'), 90, vehicleInfoY + 29)
+  drawKeyValue(pdf, 'Şasi / VIN', v.vin || 'Belirtilmedi', 20, vehicleInfoY + 45)
+
+  // Boya analiz detayları
+  const analysisY = vehicleInfoY + 70
+  drawSectionTitle(pdf, 'ANALİZ DETAYLARI', analysisY)
+
+  const detailRows = [
+    { label: 'Boya Durumu', value: paintAnalysis.paintCondition },
+    { label: 'Boya Kalınlığı', value: `${paintAnalysis.paintThickness} mikron` },
+    { label: 'Çizik Sayısı', value: `${paintAnalysis.scratchCount} adet` },
+    { label: 'Çukur Sayısı', value: `${paintAnalysis.dentCount} adet` },
+    { label: 'Pas Durumu', value: paintAnalysis.rustDetected ? 'Tespit edildi' : 'Tespit edilmedi' },
+    { label: 'Oksidasyon Oranı', value: `%${paintAnalysis.oxidationLevel}` }
+  ]
+
+  let detailY = analysisY + 13
+  detailRows.forEach((row, index) => {
+    const columnX = index % 2 === 0 ? 20 : 90
+    const rowY = detailY + Math.floor(index / 2) * 18
+    drawKeyValue(pdf, row.label, row.value, columnX, rowY)
+  })
+
+  // Öneriler
+  let recommendationY = detailY + Math.ceil(detailRows.length / 2) * 18 + 12
+  drawSectionTitle(pdf, 'BAKIM VE ONARIM ÖNERİLERİ', recommendationY)
+  recommendationY = drawRecommendationList(pdf, paintAnalysis.recommendations, recommendationY + 12)
+
+  // Footer
+  drawFooter(pdf)
+
+  const fileName = `mivvo-boya-analizi-${analysisData.reportId}.pdf`
+  pdf.save(fileName)
 }

@@ -1,15 +1,22 @@
-import { Router } from 'express';
-import { PaintAnalysisController, upload } from '../controllers/paintAnalysisController';
+import express from 'express'
+import { PaintAnalysisController, upload } from '../controllers/paintAnalysisController'
+import { authenticate } from '../middleware/auth'
 
-const router = Router();
+const router = express.Router()
 
-// Boya analizi için resim yükleme ve analiz
-router.post('/analyze', upload.array('images', 10), PaintAnalysisController.analyzePaint);
+// Tüm rotalar için kimlik doğrulama gerekli
+router.use(authenticate)
 
-// Boya analizi geçmişini getir
-router.get('/history', PaintAnalysisController.getAnalysisHistory);
+// Boya analizi başlat
+router.post('/start', PaintAnalysisController.startAnalysis)
 
-// Detaylı analiz raporu getir
-router.get('/report/:analysisId', PaintAnalysisController.getAnalysisReport);
+// Resim yükleme (çoklu dosya)
+router.post('/:reportId/upload', upload.array('images', 10), PaintAnalysisController.uploadImages)
 
-export default router;
+// Boya analizi gerçekleştir
+router.post('/:reportId/analyze', PaintAnalysisController.performAnalysis)
+
+// Boya analizi raporu getir
+router.get('/:reportId', PaintAnalysisController.getReport)
+
+export default router
