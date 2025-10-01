@@ -87,12 +87,12 @@ export function StaggerContainer({ children, className = '' }: { children: React
   )
 }
 
-export function StaggerItem({ children, className = '' }: { children: ReactNode, className?: string }) {
+export function StaggerItem({ children, className = '', delay = 0 }: { children: ReactNode, className?: string, delay?: number }) {
   return (
     <motion.div
       variants={{
         hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 }
+        visible: { opacity: 1, y: 0, transition: { delay } }
       }}
       className={className}
     >
