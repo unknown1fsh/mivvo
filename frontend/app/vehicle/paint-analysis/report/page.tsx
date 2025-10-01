@@ -19,6 +19,8 @@ import {
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
+import { generatePaintAnalysisPDF } from '@/utils/pdfGenerator'
+import toast from 'react-hot-toast'
 
 interface PaintAnalysisReport {
   id: string
