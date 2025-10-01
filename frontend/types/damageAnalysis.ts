@@ -11,6 +11,8 @@ export interface DamageAnalysisImageArea {
   confidence: number
   description: string
   estimatedRepairCost: number
+  repairCost?: number
+  partsAffected?: string[]
 }
 
 export interface DamageAnalysisImage {

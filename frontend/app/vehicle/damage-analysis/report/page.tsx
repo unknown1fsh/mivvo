@@ -25,6 +25,7 @@ import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
 import { DamageAnalysisReportData, DamageSeverityLevel, DamageAnalysisImageArea } from '@/types/damageAnalysis'
+import { generateDamageAnalysisPDF } from '@/utils/pdfDamageAnalysis'
 
 
 const damageSeverities: Record<DamageSeverityLevel, { label: string; color: string; bg: string; score: string }> = {
