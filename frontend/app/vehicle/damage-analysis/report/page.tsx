@@ -208,6 +208,17 @@ export default function DamageAnalysisReportPage() {
     const summary = aiAnalysisData?.summary ?? {}
     const technical = aiAnalysisData?.technicalDetails ?? {}
 
+    // Transform images first to calculate total repair cost
+    const transformedImages = transformImagesData(backendData?.vehicleImages ?? [], aiAnalysisData?.analysisResults ?? [])
+    
+    // Calculate total repair cost from all damage areas
+    const totalRepairCost = transformedImages.reduce((total, image) => {
+      const imageCost = image.damageAreas.reduce((imageTotal, damage) => {
+        return imageTotal + (damage.estimatedRepairCost || 0)
+      }, 0)
+      return total + imageCost
+    }, 0)
+
     return {
       id: String(backendData?.id ?? ''),
       vehicleInfo: {
@@ -220,11 +231,11 @@ export default function DamageAnalysisReportPage() {
       overallScore: Number(aiAnalysisData?.overallScore ?? 0),
       damageSeverity: (aiAnalysisData?.damageSeverity ?? 'low') as DamageSeverityLevel,
       analysisDate: backendData?.createdAt ? new Date(backendData.createdAt).toLocaleDateString('tr-TR') : new Date().toLocaleDateString('tr-TR'),
-      images: transformImagesData(backendData?.vehicleImages ?? [], aiAnalysisData?.analysisResults ?? []),
+      images: transformedImages,
       summary: {
         totalDamages: Number(summary?.totalDamages ?? 0),
         criticalDamages: Number(summary?.criticalDamages ?? 0),
-        estimatedRepairCost: Number(summary?.estimatedRepairCost ?? 0),
+        estimatedRepairCost: totalRepairCost > 0 ? totalRepairCost : Number(summary?.estimatedRepairCost ?? 0),
         insuranceImpact: summary?.insuranceImpact ?? 'Değerlendirilecek',
         safetyConcerns: Array.isArray(summary?.safetyConcerns) ? summary.safetyConcerns : [],
         strengths: Array.isArray(summary?.strengths) ? summary.strengths : [],
