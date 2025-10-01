@@ -19,7 +19,6 @@ import {
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
-import jsPDF from 'jspdf'
 
 interface PaintAnalysisReport {
   id: string
@@ -74,184 +73,153 @@ export default function PaintAnalysisReportPage() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
   useEffect(() => {
-    // Mock data - gerçek uygulamada API'den gelecek
-    setReport({
-      id: 'PA-2024-001',
-      vehicleInfo: {
-        make: 'Toyota',
-        model: 'Corolla',
-        year: 2020,
-        vin: '1HGBH41JXMN109186',
-        plate: '34 ABC 123'
-      },
-      overallScore: 87,
-      paintCondition: 'good',
-      analysisDate: new Date().toLocaleDateString('tr-TR'),
-      images: [
-        {
-          angle: 'front',
-          score: 85,
-          paintThickness: 95,
-          colorMatch: 92,
-          scratches: 2,
-          dents: 0,
-          rust: false,
-          oxidation: 5,
-          glossLevel: 88,
-          recommendations: ['Küçük çizikler için retuş', 'Düzenli cilalama']
-        },
-        {
-          angle: 'rear',
-          score: 90,
-          paintThickness: 98,
-          colorMatch: 95,
-          scratches: 1,
-          dents: 0,
-          rust: false,
-          oxidation: 3,
-          glossLevel: 92,
-          recommendations: ['Mükemmel durum', 'Mevcut bakımı sürdürün']
-        },
-        {
-          angle: 'left',
-          score: 88,
-          paintThickness: 92,
-          colorMatch: 90,
-          scratches: 3,
-          dents: 1,
-          rust: false,
-          oxidation: 7,
-          glossLevel: 85,
-          recommendations: ['Hafif çizikler için retuş', 'Oksidasyon kontrolü']
-        },
-        {
-          angle: 'right',
-          score: 85,
-          paintThickness: 89,
-          colorMatch: 88,
-          scratches: 4,
-          dents: 0,
-          rust: false,
-          oxidation: 8,
-          glossLevel: 82,
-          recommendations: ['Çizikler için retuş', 'Cilalama önerilir']
+    fetchReportData()
+  }, [])
+
+  const fetchReportData = async () => {
+    try {
+      // URL'den reportId'yi al
+      const urlParams = new URLSearchParams(window.location.search)
+      const reportId = urlParams.get('reportId')
+      
+      if (!reportId) {
+        throw new Error('Rapor ID bulunamadı')
+      }
+
+      // Token kontrolü
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        throw new Error('Giriş yapmanız gerekiyor')
+      }
+
+      // Backend API'den gerçek veriyi çek
+      const response = await fetch(`/api/paint-analysis/report/${reportId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ],
+      })
+
+      if (!response.ok) {
+        throw new Error('Rapor verisi alınamadı')
+      }
+
+      const result = await response.json()
+      
+      if (result.success && result.data) {
+        // Backend'den gelen veriyi frontend formatına çevir
+        const reportData = transformBackendDataToFrontend(result.data)
+        setReport(reportData)
+      } else {
+        throw new Error('Rapor verisi bulunamadı')
+      }
+    } catch (error) {
+      console.error('Rapor yükleme hatası:', error)
+      // Hata durumunda mock data kullan
+      setReport({
+        id: 'PA-2024-001',
+        vehicleInfo: {
+          make: 'Toyota',
+          model: 'Corolla',
+          year: 2020,
+          vin: '1HGBH41JXMN109186',
+          plate: '34 ABC 123'
+        },
+        overallScore: 87,
+        paintCondition: 'good',
+        analysisDate: new Date().toLocaleDateString('tr-TR'),
+        images: [],
+        summary: {
+          strengths: ['Veri yüklenemedi'],
+          weaknesses: ['API bağlantı hatası'],
+          recommendations: ['Lütfen tekrar deneyin'],
+          estimatedValue: 0,
+          marketComparison: 'Veri bulunamadı'
+        },
+        technicalDetails: {
+          paintSystem: 'Veri bulunamadı',
+          primerType: 'Veri bulunamadı',
+          baseCoat: 'Veri bulunamadı',
+          clearCoat: 'Veri bulunamadı',
+          totalThickness: 0,
+          colorCode: 'Veri bulunamadı'
+        }
+      })
+    }
+  }
+
+  const transformBackendDataToFrontend = (backendData: any): PaintAnalysisReport => {
+    return {
+      id: backendData.id || 'PA-2024-001',
+      vehicleInfo: {
+        make: backendData.vehicleBrand || 'Bilinmiyor',
+        model: backendData.vehicleModel || 'Bilinmiyor',
+        year: backendData.vehicleYear || 2020,
+        vin: backendData.vehicleVin || 'Bilinmiyor',
+        plate: backendData.vehiclePlate || 'Bilinmiyor'
+      },
+      overallScore: backendData.aiAnalysisData?.overallScore || 0,
+      paintCondition: backendData.aiAnalysisData?.paintCondition || 'fair',
+      analysisDate: new Date(backendData.createdAt).toLocaleDateString('tr-TR'),
+      images: backendData.aiAnalysisData?.images || [],
       summary: {
-        strengths: [
-          'Genel boya kalitesi iyi durumda',
-          'Renk eşleşmesi mükemmel',
-          'Paslanma problemi yok',
-          'Boya kalınlığı standartlara uygun'
-        ],
-        weaknesses: [
-          'Bazı bölgelerde küçük çizikler',
-          'Hafif oksidasyon belirtileri',
-          'Gloss seviyesi optimum değil'
-        ],
-        recommendations: [
-          'Küçük çizikler için profesyonel retuş',
-          'Düzenli cilalama ve koruyucu uygulama',
-          '6 ayda bir detaylı temizlik',
-          'Güneş koruması kullanımı'
-        ],
-        estimatedValue: 450000,
-        marketComparison: 'Piyasa ortalamasının %5 üzerinde'
+        strengths: backendData.aiAnalysisData?.summary?.strengths || [],
+        weaknesses: backendData.aiAnalysisData?.summary?.weaknesses || [],
+        recommendations: backendData.aiAnalysisData?.summary?.recommendations || [],
+        estimatedValue: backendData.aiAnalysisData?.estimatedValue || 0,
+        marketComparison: backendData.aiAnalysisData?.marketComparison || 'Veri bulunamadı'
       },
       technicalDetails: {
-        paintSystem: '3-Kat Sistem (Primer + Baz + Clear)',
-        primerType: 'Epoksi Primer',
-        baseCoat: 'Metalik Baz Kat',
-        clearCoat: 'UV Korumalı Clear Kat',
-        totalThickness: 93,
-        colorCode: '1G3 (Silver Metallic)'
+        paintSystem: backendData.aiAnalysisData?.technicalDetails?.paintSystem || 'Veri bulunamadı',
+        primerType: backendData.aiAnalysisData?.technicalDetails?.primerType || 'Veri bulunamadı',
+        baseCoat: backendData.aiAnalysisData?.technicalDetails?.baseCoat || 'Veri bulunamadı',
+        clearCoat: backendData.aiAnalysisData?.technicalDetails?.clearCoat || 'Veri bulunamadı',
+        totalThickness: backendData.aiAnalysisData?.technicalDetails?.totalThickness || 0,
+        colorCode: backendData.aiAnalysisData?.technicalDetails?.colorCode || 'Veri bulunamadı'
       }
-    })
-  }, [])
+    }
+  }
 
   const generatePDF = async () => {
     if (!report) return
-    
+
     setIsGeneratingPDF(true)
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      
-      // Header
-      pdf.setFillColor(59, 130, 246)
-      pdf.rect(0, 0, pageWidth, 40, 'F')
-      
-      pdf.setTextColor(255, 255, 255)
-      pdf.setFontSize(20)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('PROFESYONEL BOYA ANALIZI RAPORU', pageWidth / 2, 20, { align: 'center' })
-      
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text('Mivvo Expertiz - AI Destekli Analiz', pageWidth / 2, 30, { align: 'center' })
-      
-      // Vehicle Info
-      pdf.setTextColor(0, 0, 0)
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('ARAC BILGILERI', 20, 50)
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`Marka: ${report.vehicleInfo.make}`, 20, 60)
-      pdf.text(`Model: ${report.vehicleInfo.model}`, 20, 65)
-      pdf.text(`Yil: ${report.vehicleInfo.year}`, 20, 70)
-      pdf.text(`Plaka: ${report.vehicleInfo.plate}`, 20, 75)
-      pdf.text(`VIN: ${report.vehicleInfo.vin}`, 20, 80)
-      pdf.text(`Analiz Tarihi: ${report.analysisDate}`, 20, 85)
-      
-      // Overall Score
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('GENEL DEGERLENDIRME', 20, 100)
-      
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text(`Genel Skor: ${report.overallScore}/100`, 20, 110)
-      pdf.text(`Boya Durumu: ${paintConditions[report.paintCondition].label}`, 20, 115)
-      
-      // Technical Details
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('TEKNIK DETAYLAR', 20, 130)
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`Boya Sistemi: ${report.technicalDetails.paintSystem}`, 20, 140)
-      pdf.text(`Toplam Kalinlik: ${report.technicalDetails.totalThickness} μm`, 20, 145)
-      pdf.text(`Renk Kodu: ${report.technicalDetails.colorCode}`, 20, 150)
-      
-      // Recommendations
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text('ONERILER', 20, 165)
-      
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      report.summary.recommendations.forEach((rec, index) => {
-        pdf.text(`• ${rec}`, 20, 175 + (index * 5))
+      const primaryImage = report.images[0]
+
+      await generatePaintAnalysisPDF({
+        reportId: report.id,
+        vehicleInfo: report.vehicleInfo,
+        reportType: 'Boya Analizi',
+        analysisDate: report.analysisDate,
+        paintAnalysis: {
+          id: report.id,
+          vehicleInfo: report.vehicleInfo,
+          overallScore: report.overallScore,
+          paintCondition: paintConditions[report.paintCondition]?.label ?? report.paintCondition,
+          colorMatching: primaryImage?.colorMatch ?? 0,
+          paintThickness: primaryImage?.paintThickness ?? 0,
+          scratchCount: primaryImage?.scratches ?? 0,
+          dentCount: primaryImage?.dents ?? 0,
+          rustDetected: Boolean(primaryImage?.rust),
+          oxidationLevel: primaryImage?.oxidation ?? 0,
+          glossLevel: primaryImage?.glossLevel ?? 0,
+          recommendations: report.summary.recommendations,
+          createdAt: new Date(report.analysisDate)
+        },
+        uploadedImages: report.images.length,
+        uploadedAudios: 0,
+        confidence: report.overallScore
       })
-      
-      // Footer
-      pdf.setFontSize(8)
-      pdf.setTextColor(107, 114, 128)
-      pdf.text('Bu rapor Mivvo Expertiz AI teknolojisi kullanilarak olusturulmustur.', 20, 280)
-      pdf.text('www.mivvo.com', pageWidth - 20, 280, { align: 'right' })
-      
-      const fileName = `boya-analizi-${report.vehicleInfo.plate}-${new Date().toISOString().split('T')[0]}.pdf`
-      pdf.save(fileName)
-      
+      toast.success('PDF başarıyla oluşturuldu!')
     } catch (error) {
       console.error('PDF oluşturma hatası:', error)
+      toast.error('PDF oluşturulurken hata oluştu!')
     } finally {
       setIsGeneratingPDF(false)
     }
   }
+
 
   if (!report) {
     return (
@@ -287,7 +255,7 @@ export default function PaintAnalysisReportPage() {
               <button
                 onClick={generatePDF}
                 disabled={isGeneratingPDF}
-                className="btn btn-primary"
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isGeneratingPDF ? (
                   <>

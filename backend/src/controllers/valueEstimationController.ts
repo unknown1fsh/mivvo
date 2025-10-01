@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { AuthRequest } from '../middleware/auth'
-import { PaintAnalysisService } from '../services/paintAnalysisService'
+import { ValueEstimationService } from '../services/valueEstimationService'
 import multer from 'multer'
 
 const prisma = new PrismaClient()
@@ -20,9 +20,9 @@ const upload = multer({
   }
 })
 
-export class PaintAnalysisController {
+export class ValueEstimationController {
   /**
-   * Boya analizi başlat
+   * Değer tahmini başlat
    */
   static async startAnalysis(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -50,9 +50,9 @@ export class PaintAnalysisController {
           vehicleBrand: vehicleInfo.make || vehicleInfo.brand || 'Belirtilmemiş',
           vehicleModel: vehicleInfo.model || 'Belirtilmemiş',
           vehicleYear: vehicleInfo.year || new Date().getFullYear(),
-          reportType: 'PAINT_ANALYSIS',
+          reportType: 'VALUE_ESTIMATION',
           status: 'PROCESSING',
-          totalCost: 25,
+          totalCost: 20,
           aiAnalysisData: {}
         }
       })
@@ -62,15 +62,15 @@ export class PaintAnalysisController {
         data: {
           reportId: report.id,
           status: 'PROCESSING',
-          message: 'Boya analizi başlatıldı'
+          message: 'Değer tahmini başlatıldı'
         }
       })
 
     } catch (error) {
-      console.error('❌ Boya analizi başlatma hatası:', error)
+      console.error('❌ Değer tahmini başlatma hatası:', error)
       res.status(500).json({
         success: false,
-        message: 'Boya analizi başlatılamadı',
+        message: 'Değer tahmini başlatılamadı',
         error: error instanceof Error ? error.message : 'Bilinmeyen hata'
       })
     }
@@ -112,7 +112,7 @@ export class PaintAnalysisController {
             data: {
               reportId: parseInt(reportId),
               imageUrl: base64Image,
-              imageType: 'PAINT',
+              imageType: 'EXTERIOR',
               fileSize: file.size
             }
           })
@@ -137,7 +137,7 @@ export class PaintAnalysisController {
   }
 
   /**
-   * Boya analizi gerçekleştir
+   * Değer tahmini gerçekleştir
    */
   static async performAnalysis(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -150,7 +150,8 @@ export class PaintAnalysisController {
       }
 
       const report = await prisma.vehicleReport.findFirst({
-        where: { id: parseInt(reportId), userId }
+        where: { id: parseInt(reportId), userId },
+        include: { vehicleImages: true }
       })
 
       if (!report) {
@@ -158,28 +159,28 @@ export class PaintAnalysisController {
         return
       }
 
-      const images = await prisma.vehicleImage.findMany({
-        where: { reportId: parseInt(reportId) }
-      })
+      console.log('💰 OpenAI ile değer tahmini başlatılıyor...')
 
-      if (!images || images.length === 0) {
-        res.status(400).json({ success: false, message: 'Analiz için resim gerekli' })
-        return
+      // Araç bilgilerini hazırla
+      const vehicleInfo = {
+        make: report.vehicleBrand,
+        model: report.vehicleModel,
+        year: report.vehicleYear,
+        plate: report.vehiclePlate
       }
 
-      console.log('🎨 OpenAI Vision API ile boya analizi başlatılıyor...')
+      // AI analizi gerçekleştir - Resimleri de gönder
+      const imagePaths = report.vehicleImages.map(img => img.imageUrl)
+      const valueResult = await ValueEstimationService.estimateValue(vehicleInfo, imagePaths)
 
-      // AI analizi gerçekleştir
-      const paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl)
-
-      console.log('✅ Boya analizi tamamlandı')
+      console.log('✅ Değer tahmini tamamlandı')
 
       // Raporu güncelle
       await prisma.vehicleReport.update({
         where: { id: parseInt(reportId) },
         data: {
           status: 'COMPLETED',
-          aiAnalysisData: paintResult as any
+          aiAnalysisData: valueResult as any
         }
       })
 
@@ -187,23 +188,23 @@ export class PaintAnalysisController {
         success: true,
         data: {
           reportId,
-          analysisResult: paintResult,
-          message: 'OpenAI Vision API ile boya analizi tamamlandı'
+          analysisResult: valueResult,
+          message: 'OpenAI ile değer tahmini tamamlandı'
         }
       })
 
     } catch (error) {
-      console.error('❌ Boya analizi hatası:', error)
+      console.error('❌ Değer tahmini hatası:', error)
       res.status(500).json({
         success: false,
-        message: 'Boya analizi gerçekleştirilemedi',
+        message: 'Değer tahmini gerçekleştirilemedi',
         error: error instanceof Error ? error.message : 'Bilinmeyen hata'
       })
     }
   }
 
   /**
-   * Boya analizi raporu getir
+   * Değer tahmini raporu getir
    */
   static async getReport(req: AuthRequest, res: Response): Promise<void> {
     try {

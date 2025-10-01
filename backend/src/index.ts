@@ -20,6 +20,8 @@ import vehicleGarageRoutes from './routes/vehicleGarage';
 import aiAnalysisRoutes from './routes/aiAnalysis';
 import aiTestRoutes from './routes/aiTest';
 import damageAnalysisRoutes from './routes/damageAnalysis';
+import valueEstimationRoutes from './routes/valueEstimation';
+import comprehensiveExpertiseRoutes from './routes/comprehensiveExpertise';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -128,6 +130,8 @@ app.use('/api/vehicle-garage', vehicleGarageRoutes);
 app.use('/api/ai-analysis', aiAnalysisRoutes);
 app.use('/api/ai-test', aiTestRoutes);
 app.use('/api/damage-analysis', damageAnalysisRoutes);
+app.use('/api/value-estimation', valueEstimationRoutes);
+app.use('/api/comprehensive-expertise', comprehensiveExpertiseRoutes);
 
 // Reports endpoint - frontend için alias
 app.use('/api/reports', userRoutes);

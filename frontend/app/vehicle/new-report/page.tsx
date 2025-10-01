@@ -4,8 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { useSearchParams } from 'next/navigation'
-import api from '@/lib/api'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { 
   SparklesIcon,
   ArrowLeftIcon
@@ -17,7 +16,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 
 // Types
-import { ReportType, VehicleInfo } from '@/types'
+import { ReportType, VehicleInfo, UploadedImage } from '@/types'
 
 // Components
 import { ReportTypeSelector } from '@/components/features/ReportTypeSelector'
@@ -36,6 +35,7 @@ import { REPORT_TYPES, STEPS, getStepsForReportType } from '@/constants'
 import { useFormSteps } from '@/hooks/useFormSteps'
 import { useFileUpload } from '@/hooks/useFileUpload'
 import { usePaintAnalysis } from '@/hooks/usePaintAnalysis'
+import { useDamageAnalysis } from '@/hooks/useDamageAnalysis'
 import { useAudioRecording } from '@/hooks/useAudioRecording'
 import { useAuth } from '@/hooks'
 
@@ -44,7 +44,6 @@ import { vehicleGarageService } from '@/services'
 import { VehicleGarage } from '@/types'
 
 // Utils
-import toast from 'react-hot-toast'
 
 const schema = yup.object({
   vehiclePlate: yup.string().matches(/^[0-9]{2}\s[A-Z]{1,3}\s[0-9]{2,4}$/, 'Geçerli plaka formatı: 34 ABC 123'),
@@ -59,13 +58,14 @@ type FormData = yup.InferType<typeof schema>
 
 function NewReportPageContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const { isAuthenticated, isLoading: authLoading, requireAuth } = useAuth()
   const [selectedReportType, setSelectedReportType] = useState<ReportType | null>(null)
   const [vehicles, setVehicles] = useState<VehicleGarage[]>([])
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleGarage | null>(null)
   const [useGarageVehicle, setUseGarageVehicle] = useState(false)
   const [useGlobalImages, setUseGlobalImages] = useState(true)
-  const [reportSpecificImages, setReportSpecificImages] = useState<any[]>([])
+  const [reportSpecificImages, setReportSpecificImages] = useState<UploadedImage[]>([])
   
   // Dinamik adımları hesapla
   const currentSteps = selectedReportType 
@@ -74,77 +74,26 @@ function NewReportPageContent() {
   
   const { currentStep, nextStep, prevStep, progress } = useFormSteps(currentSteps)
   const fileUploadProps = useFileUpload()
-  const { isAnalyzing, performAnalysis } = usePaintAnalysis()
+  const { uploadedImages } = fileUploadProps
+  const { isAnalyzing: isPaintAnalyzing, performAnalysis: performPaintAnalysis } = usePaintAnalysis()
+  const { isAnalyzing: isDamageAnalyzing, startDamageAnalysis } = useDamageAnalysis()
   const audioRecordingProps = useAudioRecording()
+  
+  // Yeni hook'ları import et
+  const { useValueEstimation } = require('@/hooks/useValueEstimation')
+  const { useComprehensiveExpertise } = require('@/hooks/useComprehensiveExpertise')
+  const { isAnalyzing: isValueAnalyzing, performAnalysis: performValueAnalysis } = useValueEstimation()
+  const { isAnalyzing: isComprehensiveAnalyzing, performAnalysis: performComprehensiveAnalysis } = useComprehensiveExpertise()
+  
+  const isGeneratingReport = isPaintAnalyzing || isDamageAnalyzing || audioRecordingProps.isAnalyzing || isValueAnalyzing || isComprehensiveAnalyzing
 
-  // Hasar analizi fonksiyonu
-  const performDamageAnalysis = async (vehicleInfo: VehicleInfo, imageCount: number) => {
-    try {
-      console.log('🔧 Hasar analizi başlatılıyor:', { vehicleInfo, imageCount })
-      
-      // Resim kontrolü
-      if (imageCount === 0 || fileUploadProps.uploadedImages.length === 0) {
-        throw new Error('Hasar analizi için en az bir resim gereklidir')
-      }
-
-      // İlk olarak hasar analizi raporu oluştur
-      console.log('📝 Hasar analizi raporu oluşturuluyor...')
-      const reportResponse = await api.post('/damage-analysis/start', {
-        vehicleInfo,
-        analysisType: 'damage'
-      })
-      
-      if (reportResponse.data.success) {
-        const reportId = reportResponse.data.data.reportId
-        console.log('✅ Hasar analizi raporu oluşturuldu:', reportId)
-        
-        // Resimleri yükle
-        console.log('📸 Resimler yükleniyor...')
-        const formData = new FormData()
-        
-        fileUploadProps.uploadedImages.forEach((image, index) => {
-          if (image.file) {
-            formData.append('images', image.file)
-          }
-        })
-        
-        const uploadResponse = await api.post(`/damage-analysis/${reportId}/upload`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        })
-        
-        if (uploadResponse.data.success) {
-          console.log('✅ Resimler yüklendi')
-          
-          // Raporu tamamla - Backend'de AI analizi yapılacak
-          console.log('🔍 Backend AI analizi başlatılıyor...')
-          const analysisResponse = await api.post(`/damage-analysis/${reportId}/analyze`, {}, {
-            timeout: 600000 // 10 dakika timeout
-          })
-          
-          if (analysisResponse.data.success) {
-            console.log('✅ AI analizi tamamlandı')
-            return {
-              id: reportId,
-              reportId: reportId,
-              status: 'completed',
-              analysisResult: analysisResponse.data.data.analysisResult
-            }
-          } else {
-            throw new Error('AI analizi başarısız')
-          }
-        } else {
-          throw new Error('Resimler yüklenemedi')
-        }
-      } else {
-        throw new Error('Rapor oluşturulamadı')
-      }
-    } catch (error) {
-      console.error('❌ Hasar analizi hatası:', error)
-      throw error
+  useEffect(() => {
+    if (!useGlobalImages) {
+      setReportSpecificImages(uploadedImages)
+    } else {
+      setReportSpecificImages([])
     }
-  }
+  }, [useGlobalImages, uploadedImages])
 
 
   // Global resimleri yükle
@@ -231,15 +180,14 @@ function NewReportPageContent() {
   })
 
   const onSubmit = async (data: FormData) => {
-    console.log('🚀 Rapor oluşturma başlatıldı:', { selectedReportType, data })
+    console.log('[NewReport] Starting report creation', { selectedReportType, data })
     
     if (!selectedReportType) {
-      console.error('❌ Rapor türü seçilmemiş')
+      console.error('[NewReport] Report type is not selected')
       return
     }
 
     try {
-      // Araç Garajı'ndan seçilmişse o bilgileri kullan, yoksa form verilerini kullan
       const vehicleInfo: VehicleInfo = selectedVehicle 
         ? vehicleGarageService.convertToVehicleInfo(selectedVehicle)
         : {
@@ -250,56 +198,65 @@ function NewReportPageContent() {
             vin: 'Belirtilmemiş'
           }
 
-      console.log('🚗 Araç bilgileri:', vehicleInfo)
+      console.log('[NewReport] Vehicle info', vehicleInfo)
 
       let results
-      
-      // Kullanılacak resim sayısını belirle
-      const imageCount = useGlobalImages 
-        ? fileUploadProps.uploadedImages.length 
-        : reportSpecificImages.length
-      
-      console.log('📸 Resim sayısı:', imageCount)
-      
-      // Rapor türüne göre analiz yap
+
+      const imagesForAnalysis = useGlobalImages 
+        ? uploadedImages 
+        : reportSpecificImages
+
+      const imageCount = imagesForAnalysis.length
+
+      console.log('[NewReport] Image count', imageCount)
+
       if (selectedReportType.id === 'ENGINE_SOUND_ANALYSIS') {
-        console.log('🔊 Motor sesi analizi yapılıyor...')
+        console.log('[NewReport] Engine sound analysis in progress...')
         results = await audioRecordingProps.performEngineSoundAnalysis(vehicleInfo)
       } else if (selectedReportType.id === 'DAMAGE_ANALYSIS') {
-        console.log('🔧 Hasar analizi yapılıyor...')
-        // Hasar analizi için özel işlem
-        results = await performDamageAnalysis(vehicleInfo, imageCount)
+        console.log('[NewReport] Damage analysis in progress...')
+        results = await startDamageAnalysis(vehicleInfo, imagesForAnalysis)
+      } else if (selectedReportType.id === 'VALUE_ESTIMATION') {
+        console.log('[NewReport] Value estimation in progress...')
+        results = await performValueAnalysis(vehicleInfo, imageCount)
+      } else if (selectedReportType.id === 'FULL_REPORT') {
+        console.log('[NewReport] Comprehensive expertise in progress...')
+        results = await performComprehensiveAnalysis(vehicleInfo, imagesForAnalysis, audioRecordingProps.recordedAudios)
       } else {
-        console.log('🎨 Boya analizi yapılıyor...')
-        results = await performAnalysis(vehicleInfo, imageCount)
+        console.log('[NewReport] Paint analysis in progress...')
+        results = await performPaintAnalysis(vehicleInfo, imageCount)
       }
-      
-      console.log('📊 Analiz sonucu:', results)
-      
+
+      console.log('[NewReport] Analysis results', results)
+
       if (results) {
-        console.log('✅ Rapor oluşturuldu, yönlendiriliyor...')
-        // Rapor sayfasına yönlendir
-        setTimeout(() => {
-          let reportType = 'paint-analysis'
-          if (selectedReportType.id === 'ENGINE_SOUND_ANALYSIS') {
-            reportType = 'engine-sound-analysis'
-          } else if (selectedReportType.id === 'DAMAGE_ANALYSIS') {
-            reportType = 'damage-analysis'
-          }
-          const reportId = results.reportId || results.id
-          const reportUrl = `/vehicle/${reportType}/report?reportId=${reportId}`
-          console.log('🔗 Rapor URL:', reportUrl)
-          console.log('🔢 Report ID:', reportId, 'Type:', typeof reportId)
-          window.open(reportUrl, '_blank')
-        }, 1000)
+        console.log('[NewReport] Report generated, navigating to detail page...')
+        let reportType = 'paint-analysis'
+        if (selectedReportType.id === 'ENGINE_SOUND_ANALYSIS') {
+          reportType = 'engine-sound-analysis'
+        } else if (selectedReportType.id === 'DAMAGE_ANALYSIS') {
+          reportType = 'damage-analysis'
+        } else if (selectedReportType.id === 'VALUE_ESTIMATION') {
+          reportType = 'value-estimation'
+        } else if (selectedReportType.id === 'FULL_REPORT') {
+          reportType = 'comprehensive-expertise'
+        }
+        const reportId = results.reportId || results.id
+        const reportUrl = `/vehicle/${reportType}/report?reportId=${reportId}`
+        console.log('[NewReport] Report URL', reportUrl)
+        const openedWindow = window.open(reportUrl, '_blank', 'noopener,noreferrer')
+        if (!openedWindow) {
+          router.push(reportUrl)
+        }
       } else {
-        console.error('❌ Rapor oluşturulamadı')
+        console.error('[NewReport] Report could not be created')
       }
-      
+
     } catch (error) {
-      console.error('💥 Rapor oluşturma hatası:', error)
+      console.error('[NewReport] Report creation error:', error)
     }
   }
+
 
   const handleReportTypeSelect = (reportType: ReportType) => {
     setSelectedReportType(reportType)
@@ -365,57 +322,19 @@ function NewReportPageContent() {
         } else if (selectedReportType?.id === 'DAMAGE_ANALYSIS') {
           // Hasar analizi için özel resim yükleme
           return (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Hasar Analizi Fotoğrafları</h2>
-                <p className="text-gray-600">
-                  AI'nın en iyi sonuçları vermesi için kaliteli fotoğraflar yükleyin
-                </p>
-              </div>
-
-              {/* Hasar Analizi Rehberi */}
-              <div className="bg-blue-50 rounded-lg p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                      📸 Hasar Analizi Fotoğraf Rehberi
-                    </h3>
-                    <p className="text-blue-700 text-sm">
-                      AI'nın en iyi sonuçları vermesi için fotoğraf çekme ipuçları
-                    </p>
-                  </div>
-                  <DamageAnalysisGuide />
-                </div>
-              </div>
-
-              {/* Fotoğraf Kalite Kontrolü */}
-              <div className="bg-green-50 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-green-900 mb-4">
-                  🔍 Fotoğraf Kalite Kontrolü
-                </h3>
-                <PhotoQualityChecker />
-              </div>
-
-              {/* Resim Yükleme */}
-              <div className="bg-white rounded-lg border p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  📁 Hasar Fotoğraflarını Yükleyin
-                </h3>
-                <ImageUploader
-                  {...fileUploadProps}
-                  onNext={nextStep}
-                  onPrev={prevStep}
-                  useGlobalImages={useGlobalImages}
-                  onUseGlobalImagesToggle={(use) => {
-                    setUseGlobalImages(use)
-                    if (!use) {
-                      setReportSpecificImages([])
-                    }
-                  }}
-                  selectedReportType={selectedReportType}
-                />
-              </div>
-            </div>
+            <ImageUploader
+              {...fileUploadProps}
+              onNext={nextStep}
+              onPrev={prevStep}
+              useGlobalImages={useGlobalImages}
+              onUseGlobalImagesToggle={(use) => {
+                setUseGlobalImages(use)
+                if (!use) {
+                  setReportSpecificImages([])
+                }
+              }}
+              selectedReportType={selectedReportType}
+            />
           )
         } else {
           // Diğer rapor türleri için resim yükleme
@@ -457,7 +376,7 @@ function NewReportPageContent() {
               uploadedImages={useGlobalImages ? fileUploadProps.uploadedImages : reportSpecificImages}
               uploadedAudios={audioRecordingProps.recordedAudios}
               onSubmit={handleSubmit(onSubmit)}
-              isLoading={isAnalyzing}
+              isLoading={isGeneratingReport}
               onPrev={prevStep}
               useGlobalImages={useGlobalImages}
             />
@@ -473,7 +392,7 @@ function NewReportPageContent() {
             uploadedImages={useGlobalImages ? fileUploadProps.uploadedImages : reportSpecificImages}
             uploadedAudios={audioRecordingProps.recordedAudios}
             onSubmit={handleSubmit(onSubmit)}
-            isLoading={isAnalyzing}
+            isLoading={isGeneratingReport}
             onPrev={prevStep}
             useGlobalImages={useGlobalImages}
           />
