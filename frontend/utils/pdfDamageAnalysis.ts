@@ -12,6 +12,7 @@ const palette = {
   border: '#e2e8f0',
   muted: '#94a3b8',
   surface: '#f8fafc',
+  slate: '#64748b',
 }
 
 const severityColors: Record<string, string> = {
