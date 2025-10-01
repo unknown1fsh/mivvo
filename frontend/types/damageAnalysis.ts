@@ -1,6 +1,7 @@
 ﻿export type DamageSeverityLevel = 'low' | 'medium' | 'high' | 'critical'
 
 export interface DamageAnalysisImageArea {
+  id?: string
   x: number
   y: number
   width: number
