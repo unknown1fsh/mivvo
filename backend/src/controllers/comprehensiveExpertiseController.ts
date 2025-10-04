@@ -249,6 +249,8 @@ export class ComprehensiveExpertiseController {
         plate: report.vehiclePlate
       }
 
+      console.log('🚗 Araç bilgileri kapsamlı expertiz prompt\'a dahil ediliyor:', vehicleInfo)
+
       // AI analizi gerçekleştir
       const imagePaths = report.vehicleImages.map(img => img.imageUrl)
       const audioPath = report.vehicleAudios.length > 0 ? report.vehicleAudios[0].audioPath : undefined

@@ -169,6 +169,8 @@ export class ValueEstimationController {
         plate: report.vehiclePlate
       }
 
+      console.log('🚗 Araç bilgileri değer tahmini prompt\'a dahil ediliyor:', vehicleInfo)
+
       // AI analizi gerçekleştir - Resimleri de gönder
       const imagePaths = report.vehicleImages.map(img => img.imageUrl)
       const valueResult = await ValueEstimationService.estimateValue(vehicleInfo, imagePaths)

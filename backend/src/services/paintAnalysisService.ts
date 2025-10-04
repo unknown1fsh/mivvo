@@ -303,19 +303,30 @@ export class PaintAnalysisService {
     }
   }
 
-  private static buildPrompt(): string {
+  private static buildPrompt(vehicleInfo?: any): string {
+    const vehicleContext = vehicleInfo ? `
+🚗 ARAÇ BİLGİLERİ:
+- Marka: ${vehicleInfo.make || 'Bilinmiyor'}
+- Model: ${vehicleInfo.model || 'Bilinmiyor'}
+- Yıl: ${vehicleInfo.year || 'Bilinmiyor'}
+- Plaka: ${vehicleInfo.plate || 'Bilinmiyor'}
+
+Bu araç bilgilerini göz önünde bulundurarak analiz yap.` : ''
+
     return `Sen dünyaca ünlü bir otomotiv boya uzmanısın. 25+ yıllık deneyimin var. Araç boyasını MİKRON SEVİYESİNDE analiz edebiliyorsun.
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
-🎨 ULTRA DETAYLI BOYA ANALİZİ
+🎨 PROFESYONEL BOYA ANALİZİ RAPORU
+
+${vehicleContext}
 
 📋 ANALİZ KURALLARI:
 1. Fotoğraftaki boyayı ÇOKDETAYLI incele
 2. Her detayı Türkçe açıkla
 3. Mikron seviyesinde ölçümler yap
 4. Renk kodunu tespit et
-5. Tüm kusurları belirt
+5. SADECE BOYA KALİTESİ ve YÜZEY ANALİZİ yap (hasar tespiti değil!)
 6. Gerçekçi maliyet hesapla (Türkiye 2025 fiyatları)
 
 💰 MALİYET HESAPLAMA (Türkiye 2025):
@@ -380,30 +391,23 @@ export class PaintAnalysisService {
       }
     ]
   },
-  "damageAssessment": {
-    "scratches": [
+  "paintDefects": {
+    "surfaceDefects": [
       {
-        "id": "cizik-001",
-        "depth": "surface",
-        "length": 15,
-        "width": 0.5,
+        "id": "yuzey-001",
+        "type": "orange_peel",
         "severity": "low",
-        "location": "Ön tampon sağ alt köşe",
+        "location": "Ön kaput merkez bölgesi",
+        "size": 2,
+        "description": "Hafif portakal kabuğu efekti tespit edildi. Fabrika çıkışı standartlarında. Görsel etki minimal.",
         "repairable": true,
-        "repairMethod": "Profesyonel retuş ve parlatma",
-        "repairCost": 450,
-        "description": "Yüzeysel çizik, clear kat seviyesinde. Metal yapıya ulaşmamış. Retuş ile giderilebilir."
+        "repairCost": 800
       }
     ],
-    "dents": [],
-    "rust": [],
-    "oxidation": [],
-    "fading": [],
-    "chipping": [],
-    "peeling": [],
-    "blistering": [],
-    "cracking": [],
-    "totalDamageScore": 15
+    "colorIssues": [],
+    "glossProblems": [],
+    "thicknessVariations": [],
+    "totalDefectScore": 5
   },
   "technicalDetails": {
     "paintSystem": "3 Katlı Sistem (Astar + Baz + Vernik)",
@@ -421,7 +425,7 @@ export class PaintAnalysisService {
   },
   "recommendations": {
     "immediate": [
-      "Ön tampondaki çizik profesyonel retuş ile giderilmeli"
+      "Portakal kabuğu efekti hafif parlatma ile giderilebilir"
     ],
     "shortTerm": [
       "Seramik kaplama uygulanmalı",
@@ -445,10 +449,10 @@ export class PaintAnalysisService {
       "UV koruyucu uygulama şart",
       "Çevresel faktörlere karşı önlem"
     ],
-    "restoration": [
-      "Portakal kabuğu efekti hafif parlatma ile giderilebilir",
+    "qualityImprovement": [
       "Yüzey pürüzlülüğü azaltılmalı",
-      "Çizikler retuş edilmeli"
+      "Gloss seviyesi artırılabilir",
+      "Renk derinliği geliştirilebilir"
     ],
     "prevention": [
       "Düzenli bakım programı oluştur",
@@ -467,14 +471,14 @@ export class PaintAnalysisService {
     "additionalCosts": 0,
     "breakdown": [
       {
-        "category": "Çizik Retuşu",
-        "cost": 450,
-        "description": "Ön tampon çizik profesyonel retuş"
-      },
-      {
         "category": "Yüzey Düzeltme",
         "cost": 800,
         "description": "Portakal kabuğu efekti giderme ve parlatma"
+      },
+      {
+        "category": "Gloss İyileştirme",
+        "cost": 650,
+        "description": "Profesyonel parlatma ve gloss artırma"
       },
       {
         "category": "Koruyucu Uygulama",
@@ -489,9 +493,9 @@ export class PaintAnalysisService {
         "description": "Detaylı yıkama ve yüzey hazırlığı"
       },
       {
-        "phase": "Retuş İşlemi",
+        "phase": "Yüzey Düzeltme",
         "duration": 3,
-        "description": "Çizik retuşu ve düzeltme"
+        "description": "Portakal kabuğu efekti giderme ve düzeltme"
       },
       {
         "phase": "Parlatma",
@@ -528,11 +532,13 @@ export class PaintAnalysisService {
 
 ⚠️ KRİTİK KURALLAR:
 - RAPOR TAMAMEN TÜRKÇE - HİÇBİR İNGİLİZCE YOK!
+- SADECE BOYA KALİTESİ ANALİZİ - Hasar tespiti yapma!
 - Her ölçüm gerçekçi olmalı (mikron cinsinden)
 - Maliyet Türkiye 2025 fiyatları
 - Detaylı Türkçe açıklamalar (minimum 2 cümle)
 - Sadece geçerli JSON döndür
-- Tüm field'lar Türkçe değerler içermeli`
+- Tüm field'lar Türkçe değerler içermeli
+- Boya kalınlığı, gloss, renk eşleşmesi, yüzey kalitesi odaklı analiz yap`
   }
 
   private static extractJsonPayload(rawText: string): any {
@@ -545,13 +551,13 @@ export class PaintAnalysisService {
     return JSON.parse(json)
   }
 
-  private static async analyzePaintWithOpenAI(imagePath: string): Promise<PaintAnalysisResult> {
+  private static async analyzePaintWithOpenAI(imagePath: string, vehicleInfo?: any): Promise<PaintAnalysisResult> {
     if (!this.openaiClient) {
       throw new Error('OpenAI istemcisi kullanılabilir değil')
     }
 
     const imageBase64 = await this.convertImageToBase64(imagePath)
-    const prompt = `${this.buildPrompt()}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
+    const prompt = `${this.buildPrompt(vehicleInfo)}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
 
     const response = await this.openaiClient.chat.completions.create({
       model: OPENAI_MODEL,
@@ -580,7 +586,7 @@ export class PaintAnalysisService {
     return parsed as PaintAnalysisResult
   }
 
-  static async analyzePaint(imagePath: string): Promise<PaintAnalysisResult> {
+  static async analyzePaint(imagePath: string, vehicleInfo?: any): Promise<PaintAnalysisResult> {
     await this.initialize()
 
     const cacheKey = await this.getImageHash(imagePath)
@@ -592,7 +598,7 @@ export class PaintAnalysisService {
 
     try {
       console.log('[AI] OpenAI ile boya analizi başlatılıyor...')
-      const result = await this.analyzePaintWithOpenAI(imagePath)
+      const result = await this.analyzePaintWithOpenAI(imagePath, vehicleInfo)
       console.log('[AI] OpenAI boya analizi başarılı!')
       
       this.cache.set(cacheKey, result)

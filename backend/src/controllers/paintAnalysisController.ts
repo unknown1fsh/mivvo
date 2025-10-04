@@ -99,16 +99,28 @@ export class PaintAnalysisController {
       }
 
       const files = req.files as Express.Multer.File[]
+      console.log(`📤 Rapor ${reportId} için ${files?.length || 0} dosya yüklenmeye çalışılıyor`)
+      
       if (!files || files.length === 0) {
-        res.status(400).json({ success: false, message: 'Resim dosyası gerekli' })
+        console.error(`❌ Rapor ${reportId} için dosya bulunamadı`)
+        res.status(400).json({ 
+          success: false, 
+          message: 'Resim dosyası gerekli',
+          details: {
+            reportId: parseInt(reportId),
+            receivedFiles: files?.length || 0,
+            suggestion: 'Lütfen en az bir resim dosyası seçin'
+          }
+        })
         return
       }
 
       const imageRecords = await Promise.all(
-        files.map(async (file) => {
+        files.map(async (file, index) => {
+          console.log(`📸 Resim ${index + 1} işleniyor: ${file.originalname} (${file.size} bytes)`)
           const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`
           
-          return prisma.vehicleImage.create({
+          const imageRecord = await prisma.vehicleImage.create({
             data: {
               reportId: parseInt(reportId),
               imageUrl: base64Image,
@@ -116,6 +128,9 @@ export class PaintAnalysisController {
               fileSize: file.size
             }
           })
+          
+          console.log(`✅ Resim ${index + 1} veritabanına kaydedildi: ID ${imageRecord.id}`)
+          return imageRecord
         })
       )
 
@@ -162,17 +177,46 @@ export class PaintAnalysisController {
         where: { reportId: parseInt(reportId) }
       })
 
+      console.log(`🔍 Rapor ${reportId} için ${images.length} resim bulundu`)
+
       if (!images || images.length === 0) {
-        res.status(400).json({ success: false, message: 'Analiz için resim gerekli' })
+        console.error(`❌ Rapor ${reportId} için resim bulunamadı`)
+        res.status(400).json({ 
+          success: false, 
+          message: 'Analiz için resim gerekli. Lütfen önce resim yükleyin.',
+          details: {
+            reportId: parseInt(reportId),
+            imageCount: 0,
+            suggestion: 'Resim yükleme adımını tamamladığınızdan emin olun'
+          }
+        })
         return
       }
 
       console.log('🎨 OpenAI Vision API ile boya analizi başlatılıyor...')
+      console.log('📸 İlk resim URL:', images[0].imageUrl)
+
+      // Araç bilgilerini hazırla
+      const vehicleInfo = {
+        make: report.vehicleBrand,
+        model: report.vehicleModel,
+        year: report.vehicleYear,
+        plate: report.vehiclePlate
+      }
+
+      console.log('🚗 Araç bilgileri prompt\'a dahil ediliyor:', vehicleInfo)
 
       // AI analizi gerçekleştir
-      const paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl)
+      console.log('🤖 PaintAnalysisService.analyzePaint çağrılıyor...')
+      const paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl, vehicleInfo)
 
       console.log('✅ Boya analizi tamamlandı')
+      console.log('📊 AI Analiz Sonucu:', JSON.stringify(paintResult, null, 2))
+      
+      // AI sonucunu kontrol et
+      if (!paintResult || Object.keys(paintResult).length === 0) {
+        throw new Error('AI analizi boş sonuç döndü')
+      }
 
       // Raporu güncelle
       await prisma.vehicleReport.update({
@@ -188,6 +232,7 @@ export class PaintAnalysisController {
         data: {
           reportId,
           analysisResult: paintResult,
+          aiAnalysisData: paintResult,
           message: 'OpenAI Vision API ile boya analizi tamamlandı'
         }
       })
@@ -225,9 +270,24 @@ export class PaintAnalysisController {
         return
       }
 
+      console.log('📋 Rapor getirildi:', {
+        id: report.id,
+        status: report.status,
+        hasAiAnalysisData: !!report.aiAnalysisData,
+        aiAnalysisDataKeys: report.aiAnalysisData ? Object.keys(report.aiAnalysisData) : [],
+        aiAnalysisDataContent: report.aiAnalysisData ? 'Data exists' : 'No data',
+        createdAt: report.createdAt,
+        updatedAt: report.updatedAt
+      })
+      
+
       res.json({
         success: true,
-        data: report
+        data: {
+          ...report,
+          status: report.status || 'PROCESSING',
+          aiAnalysisData: report.aiAnalysisData || {}
+        }
       })
 
     } catch (error) {

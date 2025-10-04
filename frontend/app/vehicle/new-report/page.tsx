@@ -27,6 +27,7 @@ import { ReportSummary } from '@/components/features/ReportSummary'
 import { StepIndicator } from '@/components/features/StepIndicator'
 import DamageAnalysisGuide from '@/components/features/DamageAnalysisGuide'
 import PhotoQualityChecker from '@/components/features/PhotoQualityChecker'
+import PaintAnalysisLoading from '@/components/features/PaintAnalysisLoading'
 
 // Constants
 import { REPORT_TYPES, STEPS, getStepsForReportType } from '@/constants'
@@ -75,7 +76,7 @@ function NewReportPageContent() {
   const { currentStep, nextStep, prevStep, progress } = useFormSteps(currentSteps)
   const fileUploadProps = useFileUpload()
   const { uploadedImages } = fileUploadProps
-  const { isAnalyzing: isPaintAnalyzing, performAnalysis: performPaintAnalysis } = usePaintAnalysis()
+  const { isAnalyzing: isPaintAnalyzing, progress: paintProgress, currentStep: paintCurrentStep, performAnalysis: performPaintAnalysis } = usePaintAnalysis()
   const { isAnalyzing: isDamageAnalyzing, startDamageAnalysis } = useDamageAnalysis()
   const audioRecordingProps = useAudioRecording()
   
@@ -224,7 +225,7 @@ function NewReportPageContent() {
         results = await performComprehensiveAnalysis(vehicleInfo, imagesForAnalysis, audioRecordingProps.recordedAudios)
       } else {
         console.log('[NewReport] Paint analysis in progress...')
-        results = await performPaintAnalysis(vehicleInfo, imageCount)
+        results = await performPaintAnalysis(vehicleInfo, imagesForAnalysis)
       }
 
       console.log('[NewReport] Analysis results', results)
@@ -421,44 +422,67 @@ function NewReportPageContent() {
       {/* Authenticated Content */}
       {!authLoading && isAuthenticated && (
         <>
-          {/* Header */}
-          <header className="bg-white shadow-sm border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center h-16">
-                <div className="flex items-center space-x-4">
-                  <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
-                    <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                    Geri Dön
-                  </Link>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                      <SparklesIcon className="w-5 h-5 text-white" />
+          {/* Boya Analizi Loading Ekranı */}
+          {isPaintAnalyzing && selectedReportType?.id === 'PAINT_ANALYSIS' && (
+            <PaintAnalysisLoading 
+              vehicleInfo={selectedVehicle ? {
+                make: selectedVehicle.brand,
+                model: selectedVehicle.model,
+                year: selectedVehicle.year,
+                plate: selectedVehicle.plate
+              } : {
+                make: watch('vehicleBrand'),
+                model: watch('vehicleModel'),
+                year: watch('vehicleYear'),
+                plate: watch('vehiclePlate')
+              }}
+              progress={paintProgress}
+            />
+          )}
+
+          {/* Normal İçerik - Boya analizi yapılmıyorsa göster */}
+          {!(isPaintAnalyzing && selectedReportType?.id === 'PAINT_ANALYSIS') && (
+            <>
+              {/* Header */}
+              <header className="bg-white shadow-sm border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="flex justify-between items-center h-16">
+                    <div className="flex items-center space-x-4">
+                      <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
+                        <ArrowLeftIcon className="w-5 h-5 mr-2" />
+                        Geri Dön
+                      </Link>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                          <SparklesIcon className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                          Mivvo Expertiz
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                      Mivvo Expertiz
-                    </span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </header>
+              </header>
 
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Progress */}
-            <FadeInUp>
-              <div className="mb-8">
-                <StepIndicator steps={currentSteps} currentStep={currentStep} />
-                <ProgressBar value={progress} />
-              </div>
-            </FadeInUp>
+              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Progress */}
+                <FadeInUp>
+                  <div className="mb-8">
+                    <StepIndicator steps={currentSteps} currentStep={currentStep} />
+                    <ProgressBar value={progress} />
+                  </div>
+                </FadeInUp>
 
-            {/* Step Content */}
-            <FadeInUp>
-              <Card padding="lg">
-                {renderStep()}
-              </Card>
-            </FadeInUp>
-          </div>
+                {/* Step Content */}
+                <FadeInUp>
+                  <Card padding="lg">
+                    {renderStep()}
+                  </Card>
+                </FadeInUp>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

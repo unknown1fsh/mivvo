@@ -342,7 +342,17 @@ async function simulateEngineSoundAnalysis(audioFiles: Express.Multer.File[], ve
     const audioPath = audioFiles[0]?.path; // İlk ses dosyasını kullan
     
     if (audioPath) {
-      return await AIService.analyzeEngineSound(audioPath, vehicleInfo);
+      // Araç bilgilerini hazırla
+      const vehicleInfoForAnalysis = {
+        make: vehicleInfo.make,
+        model: vehicleInfo.model,
+        year: vehicleInfo.year,
+        plate: vehicleInfo.plate
+      }
+
+      console.log('🚗 Araç bilgileri motor ses analizi prompt\'a dahil ediliyor:', vehicleInfoForAnalysis)
+
+      return await AIService.analyzeEngineSound(audioPath, vehicleInfoForAnalysis);
     }
   } catch (error) {
     console.error('AI motor sesi analizi hatası, simülasyon kullanılıyor:', error);

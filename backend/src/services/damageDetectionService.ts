@@ -209,10 +209,21 @@ export class DamageDetectionService {
     }
   }
 
-  private static buildPrompt(): string {
+  private static buildPrompt(vehicleInfo?: any): string {
+    const vehicleContext = vehicleInfo ? `
+🚗 ARAÇ BİLGİLERİ:
+- Marka: ${vehicleInfo.make || 'Bilinmiyor'}
+- Model: ${vehicleInfo.model || 'Bilinmiyor'}
+- Yıl: ${vehicleInfo.year || 'Bilinmiyor'}
+- Plaka: ${vehicleInfo.plate || 'Bilinmiyor'}
+
+Bu araç bilgilerini göz önünde bulundurarak hasar analizi yap.` : ''
+
     return `Sen profesyonel bir otomotiv hasar eksperisin. Araç fotoğrafını ÇOK DETAYLI analiz et ve TÜM hasarları Türkçe olarak raporla.
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME KULLANMA!
+
+${vehicleContext}
 
 📋 HASAR TESPİT KURALLARI:
 1. Fotoğraftaki HER hasarı ayrı ayrı tespit et ve raporla
@@ -562,13 +573,13 @@ export class DamageDetectionService {
   }
 
 
-  private static async detectDamageWithOpenAI(imagePath: string): Promise<DamageDetectionResult> {
+  private static async detectDamageWithOpenAI(imagePath: string, vehicleInfo?: any): Promise<DamageDetectionResult> {
     if (!this.openaiClient) {
       throw new Error('OpenAI istemcisi kullanılabilir değil')
     }
 
     const imageBase64 = await this.convertImageToBase64(imagePath)
-    const prompt = `${this.buildPrompt()}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
+    const prompt = `${this.buildPrompt(vehicleInfo)}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
 
     const response = await this.openaiClient.chat.completions.create({
       model: OPENAI_MODEL,
@@ -597,7 +608,7 @@ export class DamageDetectionService {
     return this.sanitizeDamageResult(parsed, 'OpenAI', 'OpenAI')
   }
 
-  static async detectDamage(imagePath: string): Promise<DamageDetectionResult> {
+  static async detectDamage(imagePath: string, vehicleInfo?: any): Promise<DamageDetectionResult> {
     await this.initialize()
 
     const cacheKey = await this.getImageHash(imagePath)
@@ -609,7 +620,7 @@ export class DamageDetectionService {
 
     try {
       console.log('[AI] OpenAI ile hasar analizi başlatılıyor...')
-      const result = await this.detectDamageWithOpenAI(imagePath)
+      const result = await this.detectDamageWithOpenAI(imagePath, vehicleInfo)
       console.log('[AI] OpenAI hasar analizi başarılı!')
       
       this.cache.set(cacheKey, result)

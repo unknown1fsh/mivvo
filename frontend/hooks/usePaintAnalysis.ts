@@ -7,13 +7,18 @@ import api from '@/lib/api'
 
 export const usePaintAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [currentStep, setCurrentStep] = useState('')
 
-  const performAnalysis = useCallback(async (vehicleInfo: VehicleInfo, uploadedImagesCount: number) => {
+  const performAnalysis = useCallback(async (vehicleInfo: VehicleInfo, uploadedImages: any[]) => {
     setIsAnalyzing(true)
+    setProgress(0)
+    setCurrentStep('')
     
     try {
       // 1. Analizi başlat
-      toast.loading('Boya analizi başlatılıyor...', { id: 'paint-analysis' })
+      setCurrentStep('Analiz başlatılıyor...')
+      setProgress(10)
       
       const startResponse = await api.post('/paint-analysis/start', {
         vehicleInfo: {
@@ -32,34 +37,65 @@ export const usePaintAnalysis = () => {
       console.log('✅ Boya analizi başlatıldı, Report ID:', reportId)
 
       // 2. Resimleri yükle (eğer varsa)
-      if (uploadedImagesCount > 0) {
-        toast.loading('Resimler yükleniyor...', { id: 'paint-analysis' })
+      if (uploadedImages && uploadedImages.length > 0) {
+        setCurrentStep('Resimler yükleniyor...')
+        setProgress(25)
         
-        // Global resimlerden al
-        const savedImages = localStorage.getItem('globalVehicleImages')
-        if (savedImages) {
-          const images = JSON.parse(savedImages)
-          const formData = new FormData()
-          
-          for (const imageData of images) {
-            if (imageData.preview) {
-              // Base64'ü blob'a çevir
-              const response = await fetch(imageData.preview)
-              const blob = await response.blob()
-              formData.append('images', blob, imageData.name)
+        console.log(`📸 ${uploadedImages.length} resim yüklenecek`)
+        const formData = new FormData()
+        
+        for (const imageData of uploadedImages) {
+          if (imageData.preview) {
+            try {
+              let blob: Blob
+              
+              // Base64 formatını kontrol et
+              if (imageData.preview.startsWith('data:')) {
+                // Base64'ü blob'a çevir
+                const response = await fetch(imageData.preview)
+                if (!response.ok) {
+                  console.warn('Resim fetch edilemedi:', imageData.name)
+                  continue
+                }
+                blob = await response.blob()
+              } else {
+                // URL ise direkt fetch et
+                const response = await fetch(imageData.preview)
+                if (!response.ok) {
+                  console.warn('Resim URL\'si erişilemez:', imageData.name)
+                  continue
+                }
+                blob = await response.blob()
+              }
+              
+              formData.append('images', blob, imageData.name || 'image.jpg')
+              console.log(`✅ Resim eklendi: ${imageData.name}`)
+            } catch (imageError) {
+              console.error('Resim işleme hatası:', imageError, imageData.name)
+              continue
             }
           }
+        }
 
+        // Eğer formData'da resim varsa yükle
+        if (formData.has('images')) {
+          console.log('📤 Resimler backend\'e yükleniyor...')
           await api.post(`/paint-analysis/${reportId}/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           })
-          
-          console.log('✅ Resimler yüklendi')
+          console.log('✅ Resimler başarıyla yüklendi')
+          setProgress(40)
+        } else {
+          console.warn('⚠️ Yüklenecek resim bulunamadı - formData boş')
         }
+      } else {
+        console.warn('⚠️ Yüklenecek resim bulunamadı')
+        setProgress(40)
       }
 
       // 3. AI analizi gerçekleştir
-      toast.loading('OpenAI Vision API ile analiz ediliyor...', { id: 'paint-analysis' })
+      setCurrentStep('AI analizi yapılıyor...')
+      setProgress(60)
       
       const analyzeResponse = await api.post(`/paint-analysis/${reportId}/analyze`)
 
@@ -68,8 +104,14 @@ export const usePaintAnalysis = () => {
       }
 
       console.log('✅ Boya analizi tamamlandı')
+      setProgress(90)
+      setCurrentStep('Rapor hazırlanıyor...')
 
-      toast.dismiss('paint-analysis')
+      // Kısa bir bekleme
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      setProgress(100)
+      setCurrentStep('Tamamlandı!')
+      
       toast.success('🎨 Boya analizi raporu başarıyla oluşturuldu!')
       
       return {
@@ -80,16 +122,37 @@ export const usePaintAnalysis = () => {
       
     } catch (error: any) {
       console.error('❌ Boya analizi hatası:', error)
-      toast.dismiss('paint-analysis')
-      toast.error(error.response?.data?.message || error.message || 'Boya analizi başarısız oldu')
+      console.error('❌ Hata detayları:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: error.config
+      })
+      
+      // Daha detaylı hata mesajı
+      let errorMessage = 'Boya analizi başarısız oldu'
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+        if (error.response.data.details) {
+          errorMessage += ` (${error.response.data.details.suggestion || ''})`
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      toast.error(errorMessage)
       throw error
     } finally {
       setIsAnalyzing(false)
+      setProgress(0)
+      setCurrentStep('')
     }
   }, [])
 
   return {
     isAnalyzing,
+    progress,
+    currentStep,
     performAnalysis
   }
 }

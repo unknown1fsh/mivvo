@@ -257,8 +257,18 @@ export class DamageAnalysisController {
         try {
           console.log(`🔍 Resim ${i + 1}/${images.length} analiz ediliyor...`);
           
+          // Araç bilgilerini hazırla
+          const vehicleInfo = {
+            make: report.vehicleBrand,
+            model: report.vehicleModel,
+            year: report.vehicleYear,
+            plate: report.vehiclePlate
+          }
+
+          console.log('🚗 Araç bilgileri prompt\'a dahil ediliyor:', vehicleInfo)
+
           // OpenAI Vision API ile gerçek AI hasar tespiti
-          const damageResult = await AIService.detectDamage(image.imageUrl);
+          const damageResult = await AIService.detectDamage(image.imageUrl, vehicleInfo);
           
           console.log(`✅ Resim ${i + 1} analizi tamamlandı: ${damageResult?.damageAreas?.length || 0} hasar tespit edildi`);
           

@@ -42,9 +42,12 @@ class VehicleGarageService {
   async getVehicleGarage(): Promise<VehicleGarage[]> {
     const response = await apiClient.get<VehicleGarage[]>('/api/vehicle-garage')
     
+    console.log('🔍 Vehicle garage response:', response)
+    
     if (response.success && response.data) {
       // Güvenli kontrol: data array olup olmadığını kontrol et
       if (Array.isArray(response.data)) {
+        console.log(`✅ ${response.data.length} araç bulundu`)
         return response.data
       } else {
         console.warn('Araç verisi beklenmeyen formatta:', response.data)
@@ -52,6 +55,7 @@ class VehicleGarageService {
       }
     }
     
+    console.log('⚠️ Araç verisi bulunamadı veya hata oluştu')
     return []
   }
 

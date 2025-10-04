@@ -98,12 +98,23 @@ export class AudioAnalysisService {
     }
   }
 
-  private static buildPrompt(): string {
+  private static buildPrompt(vehicleInfo?: any): string {
+    const vehicleContext = vehicleInfo ? `
+🚗 ARAÇ BİLGİLERİ:
+- Marka: ${vehicleInfo.make || 'Bilinmiyor'}
+- Model: ${vehicleInfo.model || 'Bilinmiyor'}
+- Yıl: ${vehicleInfo.year || 'Bilinmiyor'}
+- Plaka: ${vehicleInfo.plate || 'Bilinmiyor'}
+
+Bu araç bilgilerini göz önünde bulundurarak motor ses analizi yap.` : ''
+
     return `Sen dünyaca ünlü bir motor uzmanı ve akustik mühendisisin. 30+ yıllık deneyimin var. Motor sesini FREKANS SEVİYESİNDE analiz edebiliyorsun.
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
-🔊 AKUSTIK MOTOR ANALİZİ
+🔊 PROFESYONEL MOTOR SES ANALİZİ
+
+${vehicleContext}
 
 📋 ANALİZ KURALLARI:
 1. Motor sesini ÇOK DETAYLI dinle ve analiz et
@@ -214,11 +225,13 @@ export class AudioAnalysisService {
 
 ⚠️ KRİTİK KURALLAR:
 - RAPOR TAMAMEN TÜRKÇE - HİÇBİR İNGİLİZCE YOK!
+- SADECE MOTOR SES ANALİZİ - Hasar tespiti veya boya analizi yapma!
 - Her sorun için DETAYLI Türkçe açıklama (minimum 2 cümle)
 - Maliyet Türkiye 2025 fiyatları
 - RPM ve frekans değerleri gerçekçi olmalı
 - Sadece geçerli JSON döndür
-- Tüm field'lar Türkçe değerler içermeli`
+- Tüm field'lar Türkçe değerler içermeli
+- Motor sağlığı, RPM analizi, frekans analizi ve arıza tespiti odaklı analiz yap`
   }
 
   private static extractJsonPayload(rawText: string): any {
@@ -238,10 +251,7 @@ export class AudioAnalysisService {
 
     // Not: OpenAI şu anda doğrudan ses dosyası analizi yapmıyor
     // Bu yüzden ses dosyasının özelliklerini metin olarak göndereceğiz
-    const prompt = `${this.buildPrompt()}
-
-ARAÇ BİLGİLERİ:
-${JSON.stringify(vehicleInfo, null, 2)}
+    const prompt = `${this.buildPrompt(vehicleInfo)}
 
 SES DOSYASI: ${audioPath}
 

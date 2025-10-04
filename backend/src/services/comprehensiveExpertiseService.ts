@@ -99,17 +99,28 @@ export class ComprehensiveExpertiseService {
     }
   }
 
-  private static buildPrompt(analyses: {
+  private static buildPrompt(vehicleInfo: any, analyses: {
     damage?: DamageDetectionResult
     paint?: PaintAnalysisResult
     audio?: AudioAnalysisResult
     value?: ValueEstimationResult
   }): string {
+    const vehicleContext = vehicleInfo ? `
+🚗 ARAÇ BİLGİLERİ:
+- Marka: ${vehicleInfo.make || 'Bilinmiyor'}
+- Model: ${vehicleInfo.model || 'Bilinmiyor'}
+- Yıl: ${vehicleInfo.year || 'Bilinmiyor'}
+- Plaka: ${vehicleInfo.plate || 'Bilinmiyor'}
+
+Bu araç bilgilerini göz önünde bulundurarak kapsamlı expertiz raporu hazırla.` : ''
+
     return `Sen dünyaca ünlü bir otomotiv eksperisin. 30+ yıllık deneyimin var. Tüm analiz sonuçlarını birleştirip KAPSAMLI bir expertiz raporu hazırlayabiliyorsun.
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
-📋 KAPSAMLI EKSPERTİZ RAPORU
+📋 PROFESYONEL KAPSAMLI EKSPERTİZ RAPORU
+
+${vehicleContext}
 
 ANALİZ SONUÇLARI:
 
@@ -286,11 +297,13 @@ ${analyses.value ? `
 
 ⚠️ KRİTİK KURALLAR:
 - RAPOR TAMAMEN TÜRKÇE - HİÇBİR İNGİLİZCE YOK!
+- SADECE KAPSAMLI EKSPERTİZ - Tek analiz türü değil, tüm analizleri birleştir!
 - Tüm analizleri birleştir ve kapsamlı değerlendir
 - Uzman görüşü sun
 - Yatırım kararı ver
 - Detaylı Türkçe açıklamalar
-- Sadece geçerli JSON döndür`
+- Sadece geçerli JSON döndür
+- Hasar, boya, motor ses ve değer analizlerini entegre et`
   }
 
   private static extractJsonPayload(rawText: string): any {
@@ -324,13 +337,13 @@ ${analyses.value ? `
       // Hasar analizi
       if (imagePaths && imagePaths.length > 0) {
         console.log('[AI] Hasar analizi yapılıyor...')
-        analyses.damage = await DamageDetectionService.detectDamage(imagePaths[0])
+        analyses.damage = await DamageDetectionService.detectDamage(imagePaths[0], vehicleInfo)
       }
 
       // Boya analizi
       if (imagePaths && imagePaths.length > 0) {
         console.log('[AI] Boya analizi yapılıyor...')
-        analyses.paint = await PaintAnalysisService.analyzePaint(imagePaths[0])
+        analyses.paint = await PaintAnalysisService.analyzePaint(imagePaths[0], vehicleInfo)
       }
 
       // Motor ses analizi
@@ -345,7 +358,7 @@ ${analyses.value ? `
 
       // Kapsamlı rapor oluştur
       console.log('[AI] Kapsamlı rapor birleştiriliyor...')
-      const prompt = `${this.buildPrompt(analyses)}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
+      const prompt = `${this.buildPrompt(vehicleInfo, analyses)}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
 
       const response = await this.openaiClient!.chat.completions.create({
         model: OPENAI_MODEL,

@@ -68,6 +68,8 @@ export class ValueEstimationService {
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
+💰 PROFESYONEL ARAÇ DEĞER TAHMİNİ RAPORU
+
 📋 ARAÇ BİLGİLERİ:
 - Marka: ${vehicleInfo.make || 'Belirtilmemiş'}
 - Model: ${vehicleInfo.model || 'Belirtilmemiş'}
@@ -421,12 +423,14 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
 
 ⚠️ KRİTİK KURALLAR:
 - RAPOR TAMAMEN TÜRKÇE - HİÇBİR İNGİLİZCE YOK!
+- SADECE ARAÇ DEĞER TAHMİNİ - Hasar tespiti veya boya analizi yapma!
 - Fiyatlar GERÇEK Türkiye 2025 piyasa değerleri olmalı
 - ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.model} için UYGUN fiyat belirle
 - Detaylı Türkçe açıklamalar yap (minimum 2-3 cümle)
 - ${hasImages ? 'Fotoğraflardaki araç durumunu DEĞERLENDİR ve yorumla' : 'Genel piyasa verilerine göre değerle'}
 - Tüm sayısal değerleri NUMBER olarak ver (string DEĞİL!)
-- Sadece geçerli JSON döndür`
+- Sadece geçerli JSON döndür
+- Piyasa analizi, değer hesaplama ve yatırım önerileri odaklı analiz yap`
   }
 
   private static extractJsonPayload(rawText: string): any {
@@ -451,7 +455,7 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     if (hasImages && imagePaths && imagePaths.length > 0) {
       try {
         console.log('[AI] Değer tahmini için önce hasar analizi yapılıyor...')
-        damageInfo = await DamageDetectionService.detectDamage(imagePaths[0])
+        damageInfo = await DamageDetectionService.detectDamage(imagePaths[0], vehicleInfo)
         console.log(`[AI] Hasar analizi tamamlandı: ${damageInfo.damageAreas.length} hasar tespit edildi`)
         console.log(`[AI] Toplam tamir maliyeti: ${damageInfo.overallAssessment.totalRepairCost} TL`)
       } catch (error) {

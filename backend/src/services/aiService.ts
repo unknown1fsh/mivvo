@@ -89,14 +89,14 @@ export class AIService {
   }
 
   /**
-   * Boya analizi - önce gerçek AI, hata durumunda simple fallback
+   * Boya analizi - sadece gerçek AI, fallback yok
    */
-  static async analyzePaint(imagePath: string, angle: string): Promise<PaintAnalysisResult> {
+  static async analyzePaint(imagePath: string, vehicleInfo?: any): Promise<PaintAnalysisResult> {
     await this.initialize()
 
     try {
       console.log('[AI] Gelişmiş boya analizi başlatılıyor...')
-      const advancedResult = await PaintAnalysisService.analyzePaint(imagePath)
+      const advancedResult = await PaintAnalysisService.analyzePaint(imagePath, vehicleInfo)
       const mapped = this.mapPaintAnalysisResult(advancedResult)
       console.log('[AI] Boya analizi tamamlandı:', {
         provider: advancedResult.aiProvider,
@@ -105,20 +105,20 @@ export class AIService {
       })
       return mapped
     } catch (error) {
-      console.error('[AI] Gelişmiş boya analizi başarısız, fallback devrede:', error)
-      return await SimpleFallbackService.analyzePaint(imagePath, angle)
+      console.error('[AI] Gelişmiş boya analizi başarısız:', error)
+      throw new Error('AI boya analizi gerçekleştirilemedi. Lütfen resim kalitesini kontrol edin ve tekrar deneyin.')
     }
   }
 
   /**
    * Hasar tespiti - önce gerçek AI, hata durumunda simple fallback
    */
-  static async detectDamage(imagePath: string): Promise<DamageDetectionResult> {
+  static async detectDamage(imagePath: string, vehicleInfo?: any): Promise<DamageDetectionResult> {
     await this.initialize()
 
     try {
       console.log('[AI] Gelişmiş hasar analizi başlatılıyor...')
-      const advancedResult = await DamageDetectionService.detectDamage(imagePath)
+      const advancedResult = await DamageDetectionService.detectDamage(imagePath, vehicleInfo)
       const normalizedAreas = advancedResult.damageAreas.map((area) => ({
         ...area,
         severity: this.normalizeDamageSeverity(area.severity)
@@ -145,7 +145,7 @@ export class AIService {
   /**
    * Motor sesi analizi - önce gerçek AI, hata durumunda simple fallback
    */
-  static async analyzeEngineSound(audioPath: string, vehicleInfo: any): Promise<AudioAnalysisResult> {
+  static async analyzeEngineSound(audioPath: string, vehicleInfo?: any): Promise<AudioAnalysisResult> {
     await this.initialize()
 
     try {
