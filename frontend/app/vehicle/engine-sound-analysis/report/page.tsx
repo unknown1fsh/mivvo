@@ -224,19 +224,19 @@ function EngineSoundAnalysisReportPageContent() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Toplam Süre:</span>
-                  <span className="font-medium">{analysisResult as any && (analysisResult as any).acousticFeatures?.durationSec ?? '-'} sn</span>
+                  <span className="font-medium">{(((analysisResult as any) && (analysisResult as any).acousticFeatures?.durationSec) ?? '-')} sn</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">RMS (Ortalama Enerji):</span>
-                  <span className="font-medium">{(analysisResult as any)?.acousticFeatures?.rms ?? '-'}</span>
+                  <span className="font-medium">{((analysisResult as any)?.acousticFeatures?.rms ?? '-')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Zero Crossing Rate:</span>
-                  <span className="font-medium">{(analysisResult as any)?.acousticFeatures?.zeroCrossingRate ?? '-'}</span>
+                  <span className="font-medium">{((analysisResult as any)?.acousticFeatures?.zeroCrossingRate ?? '-')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Baskın Frekans:</span>
-                  <span className="font-medium">{(analysisResult as any)?.acousticFeatures?.dominantFrequencyHz ?? '-'} Hz</span>
+                  <span className="font-medium">{((analysisResult as any)?.acousticFeatures?.dominantFrequencyHz ?? '-')} Hz</span>
                 </div>
               </div>
             </Card>
