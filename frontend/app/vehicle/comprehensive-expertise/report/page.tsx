@@ -34,6 +34,44 @@ interface ComprehensiveReport {
       criticalIssues: string[]
       strengths: string[]
       weaknesses: string[]
+      vehicleSpecsTable?: {
+        makeModel: string;
+        year: string;
+        engineType: string;
+        transmission: string;
+        driveType: string;
+        color: string;
+        plate: string;
+      };
+      exteriorConditionTable?: {
+        bodywork: { status: string; note: string };
+        paint: { status: string; note: string };
+        windows: { status: string; note: string };
+        lights: { status: string; note: string };
+        mirrors: { status: string; note: string };
+      };
+      mechanicalAnalysisTable?: {
+        engine: { status: string; note: string };
+        transmission: { status: string; note: string };
+        suspension: { status: string; note: string };
+        brakes: { status: string; note: string };
+        electrical: { status: string; note: string };
+      };
+      expertiseScoreTable?: {
+        bodyPaint: { score: number; status: string; note: string };
+        chassis: { score: number; status: string; note: string };
+        mechanical: { score: number; status: string; note: string };
+        electrical: { score: number; status: string; note: string };
+        tires: { score: number; status: string; note: string };
+        wheels: { score: number; status: string; note: string };
+        interior: { score: number; status: string; note: string };
+        overall: { score: number; status: string; note: string };
+      };
+      marketValueTable?: {
+        asIs: { min: number; max: number; note: string };
+        afterRepair: { min: number; max: number; note: string };
+        restored: { min: number; note: string };
+      };
     }
     expertOpinion: {
       recommendation: string
@@ -338,7 +376,7 @@ function ComprehensiveReportContent() {
         )}
 
         {/* Teknik Özellikler Tablosu */}
-        {analysis.comprehensiveSummary?.vehicleSpecsTable && (
+        {analysis.comprehensiveSummary && (analysis as any).comprehensiveSummary?.vehicleSpecsTable && (
           <FadeInUp delay={0.15}>
             <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-indigo-100">
               <div className="flex items-center mb-6">
@@ -358,31 +396,31 @@ function ComprehensiveReportContent() {
                   <tbody>
                     <tr className="hover:bg-indigo-50 transition-colors">
                       <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Marka / Model</td>
-                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.makeModel}</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{(analysis as any).comprehensiveSummary?.vehicleSpecsTable?.makeModel ?? '-'}</td>
                     </tr>
                     <tr className="hover:bg-indigo-50 transition-colors">
                       <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Model Yılı</td>
-                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.year}</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{(analysis as any).comprehensiveSummary?.vehicleSpecsTable?.year ?? '-'}</td>
                     </tr>
                     <tr className="hover:bg-indigo-50 transition-colors">
                       <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Motor Tipi</td>
-                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.engineType}</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{(analysis as any).comprehensiveSummary?.vehicleSpecsTable?.engineType ?? '-'}</td>
                     </tr>
                     <tr className="hover:bg-indigo-50 transition-colors">
                       <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Aktarma</td>
-                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.transmission}</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{(analysis as any).comprehensiveSummary?.vehicleSpecsTable?.transmission ?? '-'}</td>
                     </tr>
                     <tr className="hover:bg-indigo-50 transition-colors">
                       <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Çekiş Sistemi</td>
-                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.driveType}</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{(analysis as any).comprehensiveSummary?.vehicleSpecsTable?.driveType ?? '-'}</td>
                     </tr>
                     <tr className="hover:bg-indigo-50 transition-colors">
                       <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Renk</td>
-                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.color}</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{(analysis as any).comprehensiveSummary?.vehicleSpecsTable?.color ?? '-'}</td>
                     </tr>
                     <tr className="hover:bg-indigo-50 transition-colors">
                       <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Plaka</td>
-                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.vehicleSpecsTable.plate}</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900 font-bold">{(analysis as any).comprehensiveSummary?.vehicleSpecsTable?.plate ?? '-'}</td>
                     </tr>
                   </tbody>
                 </table>
