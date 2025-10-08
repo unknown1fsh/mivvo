@@ -313,7 +313,7 @@ function NewReportPageContent() {
           // Motor ses analizi için ses kaydı
           return (
             <AudioRecorder
-              {...audioRecordingProps}
+              audioRecordingHook={audioRecordingProps}
               onNext={nextStep}
               onPrev={prevStep}
               selectedReportType={selectedReportType}
@@ -361,7 +361,7 @@ function NewReportPageContent() {
         if (selectedReportType?.id === 'FULL_REPORT') {
           return (
             <AudioRecorder
-              {...audioRecordingProps}
+              audioRecordingHook={audioRecordingProps}
               onNext={nextStep}
               onPrev={prevStep}
               selectedReportType={selectedReportType}

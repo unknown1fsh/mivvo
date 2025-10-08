@@ -1,7 +1,39 @@
-// Rapor türleri sabitleri
+/**
+ * Report Types Constants (Rapor Tipleri Sabitleri)
+ * 
+ * Clean Architecture - Constants Layer (Sabitler Katmanı)
+ * 
+ * Bu dosya, rapor tipleri ve form adımları için sabitleri içerir.
+ * 
+ * İçerik:
+ * - REPORT_TYPES: Mevcut rapor tipleri ve fiyatları
+ * - Analysis adımları (Paint, Damage, Engine, Value, Full)
+ * - getStepsForReportType(): Rapor tipine göre adımları getiren helper
+ * 
+ * Kullanım:
+ * ```typescript
+ * import { REPORT_TYPES, getStepsForReportType } from '@/constants'
+ * 
+ * const steps = getStepsForReportType('PAINT_ANALYSIS')
+ * ```
+ */
 
 import { ReportType } from '@/types/report'
 
+/**
+ * Report Types (Rapor Tipleri)
+ * 
+ * Mevcut tüm rapor tipleri, fiyatları ve özellikleri.
+ * 
+ * Her rapor tipi için:
+ * - id: Benzersiz ID
+ * - name: Rapor adı
+ * - price: Fiyat (kredi)
+ * - description: Açıklama
+ * - features: Özellikler listesi
+ * - icon: Emoji ikonu
+ * - popular: Popüler mi? (opsiyonel)
+ */
 export const REPORT_TYPES: ReportType[] = [
   {
     id: 'PAINT_ANALYSIS',
@@ -46,14 +78,27 @@ export const REPORT_TYPES: ReportType[] = [
   }
 ]
 
-// Adım türleri
+/**
+ * Step Interface (Adım Arayüzü)
+ * 
+ * Form wizard adımları için tip tanımı.
+ */
 export interface Step {
+  /** Adım numarası */
   id: number
+  
+  /** Adım adı */
   name: string
+  
+  /** Adım açıklaması */
   description: string
 }
 
-// Boya analizi için adımlar
+/**
+ * Paint Analysis Steps (Boya Analizi Adımları)
+ * 
+ * Boya analizi form wizard adımları.
+ */
 export const PAINT_ANALYSIS_STEPS: Step[] = [
   { id: 1, name: 'Rapor Türü', description: 'Analiz türünü seçin' },
   { id: 2, name: 'Araç Bilgileri', description: 'Araç detaylarını girin' },
@@ -61,7 +106,11 @@ export const PAINT_ANALYSIS_STEPS: Step[] = [
   { id: 4, name: 'Özet', description: 'Bilgileri kontrol edin' },
 ]
 
-// Motor ses analizi için adımlar
+/**
+ * Engine Sound Analysis Steps (Motor Ses Analizi Adımları)
+ * 
+ * Motor sesi analizi form wizard adımları.
+ */
 export const ENGINE_SOUND_ANALYSIS_STEPS: Step[] = [
   { id: 1, name: 'Rapor Türü', description: 'Analiz türünü seçin' },
   { id: 2, name: 'Araç Bilgileri', description: 'Araç detaylarını girin' },
@@ -69,7 +118,11 @@ export const ENGINE_SOUND_ANALYSIS_STEPS: Step[] = [
   { id: 4, name: 'Özet', description: 'Bilgileri kontrol edin' },
 ]
 
-// Hasar analizi için adımlar
+/**
+ * Damage Analysis Steps (Hasar Analizi Adımları)
+ * 
+ * Hasar analizi form wizard adımları.
+ */
 export const DAMAGE_ANALYSIS_STEPS: Step[] = [
   { id: 1, name: 'Rapor Türü', description: 'Analiz türünü seçin' },
   { id: 2, name: 'Araç Bilgileri', description: 'Araç detaylarını girin' },
@@ -77,7 +130,11 @@ export const DAMAGE_ANALYSIS_STEPS: Step[] = [
   { id: 4, name: 'Özet', description: 'Bilgileri kontrol edin' },
 ]
 
-// Değer tahmini için adımlar
+/**
+ * Value Estimation Steps (Değer Tahmini Adımları)
+ * 
+ * Değer tahmini form wizard adımları.
+ */
 export const VALUE_ESTIMATION_STEPS: Step[] = [
   { id: 1, name: 'Rapor Türü', description: 'Analiz türünü seçin' },
   { id: 2, name: 'Araç Bilgileri', description: 'Araç detaylarını girin' },
@@ -85,7 +142,13 @@ export const VALUE_ESTIMATION_STEPS: Step[] = [
   { id: 4, name: 'Özet', description: 'Bilgileri kontrol edin' },
 ]
 
-// Tam expertiz için adımlar
+/**
+ * Full Report Steps (Tam Expertiz Adımları)
+ * 
+ * Tam expertiz form wizard adımları.
+ * 
+ * NOT: Hem görsel hem ses kaydı içerir (5 adım).
+ */
 export const FULL_REPORT_STEPS: Step[] = [
   { id: 1, name: 'Rapor Türü', description: 'Analiz türünü seçin' },
   { id: 2, name: 'Araç Bilgileri', description: 'Araç detaylarını girin' },
@@ -94,7 +157,19 @@ export const FULL_REPORT_STEPS: Step[] = [
   { id: 5, name: 'Özet', description: 'Bilgileri kontrol edin' },
 ]
 
-// Rapor türüne göre adımları getir
+/**
+ * Get Steps For Report Type (Rapor Tipine Göre Adımları Getir)
+ * 
+ * Verilen rapor tipi ID'sine göre ilgili form wizard adımlarını döner.
+ * 
+ * @param reportTypeId - Rapor tipi ID
+ * 
+ * @returns İlgili adımlar dizisi
+ * 
+ * @example
+ * const steps = getStepsForReportType('PAINT_ANALYSIS')
+ * // [{ id: 1, name: 'Rapor Türü', ... }, ...]
+ */
 export const getStepsForReportType = (reportTypeId: string): Step[] => {
   switch (reportTypeId) {
     case 'PAINT_ANALYSIS':
@@ -108,9 +183,16 @@ export const getStepsForReportType = (reportTypeId: string): Step[] => {
     case 'FULL_REPORT':
       return FULL_REPORT_STEPS
     default:
+      // Varsayılan olarak boya analizi adımlarını döner
       return PAINT_ANALYSIS_STEPS
   }
 }
 
-// Varsayılan adımlar (geriye uyumluluk için)
+/**
+ * Default Steps (Varsayılan Adımlar)
+ * 
+ * Geriye uyumluluk için varsayılan adımlar.
+ * 
+ * @deprecated Bunun yerine getStepsForReportType() kullanın
+ */
 export const STEPS = PAINT_ANALYSIS_STEPS

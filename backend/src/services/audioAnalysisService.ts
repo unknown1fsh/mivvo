@@ -1,72 +1,147 @@
+/**
+ * Ses Analizi Servisi (Audio Analysis Service)
+ * 
+ * Clean Architecture - Service Layer (İş Mantığı Katmanı)
+ * 
+ * Bu servis, OpenAI API kullanarak motor ses analizi yapar.
+ * 
+ * Amaç:
+ * - Motor ses kaydından arıza tespiti
+ * - RPM ve frekans analizi
+ * - Motor sağlığı değerlendirmesi
+ * - Detaylı Türkçe arıza raporları
+ * - Bakım önerileri ve maliyet tahmini
+ * 
+ * NOT: OpenAI şu anda doğrudan ses dosyası analizi desteklemiyor.
+ * Bu implementasyon ses dosyası path'ini prompt'a ekleyerek
+ * simüle bir analiz yapıyor. Gelecekte Whisper API veya
+ * özel ses analiz modelleri entegre edilebilir.
+ * 
+ * Motor Analiz Kategorileri:
+ * - RPM analizi (rölanti, max devir, stabilite)
+ * - Ses kalitesi (netlik, pürüzsüzlük, tutarlılık)
+ * - Tespit edilen sorunlar (mekanik, elektrik vb.)
+ * - Performans metrikleri (verimlilik, yakıt ekonomisi)
+ * - Bakım önerileri (acil, kısa/uzun vadeli)
+ * - Maliyet tahmini (detaylı breakdown)
+ * 
+ * Özellikler:
+ * - Gerçekçi Türkiye fiyatları (2025)
+ * - Detaylı arıza açıklaması
+ * - Semptom ve neden analizi
+ * - Aciliyet değerlendirmesi
+ * - Cache mekanizması
+ */
+
 import OpenAI from 'openai'
 import fs from 'fs/promises'
 import crypto from 'crypto'
 
-// --- Tip Tanımları (Kısaltılmış) ---------------------------------------------------------
+// ===== TİP TANIMLARI =====
 
+/**
+ * Ses Analizi Sonucu Interface
+ * 
+ * Motor ses analizinin tüm sonuçlarını içerir
+ */
 export interface AudioAnalysisResult {
-  overallScore: number
-  engineHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical'
-  rpmAnalysis: {
-    idleRpm: number
-    maxRpm: number
-    rpmStability: number
-    rpmResponse: number
-    idleQuality: string
+  overallScore: number                                                  // Genel puan (0-100)
+  engineHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical'   // Motor sağlığı
+  rpmAnalysis: {                                                        // RPM analizi
+    idleRpm: number                                                     // Rölanti devri
+    maxRpm: number                                                      // Maximum devir
+    rpmStability: number                                                // Devir stabilitesi (%)
+    rpmResponse: number                                                 // Devir tepkisi (%)
+    idleQuality: string                                                 // Rölanti kalitesi açıklaması
   }
-  soundQuality: {
-    overallQuality: number
-    clarity: number
-    smoothness: number
-    consistency: number
-    soundSignature: string
+  soundQuality: {                                                       // Ses kalitesi
+    overallQuality: number                                              // Genel kalite (0-100)
+    clarity: number                                                     // Netlik (0-100)
+    smoothness: number                                                  // Pürüzsüzlük (0-100)
+    consistency: number                                                 // Tutarlılık (0-100)
+    soundSignature: string                                              // Ses imzası açıklaması
   }
-  detectedIssues: EngineIssue[]
-  performanceMetrics: {
-    engineEfficiency: number
-    fuelEfficiency: number
-    overallPerformance: number
-    performanceGrade: string
+  detectedIssues: EngineIssue[]                                        // Tespit edilen sorunlar
+  performanceMetrics: {                                                 // Performans metrikleri
+    engineEfficiency: number                                            // Motor verimliliği (%)
+    fuelEfficiency: number                                              // Yakıt verimliliği (%)
+    overallPerformance: number                                          // Genel performans (%)
+    performanceGrade: string                                            // Performans notu
   }
-  recommendations: {
-    immediate: string[]
-    shortTerm: string[]
-    longTerm: string[]
-    maintenance: string[]
+  recommendations: {                                                    // Öneriler
+    immediate: string[]                                                 // Acil öneriler
+    shortTerm: string[]                                                 // Kısa vadeli öneriler
+    longTerm: string[]                                                  // Uzun vadeli öneriler
+    maintenance: string[]                                               // Bakım önerileri
   }
-  costEstimate: {
-    totalCost: number
-    breakdown: Array<{ category: string; cost: number; description: string }>
+  costEstimate: {                                                       // Maliyet tahmini
+    totalCost: number                                                   // Toplam maliyet (TL)
+    breakdown: Array<{                                                  // Maliyet detayı
+      category: string                                                  // Kategori
+      cost: number                                                      // Maliyet (TL)
+      description: string                                               // Açıklama
+    }>
   }
-  aiProvider: string
-  model: string
-  confidence: number
-  analysisTimestamp: string
+  aiProvider: string                                                    // AI sağlayıcı
+  model: string                                                         // AI model
+  confidence: number                                                    // Güven seviyesi (0-100)
+  analysisTimestamp: string                                             // Analiz zamanı (ISO)
 }
 
+/**
+ * Motor Arızası Interface
+ * 
+ * Tespit edilen her arıza için detaylı bilgi
+ */
 export interface EngineIssue {
-  id: string
-  type: string
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  confidence: number
-  description: string
-  symptoms: string[]
-  possibleCauses: string[]
-  urgency: 'immediate' | 'urgent' | 'normal' | 'low'
-  estimatedRepairCost: number
-  estimatedRepairTime: number
-  recommendedActions: string[]
+  id: string                                                            // Benzersiz arıza ID'si
+  type: string                                                          // Arıza tipi
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'        // Şiddet seviyesi
+  confidence: number                                                    // Güven seviyesi (0-100)
+  description: string                                                   // Detaylı açıklama
+  symptoms: string[]                                                    // Semptomlar listesi
+  possibleCauses: string[]                                              // Olası nedenler
+  urgency: 'immediate' | 'urgent' | 'normal' | 'low'                  // Aciliyet
+  estimatedRepairCost: number                                           // Tahmini onarım maliyeti (TL)
+  estimatedRepairTime: number                                           // Tahmini onarım süresi (saat)
+  recommendedActions: string[]                                          // Önerilen aksiyonlar
 }
 
-// --- Servis ----------------------------------------------------------------
+// ===== SERVİS =====
 
+/**
+ * OpenAI Model Seçimi
+ * 
+ * Environment variable'dan model adı alınır, yoksa default kullanılır
+ */
 const OPENAI_MODEL = process.env.OPENAI_AUDIO_MODEL ?? 'gpt-4o-mini'
 
+/**
+ * AudioAnalysisService Sınıfı
+ * 
+ * OpenAI API ile motor ses analizi yapan servis
+ */
 export class AudioAnalysisService {
+  /**
+   * OpenAI client instance
+   */
   private static openaiClient: OpenAI | null = null
+
+  /**
+   * Initialization durumu
+   */
   private static isInitialized = false
+
+  /**
+   * In-memory cache (audio hash → result)
+   */
   private static cache = new Map<string, AudioAnalysisResult>()
 
+  /**
+   * Servisi başlatır (OpenAI client oluşturur)
+   * 
+   * @throws Error - API key yoksa
+   */
   static async initialize(): Promise<void> {
     if (this.isInitialized) return
 
@@ -85,10 +160,23 @@ export class AudioAnalysisService {
     }
   }
 
+  /**
+   * Cache'i temizler
+   */
   static clearCache(): void {
     this.cache.clear()
   }
 
+  /**
+   * Ses dosyası hash'ini hesaplar (cache key için)
+   * 
+   * MD5 hash kullanır
+   * 
+   * @param audioPath - Ses dosyası path'i
+   * @returns MD5 hash veya timestamp (fallback)
+   * 
+   * @private
+   */
   private static async getAudioHash(audioPath: string): Promise<string> {
     try {
       const buffer = await fs.readFile(audioPath)
@@ -98,6 +186,22 @@ export class AudioAnalysisService {
     }
   }
 
+  /**
+   * OpenAI için Türkçe prompt oluşturur
+   * 
+   * ÇOK DETAYLI prompt ile AI'ya motor uzmanı rolü verilir:
+   * - 30+ yıllık deneyimli motor uzmanı
+   * - Akustik mühendis
+   * - Frekans seviyesinde analiz
+   * - Türkçe rapor
+   * - Gerçekçi Türkiye fiyatları
+   * - JSON format örneği
+   * 
+   * @param vehicleInfo - Araç bilgileri (opsiyonel)
+   * @returns Prompt metni
+   * 
+   * @private
+   */
   private static buildPrompt(vehicleInfo?: any): string {
     const vehicleContext = vehicleInfo ? `
 🚗 ARAÇ BİLGİLERİ:
@@ -136,104 +240,72 @@ ${vehicleContext}
 🔍 ÇIKTI FORMATI (Sadece geçerli JSON, TAMAMEN TÜRKÇE):
 {
   "overallScore": 85,
-  "engineHealth": "good",
+  "engineHealth": "İyi",
   "rpmAnalysis": {
     "idleRpm": 800,
     "maxRpm": 6500,
-    "rpmStability": 90,
-    "rpmResponse": 85,
-    "idleQuality": "Düzgün ve kararlı rölanti. Motor dengeli çalışıyor."
+    "rpmStability": 90
   },
-  "soundQuality": {
-    "overallQuality": 85,
-    "clarity": 88,
-    "smoothness": 90,
-    "consistency": 87,
-    "soundSignature": "Sağlıklı 4 silindirli motor sesi. Düzgün ve güçlü çalışma."
+  "frequencyAnalysis": {
+    "dominantFrequencies": [120, 240, 360],
+    "harmonicDistortion": 6.5,
+    "noiseLevel": 52.3
+  },
+  "acousticFeatures": {
+    "durationSec": 6.0,
+    "rms": 0.033,
+    "zeroCrossingRate": 0.1986,
+    "dominantFrequencyHz": 1464
   },
   "detectedIssues": [
     {
-      "id": "sorun-001",
-      "type": "mechanical",
+      "issue": "Motor takozlarında aşınma",
       "severity": "low",
       "confidence": 85,
-      "description": "Hafif motor dengesizliği tespit edildi. Motor takozlarında minimal aşınma var. Titreşim seviyesi normalin hafif üzerinde.",
-      "symptoms": ["Hafif titreşim", "Rölantide minimal ses dalgalanması"],
-      "possibleCauses": ["Motor takozları eskimiş", "Motor dengeleme gerekli", "Enjektör temizliği gerekebilir"],
-      "urgency": "normal",
-      "estimatedRepairCost": 1500,
-      "estimatedRepairTime": 3,
-      "recommendedActions": [
-        "Motor takozlarını kontrol ettir",
-        "Motor dengeleme yaptır",
-        "Enjektör temizliği değerlendir"
-      ]
+      "description": "Rölantide hafif titreşim, motor takozlarında başlangıç seviyesi aşınma tespit edildi.",
+      "recommendation": "Motor takozlarını kontrol ettirin ve gerekirse değiştirin"
     }
   ],
   "performanceMetrics": {
     "engineEfficiency": 85,
-    "fuelEfficiency": 82,
-    "overallPerformance": 85,
-    "performanceGrade": "İyi - Motor sağlıklı çalışıyor"
+    "vibrationLevel": 22,
+    "acousticQuality": 88
   },
-  "recommendations": {
-    "immediate": [
-      "Motor takozlarını kontrol ettir"
-    ],
-    "shortTerm": [
-      "Enjektör temizliği yaptır",
-      "Motor yağı ve filtre değişimi planla",
-      "Hava filtresi kontrol et"
-    ],
-    "longTerm": [
-      "Yılda 2 kez motor kontrolü",
-      "15.000 km'de bir detaylı bakım",
-      "Triger kayışı durumunu takip et"
-    ],
-    "maintenance": [
-      "Her 10.000 km'de yağ değişimi",
-      "Her 20.000 km'de hava filtresi",
-      "Her 30.000 km'de yakıt filtresi",
-      "Her 40.000 km'de buji kontrolü"
-    ]
-  },
-  "costEstimate": {
-    "totalCost": 2800,
-    "breakdown": [
-      {
-        "category": "Motor Takozları",
-        "cost": 1500,
-        "description": "Motor takoz değişimi ve montaj"
-      },
-      {
-        "category": "Enjektör Temizliği",
-        "cost": 800,
-        "description": "Ultrasonik enjektör temizliği"
-      },
-      {
-        "category": "Genel Kontrol",
-        "cost": 500,
-        "description": "Detaylı motor kontrolü ve ayarlar"
-      }
-    ]
-  },
+  "recommendations": [
+    "Motor yağı ve filtre değişimini zamanında yapın",
+    "Hava filtresini kontrol edin",
+    "Yakıt kalitesine dikkat edin"
+  ],
+  "analysisSummary": "Ses kaydında motor ateşleme darbeleri belirgin değil; marş dönüyor fakat tutuşma zayıf. Baskın frekans ~1464 Hz metal sürtünmesine işaret edebilir. Ateşleme/yakıt sistemi kontrol önerilir.",
   "aiProvider": "OpenAI",
-  "model": "OpenAI",
-  "confidence": 95,
+  "model": "${OPENAI_MODEL}",
   "analysisTimestamp": "${new Date().toISOString()}"
 }
 
 ⚠️ KRİTİK KURALLAR:
 - RAPOR TAMAMEN TÜRKÇE - HİÇBİR İNGİLİZCE YOK!
-- SADECE MOTOR SES ANALİZİ - Hasar tespiti veya boya analizi yapma!
-- Her sorun için DETAYLI Türkçe açıklama (minimum 2 cümle)
-- Maliyet Türkiye 2025 fiyatları
-- RPM ve frekans değerleri gerçekçi olmalı
-- Sadece geçerli JSON döndür
-- Tüm field'lar Türkçe değerler içermeli
-- Motor sağlığı, RPM analizi, frekans analizi ve arıza tespiti odaklı analiz yap`
+- SADECE MOTOR SES ANALİZİ - Başka analiz yapma
+- Sadece GEÇERLİ JSON döndür (ek metin YOK)
+- frequencyAnalysis alanını MUTLAKA doldur (dominantFrequencies, harmonicDistortion, noiseLevel)
+- acousticFeatures alanını da doldur (durationSec, rms, zeroCrossingRate, dominantFrequencyHz)
+- detectedIssues.severity sadece: low | medium | high | critical
+- recommendations mutlaka string[] olmalı (düz liste)
+- Kısa bir "analysisSummary" metni ekle (Türkçe yorum)
+- Değerler gerçekçi aralıkta olmalı`
   }
 
+  /**
+   * AI yanıtından JSON payload'ı çıkarır
+   * 
+   * AI bazen JSON öncesi/sonrasında metin ekler,
+   * bu fonksiyon sadece JSON kısmını parse eder.
+   * 
+   * @param rawText - AI'dan gelen ham metin
+   * @returns Parse edilmiş JSON
+   * @throws Error - JSON bulunamazsa
+   * 
+   * @private
+   */
   private static extractJsonPayload(rawText: string): any {
     const start = rawText.indexOf('{')
     const end = rawText.lastIndexOf('}')
@@ -244,22 +316,41 @@ ${vehicleContext}
     return JSON.parse(json)
   }
 
+  /**
+   * OpenAI API ile ses analizi yapar
+   * 
+   * NOT: OpenAI şu anda doğrudan ses dosyası analizi desteklemiyor.
+   * Bu implementasyon ses dosyası path'ini prompt'a ekleyerek
+   * simüle bir analiz yapıyor.
+   * 
+   * Gelecek İyileştirmeler:
+   * - Whisper API ile ses transkripti
+   * - FFmpeg ile ses özellikleri çıkarma (frekans, amplitüd)
+   * - Özel audio analysis model entegrasyonu
+   * 
+   * @param audioPath - Ses dosyası path'i
+   * @param vehicleInfo - Araç bilgileri
+   * @returns Ses analizi sonucu
+   * @throws Error - API hatası
+   * 
+   * @private
+   */
   private static async analyzeAudioWithOpenAI(audioPath: string, vehicleInfo: any): Promise<AudioAnalysisResult> {
     if (!this.openaiClient) {
       throw new Error('OpenAI istemcisi kullanılabilir değil')
     }
 
-    // Not: OpenAI şu anda doğrudan ses dosyası analizi yapmıyor
-    // Bu yüzden ses dosyasının özelliklerini metin olarak göndereceğiz
+    // Prompt'a ses dosyası path'ini ekle
     const prompt = `${this.buildPrompt(vehicleInfo)}
 
 SES DOSYASI: ${audioPath}
 
 Lütfen motor sesini analiz et ve yukarıdaki formatta JSON döndür.`
 
+    // OpenAI chat completion çağrısı
     const response = await this.openaiClient.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.1,
+      temperature: 0.1, // Düşük temperature = tutarlı sonuçlar
       messages: [
         {
           role: 'system',
@@ -272,18 +363,47 @@ Lütfen motor sesini analiz et ve yukarıdaki formatta JSON döndür.`
       ]
     })
 
+    // Yanıtı al
     const text = response.choices?.[0]?.message?.content
     if (!text) {
       throw new Error('OpenAI yanıtı boş geldi')
     }
 
+    // JSON'u parse et
     const parsed = this.extractJsonPayload(text)
     return parsed as AudioAnalysisResult
   }
 
+  /**
+   * Motor Ses Analizi - Public API
+   * 
+   * Cache kontrolü yapar, yoksa OpenAI ile analiz eder.
+   * 
+   * İşlem akışı:
+   * 1. Initialize kontrolü
+   * 2. Audio hash hesapla (cache key)
+   * 3. Cache kontrolü (varsa döndür)
+   * 4. OpenAI analizi yap
+   * 5. Sonucu cache'e kaydet
+   * 6. Sonucu döndür
+   * 
+   * @param audioPath - Ses dosyası path'i
+   * @param vehicleInfo - Araç bilgileri
+   * @returns Ses analizi sonucu
+   * @throws Error - API hatası
+   * 
+   * @example
+   * const result = await AudioAnalysisService.analyzeEngineSound(
+   *   './engine-sound.mp3',
+   *   { make: 'Toyota', model: 'Corolla', year: 2020 }
+   * );
+   * console.log(result.engineHealth); // 'good'
+   * console.log(result.overallScore); // 85
+   */
   static async analyzeEngineSound(audioPath: string, vehicleInfo: any): Promise<AudioAnalysisResult> {
     await this.initialize()
 
+    // Cache kontrolü
     const cacheKey = await this.getAudioHash(audioPath)
     const cached = this.cache.get(cacheKey)
     if (cached) {
@@ -293,9 +413,13 @@ Lütfen motor sesini analiz et ve yukarıdaki formatta JSON döndür.`
 
     try {
       console.log('[AI] OpenAI ile motor ses analizi başlatılıyor...')
+      
+      // OpenAI analizi
       const result = await this.analyzeAudioWithOpenAI(audioPath, vehicleInfo)
+      
       console.log('[AI] OpenAI motor ses analizi başarılı!')
       
+      // Cache'e kaydet
       this.cache.set(cacheKey, result)
       return result
     } catch (error) {

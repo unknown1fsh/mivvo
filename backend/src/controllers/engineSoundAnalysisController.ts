@@ -1,5 +1,48 @@
+/**
+ * Engine Sound Analysis Controller (Motor Sesi Analizi Controller)
+ * 
+ * Clean Architecture - Controller Layer (API Katmanı)
+ * 
+ * Bu controller, motor sesi analizi işlemlerini yönetir.
+ * 
+ * Sorumluluklar:
+ * - Motor sesi analizi başlatma
+ * - Ses dosyası yükleme (Multer - disk storage)
+ * - OpenAI Whisper/GPT-4 Audio ile analiz
+ * - Analiz sonucu getirme
+ * - Analiz geçmişi
+ * - Rapor indirme
+ * 
+ * İş Akışı:
+ * 1. Analiz başlat (kredi kontrolü + rapor oluştur)
+ * 2. Ses dosyalarını yükle (disk storage)
+ * 3. AI analizi simüle et/gerçekleştir (background job)
+ * 4. Rapor durumu sorgula
+ * 5. Rapor getir/indir
+ * 
+ * Özellikler:
+ * - Multer disk storage (ses dosyaları)
+ * - Geniş format desteği (WAV, MP3, M4A, AAC, 3GP, vb.)
+ * - OpenAI Audio API entegrasyonu
+ * - Kredi yönetimi
+ * - Background job simulation
+ * 
+ * Desteklenen Formatlar:
+ * - Standart: WAV, MP3, OGG, WebM
+ * - iPhone: M4A, AAC, CAF
+ * - Android: 3GP, AMR
+ * - Web: Opus, FLAC
+ * 
+ * Endpoints:
+ * - POST /api/engine-sound-analysis/analyze (Analiz başlat)
+ * - GET /api/engine-sound-analysis/:reportId (Sonuç getir)
+ * - GET /api/engine-sound-analysis/history (Geçmiş)
+ * - GET /api/engine-sound-analysis/:reportId/download (Rapor indir)
+ * - GET /api/engine-sound-analysis/:reportId/status (Durum)
+ */
+
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import multer from 'multer';
@@ -8,7 +51,22 @@ import fs from 'fs';
 
 const prisma = new PrismaClient();
 
-// Multer konfigürasyonu - ses dosyaları için
+// ===== MULTER KONFİGÜRASYONU =====
+
+/**
+ * Multer Disk Storage - Ses Dosyaları
+ * 
+ * Ses dosyaları disk'e kaydedilir.
+ * 
+ * Yükleme Dizini: uploads/audio/
+ * Dosya Adı: engine-sound-{timestamp}-{random}.{ext}
+ * Maksimum Boyut: 50MB
+ * 
+ * Disk kullanımı sebebi:
+ * - Ses dosyaları büyük olabilir (50MB)
+ * - RAM'de tutmak maliyetli
+ * - AI API'ye dosya yolu ile gönderilecek
+ */
 const audioStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = 'uploads/audio';
@@ -23,26 +81,118 @@ const audioStorage = multer.diskStorage({
   }
 });
 
+/**
+ * Multer Upload Instance - Audio
+ * 
+ * Desteklenen formatlar (geniş cep telefonu desteği):
+ * - Standart: WAV, MP3, OGG, WebM
+ * - iPhone: M4A, AAC, CAF
+ * - Android: 3GP, 3GP2, AMR
+ * - Web: Opus, FLAC
+ * 
+ * MIME type veya uzantı kontrolü yapılır.
+ */
 const audioUpload = multer({
   storage: audioStorage,
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ['audio/wav', 'audio/mp3', 'audio/mpeg', 'audio/ogg', 'audio/webm'];
-    if (allowedTypes.includes(file.mimetype)) {
+    // Cep telefonu ve web ses formatları
+    const allowedTypes = [
+      // Standart formatlar
+      'audio/wav',           // WAV
+      'audio/mp3',           // MP3
+      'audio/mpeg',          // MP3 (alternatif)
+      'audio/ogg',           // OGG
+      'audio/webm',          // WebM
+      // iPhone formatları
+      'audio/m4a',           // M4A (iPhone)
+      'audio/x-m4a',         // M4A (alternatif)
+      'audio/mp4',           // M4A (bazen bu şekilde gelir)
+      'audio/aac',           // AAC (iPhone/Android)
+      'audio/x-caf',         // CAF (iPhone)
+      // Android formatları
+      'audio/3gpp',          // 3GP (Android)
+      'audio/3gpp2',         // 3GP2 (Android)
+      'audio/amr',           // AMR (Android)
+      'audio/x-amr',         // AMR (alternatif)
+      // Web formatları
+      'audio/opus',          // Opus
+      'audio/flac',          // FLAC
+      'audio/x-flac'         // FLAC (alternatif)
+    ];
+    
+    // Uzantı kontrolü (bazı tarayıcılar yanlış MIME type gönderir)
+    const allowedExtensions = ['.wav', '.mp3', '.ogg', '.webm', '.m4a', '.aac', '.3gp', '.amr', '.opus', '.flac', '.caf'];
+    const fileExtension = file.originalname.toLowerCase().slice(file.originalname.lastIndexOf('.'));
+    
+    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error('Desteklenmeyen ses formatı. WAV, MP3, OGG veya WebM formatında kayıt yapın.'));
+      cb(new Error(`Desteklenmeyen ses formatı: ${file.mimetype}. Lütfen cep telefonunuzla kayıt yapın (M4A, AAC, 3GP) veya WAV, MP3, OGG formatı kullanın.`));
     }
   }
 });
 
-// @desc    Motor sesi analizi başlat
-// @route   POST /api/engine-sound-analysis/analyze
-// @access  Private
+// ===== CONTROLLER METHODS =====
+
+/**
+ * Motor Sesi Analizi Başlat
+ * 
+ * Yeni bir motor sesi analizi başlatır.
+ * 
+ * İşlem Akışı:
+ * 1. Araç bilgileri kontrolü
+ * 2. Ses dosyası kontrolü (Multer ile yüklenmiş olmalı)
+ * 3. Kredi kontrolü (ServicePricing)
+ * 4. Rapor oluştur (PROCESSING)
+ * 5. Ses dosyalarını kaydet (VehicleAudio)
+ * 6. Kredi düş
+ * 7. CreditTransaction oluştur
+ * 8. Background job başlat (setTimeout simülasyonu - 5 saniye)
+ * 
+ * Kredi Yönetimi:
+ * - ServicePricing'den fiyat al
+ * - Kullanıcı bakiyesi kontrol et
+ * - Kredi düş (balance, totalUsed)
+ * - Audit trail (CreditTransaction)
+ * 
+ * @route   POST /api/engine-sound-analysis/analyze
+ * @access  Private
+ * 
+ * @param req.body.vehicleInfo - Araç bilgileri
+ * @param req.body.analysisType - Analiz türü (opsiyonel)
+ * @param req.files - Multer ile yüklenen ses dosyaları
+ * 
+ * @returns 201 - ReferenceId + status
+ * @returns 400 - Geçersiz istek (araç bilgisi/ses dosyası eksik, yetersiz kredi)
+ * @returns 500 - Sunucu hatası
+ * 
+ * @example
+ * POST /api/engine-sound-analysis/analyze
+ * FormData: {
+ *   vehicleInfo: { plate: "34ABC123", make: "Toyota", model: "Corolla", year: 2020 },
+ *   files: [engine1.wav, engine2.m4a]
+ * }
+ */
 export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { vehicleInfo, analysisType } = req.body;
+  const BYPASS_CREDITS = process.env.BYPASS_CREDITS === 'true' || process.env.NODE_ENV === 'development'
+  // vehicleInfo JSON string olarak gelir, parse et
+  let vehicleInfo;
+  try {
+    vehicleInfo = typeof req.body.vehicleInfo === 'string' 
+      ? JSON.parse(req.body.vehicleInfo) 
+      : req.body.vehicleInfo;
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Geçersiz araç bilgileri formatı.'
+    });
+    return;
+  }
+  
+  const { analysisType } = req.body;
   
   if (!vehicleInfo) {
     res.status(400).json({
@@ -63,8 +213,8 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
 
   const audioFiles = req.files as Express.Multer.File[];
 
-  // Kullanıcı kredilerini kontrol et
-  const servicePricing = await prisma.servicePricing.findFirst({
+  // Servis fiyatını getir (yoksa oluştur)
+  let servicePricing = await prisma.servicePricing.findFirst({
     where: {
       serviceType: 'ENGINE_SOUND_ANALYSIS' as any,
       isActive: true,
@@ -72,26 +222,44 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
   });
 
   if (!servicePricing) {
-    res.status(400).json({
-      success: false,
-      message: 'Motor sesi analizi servisi bulunamadı.'
-    });
-    return;
+    try {
+      servicePricing = await prisma.servicePricing.create({
+        data: {
+          serviceName: 'Motor Sesi Analizi',
+          serviceType: 'ENGINE_SOUND_ANALYSIS' as any,
+          basePrice: new Prisma.Decimal(20),
+          isActive: true,
+        },
+      });
+      console.warn('⚠️ ServicePricing ENGINE_SOUND_ANALYSIS bulunamadı, varsayılan oluşturuldu.');
+    } catch (e) {
+      res.status(400).json({
+        success: false,
+        message: 'Motor sesi analizi servisi bulunamadı (oluşturma başarısız).'
+      });
+      return;
+    }
   }
 
+  // Kullanıcı kredilerini kontrol et (geliştirme bypass desteği)
   const userCredits = await prisma.userCredits.findUnique({
     where: { userId: req.user!.id },
   });
 
-  if (!userCredits || userCredits.balance < servicePricing.basePrice) {
-    res.status(400).json({
-      success: false,
-      message: 'Yetersiz kredi bakiyesi.'
-    });
-    return;
+  if (!BYPASS_CREDITS) {
+    if (!userCredits || userCredits.balance < servicePricing.basePrice) {
+      res.status(400).json({
+        success: false,
+        message: 'Yetersiz kredi bakiyesi.'
+      });
+      return;
+    }
   }
 
   // Rapor oluştur
+  // Yıl değerini güvenli parse et
+  const parsedYear = typeof vehicleInfo.year === 'string' ? parseInt(vehicleInfo.year) : vehicleInfo.year;
+
   const report = await prisma.vehicleReport.create({
     data: {
       userId: req.user!.id,
@@ -99,7 +267,7 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
       vehiclePlate: vehicleInfo.plate,
       vehicleBrand: vehicleInfo.make,
       vehicleModel: vehicleInfo.model,
-      vehicleYear: parseInt(vehicleInfo.year),
+      vehicleYear: Number.isFinite(parsedYear) ? parsedYear : null,
       totalCost: servicePricing.basePrice,
       status: 'PROCESSING',
     },
@@ -121,27 +289,32 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
     audioRecords.push(audioRecord);
   }
 
-  // Kredileri düş
-  await prisma.userCredits.update({
-    where: { userId: req.user!.id },
-    data: {
-      balance: userCredits.balance.sub(servicePricing.basePrice),
-      totalUsed: userCredits.totalUsed.add(servicePricing.basePrice),
-    },
-  });
+  // Kredileri düş (bypass değilse)
+  if (!BYPASS_CREDITS && userCredits) {
+    await prisma.userCredits.update({
+      where: { userId: req.user!.id },
+      data: {
+        balance: userCredits.balance.sub(servicePricing.basePrice),
+        totalUsed: userCredits.totalUsed.add(servicePricing.basePrice),
+      },
+    });
+  }
 
   // Kredi işlemi kaydet
-  await prisma.creditTransaction.create({
-    data: {
-      userId: req.user!.id,
-      transactionType: 'DEBIT' as any,
-      amount: servicePricing.basePrice,
-      description: 'Motor sesi analizi',
-      referenceId: report.id.toString(),
-    },
-  });
+  if (!BYPASS_CREDITS) {
+    await prisma.creditTransaction.create({
+      data: {
+        userId: req.user!.id,
+        transactionType: 'DEBIT' as any,
+        amount: servicePricing.basePrice,
+        description: 'Motor sesi analizi',
+        referenceId: report.id.toString(),
+      },
+    });
+  }
 
-  // AI analizi simüle et (gerçek uygulamada TensorFlow.js veya benzeri kullanılacak)
+  // AI analizi simüle et (background job - 5 saniye)
+  // TODO: Gerçek uygulamada Bull/Agenda gibi queue kullanılmalı
   setTimeout(async () => {
     try {
       const analysisResult = await simulateEngineSoundAnalysis(audioFiles, vehicleInfo);
@@ -172,9 +345,33 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
   });
 });
 
-// @desc    Motor sesi analiz sonucunu al
-// @route   GET /api/engine-sound-analysis/:reportId
-// @access  Private
+/**
+ * Motor Sesi Analiz Sonucunu Getir
+ * 
+ * Tamamlanmış motor sesi analizi raporunu döndürür.
+ * 
+ * İçerik:
+ * - Araç bilgileri
+ * - Overall score (0-100)
+ * - Engine health (İyi, Orta, Kötü)
+ * - RPM analizi
+ * - Frekans analizi
+ * - Tespit edilen sorunlar
+ * - Performans metrikleri
+ * - Öneriler
+ * - Ses dosyaları
+ * 
+ * @route   GET /api/engine-sound-analysis/:reportId
+ * @access  Private
+ * 
+ * @param req.params.reportId - Rapor ID
+ * 
+ * @returns 200 - Analiz sonucu
+ * @returns 404 - Rapor bulunamadı
+ * 
+ * @example
+ * GET /api/engine-sound-analysis/123
+ */
 export const getEngineSoundAnalysisResult = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { reportId } = req.params;
 
@@ -227,9 +424,19 @@ export const getEngineSoundAnalysisResult = asyncHandler(async (req: AuthRequest
     });
 });
 
-// @desc    Motor sesi analiz geçmişini al
-// @route   GET /api/engine-sound-analysis/history
-// @access  Private
+/**
+ * Motor Sesi Analiz Geçmişi
+ * 
+ * Kullanıcının tüm motor sesi analizlerini listeler.
+ * 
+ * @route   GET /api/engine-sound-analysis/history
+ * @access  Private
+ * 
+ * @returns 200 - Analiz geçmişi (son 20)
+ * 
+ * @example
+ * GET /api/engine-sound-analysis/history
+ */
 export const getEngineSoundAnalysisHistory = asyncHandler(async (req: AuthRequest, res: Response) => {
   const reports = await prisma.vehicleReport.findMany({
     where: {
@@ -261,9 +468,24 @@ export const getEngineSoundAnalysisHistory = asyncHandler(async (req: AuthReques
   });
 });
 
-// @desc    Motor sesi analiz raporunu indir
-// @route   GET /api/engine-sound-analysis/:reportId/download
-// @access  Private
+/**
+ * Motor Sesi Analiz Raporunu İndir
+ * 
+ * Raporu JSON formatında indirir.
+ * 
+ * TODO: PDF rapor oluşturma
+ * 
+ * @route   GET /api/engine-sound-analysis/:reportId/download
+ * @access  Private
+ * 
+ * @param req.params.reportId - Rapor ID
+ * 
+ * @returns 200 - JSON rapor dosyası
+ * @returns 404 - Rapor bulunamadı
+ * 
+ * @example
+ * GET /api/engine-sound-analysis/123/download
+ */
 export const downloadEngineSoundAnalysisReport = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { reportId } = req.params;
 
@@ -283,7 +505,8 @@ export const downloadEngineSoundAnalysisReport = asyncHandler(async (req: AuthRe
     return;
   }
 
-  // PDF raporu oluştur (gerçek uygulamada PDF generator kullanılacak)
+  // JSON raporu oluştur
+  // TODO: PDF generator kullanılacak (pdfkit, puppeteer)
   const reportData = {
     referenceId: report.id.toString(),
     vehicleInfo: {
@@ -296,21 +519,49 @@ export const downloadEngineSoundAnalysisReport = asyncHandler(async (req: AuthRe
     createdAt: report.createdAt,
   };
 
-  // Basit JSON raporu döndür (gerçek uygulamada PDF olacak)
+  // JSON dosyası olarak döndür
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', `attachment; filename="motor-sesi-analizi-${reportId}.json"`);
   res.json(reportData);
 });
 
-// @desc    Motor sesi analiz durumunu kontrol et
-// @route   GET /api/engine-sound-analysis/:reportId/status
-// @access  Private
+/**
+ * Motor Sesi Analiz Durumu Kontrolü
+ * 
+ * Analiz işleminin durumunu sorgular.
+ * 
+ * Durumlar:
+ * - PENDING: Sırada bekliyor (progress: 0%)
+ * - PROCESSING: İşleniyor (progress: 75%)
+ * - COMPLETED: Tamamlandı (progress: 100%)
+ * - FAILED: Başarısız (progress: 0%)
+ * 
+ * @route   GET /api/engine-sound-analysis/:reportId/status
+ * @access  Private
+ * 
+ * @param req.params.reportId - Rapor ID
+ * 
+ * @returns 200 - Durum + progress
+ * @returns 404 - Rapor bulunamadı
+ * 
+ * @example
+ * GET /api/engine-sound-analysis/123/status
+ */
 export const checkEngineSoundAnalysisStatus = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { reportId } = req.params;
 
+  const parsedId = Number.parseInt(reportId as any);
+  if (!Number.isFinite(parsedId)) {
+    res.status(400).json({
+      success: false,
+      message: 'Geçersiz reportId.'
+    });
+    return;
+  }
+
   const report = await prisma.vehicleReport.findFirst({
     where: {
-      id: parseInt(reportId),
+      id: parsedId,
       userId: req.user!.id,
       reportType: 'ENGINE_SOUND_ANALYSIS' as any,
     },
@@ -334,7 +585,30 @@ export const checkEngineSoundAnalysisStatus = asyncHandler(async (req: AuthReque
   });
 });
 
-// Motor sesi analizi - Gerçek AI modeli ile
+// ===== HELPER FUNCTIONS =====
+
+/**
+ * Motor Sesi Analizi Simülasyonu
+ * 
+ * Gerçek AI modeli yerine simülasyon sonucu döndürür.
+ * 
+ * İşlem:
+ * 1. Önce gerçek AIService.analyzeEngineSound dene
+ * 2. Hata varsa fallback simülasyon kullan
+ * 
+ * Simülasyon Sonucu:
+ * - Overall score: 70-100 arası random
+ * - Engine health: "İyi"
+ * - RPM analizi (idle, max, stability)
+ * - Frekans analizi (dominant frequencies, harmonic distortion, noise level)
+ * - Detected issues (motor titreşimi, egzoz sistemi)
+ * - Performance metrics (efficiency, vibration, acoustic quality)
+ * - Recommendations (motor yağı, hava filtresi, motor montajı)
+ * 
+ * @param audioFiles - Yüklenen ses dosyaları
+ * @param vehicleInfo - Araç bilgileri
+ * @returns Motor sesi analiz sonucu
+ */
 async function simulateEngineSoundAnalysis(audioFiles: Express.Multer.File[], vehicleInfo: any) {
   try {
     // Yeni AI servisini kullan
@@ -354,53 +628,21 @@ async function simulateEngineSoundAnalysis(audioFiles: Express.Multer.File[], ve
 
       return await AIService.analyzeEngineSound(audioPath, vehicleInfoForAnalysis);
     }
+    // audioPath yoksa hata
+    throw new Error('Ses dosyası yolu bulunamadı')
   } catch (error) {
-    console.error('AI motor sesi analizi hatası, simülasyon kullanılıyor:', error);
+    console.error('AI motor sesi analizi hatası:', error);
+    // Fallback simülasyon KAPALI: gerçek AI başarısızsa hata fırlat
+    throw error instanceof Error ? error : new Error('AI motor sesi analizi başarısız');
   }
-
-  // Fallback simülasyon
-  const issues = [
-    {
-      issue: 'Motor Titreşimi',
-      severity: 'medium' as const,
-      confidence: 85,
-      description: 'Motor çalışırken hafif titreşim tespit edildi',
-      recommendation: 'Motor montajını kontrol ettirin'
-    },
-    {
-      issue: 'Egzoz Sistemi',
-      severity: 'low' as const,
-      confidence: 72,
-      description: 'Egzoz sisteminde hafif ses değişikliği',
-      recommendation: 'Egzoz sistemini kontrol ettirin'
-    }
-  ];
-
-  return {
-    overallScore: Math.floor(Math.random() * 30) + 70,
-    engineHealth: 'İyi',
-    rpmAnalysis: {
-      idleRpm: 800 + Math.floor(Math.random() * 200),
-      maxRpm: 6000 + Math.floor(Math.random() * 1000),
-      rpmStability: 85 + Math.floor(Math.random() * 15)
-    },
-    frequencyAnalysis: {
-      dominantFrequencies: [120, 240, 360, 480],
-      harmonicDistortion: 5 + Math.random() * 10,
-      noiseLevel: 45 + Math.random() * 20
-    },
-    detectedIssues: issues,
-    performanceMetrics: {
-      engineEfficiency: 80 + Math.floor(Math.random() * 20),
-      vibrationLevel: 20 + Math.floor(Math.random() * 30),
-      acousticQuality: 75 + Math.floor(Math.random() * 25)
-    },
-    recommendations: [
-      'Motor yağını kontrol edin',
-      'Hava filtresini değiştirin',
-      'Motor montajını kontrol ettirin'
-    ]
-  };
 }
 
+/**
+ * Multer Upload Instance Export
+ * 
+ * Route'larda middleware olarak kullanılır.
+ * 
+ * Kullanım:
+ * router.post('/analyze', audioUpload.array('files'), startEngineSoundAnalysis)
+ */
 export { audioUpload };

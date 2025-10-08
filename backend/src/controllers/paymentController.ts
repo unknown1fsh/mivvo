@@ -1,3 +1,43 @@
+/**
+ * Payment Controller (Ödeme Controller)
+ * 
+ * Clean Architecture - Controller Layer (API Katmanı)
+ * 
+ * Bu controller, ödeme işlemlerini yönetir.
+ * 
+ * Sorumluluklar:
+ * - Ödeme oluşturma
+ * - Ödeme işleme (Iyzico entegrasyonu - TODO)
+ * - Ödeme geçmişi
+ * - İade işlemleri
+ * - Ödeme yöntemleri listeleme
+ * 
+ * İş Akışı:
+ * 1. Ödeme kaydı oluştur (PENDING)
+ * 2. Payment gateway'e ilet (Iyzico - TODO)
+ * 3. Callback/webhook ile sonucu al
+ * 4. Başarılıysa: Kredi ekle + COMPLETED
+ * 5. Başarısızsa: FAILED
+ * 
+ * Özellikler:
+ * - Kredi otomatik ekleme
+ * - CreditTransaction kaydı
+ * - İade mekanizması
+ * - Ödeme limitleri (50-5000 TL)
+ * 
+ * TODO:
+ * - Iyzico API entegrasyonu
+ * - Webhook endpoint
+ * - 3D Secure desteği
+ * 
+ * Endpoints:
+ * - POST /api/payment/create (Ödeme oluştur)
+ * - POST /api/payment/process (Ödeme işle)
+ * - POST /api/payment/refund (İade)
+ * - GET /api/payment/methods (Ödeme yöntemleri)
+ * - GET /api/payment/history (Ödeme geçmişi)
+ */
+
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
@@ -6,13 +46,47 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
 
-// @desc    Create payment
-// @route   POST /api/payment/create
-// @access  Private
+// ===== CONTROLLER METHODS =====
+
+/**
+ * Ödeme Oluştur
+ * 
+ * Yeni bir ödeme kaydı oluşturur (PENDING durumunda).
+ * 
+ * İşlem Akışı:
+ * 1. Tutar doğrulama (min-max limit)
+ * 2. Payment kaydı oluştur (PENDING)
+ * 3. Reference number generate (PAY_timestamp)
+ * 4. Kullanıcıya döndür
+ * 
+ * Tutar Limitleri:
+ * - Minimum: 50 TL
+ * - Maksimum: 5000 TL
+ * 
+ * Sonraki Adım:
+ * - Frontend: Payment gateway'e yönlendir
+ * - Backend: processPayment ile tamamla
+ * 
+ * @route   POST /api/payment/create
+ * @access  Private
+ * 
+ * @param req.body.amount - Ödeme tutarı (TL)
+ * @param req.body.paymentMethod - Ödeme yöntemi (CREDIT_CARD, BANK_TRANSFER, DIGITAL_WALLET)
+ * 
+ * @returns 201 - Oluşturulan ödeme kaydı
+ * @returns 400 - Geçersiz tutar
+ * 
+ * @example
+ * POST /api/payment/create
+ * Body: {
+ *   "amount": 100,
+ *   "paymentMethod": "CREDIT_CARD"
+ * }
+ */
 export const createPayment = async (req: AuthRequest, res: Response): Promise<void> => {
   const { amount, paymentMethod } = req.body;
 
-  // Validate amount
+  // Tutar limitleri
   const minAmount = 50;
   const maxAmount = 5000;
   
@@ -24,7 +98,7 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
     return;
   }
 
-  // Create payment record
+  // Ödeme kaydı oluştur
   const payment = await prisma.payment.create({
     data: {
       userId: req.user!.id,
@@ -32,7 +106,7 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
       paymentMethod,
       paymentStatus: 'PENDING',
       paymentProvider: 'iyzico', // Default provider
-      referenceNumber: `PAY_${Date.now()}`,
+      referenceNumber: `PAY_${Date.now()}`, // Unique reference
     },
   });
 
@@ -43,9 +117,24 @@ export const createPayment = async (req: AuthRequest, res: Response): Promise<vo
   });
 };
 
-// @desc    Get payment methods
-// @route   GET /api/payment/methods
-// @access  Private
+/**
+ * Ödeme Yöntemlerini Getir
+ * 
+ * Mevcut ödeme yöntemlerini listeler.
+ * 
+ * Ödeme Yöntemleri:
+ * - CREDIT_CARD: Kredi kartı (Visa, Mastercard, Amex)
+ * - BANK_TRANSFER: Banka havalesi/EFT
+ * - DIGITAL_WALLET: Dijital cüzdan (Papara, İninal, PayTR)
+ * 
+ * @route   GET /api/payment/methods
+ * @access  Private
+ * 
+ * @returns 200 - Ödeme yöntemleri listesi
+ * 
+ * @example
+ * GET /api/payment/methods
+ */
 export const getPaymentMethods = async (req: AuthRequest, res: Response): Promise<void> => {
   const paymentMethods = [
     {
@@ -74,15 +163,52 @@ export const getPaymentMethods = async (req: AuthRequest, res: Response): Promis
   });
 };
 
-// @desc    Process payment
-// @route   POST /api/payment/process
-// @access  Private
+/**
+ * Ödeme İşle
+ * 
+ * Ödemeyi işler ve sonucu günceller.
+ * 
+ * İşlem Akışı:
+ * 1. Payment kaydı kontrolü (PENDING mi?)
+ * 2. Payment gateway'e istek (Iyzico - TODO)
+ * 3. Sonuç başarılıysa:
+ *    - Payment status: COMPLETED
+ *    - TransactionId güncelle
+ *    - Kredi ekle (UserCredits)
+ *    - CreditTransaction oluştur
+ * 4. Başarısızsa: Payment status: FAILED
+ * 
+ * TODO:
+ * - Iyzico API entegrasyonu
+ * - 3D Secure callback
+ * - Webhook handling
+ * 
+ * Şu anda: Simülasyon (90% başarı)
+ * 
+ * @route   POST /api/payment/process
+ * @access  Private
+ * 
+ * @param req.body.paymentId - Payment ID
+ * @param req.body.paymentData - Ödeme verileri (kart bilgisi vb.)
+ * 
+ * @returns 200 - Ödeme başarılı
+ * @returns 400 - Ödeme başarısız veya zaten işlenmiş
+ * @returns 404 - Payment bulunamadı
+ * 
+ * @example
+ * POST /api/payment/process
+ * Body: {
+ *   "paymentId": 123,
+ *   "paymentData": { ... }
+ * }
+ */
 export const processPayment = async (req: AuthRequest, res: Response): Promise<void> => {
   const { paymentId, paymentData } = req.body;
 
   // TODO: Implement actual payment processing with Iyzico
   // For now, simulate successful payment
   
+  // Payment kaydı kontrolü
   const payment = await prisma.payment.findFirst({
     where: {
       id: parseInt(paymentId),
@@ -98,6 +224,7 @@ export const processPayment = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
+  // Ödeme durumu kontrolü
   if (payment.paymentStatus !== 'PENDING') {
     res.status(400).json({
       success: false,
@@ -106,11 +233,11 @@ export const processPayment = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  // Simulate payment processing
-  const isSuccessful = Math.random() > 0.1; // 90% success rate for demo
+  // Ödeme simülasyonu (90% başarı - demo için)
+  const isSuccessful = Math.random() > 0.1;
 
   if (isSuccessful) {
-    // Update payment status
+    // Ödeme başarılı
     await prisma.payment.update({
       where: { id: payment.id },
       data: {
@@ -119,7 +246,7 @@ export const processPayment = async (req: AuthRequest, res: Response): Promise<v
       },
     });
 
-    // Add credits to user account
+    // Kullanıcıya kredi ekle
     const userCredits = await prisma.userCredits.findUnique({
       where: { userId: req.user!.id },
     });
@@ -133,7 +260,7 @@ export const processPayment = async (req: AuthRequest, res: Response): Promise<v
           },
         });
 
-      // Create credit transaction
+      // CreditTransaction kaydı (audit trail)
       await prisma.creditTransaction.create({
         data: {
           userId: req.user!.id,
@@ -156,7 +283,7 @@ export const processPayment = async (req: AuthRequest, res: Response): Promise<v
       },
     });
   } else {
-    // Payment failed
+    // Ödeme başarısız
     await prisma.payment.update({
       where: { id: payment.id },
       data: { paymentStatus: 'FAILED' },
@@ -169,12 +296,32 @@ export const processPayment = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-// @desc    Get payment history
-// @route   GET /api/payment/history
-// @access  Private
+/**
+ * Ödeme Geçmişi
+ * 
+ * Kullanıcının tüm ödemelerini listeler.
+ * 
+ * Özellikler:
+ * - Pagination (page, limit)
+ * - Filtreleme (status)
+ * - Tarih sıralı (yeni önce)
+ * 
+ * @route   GET /api/payment/history
+ * @access  Private
+ * 
+ * @param req.query.page - Sayfa numarası
+ * @param req.query.limit - Sayfa boyutu
+ * @param req.query.status - Durum filtresi (PENDING, COMPLETED, FAILED, REFUNDED)
+ * 
+ * @returns 200 - Ödeme geçmişi (paginated)
+ * 
+ * @example
+ * GET /api/payment/history?page=1&limit=10&status=COMPLETED
+ */
 export const getPaymentHistory = async (req: AuthRequest, res: Response): Promise<void> => {
   const { page = 1, limit = 10, status } = req.query;
 
+  // Where clause
   const where: any = { userId: req.user!.id };
   if (status) {
     where.paymentStatus = status;
@@ -203,12 +350,43 @@ export const getPaymentHistory = async (req: AuthRequest, res: Response): Promis
   });
 };
 
-// @desc    Refund payment
-// @route   POST /api/payment/refund
-// @access  Private
+/**
+ * Ödeme İadesi
+ * 
+ * Tamamlanmış bir ödemeyi iade eder.
+ * 
+ * İşlem Akışı:
+ * 1. Payment kontrolü (COMPLETED olmalı)
+ * 2. İade işlemi (payment gateway - TODO)
+ * 3. Payment status: REFUNDED
+ * 4. Kullanıcıdan kredi düş
+ * 5. CreditTransaction oluştur (REFUND)
+ * 
+ * TODO:
+ * - Iyzico refund API
+ * - Kısmi iade desteği
+ * - İade süresi kontrolü (30 gün)
+ * 
+ * @route   POST /api/payment/refund
+ * @access  Private
+ * 
+ * @param req.body.paymentId - Payment ID
+ * @param req.body.reason - İade nedeni
+ * 
+ * @returns 200 - İade işlemi başlatıldı
+ * @returns 404 - İade edilebilir ödeme bulunamadı
+ * 
+ * @example
+ * POST /api/payment/refund
+ * Body: {
+ *   "paymentId": 123,
+ *   "reason": "Kullanılmadı"
+ * }
+ */
 export const refundPayment = async (req: AuthRequest, res: Response): Promise<void> => {
   const { paymentId, reason } = req.body;
 
+  // Payment kontrolü (COMPLETED olmalı)
   const payment = await prisma.payment.findFirst({
     where: {
       id: parseInt(paymentId),
@@ -228,12 +406,13 @@ export const refundPayment = async (req: AuthRequest, res: Response): Promise<vo
   // TODO: Implement actual refund processing
   // For now, just update status
   
+  // Payment status güncelle
   await prisma.payment.update({
     where: { id: payment.id },
     data: { paymentStatus: 'REFUNDED' },
   });
 
-  // Deduct credits from user account
+  // Kullanıcıdan kredi düş
   const userCredits = await prisma.userCredits.findUnique({
     where: { userId: req.user!.id },
   });
@@ -242,16 +421,16 @@ export const refundPayment = async (req: AuthRequest, res: Response): Promise<vo
     await prisma.userCredits.update({
       where: { userId: req.user!.id },
       data: {
-        balance: Decimal.max(userCredits.balance.sub(payment.amount), new Decimal(0)),
+        balance: Decimal.max(userCredits.balance.sub(payment.amount), new Decimal(0)), // Negatif olmasın
       },
     });
 
-    // Create refund transaction
+    // CreditTransaction oluştur (REFUND)
     await prisma.creditTransaction.create({
       data: {
         userId: req.user!.id,
         transactionType: 'REFUND',
-        amount: -payment.amount,
+        amount: -payment.amount, // Negatif miktar
         description: `İade: ${reason}`,
         referenceId: payment.referenceNumber,
       },

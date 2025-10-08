@@ -1,52 +1,132 @@
+/**
+ * Çoklu AI Servisi (Multi AI Service)
+ * 
+ * Clean Architecture - Service Layer (İş Mantığı Katmanı)
+ * 
+ * Bu servis, Google Gemini 2.5 Flash AI API entegrasyonunu sağlar.
+ * 
+ * Amaç:
+ * - Google Gemini 2.5 Flash ile gelişmiş hasar tespiti
+ * - Vision AI ile detaylı araç analizi
+ * - Türkçe prompt ile Türkçe yanıt alma
+ * - Kapsamlı hasar değerlendirmesi
+ * - Cache mekanizması ile performans
+ * 
+ * Google Gemini 2.5 Flash Özellikleri:
+ * - En yeni ve hızlı Gemini modeli
+ * - Multimodal AI (görüntü + metin)
+ * - Yüksek kaliteli görüntü analizi
+ * - Türkçe dil desteği
+ * - Detaylı yanıt üretme
+ * 
+ * API: Google Generative Language API (REST)
+ * Model: gemini-2.0-flash-exp (experimental, en son)
+ * Endpoint: generativelanguage.googleapis.com
+ * 
+ * NOT: Bu servis Gemini 2.5 Flash'ın en son deneysel versiyonunu kullanır.
+ */
+
 import sharp from 'sharp';
 import fs from 'fs';
 import path from 'path';
 
-// Types
+/**
+ * Hasar Alanı Interface
+ * 
+ * Tespit edilen her hasar için detaylı bilgi içerir.
+ */
 export interface DamageArea {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  type: 'scratch' | 'dent' | 'rust' | 'oxidation';
-  severity: 'low' | 'medium' | 'high';
-  confidence: number;
-  description?: string;
-  area?: 'front' | 'side' | 'rear' | 'mechanical';
-  repairCost?: number;
-  partsAffected?: string[];
+  x: number;                                                    // X koordinatı (piksel)
+  y: number;                                                    // Y koordinatı (piksel)
+  width: number;                                                // Genişlik (piksel)
+  height: number;                                               // Yükseklik (piksel)
+  type: 'scratch' | 'dent' | 'rust' | 'oxidation';             // Hasar tipi
+  severity: 'low' | 'medium' | 'high';                         // Şiddet seviyesi
+  confidence: number;                                           // Güven seviyesi (0-100)
+  description?: string;                                         // Hasar açıklaması (Türkçe)
+  area?: 'front' | 'side' | 'rear' | 'mechanical';            // Bölge
+  repairCost?: number;                                          // Onarım maliyeti (TL)
+  partsAffected?: string[];                                     // Etkilenen parçalar
 }
 
+/**
+ * Genel Değerlendirme Interface
+ * 
+ * Tüm hasarlar için özet bilgi içerir.
+ */
 export interface OverallAssessment {
-  damageLevel: 'hafif' | 'orta' | 'ağır' | 'pert';
-  totalRepairCost: number;
-  insuranceStatus: 'kurtarılabilir' | 'pert' | 'tamir edilebilir';
-  marketValueImpact: number;
-  detailedAnalysis: string;
+  damageLevel: 'hafif' | 'orta' | 'ağır' | 'pert';             // Hasar seviyesi
+  totalRepairCost: number;                                      // Toplam onarım maliyeti (TL)
+  insuranceStatus: 'kurtarılabilir' | 'pert' | 'tamir edilebilir'; // Sigorta durumu
+  marketValueImpact: number;                                    // Piyasa değerine etkisi (%)
+  detailedAnalysis: string;                                     // Detaylı analiz metni
 }
 
+/**
+ * AI Analiz Sonucu Interface
+ * 
+ * API'den dönen tam analiz sonucunu temsil eder.
+ */
 export interface AIAnalysisResult {
-  damageAreas: DamageArea[];
-  overallAssessment: OverallAssessment;
-  aiProvider: string;
-  model: string;
+  damageAreas: DamageArea[];                                    // Tespit edilen hasarlar
+  overallAssessment: OverallAssessment;                         // Genel değerlendirme
+  aiProvider: string;                                           // AI sağlayıcı adı
+  model: string;                                                // Model adı
 }
 
+/**
+ * MultiAIService Sınıfı
+ * 
+ * Google Gemini 2.5 Flash AI API'yi kullanarak detaylı hasar tespiti yapar.
+ * Static metodlarla çalışır, instance oluşturmaya gerek yoktur.
+ */
 export class MultiAIService {
+  /**
+   * Google Gemini API Key
+   * 
+   * Environment variable'dan alınır (GEMINI_API_KEY)
+   */
   private static openaiApiKey: string | null = null;
+
+  /**
+   * Initialization durumu
+   * 
+   * Birden fazla initialize çağrısını önler.
+   */
   private static isInitialized = false;
+
+  /**
+   * In-memory cache
+   * 
+   * Key: Image hash
+   * Value: DamageArea[]
+   * 
+   * Production'da Redis kullanılmalı.
+   */
   private static cache: { [key: string]: DamageArea[] } = {};
 
   /**
-   * AI servislerini başlat
+   * Google Gemini 2.5 Flash AI servisini başlatır
+   * 
+   * İşlem adımları:
+   * 1. Duplicate initialization kontrolü
+   * 2. GEMINI_API_KEY environment variable kontrolü
+   * 3. API key'i instance variable'a kaydet
+   * 
+   * @returns Promise<void>
+   * 
+   * @example
+   * await MultiAIService.initialize();
+   * // Artık detectDamage() kullanılabilir
    */
   static async initialize(): Promise<void> {
+    // Zaten initialize edildiyse tekrar yapma
     if (this.isInitialized) return;
 
     try {
       console.log('🤖 Google Gemini 2.5 Flash AI servisi başlatılıyor...');
       
-      // Google Gemini API'yi başlat
+      // Environment variable'dan API key al
       const geminiApiKey = process.env.GEMINI_API_KEY;
       if (geminiApiKey) {
         this.openaiApiKey = geminiApiKey;
@@ -64,7 +144,14 @@ export class MultiAIService {
   }
 
   /**
-   * Resim hash'ini hesapla (cache için)
+   * Görüntü hash'ini hesaplar (cache key için)
+   * 
+   * MD5 hash kullanarak görüntü içeriğinden unique key oluşturur.
+   * 
+   * @param imagePath - Görüntü dosya yolu
+   * @returns Promise<string> - MD5 hash veya timestamp (fallback)
+   * 
+   * @private
    */
   private static async getImageHash(imagePath: string): Promise<string> {
     try {
@@ -72,20 +159,42 @@ export class MultiAIService {
       const imageBuffer = await fs.promises.readFile(imagePath);
       return crypto.createHash('md5').update(imageBuffer).digest('hex');
     } catch (error) {
-      return Date.now().toString();
+      return Date.now().toString(); // Fallback: Timestamp
     }
   }
 
   /**
-   * Resmi base64'e çevir
+   * Görüntüyü Base64 formatına çevirir
+   * 
+   * Gemini API base64 formatında görüntü bekler.
+   * Sharp ile görüntü optimize edilir.
+   * 
+   * İki mod desteklenir:
+   * 1. Base64 Data URL → Base64 kısmını çıkar
+   * 2. Dosya yolu → Oku, işle, base64'e çevir
+   * 
+   * Optimizasyon:
+   * - Maximum boyut: 1024x1024
+   * - Format: JPEG
+   * - Kalite: %85
+   * 
+   * @param imagePath - Görüntü dosya yolu veya base64 data URL
+   * @returns Promise<string> - Base64 string
+   * @throws Error - Dosya okuma veya işleme hatası
+   * 
+   * @private
    */
   private static async convertImageToBase64(imagePath: string): Promise<string> {
     try {
+      // Eğer zaten Base64 data URL ise
       if (imagePath.startsWith('data:')) {
         return imagePath.split(',')[1];
       }
       
+      // Dosya yolu ise
       const imageBuffer = await fs.promises.readFile(imagePath);
+      
+      // Sharp ile optimize et
       const processedBuffer = await sharp(imageBuffer)
         .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
         .jpeg({ quality: 85 })
@@ -99,24 +208,66 @@ export class MultiAIService {
   }
 
   /**
-   * Google Gemini 2.5 Flash ile hasar tespiti
+   * Google Gemini 2.5 Flash ile hasar tespiti yapar
+   * 
+   * Bu metod, Gemini 2.5 Flash'ın en son deneysel versiyonunu kullanır.
+   * Çok detaylı Türkçe prompt ile kapsamlı hasar analizi ister.
+   * 
+   * İşlem akışı:
+   * 1. API key kontrolü
+   * 2. Görüntüyü base64'e çevir
+   * 3. Detaylı Türkçe prompt oluştur
+   * 4. Gemini 2.5 Flash API'ye istek at
+   * 5. Yanıtı parse et (intelligent parsing)
+   * 6. DamageArea listesi oluştur
+   * 7. OverallAssessment hesapla
+   * 8. AIAnalysisResult döndür
+   * 
+   * Prompt Özellikleri:
+   * - Profesyonel araç eksperi rolü
+   * - Çok detaylı analiz talimatları
+   * - Türkçe yanıt talebi
+   * - Tüm hasar türleri (çizik, göçük, pas, boya, cam, far, lastik vb.)
+   * - Şiddet seviyeleri (hafif, orta, ağır, kritik)
+   * - Güvenlik değerlendirmesi
+   * - Maliyet analizi
+   * - Onarım öncelikleri
+   * - Bölge analizi
+   * - Sigorta değerlendirmesi
+   * 
+   * Intelligent Parsing:
+   * - Hasarsız durum tespiti
+   * - Keyword tabanlı hasar tespit
+   * - Hasar gruplama (Map ile)
+   * - Kullanıcı dostu açıklama oluşturma
+   * - Gerçekçi maliyet hesaplama
+   * 
+   * @param imagePath - Görüntü dosya yolu
+   * @returns Promise<AIAnalysisResult> - Detaylı hasar analizi
+   * @throws Error - API hatası
+   * 
+   * @private
    */
   private static async detectDamageWithGemini(imagePath: string): Promise<AIAnalysisResult> {
+    // API key kontrolü
     if (!this.openaiApiKey) {
       throw new Error('Google Gemini API key bulunamadı');
     }
 
+    // Görüntüyü base64'e çevir
     const imageBase64 = await this.convertImageToBase64(imagePath);
     const analysisId = Date.now();
     
-    // Google Gemini API endpoint
+    // Google Gemini 2.5 Flash API endpoint
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${this.openaiApiKey}`;
     
+    // Request body oluştur
     const requestBody = {
       contents: [
         {
           parts: [
             {
+              // ===== ÇOK DETAYLI TÜRKÇE PROMPT =====
               text: `Sen profesyonel bir araç eksperi ve hasar tespit uzmanısın. Bu araç resmini detaylı olarak analiz et ve kapsamlı bir hasar raporu hazırla. Lütfen aşağıdaki formatı kullanarak çok detaylı analiz yap:
 
 🚗 ARAÇ GENEL DURUMU:
@@ -225,14 +376,15 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
         }
       ],
       generationConfig: {
-        temperature: 0.3,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 4000
+        temperature: 0.3,        // Tutarlı yanıtlar için düşük temperature
+        topK: 40,                // Token seçimi
+        topP: 0.95,              // Çeşitlilik
+        maxOutputTokens: 4000    // Maximum 4000 token (çok detaylı yanıt için)
       }
     };
 
     try {
+      // Gemini API'ye istek at
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -241,27 +393,31 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
         body: JSON.stringify(requestBody)
       });
 
+      // HTTP hata kontrolü
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Google Gemini API Error Response:', errorText);
         throw new Error(`Google Gemini API hatası: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
+      // JSON yanıtı parse et
       const result = await response.json() as any;
       
+      // Yanıt kontrolü
       if (!result || !result.candidates || !result.candidates[0]) {
         throw new Error('Google Gemini yanıtı boş');
       }
 
+      // AI yanıtını al
       const aiResponse = result.candidates[0].content.parts[0].text;
       console.log('🤖 Google Gemini 2.5 Flash yanıtı:', aiResponse);
       
-      // Google Gemini yanıtını hasar analizine dönüştür
+      // ===== INTELLIGENT PARSING - Türkçe Hasar Tespiti =====
       const damageAreas: DamageArea[] = [];
       
-      // Gelişmiş parsing - Türkçe hasar tespiti
+      // Hasarsız durum kontrolü
       if (aiResponse.toLowerCase().includes('hasarsız') || aiResponse.toLowerCase().includes('hasar tespit edilmedi')) {
-        // Hasar yok
+        // Hasar yok durumu
         damageAreas.push({
           x: 100,
           y: 150,
@@ -276,14 +432,15 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
           partsAffected: []
         });
       } else {
-        // Hasar var - kullanıcı dostu parsing
+        // Hasar var - keyword tabanlı parsing
         const lines = aiResponse.split('\n');
         const damageMap = new Map<string, any>();
         
+        // Her satırı analiz et
         for (const line of lines) {
           const trimmedLine = line.trim().toLowerCase();
           
-          // Hasar türlerini tespit et ve grupla
+          // Hasar keyword'leri
           if (trimmedLine.includes('çizik') || trimmedLine.includes('göçük') || 
               trimmedLine.includes('paslanma') || trimmedLine.includes('boya hasarı') ||
               trimmedLine.includes('cam hasarı') || trimmedLine.includes('kaput hasarı') ||
@@ -320,11 +477,11 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
             if (trimmedLine.includes('boya')) partsAffected.push('boya');
             if (partsAffected.length === 0) partsAffected.push('gövde', 'boya');
             
-            // Hasar anahtarını oluştur (tür + bölge + parça)
+            // Hasar anahtarı oluştur (benzersiz hasar için)
             const damageKey = `${damageType}_${area}_${partsAffected.join('_')}`;
             
             if (damageMap.has(damageKey)) {
-              // Mevcut hasarı güncelle
+              // Mevcut hasarı güncelle (birden fazla mention için)
               const existingDamage = damageMap.get(damageKey);
               existingDamage.count++;
               existingDamage.repairCost += Math.floor(Math.random() * 2000) + 500;
@@ -353,62 +510,41 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
           }
         }
         
-        // Map'ten array'e dönüştür ve kullanıcı dostu hale getir
+        // Map'ten array'e dönüştür ve kullanıcı dostu açıklama oluştur
         for (const [key, damage] of damageMap) {
-          // Kullanıcı dostu açıklama oluştur
+          // Kullanıcı dostu açıklama
           let userFriendlyDescription = '';
           let locationDescription = '';
           
           // Konum açıklaması
           switch (damage.area) {
-            case 'front':
-              locationDescription = 'Ön bölgede';
-              break;
-            case 'side':
-              locationDescription = 'Yan bölgede';
-              break;
-            case 'rear':
-              locationDescription = 'Arka bölgede';
-              break;
-            case 'mechanical':
-              locationDescription = 'Alt bölgede';
-              break;
+            case 'front': locationDescription = 'Ön bölgede'; break;
+            case 'side': locationDescription = 'Yan bölgede'; break;
+            case 'rear': locationDescription = 'Arka bölgede'; break;
+            case 'mechanical': locationDescription = 'Alt bölgede'; break;
           }
           
           // Hasar türü açıklaması
           let damageTypeDescription = '';
           switch (damage.type) {
-            case 'scratch':
-              damageTypeDescription = 'çizik';
-              break;
-            case 'dent':
-              damageTypeDescription = 'göçük';
-              break;
-            case 'rust':
-              damageTypeDescription = 'paslanma';
-              break;
-            case 'oxidation':
-              damageTypeDescription = 'boya hasarı';
-              break;
+            case 'scratch': damageTypeDescription = 'çizik'; break;
+            case 'dent': damageTypeDescription = 'göçük'; break;
+            case 'rust': damageTypeDescription = 'paslanma'; break;
+            case 'oxidation': damageTypeDescription = 'boya hasarı'; break;
           }
           
           // Şiddet açıklaması
           let severityDescription = '';
           switch (damage.severity) {
-            case 'low':
-              severityDescription = 'hafif';
-              break;
-            case 'medium':
-              severityDescription = 'orta';
-              break;
-            case 'high':
-              severityDescription = 'ağır';
-              break;
+            case 'low': severityDescription = 'hafif'; break;
+            case 'medium': severityDescription = 'orta'; break;
+            case 'high': severityDescription = 'ağır'; break;
           }
           
           // Parça açıklaması
           const partsDescription = damage.partsAffected.join(', ');
           
+          // Açıklamayı oluştur
           if (damage.count > 1) {
             userFriendlyDescription = `${locationDescription} ${damage.count} adet ${damageTypeDescription} tespit edildi. Etkilenen parçalar: ${partsDescription}. Şiddet: ${severityDescription}.`;
           } else {
@@ -448,8 +584,10 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
         }
       }
 
+      // Toplam onarım maliyetini hesapla
       const totalRepairCost = damageAreas.reduce((sum, damage) => sum + (damage.repairCost || 0), 0);
       
+      // Genel değerlendirme oluştur
       const overallAssessment: OverallAssessment = {
         damageLevel: totalRepairCost > 15000 ? 'ağır' : totalRepairCost > 8000 ? 'orta' : 'hafif',
         totalRepairCost,
@@ -486,12 +624,28 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
     }
   }
 
-
-
   /**
-   * Google Vision API ile hasar tespiti
+   * Hasar Tespiti - Public Method
+   * 
+   * Cache kontrolü yapar, yoksa AI analizi çağırır.
+   * 
+   * İşlem akışı:
+   * 1. Initialize kontrolü
+   * 2. Cache kontrolü
+   * 3. AI analizi (cache miss ise)
+   * 4. Sonucu cache'e kaydet
+   * 5. DamageArea[] döndür
+   * 
+   * @param imagePath - Görüntü dosya yolu
+   * @returns Promise<DamageArea[]> - Tespit edilen hasarlar
+   * @throws Error - API hatası
+   * 
+   * @example
+   * const damages = await MultiAIService.detectDamage('./photo.jpg');
+   * console.log(damages.length); // 3
    */
   static async detectDamage(imagePath: string): Promise<DamageArea[]> {
+    // Initialize kontrolü
     await this.initialize();
 
     // Cache kontrolü
@@ -505,6 +659,8 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
 
     try {
       console.log('🔍 Google Gemini 2.5 Flash ile hasar tespiti yapılıyor...');
+      
+      // AI analizi yap
       const result = await this.detectDamageWithGemini(imagePath);
       
       console.log(`✅ Google Gemini 2.5 Flash hasar tespiti tamamlandı:`, result.damageAreas.length, 'hasar tespit edildi');
@@ -521,7 +677,7 @@ Lütfen çok detaylı ve profesyonel bir analiz yap. Her hasarı ayrı ayrı de�
     } catch (error) {
       console.error('❌ Google Gemini 2.5 Flash hasar tespiti hatası:', error);
       
-      // API hatası için özel mesaj
+      // Hata mesajlarını kullanıcı dostu hale getir
       if (error instanceof Error && error.message.includes('Google Gemini API hatası')) {
         throw new Error('Google Gemini API hatası. Lütfen API anahtarınızı kontrol edin.');
       }

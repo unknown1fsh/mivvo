@@ -1,106 +1,211 @@
-﻿import OpenAI from 'openai'
+﻿/**
+ * Hasar Tespit Servisi (Damage Detection Service)
+ * 
+ * Clean Architecture - Service Layer (İş Mantığı Katmanı)
+ * 
+ * Bu servis, OpenAI Vision API kullanarak araç hasarlarını tespit eder.
+ * 
+ * Amaç:
+ * - Araç fotoğraflarından hasar tespiti
+ * - Detaylı hasar analizi (konum, tip, şiddet, maliyet)
+ * - Türkçe hasar raporları
+ * - OpenAI GPT-4 Vision ile yüksek doğruluk
+ * - Cache mekanizması ile performans
+ * 
+ * OpenAI Vision API:
+ * - Model: gpt-4o-mini (veya environment'tan)
+ * - Multimodal: Görüntü + Metin analizi
+ * - JSON structured output
+ * - Türkçe dil desteği
+ * 
+ * Hasar Kategorileri:
+ * - Çizik (scratch)
+ * - Ezilme/Göçük (dent)
+ * - Pas (rust)
+ * - Oksidasyon (oxidation)
+ * - Çatlak (crack)
+ * - Kırık (break)
+ * - Boya hasarı (paint_damage)
+ * - Yapısal hasar (structural)
+ * - Mekanik hasar (mechanical)
+ * - Elektrik hasarı (electrical)
+ * 
+ * Özellikler:
+ * - Her hasar için detaylı bilgi (konum, maliyet, parçalar, öncelik)
+ * - Genel değerlendirme (toplam maliyet, sigorta durumu, değer kaybı)
+ * - Teknik analiz (yapısal bütünlük, güvenlik sistemleri)
+ * - Güvenlik değerlendirmesi (sürüş güvenliği, kritik sorunlar)
+ * - Onarım tahmini (maliyet detayı, zaman planı, garanti)
+ * - Gerçekçi Türkiye fiyatları (2025)
+ */
+
+import OpenAI from 'openai'
 import sharp from 'sharp'
 import fs from 'fs/promises'
 import crypto from 'crypto'
 
-// --- Tip Tanımları ---------------------------------------------------------
+// ===== TİP TANIMLARI =====
 
+/**
+ * Hasar Şiddeti Seviyeleri
+ * 
+ * - minimal: Çok hafif, estetik sorun
+ * - low: Hafif, küçük onarım
+ * - medium: Orta, orta seviye onarım
+ * - high: Ağır, büyük onarım
+ * - critical: Kritik, güvenlik riski
+ */
 export type DamageSeverity = 'minimal' | 'low' | 'medium' | 'high' | 'critical'
+
+/**
+ * Hasar Tipleri
+ * 
+ * Tüm olası hasar türleri
+ */
 export type DamageType =
-  | 'scratch'
-  | 'dent'
-  | 'rust'
-  | 'oxidation'
-  | 'crack'
-  | 'break'
-  | 'paint_damage'
-  | 'structural'
-  | 'mechanical'
-  | 'electrical'
+  | 'scratch'        // Çizik
+  | 'dent'           // Ezilme/Göçük
+  | 'rust'           // Pas
+  | 'oxidation'      // Oksidasyon
+  | 'crack'          // Çatlak
+  | 'break'          // Kırık
+  | 'paint_damage'   // Boya hasarı
+  | 'structural'     // Yapısal hasar
+  | 'mechanical'     // Mekanik hasar
+  | 'electrical'     // Elektrik hasarı
 
+/**
+ * Hasar Alanı Interface
+ * 
+ * Tespit edilen her hasar için detaylı bilgi içerir.
+ */
 export interface DamageArea {
-  id: string
-  x: number
-  y: number
-  width: number
-  height: number
-  type: DamageType
-  severity: DamageSeverity
-  confidence: number
-  description: string
-  area: 'front' | 'rear' | 'left' | 'right' | 'top' | 'bottom' | 'interior' | 'mechanical'
-  repairCost: number
-  partsAffected: string[]
-  repairPriority: 'immediate' | 'urgent' | 'normal' | 'cosmetic'
-  safetyImpact: 'none' | 'low' | 'medium' | 'high' | 'critical'
-  repairMethod: string
-  estimatedRepairTime: number
-  warrantyImpact: boolean
-  insuranceCoverage: 'full' | 'partial' | 'none'
+  id: string                                                        // Benzersiz hasar ID'si
+  x: number                                                         // X koordinatı (piksel)
+  y: number                                                         // Y koordinatı (piksel)
+  width: number                                                     // Genişlik (piksel)
+  height: number                                                    // Yükseklik (piksel)
+  type: DamageType                                                  // Hasar tipi
+  severity: DamageSeverity                                          // Şiddet seviyesi
+  confidence: number                                                // Güven seviyesi (0-100)
+  description: string                                               // Detaylı açıklama (Türkçe)
+  area: 'front' | 'rear' | 'left' | 'right' | 'top' | 'bottom' | 'interior' | 'mechanical' // Bölge
+  repairCost: number                                                // Onarım maliyeti (TL)
+  partsAffected: string[]                                           // Etkilenen parçalar (Türkçe)
+  repairPriority: 'immediate' | 'urgent' | 'normal' | 'cosmetic'  // Onarım önceliği
+  safetyImpact: 'none' | 'low' | 'medium' | 'high' | 'critical'  // Güvenlik etkisi
+  repairMethod: string                                              // Onarım yöntemi (Türkçe)
+  estimatedRepairTime: number                                       // Tahmini onarım süresi (saat)
+  warrantyImpact: boolean                                           // Garantiyi etkiler mi?
+  insuranceCoverage: 'full' | 'partial' | 'none'                   // Sigorta kapsamı
 }
 
+/**
+ * Genel Değerlendirme Interface
+ * 
+ * Tüm hasarlar için özet değerlendirme
+ */
 export interface OverallAssessment {
-  damageLevel: 'excellent' | 'good' | 'fair' | 'poor' | 'total_loss'
-  totalRepairCost: number
-  insuranceStatus: 'repairable' | 'total_loss' | 'economical_repair'
-  marketValueImpact: number
-  detailedAnalysis: string
-  vehicleCondition: 'like_new' | 'good' | 'fair' | 'poor' | 'damaged'
-  resaleValue: number
-  depreciation: number
+  damageLevel: 'excellent' | 'good' | 'fair' | 'poor' | 'total_loss'  // Genel hasar seviyesi
+  totalRepairCost: number                                              // Toplam onarım maliyeti (TL)
+  insuranceStatus: 'repairable' | 'total_loss' | 'economical_repair'  // Sigorta durumu
+  marketValueImpact: number                                            // Piyasa değerine etkisi (%)
+  detailedAnalysis: string                                             // Detaylı analiz metni
+  vehicleCondition: 'like_new' | 'good' | 'fair' | 'poor' | 'damaged' // Araç durumu
+  resaleValue: number                                                  // Yeniden satış değeri (%)
+  depreciation: number                                                 // Değer kaybı (%)
 }
 
+/**
+ * Teknik Analiz Interface
+ * 
+ * Aracın teknik durumunu değerlendirir
+ */
 export interface TechnicalAnalysis {
-  structuralIntegrity: 'intact' | 'minor_damage' | 'moderate_damage' | 'severe_damage' | 'compromised'
-  safetySystems: 'functional' | 'minor_issues' | 'major_issues' | 'non_functional'
-  mechanicalSystems: 'operational' | 'minor_issues' | 'major_issues' | 'non_operational'
-  electricalSystems: 'functional' | 'minor_issues' | 'major_issues' | 'non_functional'
-  bodyAlignment: 'perfect' | 'minor_deviation' | 'moderate_deviation' | 'severe_deviation'
-  frameDamage: boolean
-  airbagDeployment: boolean
-  seatbeltFunction: 'functional' | 'needs_inspection' | 'non_functional'
+  structuralIntegrity: 'intact' | 'minor_damage' | 'moderate_damage' | 'severe_damage' | 'compromised' // Yapısal bütünlük
+  safetySystems: 'functional' | 'minor_issues' | 'major_issues' | 'non_functional'  // Güvenlik sistemleri
+  mechanicalSystems: 'operational' | 'minor_issues' | 'major_issues' | 'non_operational' // Mekanik sistemler
+  electricalSystems: 'functional' | 'minor_issues' | 'major_issues' | 'non_functional' // Elektrik sistemleri
+  bodyAlignment: 'perfect' | 'minor_deviation' | 'moderate_deviation' | 'severe_deviation' // Gövde hizalaması
+  frameDamage: boolean                                                // Şasi hasarı var mı?
+  airbagDeployment: boolean                                           // Hava yastığı patlamış mı?
+  seatbeltFunction: 'functional' | 'needs_inspection' | 'non_functional' // Emniyet kemeri fonksiyonu
 }
 
+/**
+ * Güvenlik Değerlendirmesi Interface
+ * 
+ * Sürüş güvenliği ve kritik sorunlar
+ */
 export interface SafetyAssessment {
-  roadworthiness: 'safe' | 'conditional' | 'unsafe'
-  criticalIssues: string[]
-  safetyRecommendations: string[]
-  inspectionRequired: boolean
-  immediateActions: string[]
-  longTermConcerns: string[]
+  roadworthiness: 'safe' | 'conditional' | 'unsafe'  // Sürüş güvenliği
+  criticalIssues: string[]                            // Kritik sorunlar listesi
+  safetyRecommendations: string[]                     // Güvenlik önerileri
+  inspectionRequired: boolean                         // Detaylı muayene gerekli mi?
+  immediateActions: string[]                          // Acil aksiyonlar
+  longTermConcerns: string[]                          // Uzun vadeli endişeler
 }
 
+/**
+ * Onarım Tahmini Interface
+ * 
+ * Detaylı maliyet ve zaman tahmini
+ */
 export interface RepairEstimate {
-  totalCost: number
-  laborCost: number
-  partsCost: number
-  paintCost: number
-  additionalCosts: number
-  breakdown: Array<{ part: string; description: string; cost: number }>
-  timeline: Array<{ phase: string; duration: number; description: string }>
-  warranty: {
-    covered: boolean
-    duration: string
-    conditions: string[]
+  totalCost: number                                   // Toplam maliyet (TL)
+  laborCost: number                                   // İşçilik maliyeti (TL)
+  partsCost: number                                   // Parça maliyeti (TL)
+  paintCost: number                                   // Boya maliyeti (TL)
+  additionalCosts: number                             // Ek maliyetler (TL)
+  breakdown: Array<{                                  // Maliyet detayı
+    part: string                                      // Parça adı
+    description: string                               // Açıklama
+    cost: number                                      // Maliyet
+  }>
+  timeline: Array<{                                   // Zaman planı
+    phase: string                                     // Aşama
+    duration: number                                  // Süre (gün)
+    description: string                               // Açıklama
+  }>
+  warranty: {                                         // Garanti bilgisi
+    covered: boolean                                  // Garanti kapsamında mı?
+    duration: string                                  // Garanti süresi
+    conditions: string[]                              // Garanti koşulları
   }
 }
 
+/**
+ * Hasar Tespit Sonucu Interface
+ * 
+ * Tüm analiz sonuçlarını içerir
+ */
 export interface DamageDetectionResult {
-  damageAreas: DamageArea[]
-  overallAssessment: OverallAssessment
-  technicalAnalysis: TechnicalAnalysis
-  safetyAssessment: SafetyAssessment
-  repairEstimate: RepairEstimate
-  aiProvider: string
-  model: string
-  confidence: number
-  analysisTimestamp: string
+  damageAreas: DamageArea[]                           // Tespit edilen hasarlar
+  overallAssessment: OverallAssessment                // Genel değerlendirme
+  technicalAnalysis: TechnicalAnalysis                // Teknik analiz
+  safetyAssessment: SafetyAssessment                  // Güvenlik değerlendirmesi
+  repairEstimate: RepairEstimate                      // Onarım tahmini
+  aiProvider: string                                  // AI sağlayıcı
+  model: string                                       // AI model
+  confidence: number                                  // Genel güven seviyesi (0-100)
+  analysisTimestamp: string                           // Analiz zamanı (ISO)
 }
 
-// --- Yardımcı Fonksiyonlar -------------------------------------------------
+// ===== YARDIMCI FONKSİYONLAR =====
 
+/**
+ * OpenAI Model Seçimi
+ * 
+ * Environment variable'dan model adı alınır, yoksa default kullanılır
+ */
 const OPENAI_MODEL = process.env.OPENAI_DAMAGE_MODEL ?? 'gpt-4o-mini'
 
+/**
+ * "Not Found" hatasını kontrol eder
+ * 
+ * @param error - Hata objesi
+ * @returns true: not found hatası, false: başka hata
+ */
 const isNotFoundError = (error: unknown): boolean => {
   if (!error || typeof error !== 'object') return false
   const message = (error as any).message?.toString().toLowerCase() ?? ''
@@ -108,6 +213,12 @@ const isNotFoundError = (error: unknown): boolean => {
   return status === 404 || message.includes('not found') || message.includes('model') && message.includes('supported')
 }
 
+/**
+ * Kota (quota) hatasını kontrol eder
+ * 
+ * @param error - Hata objesi
+ * @returns true: quota hatası, false: başka hata
+ */
 const isQuotaError = (error: unknown): boolean => {
   if (!error || typeof error !== 'object') return false
   const code = (error as any).code?.toString().toLowerCase()
@@ -115,15 +226,43 @@ const isQuotaError = (error: unknown): boolean => {
   return code === 'insufficient_quota' || message.includes('quota') || message.includes('rate limit')
 }
 
+/**
+ * Sayıyı min-max aralığına sınırlar
+ * 
+ * @param value - Değer
+ * @param min - Minimum
+ * @param max - Maximum
+ * @returns Sınırlanmış değer
+ */
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 
+/**
+ * Değeri float'a çevirir, hata varsa fallback döner
+ * 
+ * @param value - Değer
+ * @param fallback - Fallback değer
+ * @returns Float sayı
+ */
 const ensureFloat = (value: any, fallback: number) => {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
+/**
+ * Değeri integer'a çevirir, hata varsa fallback döner
+ * 
+ * @param value - Değer
+ * @param fallback - Fallback değer
+ * @returns Integer sayı
+ */
 const ensureInt = (value: any, fallback: number) => Math.round(ensureFloat(value, fallback))
 
+/**
+ * Değeri string array'e çevirir
+ * 
+ * @param value - Değer
+ * @returns String array (valid olanlar)
+ */
 const ensureStringArray = (value: any): string[] => {
   if (Array.isArray(value)) {
     return value.filter(item => typeof item === 'string') as string[]
@@ -131,6 +270,14 @@ const ensureStringArray = (value: any): string[] => {
   return []
 }
 
+/**
+ * Varsayılan hasar alanı oluşturur
+ * 
+ * AI yanıt vermezse veya hatalı yanıt verirse kullanılır
+ * 
+ * @param index - Hasar index'i
+ * @returns Varsayılan DamageArea
+ */
 const defaultDamageArea = (index: number): DamageArea => ({
   id: `damage-${index + 1}`,
   x: 0,
@@ -152,13 +299,34 @@ const defaultDamageArea = (index: number): DamageArea => ({
   insuranceCoverage: 'partial'
 })
 
-// --- Servis ----------------------------------------------------------------
+// ===== SERVİS =====
 
+/**
+ * DamageDetectionService Sınıfı
+ * 
+ * OpenAI Vision API ile hasar tespiti yapan ana servis
+ */
 export class DamageDetectionService {
+  /**
+   * OpenAI client instance
+   */
   private static openaiClient: OpenAI | null = null
+
+  /**
+   * Initialization durumu
+   */
   private static isInitialized = false
+
+  /**
+   * In-memory cache (image hash → result)
+   */
   private static cache = new Map<string, DamageDetectionResult>()
 
+  /**
+   * Servisi başlatır (OpenAI client oluşturur)
+   * 
+   * @throws Error - API key yoksa
+   */
   static async initialize(): Promise<void> {
     if (this.isInitialized) return
 
@@ -179,15 +347,30 @@ export class DamageDetectionService {
     }
   }
 
+  /**
+   * Cache'i temizler
+   */
   static clearCache(): void {
     this.cache.clear()
   }
 
+  /**
+   * Görüntüyü Base64'e çevirir
+   * 
+   * Sharp ile optimize eder (1024x1024, JPEG %90)
+   * 
+   * @param imagePath - Görüntü path'i veya data URL
+   * @returns Base64 string
+   * 
+   * @private
+   */
   private static async convertImageToBase64(imagePath: string): Promise<string> {
+    // Data URL ise direkt base64 kısmını al
     if (imagePath.startsWith('data:')) {
       return imagePath.split(',')[1]
     }
 
+    // Dosya path'i ise oku ve optimize et
     const buffer = await fs.readFile(imagePath)
     const optimized = await sharp(buffer)
       .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
@@ -197,6 +380,16 @@ export class DamageDetectionService {
     return optimized.toString('base64')
   }
 
+  /**
+   * Görüntü hash'ini hesaplar (cache key için)
+   * 
+   * MD5 hash kullanır
+   * 
+   * @param imagePath - Görüntü path'i
+   * @returns MD5 hash
+   * 
+   * @private
+   */
   private static async getImageHash(imagePath: string): Promise<string> {
     try {
       const buffer = imagePath.startsWith('data:')
@@ -209,6 +402,20 @@ export class DamageDetectionService {
     }
   }
 
+  /**
+   * OpenAI için Türkçe prompt oluşturur
+   * 
+   * ÇOK DETAYLI prompt ile AI'ya ne yapması gerektiğini anlatır:
+   * - Hasar tespit kuralları
+   * - Türkiye fiyatları (2025)
+   * - JSON format örneği
+   * - Kritik kurallar
+   * 
+   * @param vehicleInfo - Araç bilgileri (opsiyonel)
+   * @returns Prompt metni
+   * 
+   * @private
+   */
   private static buildPrompt(vehicleInfo?: any): string {
     const vehicleContext = vehicleInfo ? `
 🚗 ARAÇ BİLGİLERİ:
@@ -449,6 +656,18 @@ ${vehicleContext}
 - Tüm field'lar Türkçe değerler içermeli`
   }
 
+  /**
+   * AI yanıtından JSON payload'ı çıkarır
+   * 
+   * AI bazen JSON öncesi veya sonrasında açıklama metni ekler,
+   * bu fonksiyon sadece JSON kısmını parse eder.
+   * 
+   * @param rawText - AI'dan gelen ham metin
+   * @returns Parse edilmiş JSON
+   * @throws Error - JSON bulunamazsa
+   * 
+   * @private
+   */
   private static extractJsonPayload(rawText: string): any {
     const start = rawText.indexOf('{')
     const end = rawText.lastIndexOf('}')
@@ -459,7 +678,21 @@ ${vehicleContext}
     return JSON.parse(json)
   }
 
+  /**
+   * AI sonucunu normalize eder ve validation yapar
+   * 
+   * AI bazen eksik veya hatalı veri döndürebilir,
+   * bu fonksiyon tüm field'ları kontrol eder ve fallback değerlerle doldurur.
+   * 
+   * @param raw - AI'dan gelen ham sonuç
+   * @param provider - AI sağlayıcı adı
+   * @param model - Model adı
+   * @returns Normalize edilmiş DamageDetectionResult
+   * 
+   * @private
+   */
   private static sanitizeDamageResult(raw: any, provider: string, model: string): DamageDetectionResult {
+    // Hasar alanlarını normalize et
     const areasSource = Array.isArray(raw?.damageAreas) ? raw.damageAreas : []
     const damageAreas: DamageArea[] = (areasSource.length ? areasSource : [defaultDamageArea(0)]).map((area: any, index: number) => ({
       ...defaultDamageArea(index),
@@ -486,11 +719,13 @@ ${vehicleContext}
       insuranceCoverage: (area?.insuranceCoverage ?? 'partial') as DamageArea['insuranceCoverage']
     }))
 
+    // Toplam maliyet hesapla
     const totalRepairCost = Math.max(
       ensureInt(raw?.overallAssessment?.totalRepairCost, damageAreas.reduce((sum, area) => sum + area.repairCost, 0)),
       0
     )
 
+    // Genel değerlendirme
     const overallAssessment: OverallAssessment = {
       damageLevel: (raw?.overallAssessment?.damageLevel ?? 'fair') as OverallAssessment['damageLevel'],
       totalRepairCost,
@@ -504,6 +739,7 @@ ${vehicleContext}
       depreciation: clamp(ensureInt(raw?.overallAssessment?.depreciation, Math.floor(totalRepairCost / 180)), 0, 100)
     }
 
+    // Teknik analiz
     const technicalAnalysis: TechnicalAnalysis = {
       structuralIntegrity: (raw?.technicalAnalysis?.structuralIntegrity ?? 'intact') as TechnicalAnalysis['structuralIntegrity'],
       safetySystems: (raw?.technicalAnalysis?.safetySystems ?? 'functional') as TechnicalAnalysis['safetySystems'],
@@ -515,6 +751,7 @@ ${vehicleContext}
       seatbeltFunction: (raw?.technicalAnalysis?.seatbeltFunction ?? 'functional') as TechnicalAnalysis['seatbeltFunction']
     }
 
+    // Güvenlik değerlendirmesi
     const safetyAssessment: SafetyAssessment = {
       roadworthiness: (raw?.safetyAssessment?.roadworthiness ?? 'safe') as SafetyAssessment['roadworthiness'],
       criticalIssues: ensureStringArray(raw?.safetyAssessment?.criticalIssues),
@@ -524,6 +761,7 @@ ${vehicleContext}
       longTermConcerns: ensureStringArray(raw?.safetyAssessment?.longTermConcerns)
     }
 
+    // Onarım tahmini
     const repairEstimate: RepairEstimate = {
       totalCost: totalRepairCost,
       laborCost: ensureInt(raw?.repairEstimate?.laborCost, Math.floor(totalRepairCost * 0.4)),
@@ -572,7 +810,16 @@ ${vehicleContext}
     }
   }
 
-
+  /**
+   * OpenAI Vision API ile hasar tespiti yapar
+   * 
+   * @param imagePath - Görüntü path'i
+   * @param vehicleInfo - Araç bilgileri (opsiyonel)
+   * @returns Hasar tespit sonucu
+   * @throws Error - API hatası
+   * 
+   * @private
+   */
   private static async detectDamageWithOpenAI(imagePath: string, vehicleInfo?: any): Promise<DamageDetectionResult> {
     if (!this.openaiClient) {
       throw new Error('OpenAI istemcisi kullanılabilir değil')
@@ -605,9 +852,19 @@ ${vehicleContext}
     }
 
     const parsed = this.extractJsonPayload(text)
-    return this.sanitizeDamageResult(parsed, 'OpenAI', 'OpenAI')
+    return this.sanitizeDamageResult(parsed, 'OpenAI', OPENAI_MODEL)
   }
 
+  /**
+   * Hasar Tespiti - Public API
+   * 
+   * Cache kontrolü yapar, yoksa OpenAI ile analiz eder.
+   * 
+   * @param imagePath - Görüntü path'i
+   * @param vehicleInfo - Araç bilgileri (opsiyonel)
+   * @returns Hasar tespit sonucu
+   * @throws Error - API hatası
+   */
   static async detectDamage(imagePath: string, vehicleInfo?: any): Promise<DamageDetectionResult> {
     await this.initialize()
 

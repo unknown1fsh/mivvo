@@ -177,10 +177,11 @@ enum TransactionType {
 }
 
 enum ReportType {
-  FULL
+  FULL_REPORT
   PAINT_ANALYSIS
   DAMAGE_ASSESSMENT
   VALUE_ESTIMATION
+  ENGINE_SOUND_ANALYSIS
 }
 
 enum ReportStatus {
@@ -209,6 +210,7 @@ enum ServiceType {
   DAMAGE_ASSESSMENT
   VALUE_ESTIMATION
   FULL_REPORT
+  ENGINE_SOUND_ANALYSIS
 }
 
 enum SettingType {

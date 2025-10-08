@@ -1,35 +1,104 @@
+/**
+ * Değer Tahmini Servisi (Value Estimation Service)
+ * 
+ * Clean Architecture - Service Layer (İş Mantığı Katmanı)
+ * 
+ * Bu servis, OpenAI API kullanarak araç değer tahmini yapar.
+ * 
+ * Amaç:
+ * - Piyasa değeri tahmini
+ * - Pazar analizi ve karşılaştırma
+ * - Araç durumu değerlendirmesi
+ * - Fiyat kırılımı (temel değer + ekstralar - hasarlar)
+ * - Yatırım analizi (ROI, amortisman)
+ * - Satış ve satın alma önerileri
+ * 
+ * Değerlendirme Faktörleri:
+ * - Araç yaşı ve model yılı
+ * - Marka ve model popülaritesi
+ * - Piyasa talebi
+ * - Km durumu (varsayılan: yıl başına 15.000 km)
+ * - Hasar durumu (DamageDetectionService entegrasyonu)
+ * - Boya ve kaporta kalitesi (görsel analiz)
+ * - Türkiye piyasa fiyatları (2025)
+ * 
+ * Çıktı Detayları:
+ * - Tahmini değer (TL)
+ * - Pazar analizi
+ * - Fiyat kırılımı
+ * - Pazar konumu
+ * - Yatırım analizi
+ * - Karşılaştırılabilir araçlar
+ * - Öneriler
+ * 
+ * Özellikler:
+ * - Hasar bilgisi entegrasyonu
+ * - Görsel analiz (opsiyonel)
+ * - Gerçekçi Türkiye fiyatları
+ * - Cache mekanizması
+ */
+
 import OpenAI from 'openai'
 import crypto from 'crypto'
 import sharp from 'sharp'
 import fs from 'fs/promises'
 import { DamageDetectionService, DamageDetectionResult } from './damageDetectionService'
 
-// --- Tip Tanımları ---------------------------------------------------------
+// ===== TİP TANIMLARI =====
 
+/**
+ * Değer Tahmini Sonucu Interface
+ */
 export interface ValueEstimationResult {
-  estimatedValue: number
-  marketAnalysis: any
-  vehicleCondition: any
-  priceBreakdown: any
-  marketPosition: any
-  investmentAnalysis: any
-  recommendations: any
-  comparableVehicles: any[]
-  aiProvider: string
-  model: string
-  confidence: number
-  analysisTimestamp: string
+  estimatedValue: number              // Tahmini değer (TL)
+  marketAnalysis: any                 // Pazar analizi
+  vehicleCondition: any               // Araç durumu değerlendirmesi
+  priceBreakdown: any                 // Fiyat kırılımı (detaylı)
+  marketPosition: any                 // Pazar konumu
+  investmentAnalysis: any             // Yatırım analizi
+  recommendations: any                // Öneriler
+  comparableVehicles: any[]           // Karşılaştırılabilir araçlar
+  aiProvider: string                  // AI sağlayıcı
+  model: string                       // AI model
+  confidence: number                  // Güven seviyesi (0-100)
+  analysisTimestamp: string           // Analiz zamanı (ISO)
 }
 
-// --- Servis ----------------------------------------------------------------
+// ===== SERVİS =====
 
+/**
+ * OpenAI Model Seçimi
+ * 
+ * Değer tahmini için gpt-4o modeli kullanılır
+ */
 const OPENAI_MODEL = process.env.OPENAI_VALUE_MODEL ?? 'gpt-4o'
 
+/**
+ * ValueEstimationService Sınıfı
+ * 
+ * OpenAI API ile araç değer tahmini yapan servis
+ */
 export class ValueEstimationService {
+  /**
+   * OpenAI client instance
+   */
   private static openaiClient: OpenAI | null = null
+
+  /**
+   * Initialization durumu
+   */
   private static isInitialized = false
+
+  /**
+   * In-memory cache (vehicle hash → result)
+   */
   private static cache = new Map<string, ValueEstimationResult>()
 
+  /**
+   * Servisi başlatır (OpenAI client oluşturur)
+   * 
+   * @throws Error - API key yoksa
+   */
   static async initialize(): Promise<void> {
     if (this.isInitialized) return
 
@@ -48,10 +117,21 @@ export class ValueEstimationService {
     }
   }
 
+  /**
+   * Cache'i temizler
+   */
   static clearCache(): void {
     this.cache.clear()
   }
 
+  /**
+   * Görseli Base64'e Çevirir
+   * 
+   * @param imagePath - Görsel dosya path'i veya base64 data URL
+   * @returns Base64 encoded görsel
+   * 
+   * @private
+   */
   private static async convertImageToBase64(imagePath: string): Promise<string> {
     if (imagePath.startsWith('data:image')) {
       return imagePath.split(',')[1]

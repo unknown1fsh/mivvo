@@ -2,6 +2,8 @@
 
 Modern AI destekli araç expertiz uygulaması. Kullanıcılar araçlarının resimlerini yükleyerek AI analizi ile detaylı expertiz raporları alabilirler.
 
+> **🏗️ Clean Architecture** - Bu proje clean code ve clean architecture prensiplerine göre tasarlanmıştır. Detaylı bilgi için [BACKEND_CLEAN_ARCHITECTURE.md](./BACKEND_CLEAN_ARCHITECTURE.md) ve [FRONTEND_CLEAN_ARCHITECTURE.md](./FRONTEND_CLEAN_ARCHITECTURE.md) dosyalarını inceleyin.
+
 ## ✨ Özellikler
 
 ### 🤖 AI Destekli Analiz
@@ -24,24 +26,37 @@ Modern AI destekli araç expertiz uygulaması. Kullanıcılar araçlarının res
 
 ## 🛠️ Teknoloji Stack
 
-### Backend
+### Backend (Clean Architecture)
 - **Node.js** + **Express.js** + **TypeScript**
-- **Prisma ORM** + **MySQL/PostgreSQL**
+- **Prisma ORM** + **PostgreSQL**
 - **JWT Authentication**
+- **Clean Architecture Layers**:
+  - DTO (Request/Response)
+  - Repository Pattern
+  - Mapper Layer
+  - Service Layer
+  - Controller Layer
+  - Exception Handling
 - **Bcrypt** şifreleme
 - **Multer** dosya yükleme
 
-### Frontend
+### Frontend (Service-Oriented Architecture)
 - **Next.js 14** + **React 18** + **TypeScript**
 - **Tailwind CSS** + **Framer Motion**
-- **Zustand** state management
+- **Zero Logic in Components** - Tüm logic service katmanında
+- **Service Layer Pattern**
+- **Custom React Hooks**
 - **React Hook Form** + **Yup** validasyon
-- **Axios** API client
 
 ### Database
-- **MySQL** (Development)
-- **PostgreSQL** (Production)
+- **PostgreSQL** (Production - Vercel Postgres/Neon)
 - **Prisma** ORM
+- **Migration Support**
+
+### AI Services
+- **OpenAI Vision API** (Görsel analiz)
+- **Google Gemini AI** (Multi-modal AI)
+- **TensorFlow.js** (Local ML models)
 
 ## 🚀 Kurulum
 

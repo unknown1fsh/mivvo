@@ -143,19 +143,24 @@ function ComprehensiveReportContent() {
   const analysis = report.aiAnalysisData
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      {/* Premium Header */}
+      <header className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 shadow-2xl border-b-4 border-amber-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
+          <div className="flex justify-between items-center h-20">
+            <Link href="/dashboard" className="flex items-center text-amber-300 hover:text-amber-200 font-medium transition-colors">
               <ArrowLeftIcon className="w-5 h-5 mr-2" />
               Dashboard'a Dön
             </Link>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
+              {/* Premium Badge */}
+              <div className="hidden md:flex items-center bg-gradient-to-r from-amber-400 to-amber-500 text-gray-900 px-4 py-2 rounded-full font-bold text-sm shadow-lg">
+                <SparklesIcon className="w-4 h-4 mr-2" />
+                PREMIUM EKSPERTİZ
+              </div>
               <button 
                 onClick={handlePrint}
-                className="flex items-center px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white border border-white/20 hover:bg-white/20 rounded-xl transition-all shadow-lg hover:shadow-xl"
               >
                 <PrinterIcon className="w-5 h-5 mr-2" />
                 Yazdır
@@ -163,7 +168,7 @@ function ComprehensiveReportContent() {
               <button 
                 onClick={generatePDF}
                 disabled={isGeneratingPDF}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-gray-900 rounded-xl hover:from-amber-500 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-2xl font-bold"
               >
                 <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
                 {isGeneratingPDF ? 'PDF Oluşturuluyor...' : 'PDF İndir'}
@@ -173,24 +178,58 @@ function ComprehensiveReportContent() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Rapor Başlığı */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Premium Rapor Başlığı */}
         <FadeInUp>
-          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg shadow-lg p-8 mb-6 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center mb-2">
-                  <SparklesIcon className="w-8 h-8 mr-2" />
-                  <h1 className="text-3xl font-bold">Kapsamlı Expertiz Raporu</h1>
+          <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 rounded-3xl shadow-2xl p-10 mb-8 border-4 border-amber-400">
+            {/* Decorative Elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-400/10 rounded-full blur-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center mb-4">
+                    <div className="bg-gradient-to-r from-amber-400 to-amber-500 p-3 rounded-2xl shadow-lg mr-4">
+                      <SparklesIcon className="w-8 h-8 text-gray-900" />
+                    </div>
+                    <div>
+                      <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-300 to-amber-200">
+                        KAPSAMLI EKSPERTİZ RAPORU
+                      </h1>
+                      <p className="text-amber-400/80 text-sm font-medium mt-1">Premium AI Destekli Analiz</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mt-6 border border-white/20">
+                    <p className="text-3xl font-bold text-white mb-2">
+                      {report.vehicleBrand} {report.vehicleModel}
+                    </p>
+                    <div className="flex items-center space-x-6 text-amber-300">
+                      <div className="flex items-center">
+                        <span className="text-sm opacity-80 mr-2">Yıl:</span>
+                        <span className="text-lg font-bold">{report.vehicleYear}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-sm opacity-80 mr-2">Plaka:</span>
+                        <span className="text-lg font-bold">{report.vehiclePlate}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xl mt-2">
-                  {report.vehicleBrand} {report.vehicleModel} - {report.vehicleYear}
-                </p>
-                <p className="text-sm opacity-90">Plaka: {report.vehiclePlate}</p>
-              </div>
-              <div className="text-right">
-                <div className="text-6xl font-bold mb-2">{analysis.overallScore}/100</div>
-                <div className="text-lg opacity-90">{analysis.expertiseGrade}</div>
+                
+                {/* Premium Score Display */}
+                <div className="text-center ml-8">
+                  <div className="bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 rounded-3xl p-8 shadow-2xl border-4 border-amber-300">
+                    <div className="text-7xl font-black text-gray-900 mb-2 drop-shadow-lg">
+                      {analysis.overallScore}
+                      <span className="text-3xl">/100</span>
+                    </div>
+                    <div className="bg-gray-900 text-amber-300 px-4 py-2 rounded-xl font-bold text-lg mt-3">
+                      {analysis.expertiseGrade}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -199,19 +238,27 @@ function ComprehensiveReportContent() {
         {/* Genel Bakış */}
         {analysis.comprehensiveSummary && (
           <FadeInUp delay={0.1}>
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">📋 Genel Bakış</h2>
-              <p className="text-gray-700 mb-4">{analysis.comprehensiveSummary.vehicleOverview}</p>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-blue-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">📋</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Genel Bakış</h2>
+              </div>
+              <p className="text-lg text-gray-700 mb-6 leading-relaxed">{analysis.comprehensiveSummary.vehicleOverview}</p>
               
               {/* Önemli Bulgular */}
               {analysis.comprehensiveSummary.keyFindings && analysis.comprehensiveSummary.keyFindings.length > 0 && (
-                <div className="mb-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">🔍 Önemli Bulgular:</h3>
-                  <ul className="space-y-1">
+                <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200">
+                  <h3 className="font-bold text-xl text-blue-900 mb-4 flex items-center">
+                    <span className="text-2xl mr-2">🔍</span>
+                    Önemli Bulgular
+                  </h3>
+                  <ul className="space-y-3">
                     {analysis.comprehensiveSummary.keyFindings.map((finding, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-blue-500 mr-2">•</span>
-                        <span className="text-gray-700">{finding}</span>
+                      <li key={index} className="flex items-start bg-white/60 rounded-lg p-3 shadow-sm">
+                        <span className="text-blue-600 text-xl mr-3 mt-0.5">✓</span>
+                        <span className="text-gray-800 font-medium">{finding}</span>
                       </li>
                     ))}
                   </ul>
@@ -220,29 +267,48 @@ function ComprehensiveReportContent() {
 
               {/* Kritik Sorunlar */}
               {analysis.comprehensiveSummary.criticalIssues && analysis.comprehensiveSummary.criticalIssues.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                  <h3 className="font-semibold text-red-900 mb-2">⚠️ Kritik Sorunlar:</h3>
-                  <ul className="space-y-1">
+                <div className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-300 rounded-xl p-6 mb-6 shadow-lg">
+                  <h3 className="font-bold text-xl text-red-900 mb-4 flex items-center">
+                    <span className="text-2xl mr-2">⚠️</span>
+                    Kritik Sorunlar
+                  </h3>
+                  <ul className="space-y-3">
                     {analysis.comprehensiveSummary.criticalIssues.map((issue, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-red-500 mr-2">•</span>
-                        <span className="text-red-700">{issue}</span>
+                      <li key={index} className="flex items-start bg-white/70 rounded-lg p-3 shadow-sm border-l-4 border-red-500">
+                        <span className="text-red-600 text-xl mr-3 mt-0.5">⚡</span>
+                        <span className="text-red-800 font-semibold">{issue}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Detaylı Açıklama - Geçici olarak yorumda */}
+              {/* analysis.comprehensiveSummary.detailedDescription && (
+                <div className="mb-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6 border-2 border-gray-200">
+                  <h3 className="font-bold text-xl text-gray-900 mb-4 flex items-center">
+                    <span className="text-2xl mr-2">📝</span>
+                    Detaylı İnceleme
+                  </h3>
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-line">
+                    {analysis.comprehensiveSummary.detailedDescription}
+                  </p>
+                </div>
+              ) */}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Güçlü Yönler */}
                 {analysis.comprehensiveSummary.strengths && analysis.comprehensiveSummary.strengths.length > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-green-900 mb-2">✅ Güçlü Yönler:</h3>
-                    <ul className="space-y-1">
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 shadow-lg">
+                    <h3 className="font-bold text-lg text-green-900 mb-4 flex items-center">
+                      <span className="text-2xl mr-2">✅</span>
+                      Güçlü Yönler
+                    </h3>
+                    <ul className="space-y-2">
                       {analysis.comprehensiveSummary.strengths.map((strength, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-green-500 mr-2">•</span>
-                          <span className="text-green-700 text-sm">{strength}</span>
+                        <li key={index} className="flex items-start bg-white/60 rounded-lg p-2 shadow-sm">
+                          <span className="text-green-600 text-lg mr-2 mt-0.5">★</span>
+                          <span className="text-green-800 font-medium text-sm">{strength}</span>
                         </li>
                       ))}
                     </ul>
@@ -251,13 +317,16 @@ function ComprehensiveReportContent() {
 
                 {/* Zayıf Yönler */}
                 {analysis.comprehensiveSummary.weaknesses && analysis.comprehensiveSummary.weaknesses.length > 0 && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-yellow-900 mb-2">⚠️ Zayıf Yönler:</h3>
-                    <ul className="space-y-1">
+                  <div className="bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl p-6 shadow-lg">
+                    <h3 className="font-bold text-lg text-yellow-900 mb-4 flex items-center">
+                      <span className="text-2xl mr-2">⚠️</span>
+                      Zayıf Yönler
+                    </h3>
+                    <ul className="space-y-2">
                       {analysis.comprehensiveSummary.weaknesses.map((weakness, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="text-yellow-500 mr-2">•</span>
-                          <span className="text-yellow-700 text-sm">{weakness}</span>
+                        <li key={index} className="flex items-start bg-white/60 rounded-lg p-2 shadow-sm">
+                          <span className="text-yellow-600 text-lg mr-2 mt-0.5">▲</span>
+                          <span className="text-yellow-800 font-medium text-sm">{weakness}</span>
                         </li>
                       ))}
                     </ul>
@@ -268,25 +337,313 @@ function ComprehensiveReportContent() {
           </FadeInUp>
         )}
 
+        {/* Teknik Özellikler Tablosu */}
+        {analysis.comprehensiveSummary?.vehicleSpecsTable && (
+          <FadeInUp delay={0.15}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-indigo-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">🔧</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Genel Bilgi</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-indigo-600 to-purple-600">
+                      <th className="border-2 border-indigo-300 px-6 py-4 text-left text-white font-bold">Özellik</th>
+                      <th className="border-2 border-indigo-300 px-6 py-4 text-left text-white font-bold">Değer</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-indigo-50 transition-colors">
+                      <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Marka / Model</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.makeModel}</td>
+                    </tr>
+                    <tr className="hover:bg-indigo-50 transition-colors">
+                      <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Model Yılı</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.year}</td>
+                    </tr>
+                    <tr className="hover:bg-indigo-50 transition-colors">
+                      <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Motor Tipi</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.engineType}</td>
+                    </tr>
+                    <tr className="hover:bg-indigo-50 transition-colors">
+                      <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Aktarma</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.transmission}</td>
+                    </tr>
+                    <tr className="hover:bg-indigo-50 transition-colors">
+                      <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Çekiş Sistemi</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.driveType}</td>
+                    </tr>
+                    <tr className="hover:bg-indigo-50 transition-colors">
+                      <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Renk</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900">{analysis.comprehensiveSummary.vehicleSpecsTable.color}</td>
+                    </tr>
+                    <tr className="hover:bg-indigo-50 transition-colors">
+                      <td className="border-2 border-indigo-200 px-6 py-3 font-semibold text-gray-700">Plaka</td>
+                      <td className="border-2 border-indigo-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.vehicleSpecsTable.plate}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </FadeInUp>
+        )}
+
+        {/* Dış Donanım & Kaporta Durumu */}
+        {analysis.comprehensiveSummary?.exteriorConditionTable && (
+          <FadeInUp delay={0.2}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-teal-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-teal-500 to-cyan-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">🚗</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Dış Donanım & Kaporta Durumu</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-teal-600 to-cyan-600">
+                      <th className="border-2 border-teal-300 px-6 py-4 text-left text-white font-bold">Bölüm</th>
+                      <th className="border-2 border-teal-300 px-6 py-4 text-left text-white font-bold">Durum</th>
+                      <th className="border-2 border-teal-300 px-6 py-4 text-left text-white font-bold">Not</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-teal-50 transition-colors">
+                      <td className="border-2 border-teal-200 px-6 py-3 font-semibold text-gray-700">Kaporta</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.exteriorConditionTable.bodywork.status}</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.exteriorConditionTable.bodywork.note}</td>
+                    </tr>
+                    <tr className="hover:bg-teal-50 transition-colors">
+                      <td className="border-2 border-teal-200 px-6 py-3 font-semibold text-gray-700">Boya</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.exteriorConditionTable.paint.status}</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.exteriorConditionTable.paint.note}</td>
+                    </tr>
+                    <tr className="hover:bg-teal-50 transition-colors">
+                      <td className="border-2 border-teal-200 px-6 py-3 font-semibold text-gray-700">Camlar</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.exteriorConditionTable.windows.status}</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.exteriorConditionTable.windows.note}</td>
+                    </tr>
+                    <tr className="hover:bg-teal-50 transition-colors">
+                      <td className="border-2 border-teal-200 px-6 py-3 font-semibold text-gray-700">Farlar & Stoplar</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.exteriorConditionTable.lights.status}</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.exteriorConditionTable.lights.note}</td>
+                    </tr>
+                    <tr className="hover:bg-teal-50 transition-colors">
+                      <td className="border-2 border-teal-200 px-6 py-3 font-semibold text-gray-700">Aynalar</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.exteriorConditionTable.mirrors.status}</td>
+                      <td className="border-2 border-teal-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.exteriorConditionTable.mirrors.note}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </FadeInUp>
+        )}
+
+        {/* Motor ve Mekanik Durum */}
+        {analysis.comprehensiveSummary?.mechanicalAnalysisTable && (
+          <FadeInUp delay={0.25}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-orange-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-orange-500 to-red-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">⚙️</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Motor ve Mekanik Durum</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-orange-600 to-red-600">
+                      <th className="border-2 border-orange-300 px-6 py-4 text-left text-white font-bold">Bölüm</th>
+                      <th className="border-2 border-orange-300 px-6 py-4 text-left text-white font-bold">Durum</th>
+                      <th className="border-2 border-orange-300 px-6 py-4 text-left text-white font-bold">Not</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-orange-50 transition-colors">
+                      <td className="border-2 border-orange-200 px-6 py-3 font-semibold text-gray-700">Motor</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.mechanicalAnalysisTable.engine.status}</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.mechanicalAnalysisTable.engine.note}</td>
+                    </tr>
+                    <tr className="hover:bg-orange-50 transition-colors">
+                      <td className="border-2 border-orange-200 px-6 py-3 font-semibold text-gray-700">Şanzıman</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.mechanicalAnalysisTable.transmission.status}</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.mechanicalAnalysisTable.transmission.note}</td>
+                    </tr>
+                    <tr className="hover:bg-orange-50 transition-colors">
+                      <td className="border-2 border-orange-200 px-6 py-3 font-semibold text-gray-700">Süspansiyon</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.mechanicalAnalysisTable.suspension.status}</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.mechanicalAnalysisTable.suspension.note}</td>
+                    </tr>
+                    <tr className="hover:bg-orange-50 transition-colors">
+                      <td className="border-2 border-orange-200 px-6 py-3 font-semibold text-gray-700">Frenler</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.mechanicalAnalysisTable.brakes.status}</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.mechanicalAnalysisTable.brakes.note}</td>
+                    </tr>
+                    <tr className="hover:bg-orange-50 transition-colors">
+                      <td className="border-2 border-orange-200 px-6 py-3 font-semibold text-gray-700">Elektrik Sistemleri</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.mechanicalAnalysisTable.electrical.status}</td>
+                      <td className="border-2 border-orange-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.mechanicalAnalysisTable.electrical.note}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </FadeInUp>
+        )}
+
+        {/* Ekspertiz Sonucu Özet Tablosu */}
+        {analysis.comprehensiveSummary?.expertiseScoreTable && (
+          <FadeInUp delay={0.3}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-purple-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">📊</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Ekspertiz Sonucu Özet Tablosu</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-purple-600 to-pink-600">
+                      <th className="border-2 border-purple-300 px-6 py-4 text-left text-white font-bold">Bölüm</th>
+                      <th className="border-2 border-purple-300 px-6 py-4 text-center text-white font-bold">Puan</th>
+                      <th className="border-2 border-purple-300 px-6 py-4 text-left text-white font-bold">Durum</th>
+                      <th className="border-2 border-purple-300 px-6 py-4 text-left text-white font-bold">Not</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-purple-50 transition-colors">
+                      <td className="border-2 border-purple-200 px-6 py-3 font-semibold text-gray-700">Kaporta / Boya</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-center text-2xl font-black text-purple-600">{analysis.comprehensiveSummary.expertiseScoreTable.bodyPaint.score}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.bodyPaint.status}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.expertiseScoreTable.bodyPaint.note}</td>
+                    </tr>
+                    <tr className="hover:bg-purple-50 transition-colors">
+                      <td className="border-2 border-purple-200 px-6 py-3 font-semibold text-gray-700">Şasi</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-center text-2xl font-black text-purple-600">{analysis.comprehensiveSummary.expertiseScoreTable.chassis.score}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.chassis.status}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.expertiseScoreTable.chassis.note}</td>
+                    </tr>
+                    <tr className="hover:bg-purple-50 transition-colors">
+                      <td className="border-2 border-purple-200 px-6 py-3 font-semibold text-gray-700">Mekanik</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-center text-2xl font-black text-purple-600">{analysis.comprehensiveSummary.expertiseScoreTable.mechanical.score}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.mechanical.status}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.expertiseScoreTable.mechanical.note}</td>
+                    </tr>
+                    <tr className="hover:bg-purple-50 transition-colors">
+                      <td className="border-2 border-purple-200 px-6 py-3 font-semibold text-gray-700">Elektrik</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-center text-2xl font-black text-purple-600">{analysis.comprehensiveSummary.expertiseScoreTable.electrical.score}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.electrical.status}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.expertiseScoreTable.electrical.note}</td>
+                    </tr>
+                    <tr className="hover:bg-purple-50 transition-colors">
+                      <td className="border-2 border-purple-200 px-6 py-3 font-semibold text-gray-700">Lastikler</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-center text-2xl font-black text-purple-600">{analysis.comprehensiveSummary.expertiseScoreTable.tires.score}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.tires.status}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.expertiseScoreTable.tires.note}</td>
+                    </tr>
+                    <tr className="hover:bg-purple-50 transition-colors">
+                      <td className="border-2 border-purple-200 px-6 py-3 font-semibold text-gray-700">Jantlar</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-center text-2xl font-black text-purple-600">{analysis.comprehensiveSummary.expertiseScoreTable.wheels.score}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.wheels.status}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.expertiseScoreTable.wheels.note}</td>
+                    </tr>
+                    <tr className="hover:bg-purple-50 transition-colors">
+                      <td className="border-2 border-purple-200 px-6 py-3 font-semibold text-gray-700">İç Mekan</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-center text-2xl font-black text-purple-600">{analysis.comprehensiveSummary.expertiseScoreTable.interior.score}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.interior.status}</td>
+                      <td className="border-2 border-purple-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.expertiseScoreTable.interior.note}</td>
+                    </tr>
+                    <tr className="bg-gradient-to-r from-amber-100 to-amber-200 hover:from-amber-200 hover:to-amber-300 transition-colors">
+                      <td className="border-4 border-amber-400 px-6 py-4 font-black text-gray-900 text-lg">Genel Durum</td>
+                      <td className="border-4 border-amber-400 px-6 py-4 text-center text-3xl font-black text-amber-700">{analysis.comprehensiveSummary.expertiseScoreTable.overall.score}</td>
+                      <td className="border-4 border-amber-400 px-6 py-4 text-gray-900 font-black text-lg">{analysis.comprehensiveSummary.expertiseScoreTable.overall.status}</td>
+                      <td className="border-4 border-amber-400 px-6 py-4 text-gray-900 font-bold">{analysis.comprehensiveSummary.expertiseScoreTable.overall.note}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </FadeInUp>
+        )}
+
+        {/* Piyasa Değeri Tablosu */}
+        {analysis.comprehensiveSummary?.marketValueTable && (
+          <FadeInUp delay={0.35}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-emerald-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">💰</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Piyasa Değeri (Ekim 2025)</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-emerald-600 to-green-600">
+                      <th className="border-2 border-emerald-300 px-6 py-4 text-left text-white font-bold">Durum</th>
+                      <th className="border-2 border-emerald-300 px-6 py-4 text-center text-white font-bold">Tahmini Değer (TL)</th>
+                      <th className="border-2 border-emerald-300 px-6 py-4 text-left text-white font-bold">Not</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="hover:bg-emerald-50 transition-colors">
+                      <td className="border-2 border-emerald-200 px-6 py-3 font-semibold text-gray-700">Mevcut Durumda</td>
+                      <td className="border-2 border-emerald-200 px-6 py-3 text-center text-2xl font-black text-emerald-600">
+                        {analysis.comprehensiveSummary.marketValueTable.asIs.min.toLocaleString('tr-TR')} - {analysis.comprehensiveSummary.marketValueTable.asIs.max.toLocaleString('tr-TR')} TL
+                      </td>
+                      <td className="border-2 border-emerald-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.marketValueTable.asIs.note}</td>
+                    </tr>
+                    <tr className="hover:bg-emerald-50 transition-colors">
+                      <td className="border-2 border-emerald-200 px-6 py-3 font-semibold text-gray-700">Tamir Sonrası</td>
+                      <td className="border-2 border-emerald-200 px-6 py-3 text-center text-2xl font-black text-emerald-600">
+                        {analysis.comprehensiveSummary.marketValueTable.afterRepair.min.toLocaleString('tr-TR')} - {analysis.comprehensiveSummary.marketValueTable.afterRepair.max.toLocaleString('tr-TR')} TL
+                      </td>
+                      <td className="border-2 border-emerald-200 px-6 py-3 text-gray-700">{analysis.comprehensiveSummary.marketValueTable.afterRepair.note}</td>
+                    </tr>
+                    <tr className="bg-gradient-to-r from-green-100 to-emerald-200 hover:from-green-200 hover:to-emerald-300 transition-colors">
+                      <td className="border-4 border-emerald-400 px-6 py-4 font-black text-gray-900 text-lg">Restore Sonrası (Koleksiyonluk)</td>
+                      <td className="border-4 border-emerald-400 px-6 py-4 text-center text-3xl font-black text-emerald-700">
+                        {analysis.comprehensiveSummary.marketValueTable.restored.min.toLocaleString('tr-TR')} TL üzeri
+                      </td>
+                      <td className="border-4 border-emerald-400 px-6 py-4 text-gray-900 font-bold">{analysis.comprehensiveSummary.marketValueTable.restored.note}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </FadeInUp>
+        )}
+
         {/* Uzman Görüşü */}
         {analysis.expertOpinion && (
-          <FadeInUp delay={0.2}>
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">👨‍🔧 Uzman Görüşü</h2>
-              <div className="bg-blue-50 border-l-4 border-blue-600 p-4 mb-4">
-                <p className="font-semibold text-blue-900">
-                  Öneri: {analysis.expertOpinion.recommendation}
+          <FadeInUp delay={0.4}>
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-2xl shadow-xl p-8 mb-6 border-2 border-indigo-200">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">👨‍🔧</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Uzman Görüşü</h2>
+              </div>
+              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 border-l-4 border-amber-400 rounded-xl p-6 mb-6 shadow-lg">
+                <p className="font-bold text-xl text-white leading-relaxed">
+                  💼 Öneri: {analysis.expertOpinion.recommendation}
                 </p>
               </div>
               {analysis.expertOpinion.reasoning && analysis.expertOpinion.reasoning.length > 0 && (
-                <ul className="space-y-2">
+                <div className="space-y-3">
+                  <h3 className="font-bold text-lg text-indigo-900 mb-3">📋 Gerekçeler:</h3>
                   {analysis.expertOpinion.reasoning.map((reason, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircleIcon className="w-5 h-5 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-700">{reason}</span>
-                    </li>
+                    <div key={index} className="flex items-start bg-white/70 rounded-lg p-4 shadow-sm">
+                      <CheckCircleIcon className="w-6 h-6 text-indigo-600 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-800 font-medium">{reason}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           </FadeInUp>
@@ -295,22 +652,34 @@ function ComprehensiveReportContent() {
         {/* Öneriler */}
         {analysis.finalRecommendations && (
           <FadeInUp delay={0.3}>
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">💡 Öneriler</h2>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-purple-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">💡</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Öneriler ve Aksiyon Planı</h2>
+              </div>
               
               {/* Acil Öneriler */}
               {analysis.finalRecommendations.immediate && analysis.finalRecommendations.immediate.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-semibold text-red-900 mb-3">🚨 Acil Müdahale Gerekli:</h3>
-                  <div className="space-y-2">
+                  <h3 className="font-bold text-xl text-red-900 mb-4 flex items-center">
+                    <span className="text-2xl mr-2">🚨</span>
+                    Acil Müdahale Gerekli
+                  </h3>
+                  <div className="space-y-3">
                     {analysis.finalRecommendations.immediate.map((item, index) => (
-                      <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <div key={index} className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <span className="font-medium text-red-900">{item.action}</span>
-                            <p className="text-sm text-red-700 mt-1">Öncelik: {item.priority}</p>
+                          <div className="flex-1">
+                            <span className="font-bold text-lg text-red-900 block mb-2">{item.action}</span>
+                            <div className="inline-block bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                              Öncelik: {item.priority}
+                            </div>
                           </div>
-                          <span className="font-bold text-red-900">₺{item.cost.toLocaleString('tr-TR')}</span>
+                          <div className="bg-red-600 text-white px-4 py-2 rounded-xl font-bold text-lg ml-4">
+                            ₺{item.cost.toLocaleString('tr-TR')}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -321,16 +690,23 @@ function ComprehensiveReportContent() {
               {/* Kısa Vadeli Öneriler */}
               {analysis.finalRecommendations.shortTerm && analysis.finalRecommendations.shortTerm.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-semibold text-yellow-900 mb-3">⏰ Kısa Vadede Yapılmalı:</h3>
-                  <div className="space-y-2">
+                  <h3 className="font-bold text-xl text-yellow-900 mb-4 flex items-center">
+                    <span className="text-2xl mr-2">⏰</span>
+                    Kısa Vadede Yapılmalı (1-3 Ay)
+                  </h3>
+                  <div className="space-y-3">
                     {analysis.finalRecommendations.shortTerm.map((item, index) => (
-                      <div key={index} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <div key={index} className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <span className="font-medium text-yellow-900">{item.action}</span>
-                            <p className="text-sm text-yellow-700 mt-1">Öncelik: {item.priority}</p>
+                          <div className="flex-1">
+                            <span className="font-bold text-lg text-yellow-900 block mb-2">{item.action}</span>
+                            <div className="inline-block bg-yellow-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                              Öncelik: {item.priority}
+                            </div>
                           </div>
-                          <span className="font-bold text-yellow-900">₺{item.cost.toLocaleString('tr-TR')}</span>
+                          <div className="bg-yellow-600 text-white px-4 py-2 rounded-xl font-bold text-lg ml-4">
+                            ₺{item.cost.toLocaleString('tr-TR')}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -341,16 +717,23 @@ function ComprehensiveReportContent() {
               {/* Uzun Vadeli Öneriler */}
               {analysis.finalRecommendations.longTerm && analysis.finalRecommendations.longTerm.length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-blue-900 mb-3">📅 Uzun Vadeli Planlama:</h3>
-                  <div className="space-y-2">
+                  <h3 className="font-bold text-xl text-blue-900 mb-4 flex items-center">
+                    <span className="text-2xl mr-2">📅</span>
+                    Uzun Vadeli Planlama (6-12 Ay)
+                  </h3>
+                  <div className="space-y-3">
                     {analysis.finalRecommendations.longTerm.map((item, index) => (
-                      <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <div key={index} className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl p-5 shadow-md hover:shadow-lg transition-shadow">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <span className="font-medium text-blue-900">{item.action}</span>
-                            <p className="text-sm text-blue-700 mt-1">Öncelik: {item.priority}</p>
+                          <div className="flex-1">
+                            <span className="font-bold text-lg text-blue-900 block mb-2">{item.action}</span>
+                            <div className="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                              Öncelik: {item.priority}
+                            </div>
                           </div>
-                          <span className="font-bold text-blue-900">₺{item.cost.toLocaleString('tr-TR')}</span>
+                          <div className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-lg ml-4">
+                            ₺{item.cost.toLocaleString('tr-TR')}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -361,21 +744,38 @@ function ComprehensiveReportContent() {
           </FadeInUp>
         )}
 
-        {/* AI Bilgisi */}
+        {/* Premium AI Bilgisi */}
         <FadeInUp delay={0.4}>
-          <div className="bg-gray-100 rounded-lg p-4 text-center text-sm text-gray-600">
-            <p>
-              Bu kapsamlı rapor {analysis.aiProvider} tarafından %{analysis.confidence} güvenilirlik ile oluşturulmuştur.
-            </p>
-            <p className="mt-1 text-xs">
-              Rapor tarihi: {new Date(report.createdAt).toLocaleDateString('tr-TR', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </p>
+          <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900 rounded-2xl p-8 text-center shadow-2xl border-2 border-amber-400">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-400/10 rounded-full blur-3xl"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-center mb-4">
+                <SparklesIcon className="w-8 h-8 text-amber-400 mr-2" />
+                <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-400">
+                  AI Destekli Premium Analiz
+                </h3>
+              </div>
+              <p className="text-amber-200 font-medium text-lg mb-2">
+                Bu kapsamlı rapor <span className="font-black text-amber-300">{analysis.aiProvider}</span> tarafından 
+                <span className="font-black text-green-400"> %{analysis.confidence} güvenilirlik</span> ile oluşturulmuştur.
+              </p>
+              <p className="text-amber-300/80 text-sm">
+                Rapor tarihi: {new Date(report.createdAt).toLocaleDateString('tr-TR', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
+              <div className="mt-6 flex items-center justify-center space-x-2">
+                <div className="h-1 w-24 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full"></div>
+                <span className="text-amber-400 text-xs font-bold">MIVVO PREMIUM</span>
+                <div className="h-1 w-24 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full"></div>
+              </div>
+            </div>
           </div>
         </FadeInUp>
       </div>

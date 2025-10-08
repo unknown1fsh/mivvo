@@ -1,8 +1,52 @@
+/**
+ * VIN Controller (VIN Sorgulama Controller)
+ * 
+ * Clean Architecture - Controller Layer (API Katmanı)
+ * 
+ * Bu controller, VIN (Vehicle Identification Number) sorgulama işlemlerini yönetir.
+ * 
+ * Sorumluluklar:
+ * - VIN decode (NHTSA API üzerinden)
+ * - VIN cache yönetimi
+ * - Temel VIN bilgisi çıkarma
+ * - VIN sorgulama geçmişi
+ * 
+ * İş Akışı:
+ * 1. VIN format kontrolü (17 haneli)
+ * 2. Cache'den kontrol
+ * 3. Cache yoksa NHTSA API'den sorgula
+ * 4. Sonucu cache'e kaydet
+ * 5. Kullanıcıya döndür
+ * 
+ * Özellikler:
+ * - NHTSA (National Highway Traffic Safety Administration) API entegrasyonu
+ * - Database cache (VINLookup tablosu)
+ * - Hata toleranslı mimari (cache hatası devam eder)
+ * - Türkçe çeviri desteği
+ * 
+ * API Endpoints:
+ * - POST /api/vin/decode (VIN decode)
+ * - GET /api/vin/basic/:vin (Temel bilgi)
+ * - GET /api/vin/history (Sorgulama geçmişi)
+ * 
+ * Not: Bu controller class-based (static methods)
+ */
+
 import { Request, Response } from 'express';
 import { VINService, VINData } from '../services/vinService';
 import { PrismaClient } from '@prisma/client';
 
-// Prisma Client'ı singleton olarak kullan
+// ===== PRISMA CLIENT (SINGLETON) =====
+
+/**
+ * Prisma Client Singleton
+ * 
+ * Singleton pattern ile tek instance kullanımı.
+ * 
+ * Hata Durumu:
+ * - İlk init hatası: Fallback olarak yeni instance
+ * - DATABASE_URL env var kullanılır
+ */
 let prisma: PrismaClient;
 
 try {
@@ -19,9 +63,58 @@ try {
   });
 }
 
+// ===== CONTROLLER CLASS =====
+
 export class VINController {
   /**
-   * VIN numarasından araç bilgilerini sorgular
+   * VIN Decode (VIN Numarasını Çöz)
+   * 
+   * VIN numarasından detaylı araç bilgilerini getirir.
+   * 
+   * İşlem Akışı:
+   * 1. VIN varlık kontrolü
+   * 2. VIN format doğrulama (17 hane)
+   * 3. Database bağlantı testi
+   * 4. Cache kontrolü (VINLookup tablosu)
+   * 5. Cache varsa direkt döndür
+   * 6. Cache yoksa NHTSA API çağrısı
+   * 7. Sonucu cache'e kaydet
+   * 8. Kullanıcıya döndür
+   * 
+   * Cache Stratejisi:
+   * - VIN her sorgulandığında cache'e kaydedilir
+   * - Cache hatası durumunda API sonucu döner (fail-safe)
+   * - updatedAt timestamp ile cache freshness
+   * 
+   * NHTSA API:
+   * - https://vpic.nhtsa.dot.gov/api/
+   * - Free public API (rate limit yok)
+   * - 17 haneli VIN decode
+   * 
+   * @route   POST /api/vin/decode
+   * @access  Public/Private (check route)
+   * 
+   * @param req.body.vin - 17 haneli VIN numarası
+   * 
+   * @returns 200 - VIN bilgileri (cached veya API'den)
+   * @returns 400 - Geçersiz VIN formatı
+   * @returns 404 - VIN bilgileri bulunamadı
+   * @returns 500 - Database/API hatası
+   * 
+   * @example
+   * POST /api/vin/decode
+   * Body: { "vin": "1HGBH41JXMN109186" }
+   * Response: {
+   *   "success": true,
+   *   "data": {
+   *     "vin": "1HGBH41JXMN109186",
+   *     "make": "Honda",
+   *     "model": "Accord",
+   *     "modelYear": "2021",
+   *     "cached": true,
+   *     "lastUpdated": "2024-01-15T10:30:00Z"
+   *   }
+   * }
    */
   static async decodeVIN(req: Request, res: Response): Promise<void> {
     try {
@@ -29,6 +122,7 @@ export class VINController {
       
       const { vin } = req.body;
 
+      // VIN varlık kontrolü
       if (!vin) {
         console.log('VIN missing in request body');
         res.status(400).json({
@@ -38,7 +132,7 @@ export class VINController {
         return;
       }
 
-      // VIN formatını kontrol et
+      // VIN format kontrolü (17 hane)
       if (!VINService.isValidVIN(vin)) {
         console.log('Invalid VIN format:', vin);
         res.status(400).json({
@@ -48,7 +142,7 @@ export class VINController {
         return;
       }
 
-      // Database bağlantısını test et
+      // Database bağlantı testi
       try {
         await prisma.$connect();
         console.log('Database connected successfully');
@@ -61,7 +155,7 @@ export class VINController {
         return;
       }
 
-      // Önce cache'den kontrol et
+      // Cache kontrolü (VINLookup tablosu)
       let cachedData = null;
       try {
         cachedData = await prisma.vINLookup.findFirst({
@@ -73,6 +167,7 @@ export class VINController {
         // Cache hatası varsa devam et, API'den sorgula
       }
 
+      // Cache varsa direkt döndür
       if (cachedData) {
         res.json({
           success: true,
@@ -118,7 +213,7 @@ export class VINController {
         return;
       }
 
-      // Cache'e kaydet (hata varsa devam et)
+      // Sonucu cache'e kaydet (fail-safe)
       try {
         await prisma.vINLookup.create({
           data: {
@@ -154,6 +249,7 @@ export class VINController {
         // Cache hatası varsa devam et, kullanıcıya sonucu göster
       }
 
+      // API sonucunu döndür
       res.json({
         success: true,
         data: {
@@ -168,7 +264,7 @@ export class VINController {
     } catch (error) {
       console.error('VIN sorgulama hatası:', error);
       
-      // Hata tipine göre farklı HTTP status kodları
+      // Hata tipine göre HTTP status kodları
       if (error instanceof Error) {
         if (error.message.includes('Geçersiz VIN formatı')) {
           res.status(400).json({
@@ -196,7 +292,40 @@ export class VINController {
   }
 
   /**
-   * VIN numarasından temel bilgileri çıkarır (hızlı sorgu)
+   * Temel VIN Bilgisi (Hızlı Sorgu)
+   * 
+   * VIN numarasından temel bilgileri çıkarır (API çağrısı yapmadan).
+   * 
+   * VIN Yapısı:
+   * - İlk 3 hane: WMI (World Manufacturer Identifier)
+   * - 4-8. haneler: VDS (Vehicle Descriptor Section)
+   * - 10. hane: Model yılı
+   * - 11. hane: Üretim tesisi
+   * - 12-17. haneler: Seri numarası
+   * 
+   * Kullanım:
+   * - Hızlı önizleme
+   * - API çağrısı yapmadan temel kontrol
+   * 
+   * @route   GET /api/vin/basic/:vin
+   * @access  Public/Private
+   * 
+   * @param req.params.vin - VIN numarası
+   * 
+   * @returns 200 - Temel VIN bilgileri
+   * @returns 400 - VIN eksik
+   * @returns 500 - İşlem hatası
+   * 
+   * @example
+   * GET /api/vin/basic/1HGBH41JXMN109186
+   * Response: {
+   *   "success": true,
+   *   "data": {
+   *     "wmi": "1HG",
+   *     "countryOfOrigin": "United States",
+   *     "modelYear": "2021"
+   *   }
+   * }
    */
   static async getBasicInfo(req: Request, res: Response): Promise<void> {
     try {
@@ -210,6 +339,7 @@ export class VINController {
         return;
       }
 
+      // VIN'den temel bilgi çıkar (offline)
       const basicInfo = VINService.extractBasicInfo(vin);
 
       res.json({
@@ -228,13 +358,44 @@ export class VINController {
   }
 
   /**
-   * VIN sorgulama geçmişini getirir
+   * VIN Sorgulama Geçmişi
+   * 
+   * Sistemde yapılmış tüm VIN sorgularını listeler.
+   * 
+   * Kullanım:
+   * - Admin paneli
+   * - İstatistikler
+   * - Popüler araç modelleri
+   * 
+   * Pagination:
+   * - Default: page=1, limit=10
+   * - Tarih sıralı (yeni önce)
+   * 
+   * @route   GET /api/vin/history
+   * @access  Admin/Private
+   * 
+   * @param req.query.page - Sayfa numarası
+   * @param req.query.limit - Sayfa boyutu
+   * 
+   * @returns 200 - VIN sorgulama geçmişi (paginated)
+   * @returns 500 - İşlem hatası
+   * 
+   * @example
+   * GET /api/vin/history?page=1&limit=20
+   * Response: {
+   *   "success": true,
+   *   "data": {
+   *     "lookups": [...],
+   *     "pagination": { "page": 1, "total": 50, "pages": 3 }
+   *   }
+   * }
    */
   static async getLookupHistory(req: Request, res: Response): Promise<void> {
     try {
       const { page = 1, limit = 10 } = req.query;
       const skip = (Number(page) - 1) * Number(limit);
 
+      // Paralel sorgular (performans)
       const [lookups, total] = await Promise.all([
         prisma.vINLookup.findMany({
           skip,

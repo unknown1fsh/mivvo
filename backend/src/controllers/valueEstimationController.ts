@@ -1,3 +1,37 @@
+/**
+ * Value Estimation Controller (Değer Tahmini Controller)
+ * 
+ * Clean Architecture - Controller Layer (API Katmanı)
+ * 
+ * Bu controller, araç değer tahmini işlemlerini yönetir.
+ * 
+ * Sorumluluklar:
+ * - Değer tahmini başlatma
+ * - Görsel yükleme (Multer - memory storage)
+ * - OpenAI ile değer tahmini
+ * - Rapor getirme
+ * 
+ * İş Akışı:
+ * 1. Analiz başlat (rapor oluştur - PROCESSING)
+ * 2. Görselleri yükle (base64)
+ * 3. OpenAI ile değer tahmini (görseller dahil)
+ * 4. Raporu güncelle (COMPLETED + aiAnalysisData)
+ * 5. Rapor getir
+ * 
+ * Özellikler:
+ * - Multer memory storage (base64)
+ * - OpenAI GPT-4 Vision API entegrasyonu
+ * - Multi-image support
+ * - Piyasa analizi
+ * - Fiyat tahmini (min-max-ortalama)
+ * 
+ * Endpoints:
+ * - POST /api/value-estimation/start (Analiz başlat)
+ * - POST /api/value-estimation/:reportId/upload (Görsel yükle)
+ * - POST /api/value-estimation/:reportId/analyze (Analiz gerçekleştir)
+ * - GET /api/value-estimation/:reportId (Rapor getir)
+ */
+
 import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { AuthRequest } from '../middleware/auth'
@@ -6,7 +40,16 @@ import multer from 'multer'
 
 const prisma = new PrismaClient()
 
-// Multer konfigürasyonu
+// ===== MULTER KONFİGÜRASYONU =====
+
+/**
+ * Multer Memory Storage
+ * 
+ * Görseller RAM'e yüklenir, base64'e çevrilir.
+ * 
+ * Maksimum: 10MB
+ * Format: image/*
+ */
 const storage = multer.memoryStorage()
 const upload = multer({ 
   storage,
@@ -20,9 +63,40 @@ const upload = multer({
   }
 })
 
+// ===== CONTROLLER CLASS =====
+
 export class ValueEstimationController {
   /**
-   * Değer tahmini başlat
+   * Değer Tahmini Başlat
+   * 
+   * Yeni bir değer tahmini raporu oluşturur.
+   * 
+   * İşlem Akışı:
+   * 1. Kullanıcı yetkisi kontrolü
+   * 2. Araç bilgileri kontrolü (plaka zorunlu)
+   * 3. VehicleReport kaydı oluştur (PROCESSING)
+   * 4. ReportId döndür
+   * 
+   * @route   POST /api/value-estimation/start
+   * @access  Private
+   * 
+   * @param req.body.vehicleInfo - Araç bilgileri
+   * 
+   * @returns 200 - ReportId + status
+   * @returns 400 - Araç bilgileri eksik
+   * @returns 401 - Yetkisiz
+   * @returns 500 - Sunucu hatası
+   * 
+   * @example
+   * POST /api/value-estimation/start
+   * Body: {
+   *   "vehicleInfo": {
+   *     "plate": "34ABC123",
+   *     "make": "Toyota",
+   *     "model": "Corolla",
+   *     "year": 2020
+   *   }
+   * }
    */
   static async startAnalysis(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -77,7 +151,31 @@ export class ValueEstimationController {
   }
 
   /**
-   * Resim yükleme
+   * Görsel Yükleme
+   * 
+   * Değer tahmini için görselleri yükler.
+   * 
+   * İşlem Akışı:
+   * 1. Kullanıcı yetkisi kontrolü
+   * 2. Rapor sahiplik kontrolü
+   * 3. Dosya varlık kontrolü
+   * 4. Her dosya için base64 encode + VehicleImage kaydı
+   * 
+   * @route   POST /api/value-estimation/:reportId/upload
+   * @access  Private
+   * 
+   * @param req.params.reportId - Rapor ID
+   * @param req.files - Multer ile yüklenen dosyalar
+   * 
+   * @returns 200 - Yüklenen görseller
+   * @returns 400 - Dosya bulunamadı
+   * @returns 401 - Yetkisiz
+   * @returns 404 - Rapor bulunamadı
+   * @returns 500 - Sunucu hatası
+   * 
+   * @example
+   * POST /api/value-estimation/123/upload
+   * FormData: { files: [car1.jpg, car2.jpg] }
    */
   static async uploadImages(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -137,7 +235,37 @@ export class ValueEstimationController {
   }
 
   /**
-   * Değer tahmini gerçekleştir
+   * Değer Tahmini Gerçekleştir
+   * 
+   * OpenAI ile araç değer tahmini yapar.
+   * 
+   * İşlem Akışı:
+   * 1. Kullanıcı yetkisi kontrolü
+   * 2. Rapor sahiplik kontrolü (görseller dahil)
+   * 3. Araç bilgilerini hazırla
+   * 4. Görsel path'lerini topla
+   * 5. ValueEstimationService.estimateValue çağır (OpenAI)
+   * 6. Raporu güncelle (COMPLETED + aiAnalysisData)
+   * 
+   * OpenAI Prompt:
+   * - Araç bilgileri dahil
+   * - Multi-image analiz
+   * - Piyasa araştırması
+   * - Fiyat tahmini (min, max, ortalama)
+   * - Türkçe rapor
+   * 
+   * @route   POST /api/value-estimation/:reportId/analyze
+   * @access  Private
+   * 
+   * @param req.params.reportId - Rapor ID
+   * 
+   * @returns 200 - Değer tahmini sonucu
+   * @returns 401 - Yetkisiz
+   * @returns 404 - Rapor bulunamadı
+   * @returns 500 - AI hatası
+   * 
+   * @example
+   * POST /api/value-estimation/123/analyze
    */
   static async performAnalysis(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -206,7 +334,28 @@ export class ValueEstimationController {
   }
 
   /**
-   * Değer tahmini raporu getir
+   * Değer Tahmini Raporunu Getir
+   * 
+   * Tamamlanmış raporu döndürür.
+   * 
+   * İçerik:
+   * - Rapor bilgileri
+   * - Araç bilgileri
+   * - Görseller
+   * - AI analiz sonucu (değer tahmini)
+   * 
+   * @route   GET /api/value-estimation/:reportId
+   * @access  Private
+   * 
+   * @param req.params.reportId - Rapor ID
+   * 
+   * @returns 200 - Rapor detayları
+   * @returns 401 - Yetkisiz
+   * @returns 404 - Rapor bulunamadı
+   * @returns 500 - Sunucu hatası
+   * 
+   * @example
+   * GET /api/value-estimation/123
    */
   static async getReport(req: AuthRequest, res: Response): Promise<void> {
     try {
@@ -243,4 +392,12 @@ export class ValueEstimationController {
   }
 }
 
+/**
+ * Multer Upload Instance Export
+ * 
+ * Route'larda middleware olarak kullanılır.
+ * 
+ * Kullanım:
+ * router.post('/:reportId/upload', upload.array('files'), uploadImages)
+ */
 export { upload }

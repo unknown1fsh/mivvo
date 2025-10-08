@@ -1,28 +1,102 @@
-// Kimlik doğrulama servisi
+/**
+ * Auth Service (Kimlik Doğrulama Servisi)
+ * 
+ * Clean Architecture - Service Layer (Servis Katmanı)
+ * 
+ * Bu servis, kullanıcı kimlik doğrulama işlemlerini yönetir.
+ * 
+ * Sorumluluklar:
+ * - Kullanıcı girişi (login)
+ * - Kullanıcı kaydı (register)
+ * - Çıkış (logout)
+ * - Token yönetimi (JWT)
+ * - Şifre sıfırlama
+ * - Email doğrulama
+ * - LocalStorage yönetimi
+ * 
+ * Özellikler:
+ * - JWT token validation
+ * - Auto token expiry check
+ * - Secure localStorage operations
+ * - Token refresh (TODO)
+ * 
+ * Kullanım:
+ * ```typescript
+ * import { authService } from './authService'
+ * 
+ * const user = await authService.login({ email, password })
+ * const isAuth = authService.isAuthenticated()
+ * await authService.logout()
+ * ```
+ */
 
 import { apiClient } from './apiClient'
 import { User, LoginCredentials, RegisterData } from '@/types'
 
+// ===== INTERFACES =====
+
+/**
+ * Auth Response Interface
+ * 
+ * Login/Register işlemlerinden dönen cevap.
+ */
 export interface AuthResponse {
   user: User
   token: string
   refreshToken?: string
 }
 
+/**
+ * Login Response Interface
+ * 
+ * Backend'den gelen login cevabı.
+ */
 export interface LoginResponse {
   success: boolean
   message: string
   data: AuthResponse
 }
 
+/**
+ * Register Response Interface
+ * 
+ * Backend'den gelen register cevabı.
+ */
 export interface RegisterResponse {
   success: boolean
   message: string
   data: AuthResponse
 }
 
+// ===== AUTH SERVICE CLASS =====
+
+/**
+ * Auth Service Class
+ * 
+ * Kimlik doğrulama işlemlerini yöneten servis.
+ */
 class AuthService {
-  // Giriş yap
+  /**
+   * Login (Giriş Yap)
+   * 
+   * Kullanıcı girişi yapar.
+   * 
+   * İşlem Akışı:
+   * 1. API'ye login isteği gönder
+   * 2. Response'u parse et
+   * 3. Token ve user bilgilerini localStorage'a kaydet
+   * 4. AuthResponse döndür
+   * 
+   * @param credentials - Email ve şifre
+   * 
+   * @returns AuthResponse veya null
+   * 
+   * @example
+   * const user = await authService.login({
+   *   email: 'user@example.com',
+   *   password: '123456'
+   * })
+   */
   async login(credentials: LoginCredentials): Promise<AuthResponse | null> {
     console.log('🔐 Login başlatıldı:', { email: credentials.email })
     
@@ -37,7 +111,7 @@ class AuthService {
       })
       
       if (response.success && response.data) {
-        // Backend response'u doğru şekilde parse et
+        // Backend response'u parse et
         const backendData = response.data
         
         console.log('✅ Backend verisi parse edildi:', {
@@ -96,13 +170,35 @@ class AuthService {
     }
   }
 
-  // Kayıt ol
+  /**
+   * Register (Kayıt Ol)
+   * 
+   * Yeni kullanıcı kaydı yapar.
+   * 
+   * İşlem Akışı:
+   * 1. API'ye register isteği gönder
+   * 2. Response'u parse et
+   * 3. Token ve user bilgilerini localStorage'a kaydet
+   * 4. AuthResponse döndür
+   * 
+   * @param userData - Kullanıcı kayıt bilgileri
+   * 
+   * @returns AuthResponse veya null
+   * 
+   * @example
+   * const user = await authService.register({
+   *   email: 'newuser@example.com',
+   *   password: '123456',
+   *   firstName: 'John',
+   *   lastName: 'Doe'
+   * })
+   */
   async register(userData: RegisterData): Promise<AuthResponse | null> {
     try {
       const response = await apiClient.post<RegisterResponse>('/api/auth/register', userData)
       
       if (response.success && response.data) {
-        // Backend response'u doğru şekilde parse et
+        // Backend response'u parse et
         const backendData = response.data
         const actualData = backendData.data
         
@@ -130,7 +226,20 @@ class AuthService {
     }
   }
 
-  // Çıkış yap
+  /**
+   * Logout (Çıkış Yap)
+   * 
+   * Kullanıcı çıkışı yapar.
+   * 
+   * İşlem Akışı:
+   * 1. Backend'e logout isteği gönder (token invalidate)
+   * 2. LocalStorage'ı temizle
+   * 
+   * @returns true (her zaman başarılı)
+   * 
+   * @example
+   * await authService.logout()
+   */
   async logout(): Promise<boolean> {
     const token = this.getToken()
     
@@ -142,14 +251,22 @@ class AuthService {
     } catch (error) {
       // Hata durumunda sessizce devam et
     } finally {
-      // Local storage'ı temizle
+      // LocalStorage'ı temizle
       this.clearStorage()
     }
     
     return true
   }
 
-  // Token yenile
+  /**
+   * Refresh Token (Token Yenile)
+   * 
+   * Süresi dolan token'ı yeniler.
+   * 
+   * TODO: Backend'de refresh token endpoint'i eklenmeli
+   * 
+   * @returns Yeni token veya null
+   */
   async refreshToken(): Promise<string | null> {
     const refreshToken = typeof window !== 'undefined' 
       ? localStorage.getItem('refresh_token') 
@@ -171,7 +288,19 @@ class AuthService {
     return null
   }
 
-  // Mevcut kullanıcıyı al
+  /**
+   * Get Current User (Mevcut Kullanıcıyı Al)
+   * 
+   * LocalStorage'dan mevcut kullanıcı bilgilerini alır.
+   * 
+   * @returns User veya null
+   * 
+   * @example
+   * const user = authService.getCurrentUser()
+   * if (user) {
+   *   console.log('Current user:', user.email)
+   * }
+   */
   getCurrentUser(): User | null {
     if (typeof window === 'undefined') return null
     
@@ -188,13 +317,41 @@ class AuthService {
     }
   }
 
-  // Token'ı al
+  /**
+   * Get Token (Token Al)
+   * 
+   * LocalStorage'dan JWT token'ı alır.
+   * 
+   * @returns Token (string) veya null
+   * 
+   * @example
+   * const token = authService.getToken()
+   */
   getToken(): string | null {
     if (typeof window === 'undefined') return null
     return localStorage.getItem('auth_token')
   }
 
-  // Giriş yapmış mı kontrol et
+  /**
+   * Is Authenticated (Giriş Yapmış mı?)
+   * 
+   * Kullanıcının giriş yapmış olup olmadığını kontrol eder.
+   * 
+   * Kontroller:
+   * - Token varlığı
+   * - Token formatı (JWT: header.payload.signature)
+   * - Token geçerliliği (expiry check)
+   * - Bozuk token temizleme
+   * 
+   * @returns boolean
+   * 
+   * @example
+   * if (authService.isAuthenticated()) {
+   *   // Kullanıcı giriş yapmış
+   * } else {
+   *   // Kullanıcı giriş yapmamış
+   * }
+   */
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false
     
@@ -239,7 +396,20 @@ class AuthService {
     }
   }
 
-  // LocalStorage'ı temizle
+  /**
+   * Clear Storage (LocalStorage Temizle)
+   * 
+   * Tüm auth ile ilgili localStorage verilerini temizler.
+   * 
+   * Temizlenen veriler:
+   * - auth_token
+   * - user
+   * - refresh_token
+   * - globalVehicleImages
+   * 
+   * @example
+   * authService.clearStorage()
+   */
   clearStorage(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
@@ -249,13 +419,36 @@ class AuthService {
     }
   }
 
-  // Şifre sıfırlama
+  /**
+   * Request Password Reset (Şifre Sıfırlama Talebi)
+   * 
+   * Şifre sıfırlama email'i gönderir.
+   * 
+   * @param email - Kullanıcı email'i
+   * 
+   * @returns boolean
+   * 
+   * @example
+   * const sent = await authService.requestPasswordReset('user@example.com')
+   */
   async requestPasswordReset(email: string): Promise<boolean> {
     const response = await apiClient.post('/api/auth/forgot-password', { email })
     return response.success
   }
 
-  // Şifre sıfırlama doğrulama
+  /**
+   * Reset Password (Şifre Sıfırla)
+   * 
+   * Reset token ile şifreyi sıfırlar.
+   * 
+   * @param token - Reset token (email'den gelen)
+   * @param newPassword - Yeni şifre
+   * 
+   * @returns boolean
+   * 
+   * @example
+   * const reset = await authService.resetPassword('token123', 'newpassword')
+   */
   async resetPassword(token: string, newPassword: string): Promise<boolean> {
     const response = await apiClient.post('/api/auth/reset-password', {
       token,
@@ -264,18 +457,49 @@ class AuthService {
     return response.success
   }
 
-  // Email doğrulama
+  /**
+   * Verify Email (Email Doğrula)
+   * 
+   * Email doğrulama token'ı ile email'i doğrular.
+   * 
+   * @param token - Email verification token
+   * 
+   * @returns boolean
+   * 
+   * @example
+   * const verified = await authService.verifyEmail('token123')
+   */
   async verifyEmail(token: string): Promise<boolean> {
     const response = await apiClient.post('/api/auth/verify-email', { token })
     return response.success
   }
 
-  // Email doğrulama tekrar gönder
+  /**
+   * Resend Verification Email (Doğrulama Email'i Tekrar Gönder)
+   * 
+   * Email doğrulama link'ini tekrar gönderir.
+   * 
+   * @returns boolean
+   * 
+   * @example
+   * const sent = await authService.resendVerificationEmail()
+   */
   async resendVerificationEmail(): Promise<boolean> {
     const response = await apiClient.post('/api/auth/resend-verification')
     return response.success
   }
 }
 
+// ===== SINGLETON INSTANCE =====
+
+/**
+ * Singleton Instance
+ * 
+ * Uygulama genelinde tek bir auth service instance kullanılır.
+ */
 export const authService = new AuthService()
+
+/**
+ * Default Export
+ */
 export default authService

@@ -1,75 +1,139 @@
+/**
+ * Gerçek AI Servisi (Real AI Service)
+ * 
+ * Clean Architecture - Service Layer (İş Mantığı Katmanı)
+ * 
+ * Bu servis, OpenAI API ile gerçek AI analizi yapar.
+ * 
+ * Amaç:
+ * - OpenAI Vision API ile boya analizi
+ * - OpenAI Vision API ile hasar tespiti
+ * - OpenAI ile motor sesi analizi
+ * - API quota aşıldığında fallback mekanizması
+ * - Alternatif API key'ler ile devre dışı bırakma
+ * 
+ * Özellikler:
+ * - Birden fazla API key desteği (primary + 4 alternatif)
+ * - API bağlantısı testi
+ * - Görsel optimizasyonu (Sharp ile)
+ * - Fallback/simülasyon modu
+ * - Detaylı error handling
+ * - Akıllı prompt engineering
+ * 
+ * NOT: Bu servis, aiService.ts'nin temelini oluşturur.
+ * aiService.ts bu servisi wrap eder ve cache mekanizması ekler.
+ */
+
 import OpenAI from 'openai';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import sharp from 'sharp';
 
-// AI Model Interfaces
+// ===== TİP TANIMLARI =====
+
+/**
+ * Boya Analizi Sonucu Interface (Basitleştirilmiş)
+ * 
+ * NOT: Bu interface, paintAnalysisService.ts'deki
+ * PaintAnalysisResult'dan daha basittir.
+ */
 export interface PaintAnalysisResult {
-  paintCondition: 'excellent' | 'good' | 'fair' | 'poor';
-  paintThickness: number;
-  colorMatch: number;
-  scratches: number;
-  dents: number;
-  rust: boolean;
-  oxidation: number;
-  glossLevel: number;
-  overallScore: number;
-  recommendations: string[];
-  confidence: number;
-  technicalDetails: {
-    paintSystem: string;
-    primerType: string;
-    baseCoat: string;
-    clearCoat: string;
-    totalThickness: number;
-    colorCode: string;
+  paintCondition: 'excellent' | 'good' | 'fair' | 'poor';              // Boya durumu
+  paintThickness: number;                                               // Boya kalınlığı (mikron)
+  colorMatch: number;                                                   // Renk eşleşmesi (%)
+  scratches: number;                                                    // Çizik sayısı
+  dents: number;                                                        // Göçük sayısı
+  rust: boolean;                                                        // Pas var mı?
+  oxidation: number;                                                    // Oksidasyon seviyesi (%)
+  glossLevel: number;                                                   // Parlaklık seviyesi (%)
+  overallScore: number;                                                 // Genel puan (0-100)
+  recommendations: string[];                                            // Öneriler
+  confidence: number;                                                   // Güven seviyesi (0-100)
+  technicalDetails: {                                                   // Teknik detaylar
+    paintSystem: string;                                                // Boya sistemi
+    primerType: string;                                                 // Astar türü
+    baseCoat: string;                                                   // Baz kat
+    clearCoat: string;                                                  // Vernik
+    totalThickness: number;                                             // Toplam kalınlık (mikron)
+    colorCode: string;                                                  // Renk kodu
   };
-  damageAreas?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    type: 'scratch' | 'dent' | 'rust' | 'oxidation';
-    severity: 'low' | 'medium' | 'high';
-    confidence: number;
+  damageAreas?: {                                                       // Hasar alanları
+    x: number;                                                          // X koordinatı
+    y: number;                                                          // Y koordinatı
+    width: number;                                                      // Genişlik
+    height: number;                                                     // Yükseklik
+    type: 'scratch' | 'dent' | 'rust' | 'oxidation';                   // Hasar türü
+    severity: 'low' | 'medium' | 'high';                               // Şiddet
+    confidence: number;                                                 // Güven seviyesi (0-100)
   }[];
 }
 
+/**
+ * Motor Sesi Analizi Sonucu Interface
+ */
 export interface EngineSoundAnalysisResult {
-  overallScore: number;
-  engineHealth: string;
-  rpmAnalysis: {
-    idleRpm: number;
-    maxRpm: number;
-    rpmStability: number;
+  overallScore: number;                                                 // Genel puan (0-100)
+  engineHealth: string;                                                 // Motor sağlığı
+  rpmAnalysis: {                                                        // RPM analizi
+    idleRpm: number;                                                    // Rölanti devri
+    maxRpm: number;                                                     // Max devir
+    rpmStability: number;                                               // RPM stabilitesi (%)
   };
-  frequencyAnalysis: {
-    dominantFrequencies: number[];
-    harmonicDistortion: number;
-    noiseLevel: number;
+  frequencyAnalysis: {                                                  // Frekans analizi
+    dominantFrequencies: number[];                                      // Dominant frekanslar (Hz)
+    harmonicDistortion: number;                                         // Harmonik distorsiyon (%)
+    noiseLevel: number;                                                 // Gürültü seviyesi (dB)
   };
-  detectedIssues: {
-    issue: string;
-    severity: 'low' | 'medium' | 'high';
-    confidence: number;
-    description: string;
-    recommendation: string;
+  detectedIssues: {                                                     // Tespit edilen sorunlar
+    issue: string;                                                      // Sorun
+    severity: 'low' | 'medium' | 'high';                               // Şiddet
+    confidence: number;                                                 // Güven seviyesi (0-100)
+    description: string;                                                // Açıklama
+    recommendation: string;                                             // Öneri
   }[];
-  performanceMetrics: {
-    engineEfficiency: number;
-    vibrationLevel: number;
-    acousticQuality: number;
+  performanceMetrics: {                                                 // Performans metrikleri
+    engineEfficiency: number;                                           // Motor verimliliği (%)
+    vibrationLevel: number;                                             // Titreşim seviyesi (%)
+    acousticQuality: number;                                            // Akustik kalite (%)
   };
-  recommendations: string[];
+  recommendations: string[];                                            // Öneriler
 }
 
+// ===== SERVİS =====
+
+/**
+ * RealAIService Sınıfı
+ * 
+ * OpenAI API ile gerçek AI analizi yapan servis
+ * 
+ * Birden fazla API key desteği:
+ * - OPENAI_API_KEY (primary)
+ * - OPENAI_API_KEY_ALT1 (alternatif 1)
+ * - OPENAI_API_KEY_ALT2 (alternatif 2)
+ * - OPENAI_API_KEY_ALT3 (alternatif 3)
+ * - OPENAI_API_KEY_BACKUP (yedek)
+ */
 export class RealAIService {
+  /**
+   * OpenAI client instance
+   */
   private static openai: OpenAI | null = null;
+
+  /**
+   * Initialization durumu
+   */
   private static isInitialized = false;
 
   /**
-   * OpenAI API'yi başlat
+   * Servisi başlatır (OpenAI client oluşturur)
+   * 
+   * Akıllı API key yönetimi:
+   * 1. Primary key'i dene
+   * 2. Başarısızsa 4 alternatif key'i sırayla dene
+   * 3. Hiçbiri çalışmazsa fallback moduna geç
+   * 
+   * @throws Error - Tüm API key'ler başarısızsa (fallback modu devreye girer)
    */
   static async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -87,7 +151,7 @@ export class RealAIService {
         apiKey: primaryKey,
       });
 
-      // API bağlantısını test et
+      // API bağlantısını test et (models.list çağrısı yapar)
       await this.openai.models.list();
       
       this.isInitialized = true;
@@ -119,13 +183,33 @@ export class RealAIService {
         }
       }
       
+      // Tüm key'ler başarısız, fallback moduna geç
       console.log('⚠️ Tüm API key\'ler başarısız, fallback modunda devam');
       this.isInitialized = true; // Fallback modunda devam et
     }
   }
 
   /**
-   * Gerçek OpenAI Vision API ile boya analizi
+   * Boya Analizi - OpenAI Vision API
+   * 
+   * Gerçek OpenAI Vision API ile boya kalitesi analizi yapar.
+   * 
+   * İşlem akışı:
+   * 1. Initialize kontrolü
+   * 2. Görseli base64'e çevir
+   * 3. OpenAI Vision API çağrısı yap
+   * 4. JSON yanıtı parse et
+   * 5. Önerileri ekle
+   * 6. Sonucu döndür
+   * 
+   * Fallback: API hatası durumunda simülasyon moduna geçer
+   * 
+   * @param imagePath - Görsel dosya path'i
+   * @param angle - Görsel açısı (front, rear, side vb.)
+   * @returns Boya analizi sonucu
+   * 
+   * @example
+   * const result = await RealAIService.analyzePaint('./car.jpg', 'front');
    */
   static async analyzePaint(imagePath: string, angle: string): Promise<PaintAnalysisResult> {
     await this.initialize();
@@ -141,6 +225,7 @@ export class RealAIService {
       // Resmi base64'e çevir
       const imageBase64 = await this.convertImageToBase64(imagePath);
       
+      // OpenAI Vision API çağrısı (gpt-4o model)
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -219,13 +304,37 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
       // Hata durumunda fallback'e geç
       console.log('⚠️ OpenAI boya analizi başarısız, simülasyon modunda');
       
-      console.log('⚠️ OpenAI boya analizi başarısız, simülasyon modunda');
       return this.simulatePaintAnalysis(imagePath, angle);
     }
   }
 
   /**
-   * Gerçek OpenAI Vision API ile hasar tespiti
+   * Hasar Tespiti - OpenAI Vision API
+   * 
+   * Gerçek OpenAI Vision API ile detaylı hasar tespiti yapar.
+   * 
+   * İşlem akışı:
+   * 1. Initialize kontrolü
+   * 2. Görseli base64'e çevir
+   * 3. OpenAI Vision API çağrısı yap
+   * 4. JSON yanıtı parse et
+   * 5. Hasar alanlarını döndür
+   * 
+   * Hasar türleri:
+   * - scratch: Çizik, sıyrık
+   * - dent: Göçük, çökme
+   * - rust: Paslanma, korozyon
+   * - oxidation: Oksidasyon, renk değişimi
+   * - crack: Çatlak, yarık
+   * - break: Kırık, kopma
+   * 
+   * Fallback: API hatası durumunda gelişmiş analiz moduna geçer
+   * 
+   * @param imagePath - Görsel dosya path'i
+   * @returns Hasar alanları listesi
+   * 
+   * @example
+   * const damages = await RealAIService.detectDamage('./car-damage.jpg');
    */
   static async detectDamage(imagePath: string): Promise<PaintAnalysisResult['damageAreas']> {
     await this.initialize();
@@ -241,6 +350,7 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
       // Resmi base64'e çevir
       const imageBase64 = await this.convertImageToBase64(imagePath);
       
+      // OpenAI Vision API çağrısı (gpt-4o model)
       const response = await this.openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
@@ -313,13 +423,23 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
       // Hata durumunda fallback'e geç
       console.log('⚠️ OpenAI hasar tespiti başarısız, gelişmiş analiz yapılıyor');
       
-      console.log('⚠️ OpenAI hasar tespiti başarısız, gelişmiş analiz yapılıyor');
       return this.performAdvancedAnalysis(imagePath);
     }
   }
 
   /**
-   * Gerçek OpenAI API ile motor sesi analizi (ses dosyası analizi için)
+   * Motor Sesi Analizi - OpenAI API
+   * 
+   * NOT: OpenAI şu anda doğrudan ses dosyası analizi desteklemiyor.
+   * Bu implementasyon, gelecekte Whisper API ile entegre edilebilir.
+   * Şimdilik simülasyon modunda çalışıyor.
+   * 
+   * @param audioPath - Ses dosyası path'i
+   * @param vehicleInfo - Araç bilgileri
+   * @returns Motor sesi analizi sonucu
+   * 
+   * @example
+   * const result = await RealAIService.analyzeEngineSound('./engine.mp3', vehicleInfo);
    */
   static async analyzeEngineSound(audioPath: string, vehicleInfo: any): Promise<EngineSoundAnalysisResult> {
     await this.initialize();
@@ -342,8 +462,23 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
     }
   }
 
+  // ===== PRIVATE METODLAR =====
+
   /**
-   * Gelişmiş analiz (OpenAI API quota aşıldığında)
+   * Gelişmiş Analiz (Fallback)
+   * 
+   * OpenAI API quota aşıldığında veya kullanılamadığında
+   * dosya boyutuna göre akıllı hasar tespiti simülasyonu yapar.
+   * 
+   * Mantık:
+   * - Büyük dosyalar (>500KB): Çizik tespiti
+   * - Çok büyük dosyalar (>1MB): + Göçük tespiti
+   * - Çok çok büyük dosyalar (>2MB): + Pas tespiti
+   * 
+   * @param imagePath - Görsel dosya path'i
+   * @returns Hasar alanları listesi
+   * 
+   * @private
    */
   private static async performAdvancedAnalysis(imagePath: string): Promise<PaintAnalysisResult['damageAreas']> {
     try {
@@ -402,7 +537,18 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
   }
 
   /**
-   * Resmi base64'e çevir
+   * Görseli Base64'e Çevirir
+   * 
+   * Sharp ile görseli optimize eder:
+   * - 1024x1024 max boyut
+   * - JPEG format
+   * - %85 kalite
+   * 
+   * @param imagePath - Görsel dosya path'i
+   * @returns Base64 encoded görsel
+   * @throws Error - Görsel işleme hatası
+   * 
+   * @private
    */
   private static async convertImageToBase64(imagePath: string): Promise<string> {
     try {
@@ -419,9 +565,14 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
     }
   }
 
-
-
-  // Yardımcı metodlar
+  /**
+   * Boya Durumuna Göre Öneriler Üretir
+   * 
+   * @param condition - Boya durumu
+   * @returns Öneriler listesi
+   * 
+   * @private
+   */
   private static generatePaintRecommendations(condition: string): string[] {
     const recommendations: { [key: string]: string[] } = {
       excellent: ['Boya kalitesi mükemmel', 'Düzenli bakım yapın'],
@@ -432,8 +583,20 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
     return recommendations[condition] || recommendations.fair;
   }
 
+  // ===== SİMÜLASYON METODLARI (FALLBACK) =====
 
-  // Simülasyon metodları (fallback)
+  /**
+   * Boya Analizi Simülasyonu
+   * 
+   * OpenAI API kullanılamadığında fallback olarak çalışır.
+   * Rastgele gerçekçi değerler üretir.
+   * 
+   * @param imagePath - Görsel dosya path'i (kullanılmıyor)
+   * @param angle - Görsel açısı (kullanılmıyor)
+   * @returns Simüle edilmiş boya analizi sonucu
+   * 
+   * @private
+   */
   private static simulatePaintAnalysis(imagePath: string, angle: string): PaintAnalysisResult {
     const conditions: Array<'excellent' | 'good' | 'fair' | 'poor'> = ['excellent', 'good', 'fair', 'poor'];
     const condition = conditions[Math.floor(Math.random() * conditions.length)];
@@ -461,6 +624,15 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
     };
   }
 
+  /**
+   * Hasar Tespiti Simülasyonu
+   * 
+   * Rastgele çizik tespiti üretir.
+   * 
+   * @returns Simüle edilmiş hasar alanları
+   * 
+   * @private
+   */
   private static simulateDamageDetection(): PaintAnalysisResult['damageAreas'] {
     return [
       {
@@ -475,6 +647,17 @@ Sadece JSON yanıtı ver, başka açıklama yapma.`
     ];
   }
 
+  /**
+   * Motor Sesi Analizi Simülasyonu
+   * 
+   * Rastgele gerçekçi motor analiz değerleri üretir.
+   * 
+   * @param audioPath - Ses dosyası path'i (kullanılmıyor)
+   * @param vehicleInfo - Araç bilgileri (kullanılmıyor)
+   * @returns Simüle edilmiş motor sesi analizi sonucu
+   * 
+   * @private
+   */
   private static simulateEngineSoundAnalysis(audioPath: string, vehicleInfo: any): EngineSoundAnalysisResult {
     const issues = [
       {

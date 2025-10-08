@@ -1,258 +1,388 @@
+/**
+ * Boya Analizi Servisi (Paint Analysis Service)
+ * 
+ * Clean Architecture - Service Layer (İş Mantığı Katmanı)
+ * 
+ * Bu servis, OpenAI Vision API kullanarak araç boyası analizi yapar.
+ * 
+ * Amaç:
+ * - Boya kalitesi değerlendirmesi
+ * - Renk analizi ve eşleşme
+ * - Yüzey kusurları tespiti
+ * - Mikron seviyesinde kalınlık ölçümü
+ * - Detaylı Türkçe boya raporu
+ * - Bakım önerileri ve maliyet tahmini
+ * 
+ * Boya Analiz Kategorileri:
+ * - Boya kalitesi (gloss, pürüzsüzlük, uniformite)
+ * - Renk analizi (kod, isim, metalik/perle, solma)
+ * - Yüzey analizi (kalınlık, portakal kabuğu, kirlilik)
+ * - Hasar değerlendirmesi (çizik, göçük, pas, oksidasyon)
+ * - Teknik detaylar (sistem, marka, yöntem)
+ * - Öneriler (acil, kısa/uzun vadeli, bakım)
+ * - Maliyet tahmini (detaylı breakdown, timeline)
+ * 
+ * Özellikler:
+ * - OpenAI Vision API entegrasyonu
+ * - Sharp ile görsel optimizasyonu
+ * - Gerçekçi Türkiye fiyatları (2025)
+ * - Detaylı kusur açıklaması
+ * - Cache mekanizması
+ */
+
 import OpenAI from 'openai'
 import sharp from 'sharp'
 import fs from 'fs/promises'
 import crypto from 'crypto'
 
-// --- Tip Tanımları ---------------------------------------------------------
+// ===== TİP TANIMLARI =====
 
+/**
+ * Boya Analizi Sonucu Interface
+ * 
+ * Tüm boya analizi sonuçlarını içerir
+ */
 export interface PaintAnalysisResult {
-  paintCondition: 'excellent' | 'good' | 'fair' | 'poor' | 'critical'
-  paintQuality: PaintQuality
-  colorAnalysis: ColorAnalysis
-  surfaceAnalysis: SurfaceAnalysis
-  damageAssessment: PaintDamageAssessment
-  technicalDetails: TechnicalDetails
-  recommendations: PaintRecommendations
-  costEstimate: PaintCostEstimate
-  aiProvider: string
-  model: string
-  confidence: number
-  analysisTimestamp: string
+  paintCondition: 'excellent' | 'good' | 'fair' | 'poor' | 'critical'  // Boya durumu
+  paintQuality: PaintQuality                                             // Boya kalitesi
+  colorAnalysis: ColorAnalysis                                           // Renk analizi
+  surfaceAnalysis: SurfaceAnalysis                                       // Yüzey analizi
+  damageAssessment: PaintDamageAssessment                                // Hasar değerlendirmesi
+  technicalDetails: TechnicalDetails                                     // Teknik detaylar
+  recommendations: PaintRecommendations                                  // Öneriler
+  costEstimate: PaintCostEstimate                                        // Maliyet tahmini
+  aiProvider: string                                                     // AI sağlayıcı
+  model: string                                                          // AI model
+  confidence: number                                                     // Güven seviyesi (0-100)
+  analysisTimestamp: string                                              // Analiz zamanı (ISO)
 }
 
+/**
+ * Boya Kalitesi Interface
+ * 
+ * Boyanın genel kalite metrikleri
+ */
 export interface PaintQuality {
-  overallScore: number
-  glossLevel: number
-  smoothness: number
-  uniformity: number
-  adhesion: number
-  durability: number
-  weatherResistance: number
-  uvProtection: number
+  overallScore: number          // Genel puan (0-100)
+  glossLevel: number            // Parlaklık seviyesi (0-100)
+  smoothness: number            // Pürüzsüzlük (0-100)
+  uniformity: number            // Tekdüzelik (0-100)
+  adhesion: number              // Yapışma (0-100)
+  durability: number            // Dayanıklılık (0-100)
+  weatherResistance: number     // Hava koşullarına direnç (0-100)
+  uvProtection: number          // UV koruma (0-100)
 }
 
+/**
+ * Renk Analizi Interface
+ * 
+ * Boyanın renk özellikleri
+ */
 export interface ColorAnalysis {
-  colorCode: string
-  colorName: string
-  colorFamily: string
-  metallic: boolean
-  pearl: boolean
-  colorMatch: number
-  colorConsistency: number
-  colorDepth: number
-  colorVibrance: number
-  colorFading: number
-  colorShifting: number
-  originalColor: boolean
-  repaintDetected: boolean
-  colorHistory: string[]
+  colorCode: string             // Renk kodu (örn: "1G3")
+  colorName: string             // Renk adı (örn: "Gümüş Metalik")
+  colorFamily: string           // Renk ailesi (örn: "Gümüş")
+  metallic: boolean             // Metalik mi?
+  pearl: boolean                // Perle mi?
+  colorMatch: number            // Renk eşleşmesi (0-100)
+  colorConsistency: number      // Renk tutarlılığı (0-100)
+  colorDepth: number            // Renk derinliği (0-100)
+  colorVibrance: number         // Renk canlılığı (0-100)
+  colorFading: number           // Renk solması (0-100)
+  colorShifting: number         // Renk kayması (0-100)
+  originalColor: boolean        // Orijinal renk mi?
+  repaintDetected: boolean      // Boya tespit edildi mi?
+  colorHistory: string[]        // Renk geçmişi
 }
 
+/**
+ * Yüzey Analizi Interface
+ * 
+ * Boya yüzeyi ve kalınlık ölçümleri
+ */
 export interface SurfaceAnalysis {
-  paintThickness: number
-  primerThickness: number
-  baseCoatThickness: number
-  clearCoatThickness: number
-  totalThickness: number
-  thicknessUniformity: number
-  surfaceRoughness: number
-  orangePeel: number
-  runs: number
-  sags: number
-  dirt: number
-  contamination: number
-  surfaceDefects: SurfaceDefect[]
+  paintThickness: number        // Boya kalınlığı (mikron)
+  primerThickness: number       // Astar kalınlığı (mikron)
+  baseCoatThickness: number     // Baz kat kalınlığı (mikron)
+  clearCoatThickness: number    // Vernik kalınlığı (mikron)
+  totalThickness: number        // Toplam kalınlık (mikron)
+  thicknessUniformity: number   // Kalınlık tekdüzeliği (0-100)
+  surfaceRoughness: number      // Yüzey pürüzlülüğü (0-100)
+  orangePeel: number            // Portakal kabuğu efekti (0-100)
+  runs: number                  // Akıntı (0-100)
+  sags: number                  // Sarkma (0-100)
+  dirt: number                  // Kirlilik (0-100)
+  contamination: number         // Kontaminasyon (0-100)
+  surfaceDefects: SurfaceDefect[] // Yüzey kusurları
 }
 
+/**
+ * Yüzey Kusuru Interface
+ * 
+ * Tespit edilen yüzey kusurları
+ */
 export interface SurfaceDefect {
   type: 'orange_peel' | 'runs' | 'sags' | 'dirt' | 'contamination' | 'fish_eye' | 'crater' | 'blister' | 'crack' | 'peel'
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  size: number
-  description: string
-  repairable: boolean
-  repairCost: number
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  size: number                                                        // Boyut (cm²)
+  description: string                                                 // Açıklama
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairCost: number                                                  // Onarım maliyeti (TL)
 }
 
+/**
+ * Boya Hasarı Değerlendirmesi Interface
+ * 
+ * Tüm hasar türlerini içerir
+ */
 export interface PaintDamageAssessment {
-  scratches: ScratchAnalysis[]
-  dents: DentAnalysis[]
-  rust: RustAnalysis[]
-  oxidation: OxidationAnalysis[]
-  fading: FadingAnalysis[]
-  chipping: ChippingAnalysis[]
-  peeling: PeelingAnalysis[]
-  blistering: BlisteringAnalysis[]
-  cracking: CrackingAnalysis[]
-  totalDamageScore: number
+  scratches: ScratchAnalysis[]        // Çizikler
+  dents: DentAnalysis[]               // Göçükler
+  rust: RustAnalysis[]                // Paslanma
+  oxidation: OxidationAnalysis[]      // Oksidasyon
+  fading: FadingAnalysis[]            // Solma
+  chipping: ChippingAnalysis[]        // Sıyrıklar
+  peeling: PeelingAnalysis[]          // Soyulma
+  blistering: BlisteringAnalysis[]    // Kabarcıklanma
+  cracking: CrackingAnalysis[]        // Çatlama
+  totalDamageScore: number            // Toplam hasar puanı (0-100)
 }
 
+/**
+ * Çizik Analizi Interface
+ */
 export interface ScratchAnalysis {
-  id: string
-  depth: 'surface' | 'primer' | 'metal'
-  length: number
-  width: number
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  depth: 'surface' | 'primer' | 'metal'                              // Çizik derinliği
+  length: number                                                      // Uzunluk (cm)
+  width: number                                                       // Genişlik (mm)
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Göçük Analizi Interface
+ */
 export interface DentAnalysis {
-  id: string
-  depth: number
-  diameter: number
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  depth: number                                                       // Derinlik (mm)
+  diameter: number                                                    // Çap (cm)
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Pas Analizi Interface
+ */
 export interface RustAnalysis {
-  id: string
-  type: 'surface' | 'penetrating' | 'structural'
-  area: number
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  spreading: boolean
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  type: 'surface' | 'penetrating' | 'structural'                     // Pas türü
+  area: number                                                        // Alan (cm²)
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  spreading: boolean                                                  // Yayılıyor mu?
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Oksidasyon Analizi Interface
+ */
 export interface OxidationAnalysis {
-  id: string
-  type: 'chalking' | 'fading' | 'discoloration' | 'hazing'
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  type: 'chalking' | 'fading' | 'discoloration' | 'hazing'           // Oksidasyon türü
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Solma Analizi Interface
+ */
 export interface FadingAnalysis {
-  id: string
-  type: 'uv_fading' | 'chemical_fading' | 'heat_fading'
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  type: 'uv_fading' | 'chemical_fading' | 'heat_fading'              // Solma türü
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Sıyrık Analizi Interface
+ */
 export interface ChippingAnalysis {
-  id: string
-  size: number
-  count: number
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  size: number                                                        // Boyut (mm)
+  count: number                                                       // Adet
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Soyulma Analizi Interface
+ */
 export interface PeelingAnalysis {
-  id: string
-  area: number
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  area: number                                                        // Alan (cm²)
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Kabarcıklanma Analizi Interface
+ */
 export interface BlisteringAnalysis {
-  id: string
-  size: number
-  count: number
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  size: number                                                        // Boyut (mm)
+  count: number                                                       // Adet
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Çatlama Analizi Interface
+ */
 export interface CrackingAnalysis {
-  id: string
-  length: number
-  width: number
-  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'
-  location: string
-  repairable: boolean
-  repairMethod: string
-  repairCost: number
-  description: string
+  id: string                                                          // Benzersiz ID
+  length: number                                                      // Uzunluk (cm)
+  width: number                                                       // Genişlik (mm)
+  severity: 'minimal' | 'low' | 'medium' | 'high' | 'critical'      // Şiddet
+  location: string                                                    // Konum
+  repairable: boolean                                                 // Onarılabilir mi?
+  repairMethod: string                                                // Onarım yöntemi
+  repairCost: number                                                  // Onarım maliyeti (TL)
+  description: string                                                 // Açıklama
 }
 
+/**
+ * Teknik Detaylar Interface
+ * 
+ * Boya sistemi ve uygulama detayları
+ */
 export interface TechnicalDetails {
-  paintSystem: string
-  primerType: string
-  baseCoat: string
-  clearCoat: string
-  paintBrand: string
-  paintType: string
-  applicationMethod: string
-  curingMethod: string
-  paintAge: number
-  lastRepaint: number
-  paintLayers: number
-  qualityGrade: 'OEM' | 'aftermarket' | 'unknown'
+  paintSystem: string           // Boya sistemi (örn: "3 Katlı Sistem")
+  primerType: string            // Astar türü
+  baseCoat: string              // Baz kat
+  clearCoat: string             // Vernik
+  paintBrand: string            // Boya markası
+  paintType: string             // Boya türü
+  applicationMethod: string     // Uygulama yöntemi
+  curingMethod: string          // Kurutma yöntemi
+  paintAge: number              // Boya yaşı (yıl)
+  lastRepaint: number           // Son boya (yıl)
+  paintLayers: number           // Boya katman sayısı
+  qualityGrade: 'OEM' | 'aftermarket' | 'unknown'  // Kalite sınıfı
 }
 
+/**
+ * Boya Önerileri Interface
+ * 
+ * Bakım ve iyileştirme önerileri
+ */
 export interface PaintRecommendations {
-  immediate: string[]
-  shortTerm: string[]
-  longTerm: string[]
-  maintenance: string[]
-  protection: string[]
-  restoration: string[]
-  prevention: string[]
+  immediate: string[]           // Acil öneriler
+  shortTerm: string[]           // Kısa vadeli öneriler
+  longTerm: string[]            // Uzun vadeli öneriler
+  maintenance: string[]         // Bakım önerileri
+  protection: string[]          // Koruma önerileri
+  restoration: string[]         // Restorasyon önerileri
+  prevention: string[]          // Önleme önerileri
 }
 
+/**
+ * Boya Maliyet Tahmini Interface
+ * 
+ * Detaylı maliyet kırılımı ve zaman çizelgesi
+ */
 export interface PaintCostEstimate {
-  totalCost: number
-  laborCost: number
-  materialCost: number
-  preparationCost: number
-  paintCost: number
-  clearCoatCost: number
-  additionalCosts: number
-  breakdown: {
-    category: string
-    cost: number
-    description: string
+  totalCost: number             // Toplam maliyet (TL)
+  laborCost: number             // İşçilik maliyeti (TL)
+  materialCost: number          // Malzeme maliyeti (TL)
+  preparationCost: number       // Hazırlık maliyeti (TL)
+  paintCost: number             // Boya maliyeti (TL)
+  clearCoatCost: number         // Vernik maliyeti (TL)
+  additionalCosts: number       // Ek maliyetler (TL)
+  breakdown: {                  // Maliyet detayı
+    category: string            // Kategori
+    cost: number                // Maliyet (TL)
+    description: string         // Açıklama
   }[]
-  timeline: {
-    phase: string
-    duration: number
-    description: string
+  timeline: {                   // Zaman çizelgesi
+    phase: string               // Faz
+    duration: number            // Süre (saat)
+    description: string         // Açıklama
   }[]
-  warranty: {
-    covered: boolean
-    duration: string
-    conditions: string[]
+  warranty: {                   // Garanti
+    covered: boolean            // Kapsam
+    duration: string            // Süre
+    conditions: string[]        // Koşullar
   }
 }
 
-// --- Servis ----------------------------------------------------------------
+// ===== SERVİS =====
 
+/**
+ * OpenAI Model Seçimi
+ * 
+ * Environment variable'dan model adı alınır, yoksa default kullanılır
+ */
 const OPENAI_MODEL = process.env.OPENAI_PAINT_MODEL ?? 'gpt-4o-mini'
 
+/**
+ * PaintAnalysisService Sınıfı
+ * 
+ * OpenAI Vision API ile boya analizi yapan servis
+ */
 export class PaintAnalysisService {
+  /**
+   * OpenAI client instance
+   */
   private static openaiClient: OpenAI | null = null
+
+  /**
+   * Initialization durumu
+   */
   private static isInitialized = false
+
+  /**
+   * In-memory cache (image hash → result)
+   */
   private static cache = new Map<string, PaintAnalysisResult>()
 
+  /**
+   * Servisi başlatır (OpenAI client oluşturur)
+   * 
+   * @throws Error - API key yoksa
+   */
   static async initialize(): Promise<void> {
     if (this.isInitialized) return
 
@@ -273,10 +403,26 @@ export class PaintAnalysisService {
     }
   }
 
+  /**
+   * Cache'i temizler
+   */
   static clearCache(): void {
     this.cache.clear()
   }
 
+  /**
+   * Görseli Base64'e çevirir ve optimize eder
+   * 
+   * Sharp ile görseli optimize eder:
+   * - 1024x1024 max boyut
+   * - JPEG format
+   * - %95 kalite
+   * 
+   * @param imagePath - Görsel dosya path'i veya base64 data URL
+   * @returns Base64 encoded görsel
+   * 
+   * @private
+   */
   private static async convertImageToBase64(imagePath: string): Promise<string> {
     if (imagePath.startsWith('data:')) {
       return imagePath.split(',')[1]
@@ -291,6 +437,16 @@ export class PaintAnalysisService {
     return optimized.toString('base64')
   }
 
+  /**
+   * Görsel hash'ini hesaplar (cache key için)
+   * 
+   * MD5 hash kullanır
+   * 
+   * @param imagePath - Görsel dosya path'i veya base64 data URL
+   * @returns MD5 hash veya timestamp (fallback)
+   * 
+   * @private
+   */
   private static async getImageHash(imagePath: string): Promise<string> {
     try {
       const buffer = imagePath.startsWith('data:')
@@ -303,6 +459,21 @@ export class PaintAnalysisService {
     }
   }
 
+  /**
+   * OpenAI için Türkçe prompt oluşturur
+   * 
+   * ÇOK DETAYLI prompt ile AI'ya boya uzmanı rolü verilir:
+   * - 25+ yıllık deneyimli boya uzmanı
+   * - Mikron seviyesinde analiz
+   * - Türkçe rapor
+   * - Gerçekçi Türkiye fiyatları
+   * - JSON format örneği
+   * 
+   * @param vehicleInfo - Araç bilgileri (opsiyonel)
+   * @returns Prompt metni
+   * 
+   * @private
+   */
   private static buildPrompt(vehicleInfo?: any): string {
     const vehicleContext = vehicleInfo ? `
 🚗 ARAÇ BİLGİLERİ:
@@ -541,6 +712,18 @@ ${vehicleContext}
 - Boya kalınlığı, gloss, renk eşleşmesi, yüzey kalitesi odaklı analiz yap`
   }
 
+  /**
+   * AI yanıtından JSON payload'ı çıkarır
+   * 
+   * AI bazen JSON öncesi/sonrasında metin ekler,
+   * bu fonksiyon sadece JSON kısmını parse eder.
+   * 
+   * @param rawText - AI'dan gelen ham metin
+   * @returns Parse edilmiş JSON
+   * @throws Error - JSON bulunamazsa
+   * 
+   * @private
+   */
   private static extractJsonPayload(rawText: string): any {
     const start = rawText.indexOf('{')
     const end = rawText.lastIndexOf('}')
@@ -551,17 +734,36 @@ ${vehicleContext}
     return JSON.parse(json)
   }
 
+  /**
+   * OpenAI Vision API ile boya analizi yapar
+   * 
+   * İşlem akışı:
+   * 1. Görseli base64'e çevir ve optimize et
+   * 2. Prompt oluştur
+   * 3. OpenAI Vision API çağrısı yap
+   * 4. Yanıtı parse et
+   * 5. JSON'u extract et
+   * 
+   * @param imagePath - Görsel dosya path'i
+   * @param vehicleInfo - Araç bilgileri
+   * @returns Boya analizi sonucu
+   * @throws Error - API hatası
+   * 
+   * @private
+   */
   private static async analyzePaintWithOpenAI(imagePath: string, vehicleInfo?: any): Promise<PaintAnalysisResult> {
     if (!this.openaiClient) {
       throw new Error('OpenAI istemcisi kullanılabilir değil')
     }
 
+    // Görseli base64'e çevir
     const imageBase64 = await this.convertImageToBase64(imagePath)
     const prompt = `${this.buildPrompt(vehicleInfo)}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
 
+    // OpenAI Vision API çağrısı
     const response = await this.openaiClient.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.1,
+      temperature: 0.1, // Düşük temperature = tutarlı sonuçlar
       messages: [
         {
           role: 'system',
@@ -577,18 +779,47 @@ ${vehicleContext}
       ]
     })
 
+    // Yanıtı al
     const text = response.choices?.[0]?.message?.content
     if (!text) {
       throw new Error('OpenAI yanıtı boş geldi')
     }
 
+    // JSON'u parse et
     const parsed = this.extractJsonPayload(text)
     return parsed as PaintAnalysisResult
   }
 
+  /**
+   * Boya Analizi - Public API
+   * 
+   * Cache kontrolü yapar, yoksa OpenAI ile analiz eder.
+   * 
+   * İşlem akışı:
+   * 1. Initialize kontrolü
+   * 2. Image hash hesapla (cache key)
+   * 3. Cache kontrolü (varsa döndür)
+   * 4. OpenAI Vision analizi yap
+   * 5. Sonucu cache'e kaydet
+   * 6. Sonucu döndür
+   * 
+   * @param imagePath - Görsel dosya path'i
+   * @param vehicleInfo - Araç bilgileri (opsiyonel)
+   * @returns Boya analizi sonucu
+   * @throws Error - API hatası
+   * 
+   * @example
+   * const result = await PaintAnalysisService.analyzePaint(
+   *   './car-paint.jpg',
+   *   { make: 'Toyota', model: 'Corolla', year: 2020 }
+   * );
+   * console.log(result.paintCondition); // 'good'
+   * console.log(result.paintQuality.overallScore); // 85
+   */
   static async analyzePaint(imagePath: string, vehicleInfo?: any): Promise<PaintAnalysisResult> {
     await this.initialize()
 
+    // Cache kontrolü
     const cacheKey = await this.getImageHash(imagePath)
     const cached = this.cache.get(cacheKey)
     if (cached) {
@@ -598,9 +829,13 @@ ${vehicleContext}
 
     try {
       console.log('[AI] OpenAI ile boya analizi başlatılıyor...')
+      
+      // OpenAI analizi
       const result = await this.analyzePaintWithOpenAI(imagePath, vehicleInfo)
+      
       console.log('[AI] OpenAI boya analizi başarılı!')
       
+      // Cache'e kaydet
       this.cache.set(cacheKey, result)
       return result
     } catch (error) {

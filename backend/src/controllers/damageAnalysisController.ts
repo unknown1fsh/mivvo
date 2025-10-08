@@ -1,10 +1,15 @@
-import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { AIService } from '../services/aiService';
-import multer from 'multer';
+/**
+ * Damage Analysis Controller
+ * Clean Architecture - Controller Layer
+ * THIN Controller - Delegates all logic to Service layer
+ */
 
-const prisma = new PrismaClient();
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/auth';
+import { asyncHandler } from '../middleware/errorHandler';
+import { damageAnalysisService } from '../services/damageAnalysisService';
+import { ResponseHelper } from '../utils/ResponseHelper';
+import multer from 'multer';
 
 // Multer konfigürasyonu - Vercel için memory storage
 const storage = multer.memoryStorage();
@@ -23,462 +28,72 @@ const upload = multer({
 
 export class DamageAnalysisController {
   /**
+   * POST /api/damage-analysis/start
    * Hasar analizi başlat
    */
-  static async startAnalysis(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      console.log('🔧 startAnalysis çağrıldı:', { body: req.body, user: req.user });
-      
-      const userId = req.user?.id;
-      if (!userId) {
-        console.log('❌ Kullanıcı ID bulunamadı');
-        res.status(401).json({ success: false, message: 'Yetkilendirme gerekli' });
-        return;
-      }
+  static startAnalysis = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.id;
+    const requestData = req.body;
 
-      const { vehicleInfo, analysisType = 'damage' } = req.body;
-      console.log('📋 Gelen veriler:', { vehicleInfo, analysisType });
+    // ✅ Service'e delege et - TÜM LOGIC SERVICE'TE
+    const result = await damageAnalysisService.startAnalysis(userId, requestData);
 
-      // VehicleInfo kontrolü
-      if (!vehicleInfo || !vehicleInfo.plate) {
-        console.log('❌ Araç bilgileri eksik:', vehicleInfo);
-        res.status(400).json({
-          success: false,
-          message: 'Araç bilgileri eksik. Plaka bilgisi gerekli.'
-        });
-        return;
-      }
-
-      // Kredi kontrolü (isteğe bağlı - test için devre dışı bırakılabilir)
-      try {
-        const userCredits = await prisma.userCredits.findUnique({
-          where: { userId }
-        });
-
-        console.log('💰 Kullanıcı kredileri:', userCredits);
-
-        // Test modunda kredi kontrolünü atla
-        const isTestMode = process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true' || true; // Geçici test için
-        
-        if (!isTestMode && (!userCredits || userCredits.balance.toNumber() < 35)) {
-          console.log('❌ Yetersiz kredi:', { 
-            hasCredits: !!userCredits, 
-            balance: userCredits?.balance.toNumber() 
-          });
-          res.status(400).json({
-            success: false,
-            message: 'Yetersiz kredi. Hasar analizi için 35 kredi gerekli.'
-          });
-          return;
-        }
-
-        console.log('✅ Kredi kontrolü geçti');
-      } catch (creditError) {
-        console.warn('⚠️ Kredi kontrolü atlandı:', creditError);
-      }
-
-      // Rapor oluştur
-      console.log('📝 Rapor oluşturuluyor...');
-      const report = await prisma.vehicleReport.create({
-        data: {
-          userId,
-          vehiclePlate: vehicleInfo.plate || 'Belirtilmemiş',
-          vehicleBrand: vehicleInfo.make || vehicleInfo.brand || 'Belirtilmemiş',
-          vehicleModel: vehicleInfo.model || 'Belirtilmemiş',
-          vehicleYear: vehicleInfo.year || new Date().getFullYear(),
-          reportType: 'DAMAGE_ASSESSMENT',
-          status: 'PROCESSING',
-          totalCost: 35,
-          aiAnalysisData: {}
-        }
-      });
-
-      console.log('✅ Rapor oluşturuldu:', report.id);
-
-      // Kredi işlemi (test modunda atla)
-      try {
-        const isTestMode = process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true';
-        
-        if (!isTestMode) {
-          // Kredi düş
-          await prisma.userCredits.update({
-            where: { userId },
-            data: {
-              balance: { decrement: 35 }
-            }
-          });
-
-          // Kredi işlemi kaydet
-          console.log('💳 Kredi işlemi kaydediliyor...');
-          await prisma.creditTransaction.create({
-            data: {
-              userId,
-              amount: -35,
-              transactionType: 'USAGE',
-              description: 'Hasar Analizi - AI servisi kullanımı',
-              referenceId: report.id.toString()
-            }
-          });
-        }
-      } catch (creditError) {
-        console.warn('⚠️ Kredi işlemi atlandı:', creditError);
-      }
-
-      console.log('🎉 Hasar analizi başarıyla başlatıldı');
-      res.json({
-        success: true,
-        data: {
-          reportId: report.id,
-          status: 'PROCESSING',
-          message: 'Hasar analizi başlatıldı'
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Hasar analizi başlatma hatası:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Hasar analizi başlatılamadı',
-        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-      });
-    }
-  }
+    // ✅ Standard response
+    ResponseHelper.created(res, result, result.message);
+  });
 
   /**
+   * POST /api/damage-analysis/:reportId/upload
    * Hasar analizi resim yükleme
    */
-  static async uploadImages(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id;
-      const { reportId } = req.params;
+  static uploadImages = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.id;
+    const reportId = parseInt(req.params.reportId);
+    const files = req.files as Express.Multer.File[];
 
-      if (!userId) {
-        res.status(401).json({ success: false, message: 'Yetkilendirme gerekli' });
-        return;
-      }
+    // ✅ Service'e delege et
+    const result = await damageAnalysisService.uploadImages(userId, reportId, files);
 
-      // Rapor kontrolü
-      const report = await prisma.vehicleReport.findFirst({
-        where: {
-          id: parseInt(reportId),
-          userId
-        }
-      });
-
-      if (!report) {
-        res.status(404).json({ success: false, message: 'Rapor bulunamadı' });
-        return;
-      }
-
-      // Resim dosyalarını işle (Memory storage)
-      const files = req.files as Express.Multer.File[];
-      if (!files || files.length === 0) {
-        res.status(400).json({ success: false, message: 'Resim dosyası gerekli' });
-        return;
-      }
-
-      // Resimleri Base64 olarak veritabanına kaydet
-      const imageRecords = await Promise.all(
-        files.map(async (file) => {
-          // Buffer'ı Base64'e çevir
-          const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-          
-          return prisma.vehicleImage.create({
-            data: {
-              reportId: parseInt(reportId),
-              imageUrl: base64Image, // Base64 data URL
-              imageType: 'DAMAGE',
-              fileSize: file.size
-            }
-          });
-        })
-      );
-
-      res.json({
-        success: true,
-        data: {
-          images: imageRecords,
-          message: `${files.length} resim başarıyla yüklendi`
-        }
-      });
-
-    } catch (error) {
-      console.error('Resim yükleme hatası:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Resimler yüklenemedi'
-      });
-    }
-  }
+    // ✅ Standard response
+    ResponseHelper.success(res, result, result.message);
+  });
 
   /**
-   * Hasar analizi gerçekleştir
+   * POST /api/damage-analysis/:reportId/analyze
+   * AI hasar analizi gerçekleştir
    */
-  static async performAnalysis(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id;
-      const { reportId } = req.params;
+  static performAnalysis = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.id;
+    const reportId = parseInt(req.params.reportId);
 
-      if (!userId) {
-        res.status(401).json({ success: false, message: 'Yetkilendirme gerekli' });
-        return;
-      }
+    // ✅ Service'e delege et - TÜM AI LOGIC SERVICE'TE
+    const result = await damageAnalysisService.performAnalysis(userId, reportId);
 
-      // Rapor ve resimleri getir
-      const report = await prisma.vehicleReport.findFirst({
-        where: {
-          id: parseInt(reportId),
-          userId
-        }
-      });
-
-      if (!report) {
-        res.status(404).json({ success: false, message: 'Rapor bulunamadı' });
-        return;
-      }
-
-      // Resimleri ayrı olarak getir
-      const images = await prisma.vehicleImage.findMany({
-        where: { reportId: parseInt(reportId) }
-      });
-
-      if (!images || images.length === 0) {
-        res.status(400).json({ success: false, message: 'Analiz için resim gerekli' });
-        return;
-      }
-
-      console.log('🤖 OpenAI Vision API ile hasar analizi başlatılıyor...');
-      console.log(`📸 ${images.length} resim analiz edilecek`);
-
-      // AI analizi gerçekleştir (sequential processing for better timeout handling)
-      const analysisResults = [];
-      for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-        try {
-          console.log(`🔍 Resim ${i + 1}/${images.length} analiz ediliyor...`);
-          
-          // Araç bilgilerini hazırla
-          const vehicleInfo = {
-            make: report.vehicleBrand,
-            model: report.vehicleModel,
-            year: report.vehicleYear,
-            plate: report.vehiclePlate
-          }
-
-          console.log('🚗 Araç bilgileri prompt\'a dahil ediliyor:', vehicleInfo)
-
-          // OpenAI Vision API ile gerçek AI hasar tespiti
-          const damageResult = await AIService.detectDamage(image.imageUrl, vehicleInfo);
-          
-          console.log(`✅ Resim ${i + 1} analizi tamamlandı: ${damageResult?.damageAreas?.length || 0} hasar tespit edildi`);
-          
-          // OpenAI'den gelen gerçek verilerle damageAreas'ı işle
-          const processedDamageAreas = damageResult?.damageAreas ? damageResult.damageAreas.map((damage: any) => ({
-            ...damage,
-            // OpenAI'den gelen gerçek verileri kullan
-            description: damage.description || 'Hasar tespit edildi',
-            repairCost: damage.repairCost || 0,
-            partsAffected: damage.partsAffected || [],
-            area: damage.area || 'front',
-            confidence: damage.confidence || 0
-          })) : [];
-
-          analysisResults.push({
-            imageId: image.id,
-            imagePath: image.imageUrl,
-            damageAreas: processedDamageAreas,
-            totalDamageScore: processedDamageAreas ? 
-              Math.round(processedDamageAreas.reduce((sum: number, damage: any) => sum + (damage.severity === 'high' ? 30 : damage.severity === 'medium' ? 20 : 10), 0)) : 0
-          });
-        } catch (error) {
-          console.error(`❌ Resim ${image.id} analiz hatası:`, error);
-          // Hata durumunda boş hasar alanı döndür
-          analysisResults.push({
-            imageId: image.id,
-            imagePath: image.imageUrl,
-            damageAreas: [],
-            totalDamageScore: 0
-          });
-        }
-      }
-
-      console.log('📊 Analiz sonuçları hesaplanıyor...');
-
-      // Genel analiz sonucu hesapla
-      const totalDamages = analysisResults.reduce((sum: number, result: any) => sum + result.damageAreas.length, 0);
-      const criticalDamages = analysisResults.reduce((sum: number, result: any) => 
-        sum + result.damageAreas.filter((damage: any) => damage.severity === 'high').length, 0
-      );
-      const overallScore = totalDamages === 0 ? 95 : Math.max(10, 95 - (totalDamages * 15) - (criticalDamages * 25));
-      
-      // Hasar şiddeti belirle
-      let damageSeverity: 'low' | 'medium' | 'high' | 'critical';
-      if (overallScore >= 90) damageSeverity = 'low';
-      else if (overallScore >= 70) damageSeverity = 'medium';
-      else if (overallScore >= 40) damageSeverity = 'high';
-      else damageSeverity = 'critical';
-
-      // OpenAI'den gelen overallAssessment verilerini kullan
-      let aiOverallAssessment = null;
-      let estimatedRepairCost = 0;
-      
-      // Sigorta durumu hesaplama fonksiyonu
-      const calculateInsuranceStatus = (overallScore: number, totalDamages: number, criticalDamages: number) => {
-        if (overallScore >= 85 && criticalDamages === 0) return 'Kapsam içinde';
-        if (overallScore >= 70 && criticalDamages <= 1) return 'Kısmen kapsam içinde';
-        if (overallScore >= 50 && criticalDamages <= 2) return 'Değerlendirilecek';
-        if (overallScore >= 30) return 'Kapsam dışı olabilir';
-        return 'Kapsam dışı';
-      };
-      
-      // İlk damageArea'dan overallAssessment'i al
-      for (const result of analysisResults) {
-        if (result.damageAreas && result.damageAreas.length > 0 && result.damageAreas[0].overallAssessment) {
-          aiOverallAssessment = result.damageAreas[0].overallAssessment;
-          estimatedRepairCost = aiOverallAssessment.totalRepairCost || 0;
-          break;
-        }
-      }
-      
-      // Eğer AI verisi yoksa manuel hesapla
-      if (!aiOverallAssessment) {
-        estimatedRepairCost = analysisResults.reduce((sum: number, result: any) => {
-          return sum + result.damageAreas.reduce((damageSum: number, damage: any) => {
-            // Daha gerçekçi onarım maliyetleri (TL cinsinden)
-            const baseCosts: Record<string, number> = {
-              'scratch': 800,
-              'dent': 2500,
-              'rust': 1200,
-              'oxidation': 600,
-              'crack': 3000,
-              'break': 4000,
-              'paint_damage': 1000,
-              'structural': 5000,
-              'mechanical': 3500,
-              'electrical': 2000
-            };
-            
-            const baseCost = baseCosts[damage.type] || 1000;
-            const severityMultiplier = damage.severity === 'high' ? 2.5 : 
-                                     damage.severity === 'medium' ? 1.8 : 1.2;
-            const partsMultiplier = damage.partsAffected ? 
-              Math.max(1, damage.partsAffected.length * 0.3) : 1;
-            
-            return damageSum + Math.round(baseCost * severityMultiplier * partsMultiplier);
-          }, 0);
-        }, 0);
-        
-        // İşçilik maliyeti ekle (%30)
-        estimatedRepairCost = Math.round(estimatedRepairCost * 1.3);
-      }
-
-      const insuranceStatus = calculateInsuranceStatus(overallScore, totalDamages, criticalDamages);
-
-      // Analiz sonucu oluştur
-      const analysisResult = {
-        overallScore: Math.round(overallScore),
-        damageSeverity,
-        totalDamages,
-        criticalDamages,
-        estimatedRepairCost: Math.round(estimatedRepairCost),
-        analysisResults: analysisResults,
-        summary: {
-          totalDamages,
-          criticalDamages,
-          estimatedRepairCost: Math.round(estimatedRepairCost),
-          insuranceImpact: insuranceStatus,
-          strengths: aiOverallAssessment?.strengths || generateStrengths(analysisResults),
-          weaknesses: aiOverallAssessment?.weaknesses || generateWeaknesses(analysisResults),
-          recommendations: aiOverallAssessment?.recommendations || generateRecommendations(analysisResults, damageSeverity),
-          safetyConcerns: aiOverallAssessment?.safetyConcerns || generateSafetyConcerns(analysisResults),
-          marketValueImpact: aiOverallAssessment?.marketValueImpact || calculateMarketValueImpact(overallScore, analysisResults)
-        },
-        technicalDetails: {
-          analysisMethod: 'OpenAI Vision API Analizi',
-          aiModel: 'GPT-4 Vision',
-          confidence: 95,
-          processingTime: '3-5 saniye',
-          imageQuality: 'Yüksek (1024x1024)',
-          imagesAnalyzed: images.length
-        }
-      };
-
-      console.log('💾 Rapor güncelleniyor...');
-
-      // Raporu güncelle
-      await prisma.vehicleReport.update({
-        where: { id: parseInt(reportId) },
-        data: {
-          status: 'COMPLETED',
-          aiAnalysisData: analysisResult as any
-        }
-      });
-
-      console.log('🎉 Hasar analizi başarıyla tamamlandı');
-
-      res.json({
-        success: true,
-        data: {
-          reportId,
-          analysisResult,
-          message: 'OpenAI Vision API ile hasar analizi tamamlandı'
-        }
-      });
-
-    } catch (error) {
-      console.error('❌ Hasar analizi hatası:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Hasar analizi gerçekleştirilemedi',
-        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-      });
-    }
-  }
+    // ✅ Standard response
+    ResponseHelper.success(res, result, 'Hasar analizi tamamlandı');
+  });
 
   /**
+   * GET /api/damage-analysis/:reportId
    * Hasar analizi raporu getir
    */
-  static async getReport(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id;
-      const { reportId } = req.params;
+  static getReport = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.id;
+    const reportId = parseInt(req.params.reportId);
 
-      if (!userId) {
-        res.status(401).json({ success: false, message: 'Yetkilendirme gerekli' });
-        return;
-      }
+    // ✅ Service'e delege et
+    const result = await damageAnalysisService.getReport(userId, reportId);
 
-      const report = await prisma.vehicleReport.findFirst({
-        where: {
-          id: parseInt(reportId),
-          userId
-        },
-        include: {
-          vehicleImages: true
-        }
-      });
-
-      if (!report) {
-        res.status(404).json({ success: false, message: 'Rapor bulunamadı' });
-        return;
-      }
-
-      res.json({
-        success: true,
-        data: report
-      });
-
-    } catch (error) {
-      console.error('Rapor getirme hatası:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Rapor getirilemedi'
-      });
-    }
-  }
+    // ✅ Standard response
+    ResponseHelper.success(res, result);
+  });
 }
 
-// Yardımcı fonksiyonlar - Tamamen Türkçe
+// ============================================================================
+// DEPRECATED HELPER FUNCTIONS
+// Bunlar artık service katmanında - backward compatibility için burada kalıyor
+// ============================================================================
+
 function generateStrengths(analysisResults: any[]): string[] {
   const strengths = [];
   const totalDamages = analysisResults.reduce((sum, result) => sum + result.damageAreas.length, 0);

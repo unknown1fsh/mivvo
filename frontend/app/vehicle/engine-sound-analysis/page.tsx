@@ -598,7 +598,8 @@ export default function EngineSoundAnalysisPage() {
                 Ses Dosyası Yükle
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                MP3, WAV, M4A formatları desteklenir
+                📱 Cep telefonu kayıtları: M4A, AAC, 3GP<br />
+                💻 Bilgisayar kayıtları: MP3, WAV, OGG, WebM
               </p>
               <button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-2 rounded-xl font-semibold hover:shadow-lg transition-all duration-300">
                 Dosya Seç
@@ -607,7 +608,7 @@ export default function EngineSoundAnalysisPage() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="audio/*"
+                accept="audio/wav,audio/mp3,audio/mpeg,audio/ogg,audio/webm,audio/m4a,audio/x-m4a,audio/mp4,audio/aac,audio/x-caf,audio/3gpp,audio/3gpp2,audio/amr,audio/x-amr,audio/opus,audio/flac,audio/x-flac,.wav,.mp3,.ogg,.webm,.m4a,.aac,.3gp,.amr,.opus,.flac,.caf"
                 onChange={(e) => handleFiles(e.target.files)}
                 className="hidden"
               />

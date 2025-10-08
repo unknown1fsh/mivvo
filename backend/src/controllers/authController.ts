@@ -1,3 +1,45 @@
+/**
+ * Authentication Controller (Kimlik Doğrulama Controller)
+ * 
+ * Clean Architecture - Controller Layer (API Katmanı)
+ * 
+ * Bu controller, kullanıcı kimlik doğrulama ve yetkilendirme
+ * işlemlerini yönetir.
+ * 
+ * Sorumluluklar:
+ * - Kullanıcı kaydı (register)
+ * - Kullanıcı girişi (login)
+ * - Kullanıcı çıkışı (logout)
+ * - Profil görüntüleme ve güncelleme
+ * - Şifre değiştirme
+ * - Şifre sıfırlama (forgot/reset)
+ * - Email doğrulama
+ * 
+ * Thin Controller Prensibi:
+ * - Minimal iş mantığı (sadece request/response handling)
+ * - Validasyon (middleware'de yapılmalı)
+ * - Service çağrıları (gelecekte eklenebilir)
+ * - Response standardizasyonu
+ * 
+ * Güvenlik:
+ * - Bcrypt ile şifre hashleme
+ * - JWT token ile authentication
+ * - Token expiration (7 gün)
+ * - Email verification
+ * - Password reset tokens (1 saat)
+ * 
+ * Endpoints:
+ * - POST /api/auth/register (Public)
+ * - POST /api/auth/login (Public)
+ * - POST /api/auth/logout (Private)
+ * - GET /api/auth/profile (Private)
+ * - PUT /api/auth/profile (Private)
+ * - PUT /api/auth/change-password (Private)
+ * - POST /api/auth/forgot-password (Public)
+ * - POST /api/auth/reset-password (Public)
+ * - GET /api/auth/verify-email/:token (Public)
+ */
+
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -7,7 +49,25 @@ import { asyncHandler } from '../middleware/errorHandler';
 
 const prisma = new PrismaClient();
 
-// Generate JWT Token
+// ===== HELPER FUNCTIONS =====
+
+/**
+ * JWT Token Oluşturur
+ * 
+ * Kullanıcı ID'sini içeren JWT token üretir.
+ * 
+ * Token Özellikleri:
+ * - Payload: { id: userId }
+ * - Expiration: 7 gün (default)
+ * - Secret: JWT_SECRET env variable
+ * 
+ * @param id - Kullanıcı ID'si
+ * @returns JWT token string
+ * @throws Error - JWT_SECRET tanımlı değilse
+ * 
+ * @example
+ * const token = generateToken(123);
+ */
 const generateToken = (id: number): string => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -18,13 +78,46 @@ const generateToken = (id: number): string => {
   } as jwt.SignOptions);
 };
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
+// ===== CONTROLLER METHODS =====
+
+/**
+ * Kullanıcı Kaydı
+ * 
+ * Yeni kullanıcı hesabı oluşturur.
+ * 
+ * İşlem Akışı:
+ * 1. Email benzersizlik kontrolü
+ * 2. Şifre hashleme (bcrypt, 12 rounds)
+ * 3. Kullanıcı oluşturma
+ * 4. Kredi hesabı oluşturma (başlangıç: 0 TL)
+ * 5. JWT token üretme
+ * 6. Response dönme
+ * 
+ * @route   POST /api/auth/register
+ * @access  Public
+ * 
+ * @param req.body.email - Email adresi
+ * @param req.body.password - Şifre
+ * @param req.body.firstName - Ad
+ * @param req.body.lastName - Soyad
+ * @param req.body.phone - Telefon (opsiyonel)
+ * 
+ * @returns 201 - Kullanıcı ve token
+ * @returns 400 - Email zaten kullanımda
+ * 
+ * @example
+ * POST /api/auth/register
+ * Body: {
+ *   "email": "user@example.com",
+ *   "password": "SecurePass123",
+ *   "firstName": "Ahmet",
+ *   "lastName": "Yılmaz"
+ * }
+ */
 export const register = async (req: Request, res: Response): Promise<void> => {
   const { email, password, firstName, lastName, phone } = req.body;
 
-  // Check if user already exists
+  // Email benzersizlik kontrolü
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
@@ -37,11 +130,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  // Hash password
+  // Şifre hashleme
   const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12'));
   const passwordHash = await bcrypt.hash(password, salt);
 
-  // Create user
+  // Kullanıcı oluşturma
   const user = await prisma.user.create({
     data: {
       email,
@@ -60,7 +153,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     },
   });
 
-  // Create user credits
+  // Kredi hesabı oluşturma
   await prisma.userCredits.create({
     data: {
       userId: user.id,
@@ -68,7 +161,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     },
   });
 
-  // Generate token
+  // JWT token üretme
   const token = generateToken(user.id);
 
   res.status(201).json({
@@ -81,15 +174,44 @@ export const register = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
+/**
+ * Kullanıcı Girişi
+ * 
+ * Email ve şifre ile giriş yapar.
+ * 
+ * İşlem Akışı:
+ * 1. Kullanıcı bulma (email)
+ * 2. Aktiflik kontrolü (isActive)
+ * 3. Şifre doğrulama (bcrypt.compare)
+ * 4. JWT token üretme
+ * 5. Response dönme
+ * 
+ * Güvenlik:
+ * - Şifre hash'i response'da dönmez
+ * - Genel hata mesajı (email/şifre ayırt edilmez)
+ * 
+ * @route   POST /api/auth/login
+ * @access  Public
+ * 
+ * @param req.body.email - Email adresi
+ * @param req.body.password - Şifre
+ * 
+ * @returns 200 - Kullanıcı ve token
+ * @returns 401 - Geçersiz email veya şifre
+ * 
+ * @example
+ * POST /api/auth/login
+ * Body: {
+ *   "email": "user@example.com",
+ *   "password": "SecurePass123"
+ * }
+ */
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
   
   console.log('🔐 Backend login başlatıldı:', { email, hasPassword: !!password });
 
-  // Check if user exists
+  // Kullanıcı bulma
   console.log('🔍 Kullanıcı aranıyor:', email);
   const user = await prisma.user.findUnique({
     where: { email },
@@ -111,6 +233,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     userEmail: user?.email
   });
 
+  // Kullanıcı ve aktiflik kontrolü
   if (!user || !user.isActive) {
     console.error('❌ Kullanıcı bulunamadı veya aktif değil');
     res.status(401).json({
@@ -120,7 +243,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  // Check password
+  // Şifre doğrulama
   console.log('🔑 Şifre kontrol ediliyor...');
   const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
   console.log('🔑 Şifre kontrol sonucu:', { isValid: isPasswordValid });
@@ -134,12 +257,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  // Generate token
+  // JWT token üretme
   console.log('🎫 Token oluşturuluyor...');
   const token = generateToken(user.id);
   console.log('🎫 Token oluşturuldu:', { tokenLength: token.length });
 
-  // Remove password from response
+  // Şifre hash'ini response'dan çıkar
   const { passwordHash, ...userWithoutPassword } = user;
 
   const responseData = {
@@ -163,20 +286,50 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   res.json(responseData);
 };
 
-// @desc    Logout user
-// @route   POST /api/auth/logout
-// @access  Private
+/**
+ * Kullanıcı Çıkışı
+ * 
+ * Kullanıcıyı sistemden çıkarır.
+ * 
+ * NOT: Stateless JWT kullanıldığı için server-side logout yok.
+ * Client-side'da token silinmelidir. İleride token blacklist
+ * eklenebilir.
+ * 
+ * @route   POST /api/auth/logout
+ * @access  Private
+ * 
+ * @returns 200 - Çıkış başarılı
+ * 
+ * @example
+ * POST /api/auth/logout
+ * Headers: { Authorization: 'Bearer <token>' }
+ */
 export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
-  // In a real application, you might want to blacklist the token
+  // Token blacklist eklenebilir (gelecekte)
   res.json({
     success: true,
     message: 'Çıkış başarılı.',
   });
 };
 
-// @desc    Get current user profile
-// @route   GET /api/auth/profile
-// @access  Private
+/**
+ * Profil Görüntüleme
+ * 
+ * Giriş yapmış kullanıcının profil bilgilerini getirir.
+ * 
+ * İçerik:
+ * - Kullanıcı bilgileri (id, email, ad, soyad, telefon, rol)
+ * - Kredi bilgileri (bakiye, toplam alınan, toplam kullanılan)
+ * 
+ * @route   GET /api/auth/profile
+ * @access  Private
+ * 
+ * @returns 200 - Kullanıcı profili
+ * 
+ * @example
+ * GET /api/auth/profile
+ * Headers: { Authorization: 'Bearer <token>' }
+ */
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
@@ -205,9 +358,35 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
   });
 };
 
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private
+/**
+ * Profil Güncelleme
+ * 
+ * Kullanıcı profil bilgilerini günceller.
+ * 
+ * Güncellenebilir Alanlar:
+ * - firstName
+ * - lastName
+ * - phone
+ * 
+ * NOT: Email ve şifre burada güncellenmez.
+ * 
+ * @route   PUT /api/auth/profile
+ * @access  Private
+ * 
+ * @param req.body.firstName - Ad
+ * @param req.body.lastName - Soyad
+ * @param req.body.phone - Telefon
+ * 
+ * @returns 200 - Güncellenmiş kullanıcı
+ * 
+ * @example
+ * PUT /api/auth/profile
+ * Body: {
+ *   "firstName": "Mehmet",
+ *   "lastName": "Demir",
+ *   "phone": "05551234567"
+ * }
+ */
 export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   const { firstName, lastName, phone } = req.body;
 
@@ -235,13 +414,41 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
   });
 };
 
-// @desc    Change password
-// @route   PUT /api/auth/change-password
-// @access  Private
+/**
+ * Şifre Değiştirme
+ * 
+ * Mevcut şifreyi doğrulayarak yeni şifre belirler.
+ * 
+ * İşlem Akışı:
+ * 1. Mevcut şifre doğrulama
+ * 2. Yeni şifre hashleme
+ * 3. Şifre güncelleme
+ * 
+ * Güvenlik:
+ * - Mevcut şifre kontrolü zorunlu
+ * - Yeni şifre bcrypt ile hashlenır
+ * 
+ * @route   PUT /api/auth/change-password
+ * @access  Private
+ * 
+ * @param req.body.currentPassword - Mevcut şifre
+ * @param req.body.newPassword - Yeni şifre
+ * 
+ * @returns 200 - Şifre değiştirildi
+ * @returns 400 - Mevcut şifre yanlış
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * PUT /api/auth/change-password
+ * Body: {
+ *   "currentPassword": "OldPass123",
+ *   "newPassword": "NewSecurePass456"
+ * }
+ */
 export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
   const { currentPassword, newPassword } = req.body;
 
-  // Get user with password
+  // Kullanıcı ve şifre getirme
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
     select: { passwordHash: true },
@@ -255,7 +462,7 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  // Check current password
+  // Mevcut şifre doğrulama
   const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!isCurrentPasswordValid) {
     res.status(400).json({
@@ -265,11 +472,11 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  // Hash new password
+  // Yeni şifre hashleme
   const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12'));
   const newPasswordHash = await bcrypt.hash(newPassword, salt);
 
-  // Update password
+  // Şifre güncelleme
   await prisma.user.update({
     where: { id: req.user!.id },
     data: { passwordHash: newPasswordHash },
@@ -281,9 +488,33 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
   });
 };
 
-// @desc    Forgot password
-// @route   POST /api/auth/forgot-password
-// @access  Public
+/**
+ * Şifre Sıfırlama İsteği (Forgot Password)
+ * 
+ * Kullanıcıya şifre sıfırlama linki gönderir.
+ * 
+ * İşlem Akışı:
+ * 1. Kullanıcı bulma (email)
+ * 2. Reset token üretme (1 saat geçerli)
+ * 3. Email gönderme (TODO)
+ * 
+ * NOT: Email gönderme henüz implemente edilmemiş.
+ * Development modunda token response'da döner.
+ * 
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ * 
+ * @param req.body.email - Email adresi
+ * 
+ * @returns 200 - Email gönderildi
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * POST /api/auth/forgot-password
+ * Body: {
+ *   "email": "user@example.com"
+ * }
+ */
 export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;
 
@@ -299,45 +530,74 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     return;
   }
 
-  // Generate reset token
+  // Reset token üretme (1 saat geçerli)
   const resetToken = jwt.sign(
     { id: user.id, type: 'password_reset' },
     process.env.JWT_SECRET!,
     { expiresIn: '1h' }
   );
 
-  // TODO: Send email with reset token
-  // For now, just return success
+  // TODO: Email gönderme servisi eklenecek
   res.json({
     success: true,
     message: 'Şifre sıfırlama bağlantısı email adresinize gönderildi.',
-    // In development, you might want to return the token
+    // Development modunda token'ı döndür
     ...(process.env.NODE_ENV === 'development' && { resetToken }),
   });
 };
 
-// @desc    Reset password
-// @route   POST /api/auth/reset-password
-// @access  Public
+/**
+ * Şifre Sıfırlama (Reset Password)
+ * 
+ * Reset token ile yeni şifre belirler.
+ * 
+ * İşlem Akışı:
+ * 1. Token doğrulama (JWT verify)
+ * 2. Token tipi kontrolü (password_reset)
+ * 3. Yeni şifre hashleme
+ * 4. Şifre güncelleme
+ * 
+ * Güvenlik:
+ * - Token 1 saat geçerli
+ * - Token tipi kontrolü
+ * 
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ * 
+ * @param req.body.token - Reset token
+ * @param req.body.newPassword - Yeni şifre
+ * 
+ * @returns 200 - Şifre sıfırlandı
+ * @returns 400 - Geçersiz veya süresi dolmuş token
+ * 
+ * @example
+ * POST /api/auth/reset-password
+ * Body: {
+ *   "token": "<reset-token>",
+ *   "newPassword": "NewSecurePass789"
+ * }
+ */
 export const resetPassword = async (req: Request, res: Response): Promise<void> => {
   const { token, newPassword } = req.body;
 
   try {
+    // Token doğrulama
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error('JWT_SECRET environment variable is not set');
     }
     const decoded = jwt.verify(token, secret) as any;
     
+    // Token tipi kontrolü
     if (decoded.type !== 'password_reset') {
       throw new Error('Invalid token type');
     }
 
-    // Hash new password
+    // Yeni şifre hashleme
     const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12'));
     const newPasswordHash = await bcrypt.hash(newPassword, salt);
 
-    // Update password
+    // Şifre güncelleme
     await prisma.user.update({
       where: { id: decoded.id },
       data: { passwordHash: newPasswordHash },
@@ -355,23 +615,44 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// @desc    Verify email
-// @route   GET /api/auth/verify-email/:token
-// @access  Public
+/**
+ * Email Doğrulama
+ * 
+ * Verification token ile email adresini doğrular.
+ * 
+ * İşlem Akışı:
+ * 1. Token doğrulama (JWT verify)
+ * 2. Token tipi kontrolü (email_verification)
+ * 3. emailVerified = true güncelleme
+ * 
+ * @route   GET /api/auth/verify-email/:token
+ * @access  Public
+ * 
+ * @param req.params.token - Verification token
+ * 
+ * @returns 200 - Email doğrulandı
+ * @returns 400 - Geçersiz veya süresi dolmuş token
+ * 
+ * @example
+ * GET /api/auth/verify-email/<verification-token>
+ */
 export const verifyEmail = async (req: Request, res: Response): Promise<void> => {
   const { token } = req.params;
 
   try {
+    // Token doğrulama
     const secret = process.env.JWT_SECRET;
     if (!secret) {
       throw new Error('JWT_SECRET environment variable is not set');
     }
     const decoded = jwt.verify(token, secret) as any;
     
+    // Token tipi kontrolü
     if (decoded.type !== 'email_verification') {
       throw new Error('Invalid token type');
     }
 
+    // Email doğrulama
     await prisma.user.update({
       where: { id: decoded.id },
       data: { emailVerified: true },

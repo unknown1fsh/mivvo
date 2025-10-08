@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { 
   MicrophoneIcon, 
   StopIcon, 
@@ -22,12 +22,19 @@ interface AudioRecorderProps {
   onNext?: () => void
   onPrev?: () => void
   selectedReportType?: { id: string; name: string; icon: string } | null
+  // Hook props (opsiyonel - eğer verilirse dışarıdan state kullanılır)
+  audioRecordingHook?: ReturnType<typeof useAudioRecording>
 }
 
-export const AudioRecorder = ({ onAudiosChange, maxRecordings = 3, onNext, onPrev, selectedReportType }: AudioRecorderProps) => {
+export const AudioRecorder = ({ onAudiosChange, maxRecordings = 3, onNext, onPrev, selectedReportType, audioRecordingHook }: AudioRecorderProps) => {
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const [isPaused, setIsPaused] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  
+  // Eğer dışarıdan hook verilmişse onu kullan, yoksa kendi hook'unu çağır
+  const localHook = useAudioRecording()
+  const hook = audioRecordingHook || localHook
   
   const {
     isRecording,
@@ -41,7 +48,12 @@ export const AudioRecorder = ({ onAudiosChange, maxRecordings = 3, onNext, onPre
     formatDuration,
     getTotalDuration,
     canStartAnalysis
-  } = useAudioRecording()
+  } = hook
+
+  // recordedAudios değiştiğinde parent'a bildir
+  useEffect(() => {
+    onAudiosChange(recordedAudios)
+  }, [recordedAudios, onAudiosChange])
 
   // Ses dosyası yükleme
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,29 +177,31 @@ export const AudioRecorder = ({ onAudiosChange, maxRecordings = 3, onNext, onPre
 
           {/* Dosya Yükleme */}
           <div className="flex items-center justify-center space-x-4">
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="audio/*"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={recordedAudios.length >= maxRecordings}
-              />
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={recordedAudios.length >= maxRecordings}
-              >
-                <CloudArrowUpIcon className="w-4 h-4 mr-2" />
-                Dosya Yükle
-              </Button>
-            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/wav,audio/mp3,audio/mpeg,audio/ogg,audio/webm,audio/m4a,audio/x-m4a,audio/mp4,audio/aac,audio/x-caf,audio/3gpp,audio/3gpp2,audio/amr,audio/x-amr,audio/opus,audio/flac,audio/x-flac,.wav,.mp3,.ogg,.webm,.m4a,.aac,.3gp,.amr,.opus,.flac,.caf"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={recordedAudios.length >= maxRecordings}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={recordedAudios.length >= maxRecordings}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <CloudArrowUpIcon className="w-4 h-4 mr-2" />
+              Dosya Yükle
+            </Button>
           </div>
 
           {/* Bilgi */}
           <div className="text-xs text-gray-500 space-y-1">
             <p>• Motor çalışırken kayıt yapın (5-30 saniye)</p>
             <p>• Sessiz ortamda kayıt yapın</p>
+            <p>• 📱 Cep telefonu formatları: M4A, AAC, 3GP</p>
+            <p>• 💻 Bilgisayar formatları: MP3, WAV, OGG, WebM</p>
             <p>• Maksimum {maxRecordings} kayıt yapabilirsiniz</p>
           </div>
         </div>

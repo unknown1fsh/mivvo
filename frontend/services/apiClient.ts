@@ -1,16 +1,70 @@
-// API Client - Merkezi HTTP istemcisi
+/**
+ * API Client (API İstemci)
+ * 
+ * Clean Architecture - Service Layer (Servis Katmanı)
+ * 
+ * Bu dosya, tüm HTTP isteklerini yöneten merkezi API istemcisidir.
+ * 
+ * Sorumluluklar:
+ * - HTTP isteklerini (GET, POST, PUT, DELETE, PATCH) yönetme
+ * - JWT token yönetimi (Authorization header)
+ * - Request/Response interceptor
+ * - Hata yönetimi ve loglama
+ * - File upload desteği
+ * - Timeout yönetimi
+ * 
+ * Özellikler:
+ * - Singleton pattern
+ * - TypeScript generic support
+ * - Environment-aware (dev/prod)
+ * - FormData desteği (multipart/form-data)
+ * - Automatic token injection
+ * - Detaylı console loglama
+ * - 401 durumunda auto-logout
+ * 
+ * Kullanım:
+ * ```typescript
+ * import { apiClient } from './apiClient'
+ * 
+ * const response = await apiClient.get<User>('/users/me')
+ * const response = await apiClient.post<Report>('/reports', { data })
+ * ```
+ */
 
+// ===== API BASE URL =====
+
+/**
+ * API Base URL
+ * 
+ * Environment'a göre otomatik seçilir:
+ * - Production: https://mivvo-expertiz.vercel.app
+ * - Development: http://localhost:3001
+ */
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? 'https://mivvo-expertiz.vercel.app'
   : 'http://localhost:3001'
 
+// ===== INTERFACES =====
+
+/**
+ * API Response Interface
+ * 
+ * Tüm API yanıtları bu formatta döner.
+ * 
+ * Generic type: T = response data'nın tipi
+ */
 interface ApiResponse<T = any> {
-  success: boolean
-  data?: T
-  error?: string
-  message?: string
+  success: boolean      // İşlem başarılı mı?
+  data?: T             // Response data (başarılı ise)
+  error?: string       // Hata mesajı (başarısız ise)
+  message?: string     // Bilgi mesajı
 }
 
+/**
+ * Request Options Interface
+ * 
+ * HTTP request için opsiyonlar.
+ */
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   headers?: Record<string, string>
@@ -18,10 +72,26 @@ interface RequestOptions {
   timeout?: number
 }
 
+// ===== API CLIENT CLASS =====
+
+/**
+ * API Client Class
+ * 
+ * Merkezi HTTP istemcisi.
+ * 
+ * Tüm API istekleri bu class üzerinden yapılır.
+ */
 class ApiClient {
   private baseURL: string
   private defaultHeaders: Record<string, string>
 
+  /**
+   * Constructor
+   * 
+   * API client'ı başlatır.
+   * 
+   * @param baseURL - API base URL (default: API_BASE_URL)
+   */
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL
     this.defaultHeaders = {
@@ -29,6 +99,23 @@ class ApiClient {
     }
   }
 
+  /**
+   * Request (Genel HTTP İsteği)
+   * 
+   * Tüm HTTP istekleri bu method üzerinden yapılır.
+   * 
+   * Özellikler:
+   * - Token injection (Authorization header)
+   * - FormData desteği (Content-Type auto-remove)
+   * - Timeout (default: 120 saniye)
+   * - Detaylı loglama
+   * - 401 durumunda auto-logout
+   * 
+   * @param endpoint - API endpoint (örn: '/users/me')
+   * @param options - Request opsiyonları
+   * 
+   * @returns ApiResponse<T>
+   */
   private async request<T>(
     endpoint: string,
     options: RequestOptions = {}
@@ -46,12 +133,13 @@ class ApiClient {
       ...headers,
     }
 
-    // Token varsa ekle
+    // Token varsa Authorization header'a ekle
     const token = this.getToken()
     if (token) {
       requestHeaders.Authorization = `Bearer ${token}`
     }
 
+    // Detaylı console log
     console.log('🌐 API İsteği:', {
       method,
       url,
@@ -64,10 +152,11 @@ class ApiClient {
     })
 
     try {
+      // AbortController ile timeout
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), timeout)
 
-      // FormData ise Content-Type header'ını kaldır
+      // FormData ise Content-Type header'ını kaldır (browser otomatik ekler)
       let requestBody: string | FormData | undefined
       if (body instanceof FormData) {
         delete requestHeaders['Content-Type']
@@ -78,6 +167,7 @@ class ApiClient {
         console.log('📝 JSON body hazırlandı:', body)
       }
 
+      // Fetch isteği
       console.log('🚀 Fetch isteği gönderiliyor...')
       const response = await fetch(url, {
         method,
@@ -88,6 +178,7 @@ class ApiClient {
 
       clearTimeout(timeoutId)
 
+      // Response loglama
       console.log('📡 Response alındı:', {
         status: response.status,
         statusText: response.statusText,
@@ -95,14 +186,15 @@ class ApiClient {
         headers: Object.fromEntries(response.headers.entries())
       })
 
+      // HTTP hata kontrolü
       if (!response.ok) {
         console.error('❌ HTTP Hatası:', {
           status: response.status,
           statusText: response.statusText,
           url
         })
-        
-        // 401 hatası durumunda token'ı temizle
+
+        // 401 hatası durumunda token'ı temizle (unauthorized)
         if (response.status === 401) {
           console.log('🔒 401 hatası - Token temizleniyor')
           if (typeof window !== 'undefined') {
@@ -111,9 +203,34 @@ class ApiClient {
             localStorage.removeItem('refresh_token')
           }
         }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+
+        // Hata gövdesini parse etmeye çalış (JSON ise message'ı yüzeye çıkar)
+        let errorMessage = response.statusText
+        let errorPayload: any = null
+        try {
+          const contentType = response.headers.get('content-type') || ''
+          const raw = await response.text()
+          if (contentType.includes('application/json')) {
+            try {
+              errorPayload = raw ? JSON.parse(raw) : null
+            } catch {
+              errorPayload = { message: raw }
+            }
+          } else if (raw) {
+            errorPayload = { message: raw }
+          }
+          if (errorPayload?.message) {
+            errorMessage = errorPayload.message
+          } else if (errorPayload?.error) {
+            errorMessage = errorPayload.error
+          }
+        } catch {}
+
+        console.error('❌ HTTP Error payload:', errorPayload)
+        throw new Error(`HTTP ${response.status}: ${errorMessage}`)
       }
 
+      // Response data parse
       const data = await response.json()
       console.log('✅ Response data parse edildi:', data)
       
@@ -122,6 +239,7 @@ class ApiClient {
         data,
       }
     } catch (error) {
+      // Hata loglama
       console.error('💥 API Request Error:', error)
       console.error('💥 Error details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -129,6 +247,7 @@ class ApiClient {
         url,
         method
       })
+      
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Bilinmeyen hata',
@@ -136,6 +255,13 @@ class ApiClient {
     }
   }
 
+  /**
+   * Get Token (Token Al)
+   * 
+   * LocalStorage'dan JWT token'ı alır.
+   * 
+   * @returns Token (string) veya null
+   */
   private getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('auth_token')
@@ -143,28 +269,92 @@ class ApiClient {
     return null
   }
 
-  // HTTP Methods
+  // ===== HTTP METHODS =====
+
+  /**
+   * GET Request
+   * 
+   * HTTP GET isteği yapar.
+   * 
+   * @param endpoint - API endpoint
+   * @param headers - Ek headers (opsiyonel)
+   * 
+   * @returns ApiResponse<T>
+   */
   async get<T>(endpoint: string, headers?: Record<string, string>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'GET', headers })
   }
 
+  /**
+   * POST Request
+   * 
+   * HTTP POST isteği yapar.
+   * 
+   * @param endpoint - API endpoint
+   * @param body - Request body
+   * @param headers - Ek headers (opsiyonel)
+   * 
+   * @returns ApiResponse<T>
+   */
   async post<T>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'POST', body, headers })
   }
 
+  /**
+   * PUT Request
+   * 
+   * HTTP PUT isteği yapar.
+   * 
+   * @param endpoint - API endpoint
+   * @param body - Request body
+   * @param headers - Ek headers (opsiyonel)
+   * 
+   * @returns ApiResponse<T>
+   */
   async put<T>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'PUT', body, headers })
   }
 
+  /**
+   * DELETE Request
+   * 
+   * HTTP DELETE isteği yapar.
+   * 
+   * @param endpoint - API endpoint
+   * @param headers - Ek headers (opsiyonel)
+   * 
+   * @returns ApiResponse<T>
+   */
   async delete<T>(endpoint: string, headers?: Record<string, string>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'DELETE', headers })
   }
 
+  /**
+   * PATCH Request
+   * 
+   * HTTP PATCH isteği yapar.
+   * 
+   * @param endpoint - API endpoint
+   * @param body - Request body
+   * @param headers - Ek headers (opsiyonel)
+   * 
+   * @returns ApiResponse<T>
+   */
   async patch<T>(endpoint: string, body?: any, headers?: Record<string, string>): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'PATCH', body, headers })
   }
 
-  // File upload
+  /**
+   * File Upload (Dosya Yükleme)
+   * 
+   * Dosya yükleme işlemi yapar (multipart/form-data).
+   * 
+   * @param endpoint - API endpoint
+   * @param file - Yüklenecek dosya
+   * @param additionalData - Ek form verileri (opsiyonel)
+   * 
+   * @returns ApiResponse<T>
+   */
   async uploadFile<T>(
     endpoint: string,
     file: File,
@@ -173,12 +363,14 @@ class ApiClient {
     const formData = new FormData()
     formData.append('file', file)
     
+    // Ek veriler varsa ekle
     if (additionalData) {
       Object.entries(additionalData).forEach(([key, value]) => {
         formData.append(key, value)
       })
     }
 
+    // Token header
     const token = this.getToken()
     const headers: Record<string, string> = {}
     if (token) {
@@ -210,14 +402,30 @@ class ApiClient {
     }
   }
 
-  // Health check
+  /**
+   * Health Check (Sağlık Kontrolü)
+   * 
+   * Backend API'nin çalışıp çalışmadığını kontrol eder.
+   * 
+   * @returns ApiResponse<{ status: string; timestamp: string }>
+   */
   async healthCheck(): Promise<ApiResponse<{ status: string; timestamp: string }>> {
     return this.get('/health')
   }
 }
 
-// Singleton instance
+// ===== SINGLETON INSTANCE =====
+
+/**
+ * Singleton Instance
+ * 
+ * Uygulama genelinde tek bir API client instance kullanılır.
+ */
 export const apiClient = new ApiClient()
 
-// Default export
+/**
+ * Default Export
+ * 
+ * Named export + default export (esneklik için)
+ */
 export default apiClient

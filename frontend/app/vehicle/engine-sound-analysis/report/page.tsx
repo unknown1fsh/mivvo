@@ -122,7 +122,7 @@ function EngineSoundAnalysisReportPageContent() {
     )
   }
 
-  if (status === 'processing') {
+  if (status === 'processing' || status === 'pending' || status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card padding="lg" className="max-w-md w-full">
@@ -142,7 +142,7 @@ function EngineSoundAnalysisReportPageContent() {
     )
   }
 
-  if (status === 'failed' || !analysisResult) {
+  if (status === 'failed') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card padding="lg" className="max-w-md w-full">
@@ -163,6 +163,24 @@ function EngineSoundAnalysisReportPageContent() {
     )
   }
 
+  // Sadece GERÇEK veri varsa render et
+  if (!analysisResult) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card padding="lg" className="max-w-md w-full">
+          <div className="text-center">
+            <ExclamationTriangleIcon className="w-16 h-16 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Veri Bulunamadı
+            </h2>
+            <p className="text-gray-600 mb-4">AI analiz verisi gelmedi. Lütfen birkaç saniye sonra tekrar deneyin.</p>
+            <Button variant="primary" onClick={() => window.location.reload()}>Yenile</Button>
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -176,7 +194,7 @@ function EngineSoundAnalysisReportPageContent() {
               Motor Ses Analizi Raporu
             </h1>
             <p className="text-gray-600">
-              {analysisResult.vehicleInfo.make} {analysisResult.vehicleInfo.model} ({analysisResult.vehicleInfo.year})
+              {(analysisResult.vehicleInfo?.make || 'Belirtilmemiş')} {(analysisResult.vehicleInfo?.model || '')} ({analysisResult.vehicleInfo?.year || '-'})
             </p>
           </div>
         </FadeInUp>
@@ -197,6 +215,32 @@ function EngineSoundAnalysisReportPageContent() {
         </FadeInUp>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Akustik Özellikler */}
+          <FadeInUp>
+            <Card padding="lg">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Akustik Özellikler
+              </h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Toplam Süre:</span>
+                  <span className="font-medium">{analysisResult as any && (analysisResult as any).acousticFeatures?.durationSec ?? '-'} sn</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">RMS (Ortalama Enerji):</span>
+                  <span className="font-medium">{(analysisResult as any)?.acousticFeatures?.rms ?? '-'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Zero Crossing Rate:</span>
+                  <span className="font-medium">{(analysisResult as any)?.acousticFeatures?.zeroCrossingRate ?? '-'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Baskın Frekans:</span>
+                  <span className="font-medium">{(analysisResult as any)?.acousticFeatures?.dominantFrequencyHz ?? '-'} Hz</span>
+                </div>
+              </div>
+            </Card>
+          </FadeInUp>
           {/* RPM Analizi */}
           <FadeInUp>
             <Card padding="lg">
@@ -207,15 +251,15 @@ function EngineSoundAnalysisReportPageContent() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Rölanti RPM:</span>
-                  <span className="font-medium">{analysisResult.rpmAnalysis.idleRpm} rpm</span>
+                  <span className="font-medium">{analysisResult.rpmAnalysis?.idleRpm ?? '-' } rpm</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Maksimum RPM:</span>
-                  <span className="font-medium">{analysisResult.rpmAnalysis.maxRpm} rpm</span>
+                  <span className="font-medium">{analysisResult.rpmAnalysis?.maxRpm ?? '-' } rpm</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">RPM Kararlılığı:</span>
-                  <span className="font-medium">{analysisResult.rpmAnalysis.rpmStability}%</span>
+                  <span className="font-medium">{analysisResult.rpmAnalysis?.rpmStability ?? '-' }%</span>
                 </div>
               </div>
             </Card>
@@ -231,15 +275,15 @@ function EngineSoundAnalysisReportPageContent() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Harmonik Bozulma:</span>
-                  <span className="font-medium">{analysisResult.frequencyAnalysis.harmonicDistortion.toFixed(1)}%</span>
+                  <span className="font-medium">{typeof analysisResult.frequencyAnalysis?.harmonicDistortion === 'number' ? analysisResult.frequencyAnalysis!.harmonicDistortion.toFixed(1) : '-' }%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Gürültü Seviyesi:</span>
-                  <span className="font-medium">{analysisResult.frequencyAnalysis.noiseLevel.toFixed(1)} dB</span>
+                  <span className="font-medium">{typeof analysisResult.frequencyAnalysis?.noiseLevel === 'number' ? analysisResult.frequencyAnalysis!.noiseLevel.toFixed(1) : '-' } dB</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Dominant Frekanslar:</span>
-                  <span className="font-medium">{analysisResult.frequencyAnalysis.dominantFrequencies.join(', ')} Hz</span>
+                  <span className="font-medium">{Array.isArray(analysisResult.frequencyAnalysis?.dominantFrequencies) ? analysisResult.frequencyAnalysis!.dominantFrequencies.join(', ') : '-' } Hz</span>
                 </div>
               </div>
             </Card>
@@ -254,15 +298,15 @@ function EngineSoundAnalysisReportPageContent() {
               <div className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Motor Verimliliği:</span>
-                  <span className="font-medium">{analysisResult.performanceMetrics.engineEfficiency}%</span>
+                  <span className="font-medium">{analysisResult.performanceMetrics?.engineEfficiency ?? '-' }%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Titreşim Seviyesi:</span>
-                  <span className="font-medium">{analysisResult.performanceMetrics.vibrationLevel}%</span>
+                  <span className="font-medium">{analysisResult.performanceMetrics?.vibrationLevel ?? '-' }%</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Akustik Kalite:</span>
-                  <span className="font-medium">{analysisResult.performanceMetrics.acousticQuality}%</span>
+                  <span className="font-medium">{analysisResult.performanceMetrics?.acousticQuality ?? '-' }%</span>
                 </div>
               </div>
             </Card>
@@ -275,7 +319,7 @@ function EngineSoundAnalysisReportPageContent() {
                 <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
                 Tespit Edilen Sorunlar
               </h3>
-              {analysisResult.detectedIssues.length > 0 ? (
+              {Array.isArray(analysisResult.detectedIssues) && analysisResult.detectedIssues.length > 0 ? (
                 <div className="space-y-3">
                   {analysisResult.detectedIssues.map((issue, index) => (
                     <div key={index} className="border-l-4 border-yellow-400 pl-4">
@@ -293,8 +337,7 @@ function EngineSoundAnalysisReportPageContent() {
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <CheckCircleIcon className="w-12 h-12 text-green-500 mx-auto mb-2" />
-                  <p className="text-gray-600">Herhangi bir sorun tespit edilmedi</p>
+                  <p className="text-gray-600">AI veri setinde sorun listesi bulunamadı</p>
                 </div>
               )}
             </Card>
@@ -307,8 +350,13 @@ function EngineSoundAnalysisReportPageContent() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Uzman Önerileri
             </h3>
+            {(analysisResult as any)?.analysisSummary && (
+              <div className="mb-4 p-3 rounded bg-blue-50 text-blue-800 text-sm">
+                {(analysisResult as any).analysisSummary}
+              </div>
+            )}
             <div className="space-y-2">
-              {analysisResult.recommendations.map((recommendation, index) => (
+              {(analysisResult.recommendations || []).map((recommendation, index) => (
                 <div key={index} className="flex items-start">
                   <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" />
                   <span className="text-gray-700">{recommendation}</span>

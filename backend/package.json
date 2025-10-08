@@ -4,7 +4,7 @@
   "description": "Yapay zeka destekli araç expertiz uygulaması backend API",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon src/index.ts",
+    "dev": "cross-env NODE_ENV=development nodemon -r ts-node/register/transpile-only -r tsconfig-paths/register src/index.ts",
     "dev:full": "npm run build && npm run dev",
     "build": "tsc",
     "postinstall": "prisma generate",
@@ -72,6 +72,7 @@
     "nodemon": "^3.0.2",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.2"
   },
   "engines": {
