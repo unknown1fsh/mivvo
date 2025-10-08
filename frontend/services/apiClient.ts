@@ -247,7 +247,46 @@ class ApiClient {
         url,
         method
       })
-      
+
+      // Abort (timeout/navigasyon) durumlarını daha anlaşılır hale getir ve idempotent GET isteğinde tek seferlik retry yap
+      const isAborted = (error as any)?.name === 'AbortError' ||
+        (error as any)?.message?.toLowerCase?.().includes('aborted')
+
+      if (isAborted && method === 'GET') {
+        try {
+          console.warn('⏳ Abort tespit edildi, GET isteği tek seferlik yeniden deneniyor (timeoutsuz)...')
+          const retryResponse = await fetch(url, {
+            method,
+            headers: {
+              ...requestHeaders,
+            },
+          })
+
+          if (!retryResponse.ok) {
+            throw new Error(`HTTP ${retryResponse.status}: ${retryResponse.statusText}`)
+          }
+
+          const data = await retryResponse.json()
+          return {
+            success: true,
+            data,
+          }
+        } catch (retryErr) {
+          console.error('❌ Retry başarısız:', retryErr)
+          return {
+            success: false,
+            error: 'İstek iptal edildi veya zaman aşımına uğradı',
+          }
+        }
+      }
+
+      if (isAborted) {
+        return {
+          success: false,
+          error: 'İstek iptal edildi veya zaman aşımına uğradı',
+        }
+      }
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Bilinmeyen hata',
