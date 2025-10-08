@@ -31,19 +31,37 @@
  * ```
  */
 
-// ===== API BASE URL =====
+// ===== API BASE URL RESOLVER =====
 
 /**
- * API Base URL
- * 
- * Environment'a göre otomatik seçilir:
- * - Production: https://mivvo-expertiz.vercel.app
- * - Development: http://localhost:3001
+ * Production/Preview ortamlarında güvenli base URL çözümleyici.
+ * Öncelik sırası:
+ * 1) NEXT_PUBLIC_API_BASE_URL (manuel tanımlanırsa)
+ * 2) window ortamı (client) → relative (aynı origin)
+ * 3) VERCEL_URL (SSR) → https://{vercel_url}
+ * 4) Development → http://localhost:3001
  */
-// Production'da aynı origin'e göre relative istek at (Vercel/preview/custom domain uyumlu)
-const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? ''
-  : 'http://localhost:3001'
+function resolveApiBaseUrl(): string {
+  const explicit = (process.env.NEXT_PUBLIC_API_BASE_URL || '').trim()
+  if (explicit) {
+    return explicit.replace(/\/$/, '')
+  }
+
+  if (typeof window !== 'undefined') {
+    // Client tarafında relative istekler (aynı origin)
+    return ''
+  }
+
+  const vercelUrl = (process.env.VERCEL_URL || '').trim()
+  if (vercelUrl) {
+    return `https://${vercelUrl}`
+  }
+
+  // Production fallback: sabit domain; Development: local backend
+  return process.env.NODE_ENV === 'production'
+    ? 'https://mivvo-expertiz.vercel.app'
+    : 'http://localhost:3001'
+}
 
 // ===== INTERFACES =====
 
@@ -93,7 +111,7 @@ class ApiClient {
    * 
    * @param baseURL - API base URL (default: API_BASE_URL)
    */
-  constructor(baseURL: string = API_BASE_URL) {
+  constructor(baseURL: string = resolveApiBaseUrl()) {
     this.baseURL = baseURL
     this.defaultHeaders = {
       'Content-Type': 'application/json',
