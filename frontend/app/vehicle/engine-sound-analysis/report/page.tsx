@@ -24,7 +24,7 @@ function EngineSoundAnalysisReportPageContent() {
   
   const [analysisResult, setAnalysisResult] = useState<EngineSoundAnalysisResult | null>(null)
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState<'loading' | 'processing' | 'completed' | 'failed'>('loading')
+  const [status, setStatus] = useState<'loading' | 'pending' | 'processing' | 'completed' | 'failed'>('loading')
 
   useEffect(() => {
     if (reportId) {
