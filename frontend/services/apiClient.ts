@@ -40,8 +40,9 @@
  * - Production: https://mivvo-expertiz.vercel.app
  * - Development: http://localhost:3001
  */
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://mivvo-expertiz.vercel.app'
+// Production'da aynı origin'e göre relative istek at (Vercel/preview/custom domain uyumlu)
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? ''
   : 'http://localhost:3001'
 
 // ===== INTERFACES =====
