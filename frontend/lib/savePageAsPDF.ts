@@ -124,7 +124,7 @@ export async function savePageAsPDFWithOptions(
     throw new Error(`Element with ID "${options.elementId}" not found`)
   }
   
-  const pdfOptions = {
+  const pdfOptions: any = {
     margin: options.margin || 10,
     filename: options.filename,
     image: { 
