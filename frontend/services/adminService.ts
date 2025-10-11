@@ -31,14 +31,14 @@ export const getAllUsers = async (params?: {
   limit?: number
   search?: string
   role?: string
-}): Promise<AdminUsersResponse> => {
+}): Promise<any> => {
   const queryParams = new URLSearchParams()
   if (params?.page) queryParams.append('page', params.page.toString())
   if (params?.limit) queryParams.append('limit', params.limit.toString())
   if (params?.search) queryParams.append('search', params.search)
   if (params?.role) queryParams.append('role', params.role)
 
-  const response = await apiClient.get<AdminUsersResponse>(
+  const response = await apiClient.get(
     `/api/admin/users?${queryParams.toString()}`
   )
   return response
@@ -47,8 +47,8 @@ export const getAllUsers = async (params?: {
 /**
  * Kullanıcı Detayını Getir
  */
-export const getUserById = async (userId: number): Promise<AdminUserDetailResponse> => {
-  const response = await apiClient.get<AdminUserDetailResponse>(
+export const getUserById = async (userId: number): Promise<any> => {
+  const response = await apiClient.get(
     `/api/admin/users/${userId}`
   )
   return response
@@ -171,14 +171,14 @@ export const getAllReports = async (params?: {
   limit?: number
   status?: string
   reportType?: string
-}): Promise<AdminReportsResponse> => {
+}): Promise<any> => {
   const queryParams = new URLSearchParams()
   if (params?.page) queryParams.append('page', params.page.toString())
   if (params?.limit) queryParams.append('limit', params.limit.toString())
   if (params?.status) queryParams.append('status', params.status)
   if (params?.reportType) queryParams.append('reportType', params.reportType)
 
-  const response = await apiClient.get<AdminReportsResponse>(
+  const response = await apiClient.get(
     `/api/admin/reports?${queryParams.toString()}`
   )
   return response
@@ -211,16 +211,16 @@ export const updateReportStatus = async (
 /**
  * Sistem İstatistiklerini Getir
  */
-export const getSystemStats = async (): Promise<AdminStatsResponse> => {
-  const response = await apiClient.get<AdminStatsResponse>('/api/admin/stats')
+export const getSystemStats = async (): Promise<any> => {
+  const response = await apiClient.get('/api/admin/stats')
   return response
 }
 
 /**
  * Detaylı İstatistikleri Getir
  */
-export const getDetailedStats = async (): Promise<DetailedStatsResponse> => {
-  const response = await apiClient.get<DetailedStatsResponse>(
+export const getDetailedStats = async (): Promise<any> => {
+  const response = await apiClient.get(
     '/api/admin/stats/detailed'
   )
   return response
@@ -231,8 +231,8 @@ export const getDetailedStats = async (): Promise<DetailedStatsResponse> => {
  */
 export const getTimelineStats = async (
   days: number = 30
-): Promise<TimelineStatsResponse> => {
-  const response = await apiClient.get<TimelineStatsResponse>(
+): Promise<any> => {
+  const response = await apiClient.get(
     `/api/admin/stats/timeline?days=${days}`
   )
   return response
@@ -241,8 +241,8 @@ export const getTimelineStats = async (
 /**
  * Rapor Dağılımını Getir
  */
-export const getReportsBreakdown = async (): Promise<ReportsBreakdownResponse> => {
-  const response = await apiClient.get<ReportsBreakdownResponse>(
+export const getReportsBreakdown = async (): Promise<any> => {
+  const response = await apiClient.get(
     '/api/admin/stats/reports-breakdown'
   )
   return response
