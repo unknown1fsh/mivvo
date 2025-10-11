@@ -127,10 +127,17 @@ function EngineSoundAnalysisReportPageContent() {
   }
 
   if (loading || status === 'processing' || status === 'pending' || status === 'loading') {
+    const vehicleInfo = analysisResult?.vehicleInfo ? {
+      ...analysisResult.vehicleInfo,
+      year: typeof analysisResult.vehicleInfo.year === 'string' 
+        ? parseInt(analysisResult.vehicleInfo.year) 
+        : analysisResult.vehicleInfo.year
+    } : undefined
+
     return (
       <ReportLoading
         type="engine"
-        vehicleInfo={analysisResult?.vehicleInfo}
+        vehicleInfo={vehicleInfo}
         progress={status === 'processing' ? 80 : 50}
         estimatedTime="45-60 saniye"
       />
