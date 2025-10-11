@@ -342,7 +342,7 @@ function ComprehensiveReportContent() {
               )}
 
               {/* Detaylı Açıklama */}
-              {analysis.comprehensiveSummary.detailedDescription && (
+              {(analysis.comprehensiveSummary as any).detailedDescription && (
                 <div className="mb-6 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 rounded-2xl p-8 border-2 border-blue-200 shadow-lg">
                   <h3 className="font-bold text-2xl text-gray-900 mb-6 flex items-center">
                     <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl mr-3">
@@ -351,7 +351,7 @@ function ComprehensiveReportContent() {
                     Detaylı İnceleme
                   </h3>
                   <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-line">
-                    {analysis.comprehensiveSummary.detailedDescription}
+                    {(analysis.comprehensiveSummary as any).detailedDescription}
                   </p>
                 </div>
               )}
