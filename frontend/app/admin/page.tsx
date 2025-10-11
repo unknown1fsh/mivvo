@@ -271,7 +271,7 @@ export default function AdminPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="large" />
+        <LoadingSpinner size="lg" />
       </div>
     )
   }
@@ -364,7 +364,7 @@ export default function AdminPage() {
             >
               {!detailedStats ? (
                 <div className="flex items-center justify-center py-12">
-                  <LoadingSpinner size="large" />
+                  <LoadingSpinner size="lg" />
                 </div>
               ) : (
                 <>
