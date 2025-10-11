@@ -115,7 +115,7 @@ export default function DashboardPage() {
           totalReports,
           completedReports,
           totalSpent,
-          creditBalance: currentUser?.creditBalance || 0
+          creditBalance: currentUser?.credits || 0
         })
       }
     } catch (error) {
