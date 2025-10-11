@@ -32,9 +32,9 @@ model User {
 model UserCredits {
   id             Int      @id @default(autoincrement())
   userId         Int      @unique @map("user_id")
-  balance        Decimal  @default(0) @db.Decimal(10, 2)
-  totalPurchased Decimal  @default(0) @map("total_purchased") @db.Decimal(10, 2)
-  totalUsed      Decimal  @default(0) @map("total_used") @db.Decimal(10, 2)
+  balance        Decimal  @default(0)
+  totalPurchased Decimal  @default(0) @map("total_purchased")
+  totalUsed      Decimal  @default(0) @map("total_used")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -46,7 +46,7 @@ model CreditTransaction {
   id              Int             @id @default(autoincrement())
   userId          Int             @map("user_id")
   transactionType TransactionType @map("transaction_type")
-  amount          Decimal         @db.Decimal(10, 2)
+  amount          Decimal
   description     String?
   referenceId     String?         @map("reference_id")
   createdAt       DateTime        @default(now()) @map("created_at")
@@ -69,7 +69,7 @@ model VehicleReport {
   status            ReportStatus       @default(PENDING)
   aiAnalysisData    Json?              @map("ai_analysis_data")
   expertNotes       String?            @map("expert_notes")
-  totalCost         Decimal            @map("total_cost") @db.Decimal(10, 2)
+  totalCost         Decimal            @map("total_cost")
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @updatedAt @map("updated_at")
   aiAnalysisResults AiAnalysisResult[]
@@ -113,7 +113,7 @@ model AiAnalysisResult {
   id               Int           @id @default(autoincrement())
   reportId         Int           @map("report_id")
   analysisType     String        @map("analysis_type")
-  confidenceScore  Decimal?      @map("confidence_score") @db.Decimal(5, 2)
+  confidenceScore  Decimal?      @map("confidence_score")
   resultData       Json          @map("result_data")
   processingTimeMs Int?          @map("processing_time_ms")
   modelVersion     String?       @map("model_version")
@@ -127,7 +127,7 @@ model ServicePricing {
   id          Int         @id @default(autoincrement())
   serviceName String      @map("service_name")
   serviceType ServiceType @map("service_type")
-  basePrice   Decimal     @map("base_price") @db.Decimal(10, 2)
+  basePrice   Decimal     @map("base_price")
   currency    String      @default("TRY")
   isActive    Boolean     @default(true) @map("is_active")
   createdAt   DateTime    @default(now()) @map("created_at")
@@ -179,9 +179,10 @@ enum TransactionType {
 enum ReportType {
   FULL_REPORT
   PAINT_ANALYSIS
-  DAMAGE_ASSESSMENT
+  DAMAGE_ANALYSIS
   VALUE_ESTIMATION
   ENGINE_SOUND_ANALYSIS
+  COMPREHENSIVE_EXPERTISE
 }
 
 enum ReportStatus {
@@ -211,6 +212,7 @@ enum ServiceType {
   VALUE_ESTIMATION
   FULL_REPORT
   ENGINE_SOUND_ANALYSIS
+  COMPREHENSIVE_EXPERTISE
 }
 
 enum SettingType {
@@ -231,48 +233,6 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
-}
-
-model PaintAnalysis {
-  id                Int      @id @default(autoincrement())
-  vehicleId         Int      @map("vehicle_id")
-  angle             String   // front, rear, left, right, top, interior
-  imagePath         String   @map("image_path")
-  imageName         String   @map("image_name")
-  analysisType      String   @default("paint") @map("analysis_type")
-  paintCondition    String   @map("paint_condition") // excellent, good, fair, poor
-  paintThickness    Int      @map("paint_thickness") // microns
-  colorMatch        Int      @map("color_match") // percentage
-  scratches         Int      // count
-  dents             Int      // count
-  rust              Boolean  @default(false)
-  oxidation         Int      // percentage
-  glossLevel        Int      @map("gloss_level") // percentage
-  overallScore      Int      @map("overall_score") // 0-100
-  recommendations   String[] // array of recommendations
-  confidence        Int      // percentage
-  technicalDetails  Json     @map("technical_details") // technical information
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  @@map("paint_analyses")
-}
-
-model Vehicle {
-  id                Int              @id @default(autoincrement())
-  make              String
-  model             String
-  year              Int
-  plate             String?          @unique
-  vin               String?          @unique
-  color             String?
-  mileage           Int?
-  createdAt         DateTime         @default(now()) @map("created_at")
-  updatedAt         DateTime         @updatedAt @map("updated_at")
-  paintAnalyses     PaintAnalysis[]
-
-  @@map("vehicles")
 }
 
 model VINLookup {

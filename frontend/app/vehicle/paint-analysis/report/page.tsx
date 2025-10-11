@@ -9,8 +9,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ArrowLeftIcon,
-  ArrowDownTrayIcon,
-  PrinterIcon,
+  DocumentArrowDownIcon,
   ShareIcon,
   LightBulbIcon,
   ShieldCheckIcon,
@@ -22,7 +21,9 @@ import {
 import Link from 'next/link'
 import { apiClient } from '@/services/apiClient'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
-import { generatePaintAnalysisPDF } from '@/utils/pdfGenerator'
+import { savePageAsPDF } from '@/lib/savePageAsPDF'
+import { ReportLoading } from '@/components/ui/ReportLoading'
+import { ReportError } from '@/components/ui/ReportError'
 import toast from 'react-hot-toast'
 
 const paintConditions = {
@@ -173,7 +174,6 @@ interface PaintAnalysisReport {
 
 export default function PaintAnalysisReportPage() {
   const [report, setReport] = useState<PaintAnalysisReport | null>(null)
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
   useEffect(() => {
     fetchReportData()
@@ -380,80 +380,39 @@ export default function PaintAnalysisReportPage() {
   }
 
 
-  const generatePDF = async () => {
+  const handleSave = async () => {
     if (!report) return
 
-    setIsGeneratingPDF(true)
     try {
-      const primaryImage = report.images[0]
-
-      await generatePaintAnalysisPDF({
-        reportId: report.id,
-        vehicleInfo: report.vehicleInfo,
-        reportType: 'Boya Analizi',
-        analysisDate: report.analysisDate,
-        paintAnalysis: {
-          id: report.id,
-          vehicleInfo: report.vehicleInfo,
-          overallScore: report.overallScore,
-          paintCondition: paintConditions[report.paintCondition]?.label ?? report.paintCondition,
-          colorMatching: primaryImage?.colorMatch ?? 0,
-          paintThickness: primaryImage?.paintThickness ?? 0,
-          scratchCount: primaryImage?.scratches ?? 0,
-          dentCount: primaryImage?.dents ?? 0,
-          rustDetected: Boolean(primaryImage?.rust),
-          oxidationLevel: primaryImage?.oxidation ?? 0,
-          glossLevel: primaryImage?.glossLevel ?? 0,
-          recommendations: report.summary.recommendations,
-          createdAt: new Date(report.analysisDate)
-        },
-        uploadedImages: report.images.length,
-        uploadedAudios: 0,
-        confidence: report.overallScore
-      })
-      toast.success('PDF başarıyla oluşturuldu!')
+      await savePageAsPDF('report-content', `boya-analizi-${report.vehicleInfo.plate}.pdf`)
+      toast.success('Rapor başarıyla kaydedildi!')
     } catch (error) {
-      console.error('PDF oluşturma hatası:', error)
-      toast.error('PDF oluşturulurken hata oluştu!')
-    } finally {
-      setIsGeneratingPDF(false)
+      console.error('PDF kaydetme hatası:', error)
+      toast.error('Rapor kaydedilirken hata oluştu!')
     }
   }
 
 
   if (!report || !report.paintQuality) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
-              <PaintBrushIcon className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Rapor Hazırlanıyor</h2>
-            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 mb-4">AI analizi tamamlanıyor...</p>
-            <p className="text-sm text-gray-500">
-              Bu işlem genellikle 30-60 saniye sürer. 
-              Lütfen sayfayı yenilemeyin.
-            </p>
-            <div className="mt-6">
-              <button 
-                onClick={() => window.location.reload()}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                Sayfayı Yenile
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ReportLoading
+        type="paint"
+        vehicleInfo={report ? {
+          make: report.vehicleInfo.make,
+          model: report.vehicleInfo.model,
+          year: report.vehicleInfo.year,
+          plate: report.vehicleInfo.plate
+        } : undefined}
+        progress={70}
+        estimatedTime="20-30 saniye"
+      />
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div id="report-content" className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white shadow-sm border-b border-gray-200 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -471,21 +430,11 @@ export default function PaintAnalysisReportPage() {
             
             <div className="flex items-center space-x-4">
               <button
-                onClick={generatePDF}
-                disabled={isGeneratingPDF}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleSave}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:from-blue-700 hover:to-purple-700"
               >
-                {isGeneratingPDF ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    PDF Oluşturuluyor...
-                  </>
-                ) : (
-                  <>
-                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                    PDF İndir
-                  </>
-                )}
+                <DocumentArrowDownIcon className="w-4 h-4 mr-2" />
+                Kaydet
               </button>
             </div>
           </div>

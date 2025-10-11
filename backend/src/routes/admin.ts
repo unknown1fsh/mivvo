@@ -53,6 +53,15 @@ import {
   getServicePricing,
   updateSystemSettings,
   getSystemSettings,
+  addUserCredits,
+  resetUserCredits,
+  refundUserCredits,
+  suspendUser,
+  activateUser,
+  hardDeleteUser,
+  getDetailedStats,
+  getTimelineStats,
+  getReportsBreakdown,
 } from '../controllers/adminController';
 
 const router = Router();
@@ -280,5 +289,110 @@ router.get('/pricing', asyncHandler(getServicePricing));
  * - Audit log tutulmalı
  */
 router.put('/pricing', asyncHandler(updateServicePricing));
+
+// ===== CREDIT MANAGEMENT ROUTES (KREDİ YÖNETİMİ) =====
+
+/**
+ * POST /admin/users/:id/credits/add
+ * 
+ * Kullanıcıya kredi ekle.
+ * 
+ * Body:
+ * - amount: number (eklenecek kredi)
+ * - description?: string (işlem açıklaması)
+ */
+router.post('/users/:id/credits/add', asyncHandler(addUserCredits));
+
+/**
+ * POST /admin/users/:id/credits/reset
+ * 
+ * Kullanıcı kredilerini sıfırla.
+ * 
+ * Body:
+ * - reason?: string (sıfırlama sebebi)
+ */
+router.post('/users/:id/credits/reset', asyncHandler(resetUserCredits));
+
+/**
+ * POST /admin/users/:id/credits/refund
+ * 
+ * Kullanıcıya kredi iadesi yap.
+ * 
+ * Body:
+ * - amount: number (iade miktarı)
+ * - reason?: string (iade sebebi)
+ */
+router.post('/users/:id/credits/refund', asyncHandler(refundUserCredits));
+
+// ===== USER STATUS MANAGEMENT ROUTES (KULLANICI DURUM YÖNETİMİ) =====
+
+/**
+ * POST /admin/users/:id/suspend
+ * 
+ * Kullanıcıyı dondur (deaktive et).
+ * 
+ * Body:
+ * - reason?: string (dondurma sebebi)
+ */
+router.post('/users/:id/suspend', asyncHandler(suspendUser));
+
+/**
+ * POST /admin/users/:id/activate
+ * 
+ * Kullanıcıyı aktifleştir.
+ */
+router.post('/users/:id/activate', asyncHandler(activateUser));
+
+/**
+ * DELETE /admin/users/:id/hard-delete
+ * 
+ * Kullanıcıyı kalıcı olarak sil (hard delete).
+ * 
+ * Body:
+ * - confirm: boolean (true olmalı)
+ * 
+ * UYARI:
+ * - Bu işlem geri alınamaz!
+ * - Tüm ilişkili veriler silinir
+ */
+router.delete('/users/:id/hard-delete', asyncHandler(hardDeleteUser));
+
+// ===== DETAILED ANALYTICS ROUTES (DETAYLI ANALİTİKS) =====
+
+/**
+ * GET /admin/stats/detailed
+ * 
+ * Detaylı sistem istatistiklerini getir.
+ * 
+ * Response:
+ * - Kullanıcı istatistikleri (toplam, aktif, yeni)
+ * - Rapor istatistikleri (toplam, durum dağılımı)
+ * - Gelir bilgileri
+ * - Kredi dolaşımı
+ */
+router.get('/stats/detailed', asyncHandler(getDetailedStats));
+
+/**
+ * GET /admin/stats/timeline
+ * 
+ * Zaman serisi istatistiklerini getir (trend analizi).
+ * 
+ * Query:
+ * - days?: number (default: 30)
+ * 
+ * Response:
+ * - Günlük kullanıcı, rapor ve gelir verileri
+ */
+router.get('/stats/timeline', asyncHandler(getTimelineStats));
+
+/**
+ * GET /admin/stats/reports-breakdown
+ * 
+ * Rapor tip dağılımını getir.
+ * 
+ * Response:
+ * - Rapor tiplerine göre sayı ve gelir dağılımı
+ */
+router.get('/stats/reports-breakdown', asyncHandler(getReportsBreakdown));
 
 export default router;

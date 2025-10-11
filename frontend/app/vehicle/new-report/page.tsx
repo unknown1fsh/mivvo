@@ -28,6 +28,7 @@ import { StepIndicator } from '@/components/features/StepIndicator'
 import DamageAnalysisGuide from '@/components/features/DamageAnalysisGuide'
 import PhotoQualityChecker from '@/components/features/PhotoQualityChecker'
 import PaintAnalysisLoading from '@/components/features/PaintAnalysisLoading'
+import { ReportLoading } from '@/components/ui/ReportLoading'
 
 // Constants
 import { REPORT_TYPES, STEPS, getStepsForReportType } from '@/constants'
@@ -245,10 +246,8 @@ function NewReportPageContent() {
         const reportId = results.reportId || results.id
         const reportUrl = `/vehicle/${reportType}/report?reportId=${reportId}`
         console.log('[NewReport] Report URL', reportUrl)
-        const openedWindow = window.open(reportUrl, '_blank', 'noopener,noreferrer')
-        if (!openedWindow) {
-          router.push(reportUrl)
-        }
+        // Aynı pencerede aç (tek ekran)
+        router.push(reportUrl)
       } else {
         console.error('[NewReport] Report could not be created')
       }
@@ -422,7 +421,9 @@ function NewReportPageContent() {
       {/* Authenticated Content */}
       {!authLoading && isAuthenticated && (
         <>
-          {/* Boya Analizi Loading Ekranı */}
+          {/* Rapor Türüne Göre Loading Ekranları */}
+          
+          {/* Boya Analizi Loading */}
           {isPaintAnalyzing && selectedReportType?.id === 'PAINT_ANALYSIS' && (
             <PaintAnalysisLoading 
               vehicleInfo={selectedVehicle ? {
@@ -440,8 +441,89 @@ function NewReportPageContent() {
             />
           )}
 
-          {/* Normal İçerik - Boya analizi yapılmıyorsa göster */}
-          {!(isPaintAnalyzing && selectedReportType?.id === 'PAINT_ANALYSIS') && (
+          {/* Hasar Analizi Loading */}
+          {isDamageAnalyzing && selectedReportType?.id === 'DAMAGE_ANALYSIS' && (
+            <ReportLoading
+              type="damage"
+              vehicleInfo={selectedVehicle ? {
+                make: selectedVehicle.brand,
+                model: selectedVehicle.model,
+                year: selectedVehicle.year,
+                plate: selectedVehicle.plate
+              } : {
+                make: watch('vehicleBrand'),
+                model: watch('vehicleModel'),
+                year: watch('vehicleYear'),
+                plate: watch('vehiclePlate')
+              }}
+              progress={75}
+              estimatedTime="30-45 saniye"
+            />
+          )}
+
+          {/* Motor Ses Analizi Loading */}
+          {audioRecordingProps.isAnalyzing && selectedReportType?.id === 'ENGINE_SOUND_ANALYSIS' && (
+            <ReportLoading
+              type="engine"
+              vehicleInfo={selectedVehicle ? {
+                make: selectedVehicle.brand,
+                model: selectedVehicle.model,
+                year: selectedVehicle.year,
+                plate: selectedVehicle.plate
+              } : {
+                make: watch('vehicleBrand'),
+                model: watch('vehicleModel'),
+                year: watch('vehicleYear'),
+                plate: watch('vehiclePlate')
+              }}
+              progress={80}
+              estimatedTime="45-60 saniye"
+            />
+          )}
+
+          {/* Değer Tahmini Loading */}
+          {isValueAnalyzing && selectedReportType?.id === 'VALUE_ESTIMATION' && (
+            <ReportLoading
+              type="value"
+              vehicleInfo={selectedVehicle ? {
+                make: selectedVehicle.brand,
+                model: selectedVehicle.model,
+                year: selectedVehicle.year,
+                plate: selectedVehicle.plate
+              } : {
+                make: watch('vehicleBrand'),
+                model: watch('vehicleModel'),
+                year: watch('vehicleYear'),
+                plate: watch('vehiclePlate')
+              }}
+              progress={80}
+              estimatedTime="45-60 saniye"
+            />
+          )}
+
+          {/* Tam Ekspertiz Loading */}
+          {isComprehensiveAnalyzing && selectedReportType?.id === 'FULL_REPORT' && (
+            <ReportLoading
+              type="comprehensive"
+              vehicleInfo={selectedVehicle ? {
+                make: selectedVehicle.brand,
+                model: selectedVehicle.model,
+                year: selectedVehicle.year,
+                plate: selectedVehicle.plate
+              } : {
+                make: watch('vehicleBrand'),
+                model: watch('vehicleModel'),
+                year: watch('vehicleYear'),
+                plate: watch('vehiclePlate')
+              }}
+              progress={85}
+              estimatedTime="2-3 dakika"
+              currentStep={{ step: 2, total: 4, name: 'AI Analizi Yapılıyor' }}
+            />
+          )}
+
+          {/* Normal İçerik - Hiçbir analiz yapılmıyorsa göster */}
+          {!isGeneratingReport && (
             <>
               {/* Header */}
               <header className="bg-white shadow-sm border-b border-gray-200">

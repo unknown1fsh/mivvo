@@ -102,3 +102,74 @@ export const LoadingPulse = ({ className }: LoadingPulseProps) => {
     />
   )
 }
+
+interface ProgressBarProps {
+  value: number
+  className?: string
+  showPercentage?: boolean
+}
+
+export const ProgressBar = ({ value, className, showPercentage = false }: ProgressBarProps) => {
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-2">
+        {showPercentage && (
+          <span className="text-sm font-medium text-gray-700">
+            {Math.round(value)}%
+          </span>
+        )}
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+        <motion.div
+          className={clsx('h-full rounded-full', className || 'bg-blue-600')}
+          initial={{ width: 0 }}
+          animate={{ width: `${value}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
+      </div>
+    </div>
+  )
+}
+
+interface SkeletonProps {
+  className?: string
+  variant?: 'text' | 'circular' | 'rectangular'
+  width?: string | number
+  height?: string | number
+  animation?: 'pulse' | 'wave' | 'none'
+}
+
+export const Skeleton = ({ 
+  className, 
+  variant = 'rectangular',
+  width,
+  height,
+  animation = 'pulse'
+}: SkeletonProps) => {
+  const variantClasses = {
+    text: 'rounded',
+    circular: 'rounded-full',
+    rectangular: 'rounded-md'
+  }
+
+  const animationClasses = {
+    pulse: 'animate-pulse',
+    wave: 'animate-shimmer',
+    none: ''
+  }
+
+  return (
+    <div
+      className={clsx(
+        'bg-gray-200',
+        variantClasses[variant],
+        animationClasses[animation],
+        className
+      )}
+      style={{
+        width: typeof width === 'number' ? `${width}px` : width,
+        height: typeof height === 'number' ? `${height}px` : height
+      }}
+    />
+  )
+}

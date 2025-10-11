@@ -7,7 +7,6 @@
  * 
  * Amaç:
  * - Birden fazla AI servisini tek noktadan yönetme
- * - Fallback mekanizması ile hata toleransı
  * - Legacy interface desteği (backward compatibility)
  * - Veri format dönüşümleri (mapping)
  * - Initialize orchestration
@@ -18,21 +17,20 @@
  * - Client (controller) sadece AIService'i bilir, alt servisleri bilmez
  * 
  * AI Servisleri:
- * - DamageDetectionService: Hasar tespiti (Google Gemini)
- * - PaintAnalysisService: Boya analizi (Google Gemini)
- * - AudioAnalysisService: Motor sesi analizi
- * - SimpleFallbackService: Yedek (fallback) servis
+ * - DamageDetectionService: Hasar tespiti (OpenAI GPT-4 Vision)
+ * - PaintAnalysisService: Boya analizi (OpenAI GPT-4 Vision)
+ * - AudioAnalysisService: Motor sesi analizi (OpenAI GPT-4)
  * 
- * Fallback Stratejisi:
- * - Boya analizi: Fallback yok (throw error)
- * - Hasar tespiti: Hata varsa throw error
- * - Motor sesi: Hata varsa SimpleFallbackService kullan
+ * Hata Stratejisi:
+ * - Tüm analizler GERÇEK AI kullanır
+ * - AI başarısız olursa hata fırlatılır
+ * - Controller'da kredi iadesi yapılır
+ * - Kullanıcıya user-friendly hata gösterilir
  */
 
 import { DamageDetectionService, DamageDetectionResult } from './damageDetectionService'
 import { PaintAnalysisService, PaintAnalysisResult as AdvancedPaintAnalysisResult } from './paintAnalysisService'
 import { AudioAnalysisService, AudioAnalysisResult } from './audioAnalysisService'
-import { SimpleFallbackService } from './simpleFallbackService';
 
 /**
  * Boya Analizi Sonucu Interface (Legacy)
@@ -132,7 +130,6 @@ export class AIService {
    * 5. Başarı/hata loglama
    * 
    * Promise.all ile parallel initialization yapılır.
-   * Hata durumunda fallback moduna geçilir (throw edilmez).
    * 
    * @returns Promise<void>
    * 
@@ -155,10 +152,11 @@ export class AIService {
       ])
       
       this.isInitialized = true
-      console.log('[AI] Servisler hazır.')
+      console.log('[AI] ✅ Tüm AI servisleri hazır (GERÇEK AI)')
     } catch (error) {
-      console.error('[AI] Servisler başlatılırken hata:', error)
-      this.isInitialized = true // Yine de fallback ile devam etmeye çalış
+      console.error('[AI] ❌ Servisler başlatılamadı:', error)
+      // Hata durumunda da initialized olarak işaretle (retry için)
+      this.isInitialized = true
     }
   }
 
@@ -276,26 +274,27 @@ export class AIService {
   /**
    * Motor Sesi Analizi
    * 
-   * Önce gerçek AI dener, hata durumunda simple fallback kullanır.
+   * SADECE GERÇEK AI kullanır - Fallback/Mock YOK!
    * 
    * İşlem akışı:
    * 1. Initialize kontrolü
-   * 2. AudioAnalysisService.analyzeEngineSound() çağır
-   * 3. Başarı loglama
-   * 4. Sonuç döndür
-   * 5. Hata varsa SimpleFallbackService.analyzeEngineSound() çağır
+   * 2. AudioAnalysisService.analyzeEngineSound() çağır (GPT-4)
+   * 3. Ses metadata + araç bilgisi → GPT-4'e gönderilir
+   * 4. Başarı loglama
+   * 5. Sonuç döndür
    * 
-   * Fallback Stratejisi:
-   * - Gerçek AI servisi başarısız olursa (API key yok, quota aşıldı vb.)
-   * - SimpleFallbackService devreye girer
-   * - Simülasyon verisi döndürür
+   * Hata Stratejisi:
+   * - AI başarısız olursa exception fırlat
+   * - Controller'da kredi iadesi yapılır
+   * - Kullanıcıya user-friendly hata gösterilir
    * 
    * @param audioPath - Motor sesi dosyası path'i
    * @param vehicleInfo - Araç bilgileri (opsiyonel)
-   * @returns Promise<AudioAnalysisResult> - Motor sesi analiz sonucu
+   * @returns Promise<AudioAnalysisResult> - GERÇEK AI motor sesi analiz sonucu
+   * @throws Error - AI analizi başarısız olursa
    * 
    * @example
-   * const result = await AIService.analyzeEngineSound('./engine.mp3', { engineType: 'Benzinli' });
+   * const result = await AIService.analyzeEngineSound('./engine.mp3', { make: 'Mercedes', year: 2008 });
    * console.log(result.engineHealth); // 'good'
    * console.log(result.overallScore); // 82
    */
@@ -303,12 +302,12 @@ export class AIService {
     await this.initialize()
 
     try {
-      console.log('[AI] Gelişmiş motor sesi analizi başlatılıyor...')
+      console.log('[AI] GERÇEK AI motor sesi analizi başlatılıyor...')
       
-      // Gelişmiş AI servisini çağır
+      // GERÇEK AI servisini çağır (GPT-4)
       const result = await AudioAnalysisService.analyzeEngineSound(audioPath, vehicleInfo)
       
-      console.log('[AI] Motor sesi analizi tamamlandı:', {
+      console.log('[AI] ✅ Motor sesi analizi tamamlandı (GERÇEK AI):', {
         provider: result.aiProvider,
         model: result.model,
         overallScore: result.overallScore
@@ -316,8 +315,8 @@ export class AIService {
       
       return result
     } catch (error) {
-      console.error('[AI] Gelişmiş motor sesi analizi başarısız:', error)
-      // Fallback DEVRE DISI: Mock/simülasyon kesinlikle dönme
+      console.error('[AI] ❌ Motor sesi analizi BAŞARISIZ:', error)
+      // Fallback YOK - Hata fırlat, controller'da kredi iade edilecek
       throw error instanceof Error ? error : new Error('Motor sesi analizi başarısız')
     }
   }

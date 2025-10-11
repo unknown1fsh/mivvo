@@ -4,8 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { 
   ArrowLeftIcon,
-  ArrowDownTrayIcon,
-  PrinterIcon,
+  DocumentArrowDownIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   SparklesIcon
@@ -14,7 +13,9 @@ import Link from 'next/link'
 import { FadeInUp } from '@/components/motion'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
-import { generateComprehensiveExpertisePDF } from '@/utils/pdfComprehensiveExpertise'
+import { savePageAsPDF } from '@/lib/savePageAsPDF'
+import { ReportLoading } from '@/components/ui/ReportLoading'
+import { ReportError } from '@/components/ui/ReportError'
 
 interface ComprehensiveReport {
   id: number
@@ -93,97 +94,124 @@ function ComprehensiveReportContent() {
   const reportId = searchParams.get('reportId')
   const [report, setReport] = useState<ComprehensiveReport | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [currentStep, setCurrentStep] = useState({ step: 3, total: 4, name: 'Kapsamlı Rapor Hazırlanıyor' })
 
-  const generatePDF = async () => {
+  const handleSave = async () => {
     if (!report) return
 
-    setIsGeneratingPDF(true)
     try {
-      const vehicleInfo = {
-        make: report.vehicleBrand,
-        model: report.vehicleModel,
-        year: report.vehicleYear,
-        plate: report.vehiclePlate
-      }
-      
-      const reportData = {
-        ...report,
-        vehicleInfo
-      }
-      
-      await generateComprehensiveExpertisePDF(reportData, report.aiAnalysisData)
-      toast.success('PDF başarıyla oluşturuldu!')
+      await savePageAsPDF('report-content', `tam-expertiz-${report.vehiclePlate}.pdf`)
+      toast.success('Rapor başarıyla kaydedildi!')
     } catch (error) {
-      console.error('PDF oluşturma hatası:', error)
-      toast.error('PDF oluşturulurken hata oluştu!')
-    } finally {
-      setIsGeneratingPDF(false)
+      console.error('PDF kaydetme hatası:', error)
+      toast.error('Rapor kaydedilirken hata oluştu!')
     }
   }
 
-  const handlePrint = () => {
-    window.print()
+  const fetchReport = async () => {
+    if (!reportId) {
+      setError('not_found')
+      setLoading(false)
+      return
+    }
+
+    try {
+      setError(null)
+      setLoading(true)
+      
+      const response = await api.get(`/comprehensive-expertise/${reportId}`)
+      if (response.data.success) {
+        const reportData = response.data.data
+        
+        // Rapor FAILED durumunda ise hata göster
+        if (reportData.status === 'FAILED') {
+          setError('ai_failed')
+          setLoading(false)
+          return
+        }
+        
+        // Rapor PROCESSING durumundaysa adım güncelle ve bekle
+        if (reportData.status === 'PROCESSING' || reportData.status === 'PENDING') {
+          setCurrentStep({ step: 3, total: 4, name: 'Tam Ekspertiz Oluşturuluyor' })
+          // 5 saniye sonra tekrar kontrol et
+          setTimeout(fetchReport, 5000)
+          return
+        }
+        
+        setReport(reportData)
+        setCurrentStep({ step: 4, total: 4, name: 'Tamamlandı' })
+      } else {
+        setError('generic')
+      }
+    } catch (error: any) {
+      console.error('Rapor yükleme hatası:', error)
+      
+      // Hata tipini belirle
+      if (error.message?.includes('Network') || error.message?.includes('network')) {
+        setError('network_error')
+      } else if (error.response?.status === 404) {
+        setError('not_found')
+      } else if (error.message?.includes('yoğun') || error.message?.includes('busy')) {
+        setError('ai_busy')
+      } else {
+        setError('generic')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
-    const fetchReport = async () => {
-      if (!reportId) {
-        toast.error('Rapor ID bulunamadı')
-        setLoading(false)
-        return
-      }
-
-      try {
-        const response = await api.get(`/comprehensive-expertise/${reportId}`)
-        if (response.data.success) {
-          setReport(response.data.data)
-        } else {
-          toast.error('Rapor yüklenemedi')
-        }
-      } catch (error) {
-        console.error('Rapor yükleme hatası:', error)
-        toast.error('Rapor yüklenirken hata oluştu')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchReport()
   }, [reportId])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Rapor yükleniyor...</p>
-        </div>
-      </div>
+      <ReportLoading
+        type="comprehensive"
+        vehicleInfo={report ? {
+          make: report.vehicleBrand,
+          model: report.vehicleModel,
+          year: report.vehicleYear,
+          plate: report.vehiclePlate
+        } : undefined}
+        progress={85}
+        estimatedTime="2-3 dakika"
+        currentStep={currentStep}
+      />
+    )
+  }
+
+  if (error) {
+    return (
+      <ReportError
+        type={error as any}
+        creditRefunded={error === 'ai_failed'}
+        refundedAmount={error === 'ai_failed' ? 85 : undefined}
+        onRetry={fetchReport}
+        showDashboardLink={true}
+        showSupportLink={true}
+      />
     )
   }
 
   if (!report) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <ExclamationTriangleIcon className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Rapor Bulunamadı</h2>
-          <p className="text-gray-600 mb-4">İstediğiniz rapor bulunamadı veya erişim yetkiniz yok.</p>
-          <Link href="/dashboard" className="text-blue-600 hover:text-blue-700">
-            Dashboard'a Dön
-          </Link>
-        </div>
-      </div>
+      <ReportError
+        type="not_found"
+        showDashboardLink={true}
+        showSupportLink={false}
+      />
     )
   }
 
   const analysis = report.aiAnalysisData
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div id="report-content" className="min-h-screen bg-white">
       {/* Premium Header */}
-      <header className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 shadow-2xl border-b-4 border-amber-400">
+      <header className="bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 shadow-2xl border-b-4 border-amber-400 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link href="/dashboard" className="flex items-center text-amber-300 hover:text-amber-200 font-medium transition-colors">
@@ -197,19 +225,11 @@ function ComprehensiveReportContent() {
                 PREMIUM EKSPERTİZ
               </div>
               <button 
-                onClick={handlePrint}
-                className="flex items-center px-5 py-2.5 bg-white/10 backdrop-blur-sm text-white border border-white/20 hover:bg-white/20 rounded-xl transition-all shadow-lg hover:shadow-xl"
+                onClick={handleSave}
+                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-gray-900 rounded-xl hover:from-amber-500 hover:to-amber-700 transition-all shadow-lg hover:shadow-2xl font-bold"
               >
-                <PrinterIcon className="w-5 h-5 mr-2" />
-                Yazdır
-              </button>
-              <button 
-                onClick={generatePDF}
-                disabled={isGeneratingPDF}
-                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 text-gray-900 rounded-xl hover:from-amber-500 hover:to-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-2xl font-bold"
-              >
-                <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
-                {isGeneratingPDF ? 'PDF Oluşturuluyor...' : 'PDF İndir'}
+                <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
+                Kaydet
               </button>
             </div>
           </div>
@@ -321,18 +341,20 @@ function ComprehensiveReportContent() {
                 </div>
               )}
 
-              {/* Detaylı Açıklama - Geçici olarak yorumda */}
-              {/* analysis.comprehensiveSummary.detailedDescription && (
-                <div className="mb-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6 border-2 border-gray-200">
-                  <h3 className="font-bold text-xl text-gray-900 mb-4 flex items-center">
-                    <span className="text-2xl mr-2">📝</span>
+              {/* Detaylı Açıklama */}
+              {analysis.comprehensiveSummary.detailedDescription && (
+                <div className="mb-6 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 rounded-2xl p-8 border-2 border-blue-200 shadow-lg">
+                  <h3 className="font-bold text-2xl text-gray-900 mb-6 flex items-center">
+                    <div className="bg-gradient-to-br from-blue-500 to-purple-600 p-2 rounded-xl mr-3">
+                      <span className="text-3xl">📝</span>
+                    </div>
                     Detaylı İnceleme
                   </h3>
-                  <p className="text-gray-800 leading-relaxed whitespace-pre-line">
+                  <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-line">
                     {analysis.comprehensiveSummary.detailedDescription}
                   </p>
                 </div>
-              ) */}
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Güçlü Yönler */}
@@ -371,6 +393,202 @@ function ComprehensiveReportContent() {
                   </div>
                 )}
               </div>
+            </div>
+          </FadeInUp>
+        )}
+
+        {/* Hasar Analizi Detayları */}
+        {analysis.damageAnalysis && analysis.damageAnalysis.damageAreas && analysis.damageAnalysis.damageAreas.length > 0 && (
+          <FadeInUp delay={0.18}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-red-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-red-500 to-orange-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">🔧</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Hasar Analizi Detayları</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-4 border-2 border-red-200">
+                  <div className="text-sm text-red-700 font-semibold mb-1">Toplam Hasar</div>
+                  <div className="text-3xl font-black text-red-900">{analysis.damageAnalysis.damageAreas.length}</div>
+                </div>
+                <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl p-4 border-2 border-orange-200">
+                  <div className="text-sm text-orange-700 font-semibold mb-1">Kritik Hasar</div>
+                  <div className="text-3xl font-black text-orange-900">
+                    {analysis.damageAnalysis.damageAreas.filter(d => d.severity === 'critical' || d.severity === 'high').length}
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border-2 border-blue-200">
+                  <div className="text-sm text-blue-700 font-semibold mb-1">Toplam Tamir Maliyeti</div>
+                  <div className="text-2xl font-black text-blue-900">
+                    {analysis.damageAnalysis.overallAssessment?.totalRepairCost 
+                      ? `₺${analysis.damageAnalysis.overallAssessment.totalRepairCost.toLocaleString('tr-TR')}`
+                      : '-'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {analysis.damageAnalysis.damageAreas.slice(0, 5).map((damage, index) => (
+                  <div key={index} className="bg-white rounded-xl p-5 border-l-4 border-red-500 shadow-md hover:shadow-lg transition-shadow">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-bold text-lg text-gray-900 mb-1">
+                          {damage.type.toUpperCase()} - {damage.area}
+                        </h4>
+                        <p className="text-gray-700 mb-2">{damage.description}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        damage.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                        damage.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                        damage.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {damage.severity === 'critical' ? 'KRİTİK' :
+                         damage.severity === 'high' ? 'YÜKSEK' :
+                         damage.severity === 'medium' ? 'ORTA' : 'DÜŞÜK'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                      <div>
+                        <span className="text-gray-600">Güven:</span>
+                        <span className="ml-2 font-bold text-gray-900">%{damage.confidence}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Maliyet:</span>
+                        <span className="ml-2 font-bold text-red-600">₺{damage.repairCost.toLocaleString('tr-TR')}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Süre:</span>
+                        <span className="ml-2 font-bold text-blue-600">{damage.estimatedRepairTime}h</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </FadeInUp>
+        )}
+
+        {/* Boya Analizi Detayları */}
+        {analysis.paintAnalysis && analysis.paintAnalysis.paintQuality && (
+          <FadeInUp delay={0.2}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-pink-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-pink-500 to-purple-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">🎨</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Boya Kalitesi Analizi</h2>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl p-4 border-2 border-pink-200">
+                  <div className="text-sm text-pink-700 font-semibold mb-1">Genel Skor</div>
+                  <div className="text-3xl font-black text-pink-900">{analysis.paintAnalysis.paintQuality.overallScore}/100</div>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border-2 border-purple-200">
+                  <div className="text-sm text-purple-700 font-semibold mb-1">Parlaklık</div>
+                  <div className="text-3xl font-black text-purple-900">{analysis.paintAnalysis.paintQuality.glossLevel}/100</div>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border-2 border-blue-200">
+                  <div className="text-sm text-blue-700 font-semibold mb-1">Pürüzsüzlük</div>
+                  <div className="text-3xl font-black text-blue-900">{analysis.paintAnalysis.paintQuality.smoothness}/100</div>
+                </div>
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border-2 border-green-200">
+                  <div className="text-sm text-green-700 font-semibold mb-1">Dayanıklılık</div>
+                  <div className="text-3xl font-black text-green-900">{analysis.paintAnalysis.paintQuality.durability}/100</div>
+                </div>
+              </div>
+
+              {analysis.paintAnalysis.colorAnalysis && (
+                <div className="bg-gradient-to-br from-gray-50 to-pink-50 rounded-xl p-6 border-2 border-pink-100">
+                  <h3 className="font-bold text-xl text-gray-900 mb-4">🌈 Renk Analizi</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-gray-600">Renk:</span>
+                      <span className="ml-2 font-bold text-gray-900">{analysis.paintAnalysis.colorAnalysis.colorName}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Renk Kodu:</span>
+                      <span className="ml-2 font-bold text-gray-900">{analysis.paintAnalysis.colorAnalysis.colorCode}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Orijinal Boya:</span>
+                      <span className="ml-2 font-bold text-green-600">
+                        {analysis.paintAnalysis.colorAnalysis.originalColor ? '✅ EVET' : '❌ DEĞİL'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Boyama Tespiti:</span>
+                      <span className="ml-2 font-bold">
+                        {analysis.paintAnalysis.colorAnalysis.repaintDetected ? '⚠️ Boyalı Panel Var' : '✅ Tüm Paneller Orijinal'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </FadeInUp>
+        )}
+
+        {/* Motor Ses Analizi Detayları */}
+        {analysis.audioAnalysis && analysis.audioAnalysis.rpmAnalysis && (
+          <FadeInUp delay={0.22}>
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6 border-2 border-blue-100">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-3 rounded-xl mr-4">
+                  <span className="text-3xl">🔊</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900">Motor Ses Analizi</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border-2 border-blue-200">
+                  <div className="text-sm text-blue-700 font-semibold mb-1">Motor Sağlığı</div>
+                  <div className="text-3xl font-black text-blue-900">{analysis.audioAnalysis.overallScore}/100</div>
+                  <div className="text-sm text-blue-600 mt-1">{analysis.audioAnalysis.engineHealth}</div>
+                </div>
+                <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 border-2 border-cyan-200">
+                  <div className="text-sm text-cyan-700 font-semibold mb-1">Rölanti RPM</div>
+                  <div className="text-3xl font-black text-cyan-900">{analysis.audioAnalysis.rpmAnalysis.idleRpm}</div>
+                  <div className="text-sm text-cyan-600 mt-1">RPM</div>
+                </div>
+                <div className="bg-gradient-to-br from-teal-50 to-green-50 rounded-xl p-4 border-2 border-teal-200">
+                  <div className="text-sm text-teal-700 font-semibold mb-1">RPM Stabilitesi</div>
+                  <div className="text-3xl font-black text-teal-900">{analysis.audioAnalysis.rpmAnalysis.rpmStability}%</div>
+                </div>
+              </div>
+
+              {analysis.audioAnalysis.detectedIssues && analysis.audioAnalysis.detectedIssues.length > 0 && (
+                <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl p-6 border-2 border-yellow-200">
+                  <h3 className="font-bold text-xl text-gray-900 mb-4">⚙️ Tespit Edilen Sorunlar</h3>
+                  <div className="space-y-3">
+                    {analysis.audioAnalysis.detectedIssues.map((issue, index) => (
+                      <div key={index} className="bg-white rounded-lg p-4 border-l-4 border-yellow-500">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-bold text-gray-900">{issue.issue}</h4>
+                            <p className="text-gray-700 text-sm mt-1">{issue.description}</p>
+                            <p className="text-blue-600 text-sm mt-2 font-medium">💡 {issue.recommendation}</p>
+                          </div>
+                          <span className={`px-2 py-1 rounded-full text-xs font-bold ml-3 ${
+                            issue.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                            issue.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                            issue.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {issue.severity.toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex gap-3 mt-3 text-xs text-gray-600">
+                          <span>Güven: %{issue.confidence}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </FadeInUp>
         )}

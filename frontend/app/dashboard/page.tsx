@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import { ProgressBar, LoadingSpinner } from '@/components/ui'
 import { authService } from '@/services/authService'
+import api from '@/lib/api'
 import toast from 'react-hot-toast'
 
 interface VehicleReport {
@@ -61,39 +62,81 @@ export default function DashboardPage() {
     const currentUser = authService.getCurrentUser()
     setUser(currentUser)
     
-    // TODO: Fetch user data from API
-    setTimeout(() => {
-      setReports([
-        {
-          id: '1',
-          vehiclePlate: '34 ABC 123',
-          vehicleBrand: 'Toyota',
-          vehicleModel: 'Corolla',
-          reportType: 'Tam Expertiz',
-          status: 'completed',
-          createdAt: '2024-01-15',
-          totalCost: 75
-        },
-        {
-          id: '2',
-          vehiclePlate: '06 XYZ 789',
-          vehicleBrand: 'Honda',
-          vehicleModel: 'Civic',
-          reportType: 'Boya Analizi',
-          status: 'processing',
-          createdAt: '2024-01-14',
-          totalCost: 25
-        }
-      ])
-      setStats({
-        totalReports: 12,
-        completedReports: 10,
-        totalSpent: 450,
-        creditBalance: 150
-      })
-      setIsLoading(false)
-    }, 1000)
+    // Gerçek API'den veri çek
+    fetchDashboardData()
   }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true)
+      
+      // Kullanıcı bilgisini al (currentUser tanımla)
+      const currentUser = authService.getCurrentUser()
+      
+      // Kullanıcı raporlarını çek
+      const reportsResponse = await api.get('/user/reports')
+      
+      if (reportsResponse.data.success) {
+        const userReports = reportsResponse.data.data?.reports || []
+        
+        console.log('📊 Dashboard - Backend response:', reportsResponse.data)
+        console.log('📊 Dashboard - User reports:', userReports)
+        
+        // Rapor türü maliyetlerini map'le
+        const reportCosts: Record<string, number> = {
+          'PAINT_ANALYSIS': 25,
+          'DAMAGE_ANALYSIS': 35,
+          'ENGINE_SOUND_ANALYSIS': 30,
+          'VALUE_ESTIMATION': 20,
+          'COMPREHENSIVE_EXPERTISE': 85,
+          'FULL_REPORT': 85
+        }
+        
+        // Backend formatını frontend formatına çevir
+        const formattedReports = userReports.slice(0, 5).map((report: any) => ({
+          id: report.id.toString(),
+          vehiclePlate: report.vehiclePlate || 'Bilinmiyor',
+          vehicleBrand: report.vehicleBrand || 'Bilinmiyor',
+          vehicleModel: report.vehicleModel || 'Bilinmiyor',
+          reportType: getReportTypeName(report.reportType),
+          status: report.status?.toLowerCase() || 'pending',
+          createdAt: new Date(report.createdAt).toLocaleDateString('tr-TR'),
+          totalCost: report.creditCost || reportCosts[report.reportType] || 0
+        }))
+        
+        setReports(formattedReports)
+        
+        // İstatistikleri hesapla
+        const totalReports = userReports.length
+        const completedReports = userReports.filter((r: any) => r.status === 'COMPLETED').length
+        const totalSpent = userReports.reduce((sum: number, r: any) => sum + (r.creditCost || reportCosts[r.reportType] || 0), 0)
+        
+        setStats({
+          totalReports,
+          completedReports,
+          totalSpent,
+          creditBalance: currentUser?.creditBalance || 0
+        })
+      }
+    } catch (error) {
+      console.error('Dashboard veri çekme hatası:', error)
+      toast.error('Veriler yüklenirken hata oluştu')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getReportTypeName = (type: string): string => {
+    const typeMap: Record<string, string> = {
+      'PAINT_ANALYSIS': 'Boya Analizi',
+      'DAMAGE_ANALYSIS': 'Hasar Analizi',
+      'ENGINE_SOUND_ANALYSIS': 'Motor Ses Analizi',
+      'VALUE_ESTIMATION': 'Değer Tahmini',
+      'COMPREHENSIVE_EXPERTISE': 'Tam Ekspertiz',
+      'FULL_REPORT': 'Tam Ekspertiz'
+    }
+    return typeMap[type] || type
+  }
 
   const handleLogout = async () => {
     try {
@@ -311,7 +354,18 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                    onDoubleClick={() => window.open(`/reports/${report.id}`, '_blank')}
+                    onClick={() => {
+                      // Rapor türüne göre doğru sayfaya yönlendir
+                      const reportTypeMap: Record<string, string> = {
+                        'Boya Analizi': 'paint-analysis',
+                        'Hasar Analizi': 'damage-analysis',
+                        'Motor Ses Analizi': 'engine-sound-analysis',
+                        'Değer Tahmini': 'value-estimation',
+                        'Tam Ekspertiz': 'comprehensive-expertise'
+                      }
+                      const reportPath = reportTypeMap[report.reportType] || 'comprehensive-expertise'
+                      router.push(`/vehicle/${reportPath}/report?reportId=${report.id}`)
+                    }}
                   >
                     <div className="flex items-center space-x-4">
                       {getStatusIcon(report.status)}

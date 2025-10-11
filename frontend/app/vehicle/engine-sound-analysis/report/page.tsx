@@ -12,10 +12,12 @@ import {
 } from '@heroicons/react/24/outline'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { ProgressBar } from '@/components/ui'
 import { FadeInUp } from '@/components/motion'
 import { engineSoundAnalysisService } from '@/services/engineSoundAnalysisService'
 import { EngineSoundAnalysisResult } from '@/types'
+import { savePageAsPDF } from '@/lib/savePageAsPDF'
+import { ReportLoading } from '@/components/ui/ReportLoading'
+import { ReportError } from '@/components/ui/ReportError'
 import toast from 'react-hot-toast'
 
 function EngineSoundAnalysisReportPageContent() {
@@ -25,6 +27,19 @@ function EngineSoundAnalysisReportPageContent() {
   const [analysisResult, setAnalysisResult] = useState<EngineSoundAnalysisResult | null>(null)
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<'loading' | 'pending' | 'processing' | 'completed' | 'failed'>('loading')
+
+  const handleSave = async () => {
+    if (!analysisResult) return
+
+    try {
+      const vehiclePlate = analysisResult.vehicleInfo?.plate || 'rapor'
+      await savePageAsPDF('report-content', `motor-ses-analizi-${vehiclePlate}.pdf`)
+      toast.success('Rapor başarıyla kaydedildi!')
+    } catch (error) {
+      console.error('PDF kaydetme hatası:', error)
+      toast.error('Rapor kaydedilirken hata oluştu!')
+    }
+  }
 
   useEffect(() => {
     if (reportId) {
@@ -111,78 +126,30 @@ function EngineSoundAnalysisReportPageContent() {
     }
   }
 
-  if (loading) {
+  if (loading || status === 'processing' || status === 'pending' || status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Analiz sonucu yükleniyor...</p>
-        </div>
-      </div>
+      <ReportLoading
+        type="engine"
+        vehicleInfo={analysisResult?.vehicleInfo}
+        progress={status === 'processing' ? 80 : 50}
+        estimatedTime="45-60 saniye"
+      />
     )
   }
 
-  if (status === 'processing' || status === 'pending' || status === 'loading') {
+  if (status === 'failed' || !analysisResult) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card padding="lg" className="max-w-md w-full">
-          <div className="text-center">
-            <ClockIcon className="w-16 h-16 text-blue-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Analiz Devam Ediyor
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Motor sesi analizi işleniyor. Bu işlem birkaç dakika sürebilir.
-            </p>
-            <ProgressBar value={75} />
-            <p className="text-sm text-gray-500 mt-2">Tahmini süre: 2-3 dakika</p>
-          </div>
-        </Card>
-      </div>
-    )
-  }
-
-  if (status === 'failed') {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card padding="lg" className="max-w-md w-full">
-          <div className="text-center">
-            <ExclamationTriangleIcon className="w-16 h-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Analiz Başarısız
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Motor sesi analizi tamamlanamadı. Lütfen tekrar deneyin.
-            </p>
-            <Button variant="primary" onClick={() => window.location.reload()}>
-              Tekrar Dene
-            </Button>
-          </div>
-        </Card>
-      </div>
-    )
-  }
-
-  // Sadece GERÇEK veri varsa render et
-  if (!analysisResult) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card padding="lg" className="max-w-md w-full">
-          <div className="text-center">
-            <ExclamationTriangleIcon className="w-16 h-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Veri Bulunamadı
-            </h2>
-            <p className="text-gray-600 mb-4">AI analiz verisi gelmedi. Lütfen birkaç saniye sonra tekrar deneyin.</p>
-            <Button variant="primary" onClick={() => window.location.reload()}>Yenile</Button>
-          </div>
-        </Card>
-      </div>
+      <ReportError
+        type={status === 'failed' ? 'ai_failed' : 'not_found'}
+        showDashboardLink={true}
+        showSupportLink={true}
+        onRetry={() => window.location.reload()}
+      />
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div id="report-content" className="min-h-screen bg-white py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <FadeInUp>
@@ -196,6 +163,12 @@ function EngineSoundAnalysisReportPageContent() {
             <p className="text-gray-600">
               {(analysisResult.vehicleInfo?.make || 'Belirtilmemiş')} {(analysisResult.vehicleInfo?.model || '')} ({analysisResult.vehicleInfo?.year || '-'})
             </p>
+            <div className="mt-4">
+              <Button onClick={handleSave} className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700">
+                <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
+                Kaydet
+              </Button>
+            </div>
           </div>
         </FadeInUp>
 
@@ -385,25 +358,16 @@ function EngineSoundAnalysisReportPageContent() {
   )
 }
 
-// Loading component
-function EngineSoundAnalysisReportPageLoading() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-8"></div>
-          <div className="h-96 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // Ana component Suspense ile sarmalanmış
 export default function EngineSoundAnalysisReportPage() {
   return (
-    <Suspense fallback={<EngineSoundAnalysisReportPageLoading />}>
+    <Suspense fallback={
+      <ReportLoading
+        type="engine"
+        progress={50}
+        estimatedTime="45-60 saniye"
+      />
+    }>
       <EngineSoundAnalysisReportPageContent />
     </Suspense>
   )

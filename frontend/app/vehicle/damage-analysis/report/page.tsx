@@ -8,8 +8,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ArrowLeftIcon,
-  ArrowDownTrayIcon,
-  PrinterIcon,
+  DocumentArrowDownIcon,
   ShareIcon,
   LightBulbIcon,
   ShieldCheckIcon,
@@ -25,7 +24,9 @@ import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
 import { DamageAnalysisReportData, DamageSeverityLevel, DamageAnalysisImageArea } from '@/types/damageAnalysis'
-import { generateDamageAnalysisPDF } from '@/utils/pdfDamageAnalysis'
+import { savePageAsPDF } from '@/lib/savePageAsPDF'
+import { ReportLoading } from '@/components/ui/ReportLoading'
+import { ReportError } from '@/components/ui/ReportError'
 
 
 const damageSeverities: Record<DamageSeverityLevel, { label: string; color: string; bg: string; score: string }> = {
@@ -146,8 +147,6 @@ const damageTypes = {
 
 export default function DamageAnalysisReportPage() {
   const [report, setReport] = useState<DamageAnalysisReportData | null>(null)
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
-  const [isPrinting, setIsPrinting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedDamage, setSelectedDamage] = useState<DamageAnalysisImageArea | null>(null)
@@ -313,56 +312,15 @@ export default function DamageAnalysisReportPage() {
     return recommendations
   }
 
-  const generatePDF = async () => {
+  const handleSave = async () => {
     if (!report) return
 
-    setIsGeneratingPDF(true)
     try {
-      await generateDamageAnalysisPDF(report)
-      toast.success('PDF başarıyla oluşturuldu!')
+      await savePageAsPDF('report-content', `hasar-analizi-${report.vehicleInfo.plate}.pdf`)
+      toast.success('Rapor başarıyla kaydedildi!')
     } catch (error) {
-      console.error('PDF oluşturma hatası:', error)
-      toast.error('PDF oluşturulurken hata oluştu!')
-    } finally {
-      setIsGeneratingPDF(false)
-    }
-  }
-
-
-  const handlePrint = async () => {
-    setIsPrinting(true)
-    try {
-      // Print styles
-      const printStyles = `
-        <style>
-          @media print {
-            body { -webkit-print-color-adjust: exact; }
-            .no-print { display: none !important; }
-            .print-break { page-break-before: always; }
-          }
-        </style>
-      `
-      
-      // Add print styles to head
-      const styleSheet = document.createElement("style")
-      styleSheet.innerText = printStyles
-      document.head.appendChild(styleSheet)
-      
-      // Print
-      window.print()
-      
-      // Clean up
-      setTimeout(() => {
-        document.head.removeChild(styleSheet)
-        setIsPrinting(false)
-      }, 1000)
-      
-      toast.success('Yazdırma başlatıldı!')
-      
-    } catch (error) {
-      console.error('Yazdırma hatası:', error)
-      toast.error('Yazdırma sırasında hata oluştu!')
-      setIsPrinting(false)
+      console.error('PDF kaydetme hatası:', error)
+      toast.error('Rapor kaydedilirken hata oluştu!')
     }
   }
 
@@ -397,54 +355,45 @@ export default function DamageAnalysisReportPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600">OpenAI Vision API ile analiz yapılıyor...</p>
-          <p className="text-sm text-gray-500">Bu işlem 2-3 saniye sürebilir</p>
-        </div>
-      </div>
+      <ReportLoading
+        type="damage"
+        vehicleInfo={report ? {
+          make: report.vehicleInfo.make,
+          model: report.vehicleInfo.model,
+          year: report.vehicleInfo.year,
+          plate: report.vehicleInfo.plate
+        } : undefined}
+        progress={75}
+        estimatedTime="30-45 saniye"
+      />
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Rapor Yüklenemedi</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={fetchReportData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Tekrar Dene
-          </button>
-        </div>
-      </div>
+      <ReportError
+        type="generic"
+        showDashboardLink={true}
+        showSupportLink={true}
+        onRetry={fetchReportData}
+      />
     )
   }
 
   if (!report) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ExclamationTriangleIcon className="w-8 h-8 text-gray-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Rapor Bulunamadı</h2>
-          <p className="text-gray-600">Bu rapor mevcut değil veya erişim yetkiniz yok.</p>
-        </div>
-      </div>
+      <ReportError
+        type="not_found"
+        showDashboardLink={true}
+        showSupportLink={false}
+      />
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50">
+    <div id="report-content" className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white shadow-sm border-b border-gray-200 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -462,47 +411,11 @@ export default function DamageAnalysisReportPage() {
             
             <div className="flex items-center space-x-4 no-print">
               <button
-                onClick={handleShare}
-                className="btn btn-outline"
+                onClick={handleSave}
+                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:from-blue-700 hover:to-purple-700"
               >
-                <ShareIcon className="w-4 h-4 mr-2" />
-                Paylaş
-              </button>
-              
-              <button
-                onClick={handlePrint}
-                disabled={isPrinting}
-                className="btn btn-outline"
-              >
-                {isPrinting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
-                    Yazdırılıyor...
-                  </>
-                ) : (
-                  <>
-                    <PrinterIcon className="w-4 h-4 mr-2" />
-                    Yazdır
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={generatePDF}
-                disabled={isGeneratingPDF}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isGeneratingPDF ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    PDF Oluşturuluyor...
-                  </>
-                ) : (
-                  <>
-                    <ArrowDownTrayIcon className="w-4 h-4 mr-2" />
-                    PDF İndir
-                  </>
-                )}
+                <DocumentArrowDownIcon className="w-4 h-4 mr-2" />
+                Kaydet
               </button>
             </div>
           </div>

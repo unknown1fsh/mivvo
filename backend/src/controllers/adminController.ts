@@ -728,3 +728,611 @@ export const updateSystemSettings = async (req: AuthRequest, res: Response): Pro
     data: { settings: updatedSettings },
   });
 };
+
+// ===== KREDİ YÖNETİMİ =====
+
+/**
+ * Kullanıcıya Kredi Ekle
+ * 
+ * Admin tarafından kullanıcıya kredi yükler.
+ * 
+ * İşlem Akışı:
+ * 1. Kullanıcı kredisini getir
+ * 2. Bakiyeye ekle
+ * 3. Transaction kaydı oluştur (audit trail)
+ * 
+ * @route   POST /api/admin/users/:id/credits/add
+ * @access  Private/Admin
+ * 
+ * @param req.params.id - Kullanıcı ID
+ * @param req.body.amount - Eklenecek kredi miktarı
+ * @param req.body.description - İşlem açıklaması
+ * 
+ * @returns 200 - Güncellenmiş bakiye
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * POST /api/admin/users/123/credits/add
+ * Body: {
+ *   "amount": 1000,
+ *   "description": "Admin tarafından bonus kredi"
+ * }
+ */
+export const addUserCredits = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { amount, description = 'Admin tarafından kredi yükleme' } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+    include: { userCredits: true },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: 'Kullanıcı bulunamadı.',
+    });
+    return;
+  }
+
+  // Kullanıcı kredisi yoksa oluştur
+  if (!user.userCredits) {
+    await prisma.userCredits.create({
+      data: {
+        userId: user.id,
+        balance: 0,
+        totalPurchased: 0,
+        totalUsed: 0,
+      },
+    });
+  }
+
+  // Kredi ekle
+  const updatedCredits = await prisma.userCredits.update({
+    where: { userId: user.id },
+    data: {
+      balance: {
+        increment: amount,
+      },
+      totalPurchased: {
+        increment: amount,
+      },
+    },
+  });
+
+  // Transaction kaydı oluştur
+  await prisma.creditTransaction.create({
+    data: {
+      userId: user.id,
+      transactionType: 'PURCHASE',
+      amount: amount,
+      description: description,
+      referenceId: `admin_add_${req.user!.id}_${Date.now()}`,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: `${amount} kredi başarıyla eklendi.`,
+    data: { credits: updatedCredits },
+  });
+};
+
+/**
+ * Kullanıcı Kredilerini Sıfırla
+ * 
+ * Kullanıcının tüm kredilerini sıfırlar.
+ * 
+ * UYARI: Bu işlem geri alınamaz!
+ * 
+ * @route   POST /api/admin/users/:id/credits/reset
+ * @access  Private/Admin
+ * 
+ * @param req.params.id - Kullanıcı ID
+ * @param req.body.reason - Sıfırlama sebebi (audit için)
+ * 
+ * @returns 200 - Sıfırlanmış krediler
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * POST /api/admin/users/123/credits/reset
+ * Body: {
+ *   "reason": "Hesap kapatma talebi"
+ * }
+ */
+export const resetUserCredits = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { reason = 'Admin tarafından sıfırlama' } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+    include: { userCredits: true },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: 'Kullanıcı bulunamadı.',
+    });
+    return;
+  }
+
+  const oldBalance = Number(user.userCredits?.balance || 0);
+
+  // Kredileri sıfırla
+  const updatedCredits = await prisma.userCredits.update({
+    where: { userId: user.id },
+    data: {
+      balance: 0,
+    },
+  });
+
+  // Transaction kaydı oluştur
+  if (oldBalance > 0) {
+    await prisma.creditTransaction.create({
+      data: {
+        userId: user.id,
+        transactionType: 'REFUND',
+        amount: oldBalance,
+        description: `Kredi sıfırlama: ${reason}`,
+        referenceId: `admin_reset_${req.user!.id}_${Date.now()}`,
+      },
+    });
+  }
+
+  res.json({
+    success: true,
+    message: 'Kullanıcı kredileri sıfırlandı.',
+    data: { credits: updatedCredits, resetAmount: oldBalance },
+  });
+};
+
+/**
+ * Kullanıcıya Kredi İadesi Yap
+ * 
+ * Belirtilen miktarda kredi iadesi yapar.
+ * 
+ * @route   POST /api/admin/users/:id/credits/refund
+ * @access  Private/Admin
+ * 
+ * @param req.params.id - Kullanıcı ID
+ * @param req.body.amount - İade edilecek kredi miktarı
+ * @param req.body.reason - İade sebebi
+ * 
+ * @returns 200 - Güncellenmiş krediler
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * POST /api/admin/users/123/credits/refund
+ * Body: {
+ *   "amount": 50,
+ *   "reason": "Hatalı işlem iadesi"
+ * }
+ */
+export const refundUserCredits = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { amount, reason = 'Admin tarafından iade' } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+    include: { userCredits: true },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: 'Kullanıcı bulunamadı.',
+    });
+    return;
+  }
+
+  // Kredi iadesi yap
+  const updatedCredits = await prisma.userCredits.update({
+    where: { userId: user.id },
+    data: {
+      balance: {
+        increment: amount,
+      },
+    },
+  });
+
+  // Transaction kaydı oluştur
+  await prisma.creditTransaction.create({
+    data: {
+      userId: user.id,
+      transactionType: 'REFUND',
+      amount: amount,
+      description: reason,
+      referenceId: `admin_refund_${req.user!.id}_${Date.now()}`,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: `${amount} kredi iadesi başarıyla yapıldı.`,
+    data: { credits: updatedCredits },
+  });
+};
+
+// ===== KULLANICI DURUM YÖNETİMİ =====
+
+/**
+ * Kullanıcıyı Dondur
+ * 
+ * Kullanıcı hesabını geçici olarak deaktive eder.
+ * 
+ * @route   POST /api/admin/users/:id/suspend
+ * @access  Private/Admin
+ * 
+ * @param req.params.id - Kullanıcı ID
+ * @param req.body.reason - Dondurma sebebi
+ * 
+ * @returns 200 - Güncellenmiş kullanıcı
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * POST /api/admin/users/123/suspend
+ * Body: {
+ *   "reason": "Şüpheli aktivite tespit edildi"
+ * }
+ */
+export const suspendUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { reason = 'Admin tarafından donduruldu' } = req.body;
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: 'Kullanıcı bulunamadı.',
+    });
+    return;
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: parseInt(id) },
+    data: {
+      isActive: false,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'Kullanıcı başarıyla donduruldu.',
+    data: { user: updatedUser },
+  });
+};
+
+/**
+ * Kullanıcıyı Aktifleştir
+ * 
+ * Dondurulmuş kullanıcı hesabını tekrar aktif eder.
+ * 
+ * @route   POST /api/admin/users/:id/activate
+ * @access  Private/Admin
+ * 
+ * @param req.params.id - Kullanıcı ID
+ * 
+ * @returns 200 - Güncellenmiş kullanıcı
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * POST /api/admin/users/123/activate
+ */
+export const activateUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: 'Kullanıcı bulunamadı.',
+    });
+    return;
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: parseInt(id) },
+    data: {
+      isActive: true,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'Kullanıcı başarıyla aktifleştirildi.',
+    data: { user: updatedUser },
+  });
+};
+
+/**
+ * Kullanıcıyı Kalıcı Olarak Sil
+ * 
+ * Kullanıcıyı ve ilişkili tüm verileri veritabanından kalıcı olarak siler.
+ * 
+ * UYARI: Bu işlem GERİ ALINAMAZ!
+ * Cascade delete ile tüm ilişkili veriler silinir:
+ * - UserCredits
+ * - CreditTransactions
+ * - VehicleReports
+ * - Payments
+ * 
+ * @route   DELETE /api/admin/users/:id/hard-delete
+ * @access  Private/Admin
+ * 
+ * @param req.params.id - Kullanıcı ID
+ * @param req.body.confirm - Onay (true olmalı)
+ * 
+ * @returns 200 - Silme başarılı
+ * @returns 400 - Onay eksik
+ * @returns 404 - Kullanıcı bulunamadı
+ * 
+ * @example
+ * DELETE /api/admin/users/123/hard-delete
+ * Body: {
+ *   "confirm": true
+ * }
+ */
+export const hardDeleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { confirm } = req.body;
+
+  if (!confirm) {
+    res.status(400).json({
+      success: false,
+      message: 'Silme işlemi için onay gereklidir.',
+    });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(id) },
+  });
+
+  if (!user) {
+    res.status(404).json({
+      success: false,
+      message: 'Kullanıcı bulunamadı.',
+    });
+    return;
+  }
+
+  // Kullanıcıyı ve cascade ile tüm ilişkili verileri sil
+  await prisma.user.delete({
+    where: { id: parseInt(id) },
+  });
+
+  res.json({
+    success: true,
+    message: 'Kullanıcı kalıcı olarak silindi.',
+    data: { deletedUserId: parseInt(id) },
+  });
+};
+
+// ===== DETAYLI ANALİTİKS =====
+
+/**
+ * Detaylı İstatistikleri Getir
+ * 
+ * Dashboard için kapsamlı istatistikler döndürür.
+ * 
+ * @route   GET /api/admin/stats/detailed
+ * @access  Private/Admin
+ * 
+ * @returns 200 - Detaylı istatistikler
+ * 
+ * @example
+ * GET /api/admin/stats/detailed
+ */
+export const getDetailedStats = async (req: AuthRequest, res: Response): Promise<void> => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const [
+    totalUsers,
+    activeUsers,
+    newUsersToday,
+    newUsersThisMonth,
+    totalReports,
+    reportsToday,
+    reportsThisMonth,
+    completedReports,
+    pendingReports,
+    failedReports,
+    totalRevenue,
+    revenueThisMonth,
+    totalCreditBalance,
+    totalCreditPurchased,
+    totalCreditUsed,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { isActive: true } }),
+    prisma.user.count({ where: { createdAt: { gte: today } } }),
+    prisma.user.count({ where: { createdAt: { gte: thisMonth } } }),
+    prisma.vehicleReport.count(),
+    prisma.vehicleReport.count({ where: { createdAt: { gte: today } } }),
+    prisma.vehicleReport.count({ where: { createdAt: { gte: thisMonth } } }),
+    prisma.vehicleReport.count({ where: { status: 'COMPLETED' } }),
+    prisma.vehicleReport.count({ where: { status: 'PENDING' } }),
+    prisma.vehicleReport.count({ where: { status: 'FAILED' } }),
+    prisma.payment.aggregate({
+      where: { paymentStatus: 'COMPLETED' },
+      _sum: { amount: true },
+    }),
+    prisma.payment.aggregate({
+      where: { 
+        paymentStatus: 'COMPLETED',
+        createdAt: { gte: thisMonth }
+      },
+      _sum: { amount: true },
+    }),
+    prisma.userCredits.aggregate({
+      _sum: { balance: true },
+    }),
+    prisma.userCredits.aggregate({
+      _sum: { totalPurchased: true },
+    }),
+    prisma.userCredits.aggregate({
+      _sum: { totalUsed: true },
+    }),
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        inactive: totalUsers - activeUsers,
+        newToday: newUsersToday,
+        newThisMonth: newUsersThisMonth,
+      },
+      reports: {
+        total: totalReports,
+        today: reportsToday,
+        thisMonth: reportsThisMonth,
+        completed: completedReports,
+        pending: pendingReports,
+        failed: failedReports,
+        processing: totalReports - completedReports - pendingReports - failedReports,
+      },
+      revenue: {
+        total: Number(totalRevenue._sum.amount || 0),
+        thisMonth: Number(revenueThisMonth._sum.amount || 0),
+      },
+      credits: {
+        totalBalance: Number(totalCreditBalance._sum.balance || 0),
+        totalPurchased: Number(totalCreditPurchased._sum.totalPurchased || 0),
+        totalUsed: Number(totalCreditUsed._sum.totalUsed || 0),
+      },
+    },
+  });
+};
+
+/**
+ * Zaman Serisi İstatistiklerini Getir
+ * 
+ * Son 30 günün trend verilerini döndürür.
+ * 
+ * @route   GET /api/admin/stats/timeline
+ * @access  Private/Admin
+ * 
+ * @param req.query.days - Gün sayısı (default: 30)
+ * 
+ * @returns 200 - Timeline verileri
+ * 
+ * @example
+ * GET /api/admin/stats/timeline?days=30
+ */
+export const getTimelineStats = async (req: AuthRequest, res: Response): Promise<void> => {
+  const days = parseInt(req.query.days as string) || 30;
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - days);
+
+  // Son N günün verilerini getir
+  const reports = await prisma.vehicleReport.findMany({
+    where: {
+      createdAt: { gte: startDate },
+    },
+    select: {
+      createdAt: true,
+      status: true,
+      totalCost: true,
+    },
+  });
+
+  const users = await prisma.user.findMany({
+    where: {
+      createdAt: { gte: startDate },
+    },
+    select: {
+      createdAt: true,
+    },
+  });
+
+  const payments = await prisma.payment.findMany({
+    where: {
+      createdAt: { gte: startDate },
+      paymentStatus: 'COMPLETED',
+    },
+    select: {
+      createdAt: true,
+      amount: true,
+    },
+  });
+
+  // Günlük gruplama
+  const timeline: any[] = [];
+  for (let i = 0; i < days; i++) {
+    const date = new Date();
+    date.setDate(date.getDate() - (days - 1 - i));
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+
+    const dayReports = reports.filter(r => 
+      r.createdAt >= dayStart && r.createdAt < dayEnd
+    );
+    const dayUsers = users.filter(u => 
+      u.createdAt >= dayStart && u.createdAt < dayEnd
+    );
+    const dayPayments = payments.filter(p => 
+      p.createdAt >= dayStart && p.createdAt < dayEnd
+    );
+
+    timeline.push({
+      date: dayStart.toISOString().split('T')[0],
+      reports: dayReports.length,
+      users: dayUsers.length,
+      revenue: dayPayments.reduce((sum, p) => sum + Number(p.amount), 0),
+    });
+  }
+
+  res.json({
+    success: true,
+    data: { timeline },
+  });
+};
+
+/**
+ * Rapor Tip Dağılımını Getir
+ * 
+ * Rapor tiplerinin istatistiklerini döndürür.
+ * 
+ * @route   GET /api/admin/stats/reports-breakdown
+ * @access  Private/Admin
+ * 
+ * @returns 200 - Rapor dağılımı
+ * 
+ * @example
+ * GET /api/admin/stats/reports-breakdown
+ */
+export const getReportsBreakdown = async (req: AuthRequest, res: Response): Promise<void> => {
+  const reportsByType = await prisma.vehicleReport.groupBy({
+    by: ['reportType'],
+    _count: {
+      id: true,
+    },
+    _sum: {
+      totalCost: true,
+    },
+  });
+
+  const breakdown = reportsByType.map(item => ({
+    type: item.reportType,
+    count: item._count.id,
+    totalRevenue: Number(item._sum.totalCost || 0),
+  }));
+
+  res.json({
+    success: true,
+    data: { breakdown },
+  });
+};

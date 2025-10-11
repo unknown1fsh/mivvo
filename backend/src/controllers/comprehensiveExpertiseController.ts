@@ -46,6 +46,8 @@ import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { AuthRequest } from '../middleware/auth'
 import { ComprehensiveExpertiseService } from '../services/comprehensiveExpertiseService'
+import { refundCreditForFailedAnalysis } from '../utils/creditRefund'
+import { ERROR_MESSAGES } from '../constants/ErrorMessages'
 import multer from 'multer'
 
 const prisma = new PrismaClient()
@@ -482,11 +484,37 @@ export class ComprehensiveExpertiseController {
 
     } catch (error) {
       console.error('❌ Tam expertiz hatası:', error)
-      res.status(500).json({
-        success: false,
-        message: 'Tam expertiz gerçekleştirilemedi',
-        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-      })
+      
+      // Analiz başarısız oldu - Krediyi iade et
+      try {
+        const userId = req.user!.id
+        const serviceCost = 85 // Tam ekspertiz maliyeti (CreditPricing'den alınmalı)
+        
+        await refundCreditForFailedAnalysis(
+          userId,
+          parseInt(req.params.reportId),
+          serviceCost,
+          'AI analizi tamamlanamadı'
+        )
+        
+        console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
+        
+        res.status(500).json({
+          success: false,
+          message: ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND,
+          creditRefunded: true,
+          refundedAmount: serviceCost,
+          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+        })
+      } catch (refundError) {
+        console.error('❌ Kredi iade hatası:', refundError)
+        
+        res.status(500).json({
+          success: false,
+          message: 'Tam expertiz gerçekleştirilemedi',
+          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+        })
+      }
     }
   }
 

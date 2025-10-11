@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   CameraIcon,
@@ -165,6 +166,7 @@ const damageTypes = [
 ]
 
 export default function DamageAnalysisPage() {
+  const router = useRouter()
   const [images, setImages] = useState<DamageAnalysisImage[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
@@ -351,10 +353,10 @@ export default function DamageAnalysisPage() {
 
       await Promise.all(analysisPromises)
       
-      // Rapor sayfasına yönlendir
+      // Rapor sayfasına yönlendir (aynı pencerede)
       setTimeout(() => {
         const reportId = `DA-${Date.now()}`
-        window.location.href = `/vehicle/damage-analysis/report?reportId=${reportId}`
+        router.push(`/vehicle/damage-analysis/report?reportId=${reportId}`)
       }, 2000)
 
     } catch (error) {

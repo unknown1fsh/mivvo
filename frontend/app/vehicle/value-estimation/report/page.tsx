@@ -4,8 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { 
   ArrowLeftIcon,
-  ArrowDownTrayIcon,
-  PrinterIcon,
+  DocumentArrowDownIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   CurrencyDollarIcon,
@@ -20,7 +19,9 @@ import Link from 'next/link'
 import { FadeInUp } from '@/components/motion'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
-import { generateValueEstimationPDF } from '@/utils/pdfValueEstimation'
+import { savePageAsPDF } from '@/lib/savePageAsPDF'
+import { ReportLoading } from '@/components/ui/ReportLoading'
+import { ReportError } from '@/components/ui/ReportError'
 
 interface ValueEstimationReport {
   id: number
@@ -39,68 +40,100 @@ function ValueEstimationReportContent() {
   const reportId = searchParams.get('reportId')
   const [report, setReport] = useState<ValueEstimationReport | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const generatePDF = async () => {
+  const handleSave = async () => {
     if (!report) return
 
-    setIsGeneratingPDF(true)
     try {
-      const vehicleInfo = {
-        make: report.vehicleBrand,
-        model: report.vehicleModel,
-        year: report.vehicleYear,
-        plate: report.vehiclePlate
-      }
-      
-      await generateValueEstimationPDF(report, report.aiAnalysisData)
-      toast.success('PDF başarıyla oluşturuldu!')
+      await savePageAsPDF('report-content', `deger-tahmini-${report.vehiclePlate}.pdf`)
+      toast.success('Rapor başarıyla kaydedildi!')
     } catch (error) {
-      console.error('PDF oluşturma hatası:', error)
-      toast.error('PDF oluşturulurken hata oluştu!')
-    } finally {
-      setIsGeneratingPDF(false)
+      console.error('PDF kaydetme hatası:', error)
+      toast.error('Rapor kaydedilirken hata oluştu!')
     }
   }
 
-  const handlePrint = () => {
-    window.print()
+  const fetchReport = async () => {
+    if (!reportId) {
+      setError('not_found')
+      setLoading(false)
+      return
+    }
+
+    try {
+      setError(null)
+      setLoading(true)
+      
+      const response = await api.get(`/value-estimation/${reportId}`)
+      if (response.data.success) {
+        const reportData = response.data.data
+        
+        // Rapor FAILED durumunda ise hata göster
+        if (reportData.status === 'FAILED') {
+          setError('ai_failed')
+          setLoading(false)
+          return
+        }
+        
+        // Rapor PROCESSING durumundaysa bekle
+        if (reportData.status === 'PROCESSING' || reportData.status === 'PENDING') {
+          // 5 saniye sonra tekrar kontrol et
+          setTimeout(fetchReport, 5000)
+          return
+        }
+        
+        setReport(reportData)
+      } else {
+        setError('generic')
+      }
+    } catch (error: any) {
+      console.error('Rapor yükleme hatası:', error)
+      
+      // Hata tipini belirle
+      if (error.message?.includes('Network') || error.message?.includes('network')) {
+        setError('network_error')
+      } else if (error.response?.status === 404) {
+        setError('not_found')
+      } else if (error.message?.includes('yoğun') || error.message?.includes('busy')) {
+        setError('ai_busy')
+      } else {
+        setError('generic')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
-    const fetchReport = async () => {
-      if (!reportId) {
-        toast.error('Rapor ID bulunamadı')
-        setLoading(false)
-        return
-      }
-
-      try {
-        const response = await api.get(`/value-estimation/${reportId}`)
-        if (response.data.success) {
-          setReport(response.data.data)
-        } else {
-          toast.error('Rapor yüklenemedi')
-        }
-      } catch (error) {
-        console.error('Rapor yükleme hatası:', error)
-        toast.error('Rapor yüklenirken hata oluştu')
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchReport()
   }, [reportId])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Rapor yükleniyor...</p>
-        </div>
-      </div>
+      <ReportLoading
+        type="value"
+        vehicleInfo={report ? {
+          make: report.vehicleBrand,
+          model: report.vehicleModel,
+          year: report.vehicleYear,
+          plate: report.vehiclePlate
+        } : undefined}
+        progress={80}
+        estimatedTime="30-45 saniye"
+      />
+    )
+  }
+
+  if (error) {
+    return (
+      <ReportError
+        type={error as any}
+        creditRefunded={error === 'ai_failed'}
+        onRetry={fetchReport}
+        showDashboardLink={true}
+        showSupportLink={true}
+      />
     )
   }
 
@@ -122,9 +155,9 @@ function ValueEstimationReportContent() {
   const analysis = report.aiAnalysisData
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div id="report-content" className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
@@ -133,19 +166,11 @@ function ValueEstimationReportContent() {
             </Link>
             <div className="flex items-center space-x-4">
               <button 
-                onClick={handlePrint}
-                className="flex items-center px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={handleSave}
+                className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
               >
-                <PrinterIcon className="w-5 h-5 mr-2" />
-                Yazdır
-              </button>
-              <button 
-                onClick={generatePDF}
-                disabled={isGeneratingPDF}
-                className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <ArrowDownTrayIcon className="w-5 h-5 mr-2" />
-                {isGeneratingPDF ? 'PDF Oluşturuluyor...' : 'PDF İndir'}
+                <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
+                Kaydet
               </button>
             </div>
           </div>

@@ -235,20 +235,11 @@ TEMEL BİLGİLER:
 Bu araç için KAPSAMLI, PROFESYONEL ve DETAYLI bir tam expertiz raporu hazırlayacaksın.
 ` : ''
 
-    return `
-╔═══════════════════════════════════════════════════════════════════╗
-║                                                                   ║
-║          🏆 MIVVO EKSPERTİZ - TAM KAPSAMLI ARAÇ ANALİZİ 🏆       ║
-║                                                                   ║
-║              Türkiye'nin En Detaylı AI Destekli                  ║
-║              Otomotiv Expertiz Rapor Sistemi                      ║
-║                                                                   ║
-╚═══════════════════════════════════════════════════════════════════╝
+    return `Türkçe göndermiş olduğum bu resimlere ve bu motor sesine göre aracın tam expertiz raporunu çıkar.
 
-🎯 ÖNEMLİ TALİMAT: DETAYLI TABLO FORMATI ZORUNLU!
-═══════════════════════════════════════════════════════════════════
+${vehicleContext}
 
-Bu rapor, kullanıcının aldığı ChatGPT benzeri DETAYLI, TABLOLU ve PROFESYONELformatta olmalıdır.
+🎯 Cevap TAMAMEN TÜRKÇE olmalı - HİÇBİR İNGİLİZCE KELİME YOK!
 
 📋 ZORUNLU BÖLÜMLER:
 
@@ -285,324 +276,27 @@ Bu rapor, kullanıcının aldığı ChatGPT benzeri DETAYLI, TABLOLU ve PROFESYO
 
 ${vehicleContext}
 
-═══════════════════════════════════════════════════════════════════
-                    👨‍🔧 UZMAN PROFİLİNİZ
-═══════════════════════════════════════════════════════════════════
+📊 Mevcut AI Analiz Sonuçları:
+${analyses.damage ? `\n✓ Hasar Tespiti: ${analyses.damage.damageAreas?.length || 0} hasar bulundu` : ''}
+${analyses.paint ? `\n✓ Boya Analizi: Durum ${analyses.paint.paintCondition || 'değerlendirildi'}` : ''}
+${analyses.audio ? `\n✓ Motor Sesi: ${analyses.audio.engineHealth || 'analiz edildi'}` : ''}
+${analyses.value ? `\n✓ Değer Tahmini: Yaklaşık ${analyses.value.estimatedValue?.toLocaleString('tr-TR') || '-'} TL` : ''}
 
-Sen dünyaca tanınmış, 35+ yıllık deneyime sahip bir MASTER OTOMOTİV EKSPERİSİN.
+📋 RAPOR FORMATI:
 
-✓ Uzmanlık Alanlarınız:
-  • Mekanik Sistem Analizi ve Teşhis (ASE Master Sertifikalı)
-  • Kaporta ve Boya Kalite Değerlendirmesi
-  • Akustik Motor Analizi ve Titreşim Ölçümü
-  • Araç Değerleme ve Piyasa Analizi (IAAI Sertifikalı)
-  • Hasar Tespiti ve Onarım Maliyet Hesaplama
-  • İkinci El Araç Yatırım Danışmanlığı
-  • Türkiye Otomotiv Piyasası Uzmanı (15+ yıl)
+1. Detaylı açıklama (200+ kelime) - Fotoğraflara bakarak başla
+2. Teknik özellikler tablosu  
+3. Dış ve iç donanım durumu tabloları
+4. Mekanik analiz (motor, vites, fren, süspansiyon)
+5. Ekspertiz puanları (her bölüm için 0-100)
+6. Piyasa değer tahmini (şu anki hali, tamir sonrası, restore sonrası)
+7. Uzman görüşü ve yatırım önerisi
+8. Acil yapılması gerekenler
+9. Kısa/uzun vadeli öneriler
 
-✓ Başarılarınız:
-  • 50.000+ araç expertiz raporu hazırladınız
-  • Türkiye'nin en büyük galeri zincirlerinin danışmanısınız
-  • Sigorta şirketleri için hasar değerleme uzmanısınız
-  • Otomotiv sektöründe "Yılın Eksperi" ödülü sahibisiniz
+💰 Türkiye 2025 gerçek fiyatlarını kullan.
 
-✓ Analiz Yaklaşımınız:
-  • MİKROSKOBİK DETAY SEVİYESİNDE inceleme yaparsınız
-  • Her bulguyu AÇIK, NET ve ANLAŞILABİLİR şekilde açıklarsınız
-  • ÖLÇÜLEBILIR VERİLER ve sayısal değerlerle desteklersiniz
-  • DÜRÜST, TARAFSIZ ve PROFESYONEL değerlendirme yaparsınız
-  • Müşterinize en iyi yatırım kararını aldıracak şekilde yönlendirirsiniz
-
-═══════════════════════════════════════════════════════════════════
-              📊 MEVCUT ANALİZ VERİLERİ VE BULGULAR
-═══════════════════════════════════════════════════════════════════
-
-${analyses.damage ? `
-┌─────────────────────────────────────────────────────────────────┐
-│ 🔧 HASAR TESPİT VE KAPORTA ANALİZİ SONUÇLARI                    │
-└─────────────────────────────────────────────────────────────────┘
-
-📋 ÖZET BULGULAR:
-├─ Toplam Tespit Edilen Hasar    : ${analyses.damage.damageAreas.length} adet
-├─ Kritik Seviye Hasar           : ${analyses.damage.damageAreas.filter(d => d.severity === 'critical').length} adet
-├─ Yüksek Seviye Hasar           : ${analyses.damage.damageAreas.filter(d => d.severity === 'high').length} adet
-├─ Orta Seviye Hasar             : ${analyses.damage.damageAreas.filter(d => d.severity === 'medium').length} adet
-├─ Düşük Seviye Hasar            : ${analyses.damage.damageAreas.filter(d => d.severity === 'low').length} adet
-├─ Genel Hasar Seviyesi          : ${analyses.damage.overallAssessment.damageLevel}
-├─ Toplam Tamir Maliyeti         : ${analyses.damage.overallAssessment.totalRepairCost.toLocaleString('tr-TR')} TL
-├─ Araç Durumu                   : ${analyses.damage.overallAssessment.vehicleCondition}
-├─ Yapısal Bütünlük              : ${analyses.damage.technicalAnalysis.structuralIntegrity}
-├─ Güvenlik Sistemleri           : ${analyses.damage.technicalAnalysis.safetySystems}
-├─ Mekanik Sistemler             : ${analyses.damage.technicalAnalysis.mechanicalSystems}
-├─ Elektrik Sistemleri           : ${analyses.damage.technicalAnalysis.electricalSystems}
-├─ Gövde Hizalaması              : ${analyses.damage.technicalAnalysis.bodyAlignment}
-├─ Şasi/Çerçeve Hasarı           : ${analyses.damage.technicalAnalysis.frameDamage ? 'EVET - KRİTİK!' : 'Hayır - Temiz'}
-├─ Hava Yastığı Patlaması        : ${analyses.damage.technicalAnalysis.airbagDeployment ? 'EVET - Değiştirilmiş' : 'Hayır - Orijinal'}
-├─ Yol Güvenliği Durumu          : ${analyses.damage.safetyAssessment.roadworthiness}
-├─ Muayene Gereksinimi           : ${analyses.damage.safetyAssessment.inspectionRequired ? 'Evet - Zorunlu' : 'Hayır'}
-├─ Piyasa Değer Kaybı            : %${analyses.damage.overallAssessment.marketValueImpact}
-├─ Sigorta Durumu                : ${analyses.damage.overallAssessment.insuranceStatus}
-└─ Tahmini Onarım Süresi         : ${analyses.damage.repairEstimate.timeline.reduce((sum, t) => sum + t.duration, 0)} gün
-
-🚨 KRİTİK GÜVENLİK SORUNLARI:
-${analyses.damage.safetyAssessment.criticalIssues.map((issue, i) => `   ${i + 1}. ${issue}`).join('\n') || '   • Kritik güvenlik sorunu tespit edilmedi'}
-
-⚠️ ACİL MÜDAHALE GEREKTİREN İŞLEMLER:
-${analyses.damage.safetyAssessment.immediateActions.map((action, i) => `   ${i + 1}. ${action}`).join('\n') || '   • Acil müdahale gerektiren işlem yok'}
-
-📍 DETAYLI HASAR LİSTESİ:
-${analyses.damage.damageAreas.map((damage, i) => `
-   ${i + 1}. ${damage.type.toUpperCase()} - ${damage.area.toUpperCase()} Bölgesi
-      ├─ Şiddet Seviyesi        : ${damage.severity.toUpperCase()}
-      ├─ Güven Skoru            : %${damage.confidence}
-      ├─ Güvenlik Etkisi        : ${damage.safetyImpact}
-      ├─ Onarım Önceliği        : ${damage.repairPriority}
-      ├─ Etkilenen Parçalar     : ${damage.partsAffected.join(', ') || 'Belirtilmemiş'}
-      ├─ Tamir Yöntemi          : ${damage.repairMethod}
-      ├─ Tahmini Maliyet        : ${damage.repairCost.toLocaleString('tr-TR')} TL
-      ├─ Tahmini Süre           : ${damage.estimatedRepairTime} saat
-      ├─ Garanti Etkisi         : ${damage.warrantyImpact ? 'Evet - Garanti geçersiz olabilir' : 'Hayır'}
-      ├─ Sigorta Kapsamı        : ${damage.insuranceCoverage}
-      └─ Açıklama               : ${damage.description}
-`).join('\n')}
-
-💰 MALİYET DÖKÜMÜ:
-├─ İşçilik Maliyeti              : ${analyses.damage.repairEstimate.laborCost.toLocaleString('tr-TR')} TL
-├─ Yedek Parça Maliyeti          : ${analyses.damage.repairEstimate.partsCost.toLocaleString('tr-TR')} TL
-├─ Boya İşçiliği                 : ${analyses.damage.repairEstimate.paintCost.toLocaleString('tr-TR')} TL
-├─ Ek Maliyetler                 : ${analyses.damage.repairEstimate.additionalCosts.toLocaleString('tr-TR')} TL
-└─ TOPLAM TAHMİNİ MALİYET        : ${analyses.damage.overallAssessment.totalRepairCost.toLocaleString('tr-TR')} TL
-
-` : ''}
-
-${analyses.paint ? `
-┌─────────────────────────────────────────────────────────────────┐
-│ 🎨 BOYA KALİTESİ VE YÜZEY ANALİZİ SONUÇLARI                     │
-└─────────────────────────────────────────────────────────────────┘
-
-📋 ÖZET BULGULAR:
-├─ Genel Boya Durumu             : ${analyses.paint.paintCondition.toUpperCase()}
-├─ Boya Kalite Skoru             : ${analyses.paint.paintQuality.overallScore}/100
-├─ Parlaklık Seviyesi            : ${analyses.paint.paintQuality.glossLevel}/100
-├─ Yüzey Pürüzsüzlüğü            : ${analyses.paint.paintQuality.smoothness}/100
-├─ Renk Tekdüzeliği              : ${analyses.paint.paintQuality.uniformity}/100
-├─ Boya Yapışması                : ${analyses.paint.paintQuality.adhesion}/100
-├─ Dayanıklılık                  : ${analyses.paint.paintQuality.durability}/100
-├─ Hava Koşullarına Dayanım      : ${analyses.paint.paintQuality.weatherResistance}/100
-├─ UV Koruma                     : ${analyses.paint.paintQuality.uvProtection}/100
-└─ Güven Skoru                   : %${analyses.paint.confidence}
-
-🎨 RENK ANALİZİ:
-├─ Renk Kodu                     : ${analyses.paint.colorAnalysis.colorCode}
-├─ Renk Adı                      : ${analyses.paint.colorAnalysis.colorName}
-├─ Renk Ailesi                   : ${analyses.paint.colorAnalysis.colorFamily}
-├─ Metalik Boya                  : ${analyses.paint.colorAnalysis.metallic ? 'EVET' : 'Hayır'}
-├─ Sedef Boya                    : ${analyses.paint.colorAnalysis.pearl ? 'EVET' : 'Hayır'}
-├─ Renk Eşleşmesi                : ${analyses.paint.colorAnalysis.colorMatch}/100
-├─ Renk Tutarlılığı              : ${analyses.paint.colorAnalysis.colorConsistency}/100
-├─ Renk Derinliği                : ${analyses.paint.colorAnalysis.colorDepth}/100
-├─ Renk Canlılığı                : ${analyses.paint.colorAnalysis.colorVibrance}/100
-├─ Renk Solması                  : ${analyses.paint.colorAnalysis.colorFading}/100
-├─ Renk Kayması                  : ${analyses.paint.colorAnalysis.colorShifting}/100
-├─ Orijinal Boya                 : ${analyses.paint.colorAnalysis.originalColor ? 'EVET - Fabrika Boyası' : 'HAYIR - Değiştirilmiş'}
-├─ Boyama Tespiti                : ${analyses.paint.colorAnalysis.repaintDetected ? 'EVET - Boyalı Panel Var' : 'HAYIR - Tüm Paneller Orijinal'}
-└─ Boya Geçmişi                  : ${analyses.paint.colorAnalysis.colorHistory.join(' → ')}
-
-📏 MİKROMETRİK KALINLIK ÖLÇÜMLERİ:
-├─ Astar Kalınlığı               : ${analyses.paint.surfaceAnalysis.primerThickness} μm (mikron)
-├─ Baz Kat Kalınlığı             : ${analyses.paint.surfaceAnalysis.baseCoatThickness} μm (mikron)
-├─ Vernik Kalınlığı              : ${analyses.paint.surfaceAnalysis.clearCoatThickness} μm (mikron)
-├─ TOPLAM BOYA KALINLIĞI         : ${analyses.paint.surfaceAnalysis.totalThickness} μm (mikron)
-├─ Kalınlık Tekdüzeliği          : ${analyses.paint.surfaceAnalysis.thicknessUniformity}/100
-├─ Yüzey Pürüzlülüğü             : ${analyses.paint.surfaceAnalysis.surfaceRoughness}/100
-└─ Standart Aralık               : 90-150 μm (Bu aracın değeri: ${analyses.paint.surfaceAnalysis.totalThickness} μm)
-
-⚠️ YÜZEY KUSUR ANALİZİ:
-├─ Portakal Kabuğu Efekti        : ${analyses.paint.surfaceAnalysis.orangePeel}/100
-├─ Sarkma/Damlama                : ${analyses.paint.surfaceAnalysis.runs}/100
-├─ Boya Toplanması               : ${analyses.paint.surfaceAnalysis.sags}/100
-├─ Toz/Kir Partikülleri          : ${analyses.paint.surfaceAnalysis.dirt}/100
-└─ Kontaminasyon Seviyesi        : ${analyses.paint.surfaceAnalysis.contamination}/100
-
-🔍 TESPİT EDİLEN YÜZEY KUSURLARI:
-${analyses.paint.surfaceAnalysis.surfaceDefects.map((defect, i) => `
-   ${i + 1}. ${defect.type.toUpperCase().replace(/_/g, ' ')}
-      ├─ Şiddet Seviyesi        : ${defect.severity.toUpperCase()}
-      ├─ Konum                  : ${defect.location}
-      ├─ Boyut                  : ${defect.size} cm²
-      ├─ Onarılabilir           : ${defect.repairable ? 'EVET' : 'HAYIR'}
-      ├─ Tahmini Maliyet        : ${defect.repairCost.toLocaleString('tr-TR')} TL
-      └─ Açıklama               : ${defect.description}
-`).join('\n') || '   • Ciddi yüzey kusuru tespit edilmedi'}
-
-🔬 TEKNİK DETAYLAR:
-├─ Boya Sistemi                  : ${analyses.paint.technicalDetails.paintSystem}
-├─ Astar Tipi                    : ${analyses.paint.technicalDetails.primerType}
-├─ Baz Kat                       : ${analyses.paint.technicalDetails.baseCoat}
-├─ Vernik Katı                   : ${analyses.paint.technicalDetails.clearCoat}
-├─ Boya Markası                  : ${analyses.paint.technicalDetails.paintBrand}
-├─ Boya Tipi                     : ${analyses.paint.technicalDetails.paintType}
-├─ Uygulama Yöntemi              : ${analyses.paint.technicalDetails.applicationMethod}
-├─ Kurutma Yöntemi               : ${analyses.paint.technicalDetails.curingMethod}
-├─ Boya Yaşı                     : ${analyses.paint.technicalDetails.paintAge} yıl
-├─ Son Boyama                    : ${analyses.paint.technicalDetails.lastRepaint === 0 ? 'Hiç boyanmamış' : `${analyses.paint.technicalDetails.lastRepaint} yıl önce`}
-├─ Boya Katman Sayısı            : ${analyses.paint.technicalDetails.paintLayers} kat
-└─ Kalite Derecesi               : ${analyses.paint.technicalDetails.qualityGrade}
-
-💰 BOYA İYİLEŞTİRME MALİYETLERİ:
-├─ İşçilik Maliyeti              : ${analyses.paint.costEstimate.laborCost.toLocaleString('tr-TR')} TL
-├─ Malzeme Maliyeti              : ${analyses.paint.costEstimate.materialCost.toLocaleString('tr-TR')} TL
-├─ Hazırlık İşlemi               : ${analyses.paint.costEstimate.preparationCost.toLocaleString('tr-TR')} TL
-├─ Boya Maliyeti                 : ${analyses.paint.costEstimate.paintCost.toLocaleString('tr-TR')} TL
-├─ Vernik Maliyeti               : ${analyses.paint.costEstimate.clearCoatCost.toLocaleString('tr-TR')} TL
-├─ Ek Maliyetler                 : ${analyses.paint.costEstimate.additionalCosts.toLocaleString('tr-TR')} TL
-└─ TOPLAM TAHMİN                 : ${analyses.paint.costEstimate.totalCost.toLocaleString('tr-TR')} TL
-
-` : ''}
-
-${analyses.audio ? `
-┌─────────────────────────────────────────────────────────────────┐
-│ 🔊 MOTOR AKUSTIK VE TİTREŞİM ANALİZİ SONUÇLARI                  │
-└─────────────────────────────────────────────────────────────────┘
-
-📋 ÖZET BULGULAR:
-├─ Genel Motor Sağlık Skoru      : ${analyses.audio.overallScore}/100
-├─ Motor Sağlık Durumu           : ${analyses.audio.engineHealth.toUpperCase()}
-├─ Tespit Edilen Sorun Sayısı    : ${analyses.audio.detectedIssues.length} adet
-├─ Kritik Sorunlar               : ${analyses.audio.detectedIssues.filter(i => i.severity === 'critical').length} adet
-├─ Yüksek Öncelik Sorunlar       : ${analyses.audio.detectedIssues.filter(i => i.severity === 'high').length} adet
-└─ Güven Skoru                   : %${analyses.audio.confidence}
-
-⚙️ RPM (DEVİR) ANALİZİ:
-├─ Rölanti Devri                 : ${analyses.audio.rpmAnalysis.idleRpm} RPM
-├─ Maksimum Devir                : ${analyses.audio.rpmAnalysis.maxRpm} RPM
-├─ Devir Stabilitesi             : ${analyses.audio.rpmAnalysis.rpmStability}/100
-├─ Gaz Tepkisi                   : ${analyses.audio.rpmAnalysis.rpmResponse}/100
-└─ Rölanti Kalitesi              : ${analyses.audio.rpmAnalysis.idleQuality}
-
-🎵 SES KALİTESİ ANALİZİ:
-├─ Genel Ses Kalitesi            : ${analyses.audio.soundQuality.overallQuality}/100
-├─ Ses Netliği                   : ${analyses.audio.soundQuality.clarity}/100
-├─ Ses Pürüzsüzlüğü              : ${analyses.audio.soundQuality.smoothness}/100
-├─ Ses Tutarlılığı               : ${analyses.audio.soundQuality.consistency}/100
-└─ Ses İmzası                    : ${analyses.audio.soundQuality.soundSignature}
-
-📊 PERFORMANS METRİKLERİ:
-├─ Motor Verimliliği             : ${analyses.audio.performanceMetrics.engineEfficiency}/100
-├─ Yakıt Verimliliği             : ${analyses.audio.performanceMetrics.fuelEfficiency}/100
-├─ Genel Performans              : ${analyses.audio.performanceMetrics.overallPerformance}/100
-└─ Performans Notu               : ${analyses.audio.performanceMetrics.performanceGrade}
-
-🔍 TESPİT EDİLEN MOTOR SORUNLARI:
-${analyses.audio.detectedIssues.map((issue, i) => `
-   ${i + 1}. ${issue.type.toUpperCase()} - ${issue.severity.toUpperCase()} SEVİYE
-      ├─ Güven Skoru            : %${issue.confidence}
-      ├─ Aciliyet Durumu        : ${issue.urgency.toUpperCase()}
-      ├─ Tahmini Maliyet        : ${issue.estimatedRepairCost.toLocaleString('tr-TR')} TL
-      ├─ Tahmini Süre           : ${issue.estimatedRepairTime} saat
-      ├─ Açıklama               : ${issue.description}
-      ├─ Belirtiler             : ${issue.symptoms.join(', ')}
-      ├─ Olası Nedenler         : ${issue.possibleCauses.join(', ')}
-      └─ Önerilen Aksiyon       : ${issue.recommendedActions.join(', ')}
-`).join('\n') || '   • Kritik motor sorunu tespit edilmedi - Motor sağlıklı çalışıyor'}
-
-💰 MOTOR ONARIM MALİYET DÖKÜMÜ:
-${analyses.audio.costEstimate.breakdown.map((item, i) => `
-   ${i + 1}. ${item.category}
-      ├─ Maliyet                : ${item.cost.toLocaleString('tr-TR')} TL
-      └─ Açıklama               : ${item.description}
-`).join('\n')}
-└─ TOPLAM TAHMİNİ MALİYET        : ${analyses.audio.costEstimate.totalCost.toLocaleString('tr-TR')} TL
-
-` : ''}
-
-${analyses.value ? `
-┌─────────────────────────────────────────────────────────────────┐
-│ 💰 ARAÇ DEĞER TAHMİNİ VE PİYASA ANALİZİ SONUÇLARI              │
-└─────────────────────────────────────────────────────────────────┘
-
-📋 ÖZET BULGULAR:
-├─ Tahmini Piyasa Değeri         : ${analyses.value.estimatedValue.toLocaleString('tr-TR')} TL
-├─ Piyasa Trendi                 : ${analyses.value.marketAnalysis.marketTrend}
-├─ Talep Seviyesi                : ${analyses.value.marketAnalysis.demandLevel}
-├─ Arz Seviyesi                  : ${analyses.value.marketAnalysis.supplyLevel}
-├─ Fiyat Aralığı (Min)           : ${analyses.value.marketAnalysis.priceRange.min.toLocaleString('tr-TR')} TL
-├─ Fiyat Aralığı (Ortalama)      : ${analyses.value.marketAnalysis.priceRange.average.toLocaleString('tr-TR')} TL
-├─ Fiyat Aralığı (Max)           : ${analyses.value.marketAnalysis.priceRange.max.toLocaleString('tr-TR')} TL
-├─ Likidite Skoru                : ${analyses.value.investmentAnalysis.liquidityScore}/100
-├─ Yatırım Derecesi              : ${analyses.value.investmentAnalysis.investmentGrade}
-└─ Güven Skoru                   : %${analyses.value.confidence}
-
-📊 PİYASA KONUMU:
-├─ Piyasa Yüzdeliği              : ${analyses.value.marketPosition.percentile}. yüzdelik dilim
-├─ Rekabet Konumu                : ${analyses.value.marketPosition.competitivePosition}
-└─ Fiyatlandırma Stratejisi      : ${analyses.value.marketPosition.pricingStrategy}
-
-💡 PİYASA İÇGÖRÜLERİ:
-${analyses.value.marketAnalysis.marketInsights.map((insight: string, i: number) => `   ${i + 1}. ${insight}`).join('\n')}
-
-` : ''}
-
-═══════════════════════════════════════════════════════════════════
-              🎯 TAM EKSPERTİZ RAPORU GEREKSİNİMLERİ
-═══════════════════════════════════════════════════════════════════
-
-⚠️ KRİTİK ÖNEMLİ TALIMATLAR - MUTLAKA UYULMALI:
-
-1. 🇹🇷 DİL KURALLARI:
-   ✓ RAPOR %100 TÜRKÇE OLMALI
-   ✓ HİÇBİR İNGİLİZCE KELİME KULLANILMAMALI
-   ✓ Teknik terimler Türkçe karşılıklarıyla yazılmalı
-   ✓ Profesyonel otomotiv terminolojisi kullanılmalı
-   ✓ Açık, net ve anlaşılır bir dil kullanılmalı
-
-2. 🔍 DETAY SEVİYESİ:
-   ✓ Her bulgu için DETAYLI açıklama yapılmalı (minimum 3-4 cümle)
-   ✓ Sayısal değerler ve ölçümler belirtilmeli
-   ✓ Karşılaştırmalar yapılmalı (standart değerlerle)
-   ✓ Neden-sonuç ilişkileri açıklanmalı
-   ✓ Örneklerle desteklenmeli
-
-3. 📊 VERİ ENTEGRASYONU:
-   ✓ Yukarıdaki TÜM analiz verilerini birleştir
-   ✓ Hasar, boya, motor ses ve değer analizlerini ilişkilendir
-   ✓ Çapraz referanslar oluştur
-   ✓ Tutarsızlıkları tespit et ve açıkla
-   ✓ Bütüncül bir değerlendirme sun
-
-4. 💼 PROFESYONELLIK:
-   ✓ Master eksper dilini kullan
-   ✓ Objektif ve tarafsız değerlendir
-   ✓ Hem olumlu hem olumsuz yönleri dengeli aktar
-   ✓ Kanıtlarla desteklenmiş görüşler sun
-   ✓ Güvenilir ve ikna edici yaz
-
-5. 💰 FİNANSAL ANALIZ:
-   ✓ Türkiye 2025 gerçek piyasa fiyatlarını kullan
-   ✓ Tüm maliyetleri detaylandır
-   ✓ ROI (Yatırım Getirisi) hesapla
-   ✓ Risk/Getiri analizi yap
-   ✓ Alternatif senaryolar sun
-
-6. 🎯 KARAR DESTEK:
-   ✓ Net bir öneri sun (Al/Alma/Pazarlık Yap)
-   ✓ Önerinizin gerekçelerini sırala
-   ✓ Riskleri açıkça belirt
-   ✓ Fırsatları vurgula
-   ✓ Acil aksiyonları önceliklendirin
-
-7. 📸 GÖRSEL VE SES ANALİZİ:
-   ✓ Fotoğraflardaki her detayı incele ve yorumla
-   ✓ Motor ses kaydındaki tüm akustik özellikleri analiz et
-   ✓ Görsel ve işitsel bulguları birleştir
-   ✓ AI analizinin yanında kendi profesyonel görüşünü ekle
-   ✓ Fotoğraflarda görünmeyen olası sorunları da değerlendir
-
-═══════════════════════════════════════════════════════════════════
-                   📄 RAPOR ÇIKTI FORMATI
-═══════════════════════════════════════════════════════════════════
-
-⚠️ SADECE AŞAĞIDAKI JSON FORMATINDA CEVAP VER - BAŞKA HİÇBİR ŞEY YAZMA!
+⚠️ SADECE JSON FORMATINDA CEVAP VER:
 
 {
   "overallScore": 85,

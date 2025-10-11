@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   MicrophoneIcon,
@@ -162,6 +163,7 @@ const commonIssues = [
 ]
 
 export default function EngineSoundAnalysisPage() {
+  const router = useRouter()
   const [audioFiles, setAudioFiles] = useState<EngineSoundFile[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
@@ -393,10 +395,10 @@ export default function EngineSoundAnalysisPage() {
 
       await Promise.all(analysisPromises)
       
-      // Rapor sayfasına yönlendir
+      // Rapor sayfasına yönlendir (aynı pencerede)
       setTimeout(() => {
         const reportId = `ESA-${Date.now()}`
-        window.location.href = `/vehicle/engine-sound-analysis/report?reportId=${reportId}`
+        router.push(`/vehicle/engine-sound-analysis/report?reportId=${reportId}`)
       }, 2000)
 
     } catch (error) {

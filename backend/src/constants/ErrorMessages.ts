@@ -265,6 +265,32 @@ export const ERROR_MESSAGES = {
     AI_UNAVAILABLE: 'AI servisi şu anda kullanılamıyor',
 
     /**
+     * AI servis yoğunluğu
+     * 
+     * Kullanım: Rate limit veya yüksek talep
+     * HTTP 429 Too Many Requests
+     * KULLANICI DOSTU: Kredi iade garanti mesajı ile
+     */
+    AI_BUSY: 'AI servis yoğunluğu nedeniyle rapor oluşturulamadı. Lütfen birkaç dakika sonra tekrar deneyiniz. Kredileriniz korunmuştur.',
+
+    /**
+     * AI analizi tamamlanamadı - Kredi iade edildi
+     * 
+     * Kullanım: Analiz başarısız, kredi iade edildi
+     * HTTP 500
+     * KULLANICI DOSTU: Kredi iade edildi mesajı ile
+     */
+    AI_FAILED_WITH_REFUND: 'AI analizi tamamlanamadı. Kredileriniz iade edilmiştir. Lütfen tekrar deneyiniz.',
+
+    /**
+     * Yetersiz veri
+     * 
+     * Kullanım: Görsel veya ses dosyası eksik
+     * HTTP 422
+     */
+    INSUFFICIENT_DATA: 'Yeterli veri bulunamadı. Lütfen daha fazla görsel veya ses dosyası yükleyiniz.',
+
+    /**
      * Geçersiz görsel
      * 
      * Kullanım: Görüntü kalitesi düşük veya format hatalı
@@ -294,7 +320,7 @@ export const ERROR_MESSAGES = {
      * Kullanım: AI servisi timeout süresini aştı
      * HTTP 504 Gateway Timeout
      */
-    TIMEOUT: 'Analiz zaman aşımına uğradı',
+    TIMEOUT: 'Analiz zaman aşımına uğradı. Lütfen tekrar deneyiniz.',
   },
 
   // ===== RAPOR HATALARI (REPORT) =====

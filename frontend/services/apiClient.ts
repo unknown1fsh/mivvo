@@ -253,10 +253,8 @@ class ApiClient {
       const data = await response.json()
       console.log('✅ Response data parse edildi:', data)
       
-      return {
-        success: true,
-        data,
-      }
+      // Backend zaten {success, data} formatında dönüyor, direkt return et
+      return data
     } catch (error) {
       // Hata loglama
       console.error('💥 API Request Error:', error)
