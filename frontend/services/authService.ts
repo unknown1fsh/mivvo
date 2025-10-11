@@ -111,25 +111,16 @@ class AuthService {
       })
       
       if (response.success && response.data) {
-        // Backend response'u parse et
-        const backendData = response.data
+        // apiClient artık direkt backend response döndürüyor
+        const actualData = response.data
         
-        console.log('✅ Backend verisi parse edildi:', {
-          hasToken: !!backendData.data?.token,
-          hasUser: !!backendData.data?.user,
-          tokenLength: backendData.data?.token?.length,
-          userEmail: backendData.data?.user?.email,
-          fullData: backendData
-        })
-        
-        // Backend'den gelen data yapısını kontrol et
-        const actualData = backendData.data
-        
-        console.log('🔍 Actual data kontrolü:', {
-          hasActualData: !!actualData,
-          hasActualToken: !!actualData.token,
-          hasActualUser: !!actualData.user,
-          actualData: actualData
+        console.log('✅ Backend verisi:', {
+          hasToken: !!actualData.token,
+          hasUser: !!actualData.user,
+          tokenLength: actualData.token?.length,
+          userEmail: actualData.user?.email,
+          userRole: actualData.user?.role,
+          fullData: actualData
         })
         
         // Token ve user bilgilerini kontrol et
@@ -198,9 +189,8 @@ class AuthService {
       const response = await apiClient.post<RegisterResponse>('/api/auth/register', userData)
       
       if (response.success && response.data) {
-        // Backend response'u parse et
-        const backendData = response.data
-        const actualData = backendData.data
+        // apiClient artık direkt backend response döndürüyor
+        const actualData = response.data
         
         // Token ve user bilgilerini kontrol et
         if (!actualData.token) {
