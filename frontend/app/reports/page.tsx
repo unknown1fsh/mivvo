@@ -360,7 +360,7 @@ export default function ReportsPage() {
         {/* Reports Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <LoadingSpinner size="large" />
+            <LoadingSpinner size="lg" />
           </div>
         ) : filteredReports.length === 0 ? (
           <FadeInUp>
