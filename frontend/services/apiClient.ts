@@ -381,8 +381,13 @@ class ApiClient {
    * 
    * @returns ApiResponse<T>
    */
-  async delete<T>(endpoint: string, headers?: Record<string, string>): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE', headers })
+  async delete<T>(endpoint: string, headersOrData?: Record<string, string> | { data?: any }): Promise<ApiResponse<T>> {
+    // Eğer data property'si varsa, bu bir body objesi
+    if (headersOrData && 'data' in headersOrData) {
+      return this.request<T>(endpoint, { method: 'DELETE', body: headersOrData.data })
+    }
+    // Değilse headers objesi
+    return this.request<T>(endpoint, { method: 'DELETE', headers: headersOrData as Record<string, string> })
   }
 
   /**
