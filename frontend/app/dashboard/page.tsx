@@ -86,6 +86,7 @@ export default function DashboardPage() {
         const reportCosts: Record<string, number> = {
           'PAINT_ANALYSIS': 25,
           'DAMAGE_ANALYSIS': 35,
+          'DAMAGE_ASSESSMENT': 35,
           'ENGINE_SOUND_ANALYSIS': 30,
           'VALUE_ESTIMATION': 20,
           'COMPREHENSIVE_EXPERTISE': 85,
@@ -130,6 +131,7 @@ export default function DashboardPage() {
     const typeMap: Record<string, string> = {
       'PAINT_ANALYSIS': 'Boya Analizi',
       'DAMAGE_ANALYSIS': 'Hasar Analizi',
+      'DAMAGE_ASSESSMENT': 'Hasar Değerlendirmesi',
       'ENGINE_SOUND_ANALYSIS': 'Motor Ses Analizi',
       'VALUE_ESTIMATION': 'Değer Tahmini',
       'COMPREHENSIVE_EXPERTISE': 'Tam Ekspertiz',

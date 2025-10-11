@@ -240,6 +240,7 @@ export default function AdminPage() {
     const types: Record<string, string> = {
       PAINT_ANALYSIS: 'Boya Analizi',
       DAMAGE_ANALYSIS: 'Hasar Tespiti',
+      DAMAGE_ASSESSMENT: 'Hasar Değerlendirmesi',
       VALUE_ESTIMATION: 'Değer Tahmini',
       ENGINE_SOUND_ANALYSIS: 'Motor Ses Analizi',
       COMPREHENSIVE_EXPERTISE: 'Kapsamlı Ekspertiz',

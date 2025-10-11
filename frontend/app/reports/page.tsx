@@ -60,6 +60,11 @@ const reportTypeLabels: Record<string, { label: string; icon: any; color: string
     icon: WrenchIcon,
     color: 'bg-red-100 text-red-700'
   },
+  'DAMAGE_ASSESSMENT': { 
+    label: 'Hasar Değerlendirmesi', 
+    icon: WrenchIcon,
+    color: 'bg-red-100 text-red-700'
+  },
   'VALUE_ESTIMATION': { 
     label: 'Değer Tahmini', 
     icon: CurrencyDollarIcon,
