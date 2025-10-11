@@ -112,7 +112,7 @@ class AuthService {
       
       if (response.success && response.data) {
         // apiClient artık direkt backend response döndürüyor
-        const actualData = response.data
+        const actualData = response.data as any
         
         console.log('✅ Backend verisi:', {
           hasToken: !!actualData.token,
@@ -190,7 +190,7 @@ class AuthService {
       
       if (response.success && response.data) {
         // apiClient artık direkt backend response döndürüyor
-        const actualData = response.data
+        const actualData = response.data as any
         
         // Token ve user bilgilerini kontrol et
         if (!actualData.token) {
