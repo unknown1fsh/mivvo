@@ -40,6 +40,9 @@ export interface User {
   /** Ad Soyad */
   name: string
   
+  /** Kullanıcı rolü */
+  role: 'USER' | 'ADMIN' | 'EXPERT'
+  
   /** Profil fotoğrafı URL */
   avatar?: string
   
