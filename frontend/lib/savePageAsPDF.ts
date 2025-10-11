@@ -66,7 +66,7 @@ export async function savePageAsPDF(
   element.classList.add('pdf-exporting')
   
   const options = {
-    margin: [5, 5, 5, 5],
+    margin: [5, 5, 5, 5] as [number, number, number, number],
     filename: filename,
     image: { 
       type: 'jpeg', 
