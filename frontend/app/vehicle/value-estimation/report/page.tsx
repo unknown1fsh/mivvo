@@ -78,8 +78,8 @@ function ValueEstimationReportContent() {
         
         // Rapor PROCESSING durumundaysa bekle
         if (reportData.status === 'PROCESSING' || reportData.status === 'PENDING') {
-          // 5 saniye sonra tekrar kontrol et
-          setTimeout(fetchReport, 5000)
+          // 1 saniye sonra tekrar kontrol et (hızlı response)
+          setTimeout(fetchReport, 1000)
           return
         }
         

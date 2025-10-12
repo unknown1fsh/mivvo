@@ -65,8 +65,8 @@ function EngineSoundAnalysisReportPageContent() {
             setAnalysisResult(result)
           }
         } else if (statusResponse.status === 'processing') {
-          // 5 saniye sonra tekrar kontrol et
-          setTimeout(fetchAnalysisResult, 5000)
+          // 1 saniye sonra tekrar kontrol et (hızlı response)
+          setTimeout(fetchAnalysisResult, 1000)
         }
       }
     } catch (error) {

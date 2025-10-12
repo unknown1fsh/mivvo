@@ -134,8 +134,8 @@ function ComprehensiveReportContent() {
         // Rapor PROCESSING durumundaysa adım güncelle ve bekle
         if (reportData.status === 'PROCESSING' || reportData.status === 'PENDING') {
           setCurrentStep({ step: 3, total: 4, name: 'Tam Ekspertiz Oluşturuluyor' })
-          // 5 saniye sonra tekrar kontrol et
-          setTimeout(fetchReport, 5000)
+          // 1 saniye sonra tekrar kontrol et (hızlı response için)
+          setTimeout(fetchReport, 1000)
           return
         }
         
