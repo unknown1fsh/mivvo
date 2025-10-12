@@ -1014,7 +1014,7 @@ function ComprehensiveReportContent() {
                 </h3>
               </div>
               <p className="text-amber-200 font-medium text-lg mb-2">
-                Bu kapsamlı rapor <span className="font-black text-amber-300">{analysis.aiProvider}</span> tarafından 
+                Bu kapsamlı rapor <span className="font-black text-amber-300">Mivvo AI</span> tarafından 
                 <span className="font-black text-green-400"> %{analysis.confidence} güvenilirlik</span> ile oluşturulmuştur.
               </p>
               <p className="text-amber-300/80 text-sm">

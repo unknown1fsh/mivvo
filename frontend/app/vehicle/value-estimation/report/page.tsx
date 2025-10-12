@@ -496,7 +496,7 @@ function ValueEstimationReportContent() {
               <span className="text-sm font-semibold text-gray-700">Yapay Zeka Destekli Analiz</span>
             </div>
             <p className="text-sm text-gray-600">
-              Bu rapor {analysis.aiProvider} tarafından %{analysis.confidence} güvenilirlik ile oluşturulmuştur.
+              Bu rapor Mivvo AI tarafından %{analysis.confidence} güvenilirlik ile oluşturulmuştur.
             </p>
             <p className="text-xs text-gray-500 mt-2">
               Rapor tarihi: {new Date(report.createdAt).toLocaleDateString('tr-TR', { 
