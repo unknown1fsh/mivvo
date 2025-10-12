@@ -306,7 +306,7 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
     await prisma.creditTransaction.create({
       data: {
         userId: req.user!.id,
-        transactionType: 'DEBIT' as any,
+        transactionType: 'USAGE',
         amount: servicePricing.basePrice,
         description: 'Motor sesi analizi',
         referenceId: report.id.toString(),
