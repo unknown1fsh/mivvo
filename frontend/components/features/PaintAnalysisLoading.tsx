@@ -34,7 +34,7 @@ const analysisSteps = [
   {
     id: 'ai_analysis',
     title: 'AI Analizi',
-    description: 'OpenAI Vision API ile boya kalitesi değerlendiriliyor',
+    description: 'Mivvo AI Vision API ile boya kalitesi değerlendiriliyor',
     icon: CpuChipIcon,
     color: 'purple'
   },

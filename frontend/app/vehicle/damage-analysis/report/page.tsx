@@ -244,7 +244,7 @@ export default function DamageAnalysisReportPage() {
       },
       technicalDetails: {
         analysisMethod: technical?.analysisMethod ?? 'AI destekli hasar analizi',
-        aiModel: technical?.aiModel ?? 'OpenAI',
+        aiModel: technical?.aiModel ?? 'Mivvo AI',
         confidence: Number(technical?.confidence ?? aiAnalysisData?.confidence ?? 85),
         processingTime: technical?.processingTime ?? '3-5 saniye',
         imageQuality: technical?.imageQuality ?? 'Yüksek çözünürlüklü (1024x1024)'
@@ -290,7 +290,7 @@ export default function DamageAnalysisReportPage() {
     const recommendations: string[] = []
     
     damageAreas.forEach(damage => {
-      // OpenAI'den gelen gerçek verileri kullan
+      // Mivvo AI'den gelen gerçek verileri kullan
       if (damage.partsAffected && damage.partsAffected.length > 0) {
         recommendations.push(`${damage.description} - Etkilenen parçalar: ${damage.partsAffected.join(', ')}`)
       } else if (damage.severity === 'high') {

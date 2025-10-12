@@ -408,7 +408,7 @@ export default function PrivacyPage() {
                 Yapay zeka analizi için yalnızca araç görselleri şu sağlayıcılarla paylaşılır:
               </p>
               <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600">
-                <li>OpenAI (Vision API)</li>
+                <li>Mivvo AI (Vision API)</li>
                 <li>Google Cloud (Gemini AI)</li>
               </ul>
               <p className="text-xs text-gray-500 mt-2">

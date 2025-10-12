@@ -77,7 +77,7 @@ export const useComprehensiveExpertise = () => {
       }
 
       // 4. Kapsamlı AI analizi gerçekleştir
-      toast.loading('OpenAI ile kapsamlı analiz yapılıyor...', { id: 'comprehensive-expertise' })
+      toast.loading('Mivvo AI ile kapsamlı analiz yapılıyor...', { id: 'comprehensive-expertise' })
       
       const analyzeResponse = await api.post(`/comprehensive-expertise/${reportId}/analyze`)
 

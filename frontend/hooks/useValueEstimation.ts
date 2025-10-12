@@ -59,7 +59,7 @@ export const useValueEstimation = () => {
       }
 
       // 3. AI analizi gerçekleştir
-      toast.loading('OpenAI ile piyasa analizi yapılıyor...', { id: 'value-estimation' })
+      toast.loading('Mivvo AI ile piyasa analizi yapılıyor...', { id: 'value-estimation' })
       
       const analyzeResponse = await api.post(`/value-estimation/${reportId}/analyze`)
 

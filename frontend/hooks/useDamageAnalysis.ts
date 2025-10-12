@@ -1,4 +1,4 @@
-ï»¿'use client'
+'use client'
 
 import { useState, useCallback } from 'react'
 import toast from 'react-hot-toast'
@@ -21,21 +21,21 @@ export const useDamageAnalysis = () => {
     const toastId = 'damage-analysis'
 
     if (!vehicleInfo) {
-      toast.error('AraÃ§ bilgileri eksik')
+      toast.error('Araç bilgileri eksik')
       throw new Error('Vehicle information is required')
     }
 
     const files = images?.filter(image => image?.file).map(image => image.file) || []
 
     if (files.length === 0) {
-      toast.error('Hasar analizi iÃ§in en az bir resim yÃ¼klemelisiniz')
+      toast.error('Hasar analizi için en az bir resim yüklemelisiniz')
       throw new Error('No images provided for damage analysis')
     }
 
     setIsAnalyzing(true)
 
     try {
-      toast.loading('Hasar analizi raporu hazÄ±rlanÄ±yor...', { id: toastId })
+      toast.loading('Hasar analizi raporu hazırlanıyor...', { id: toastId })
 
       const reportResponse = await api.post('/damage-analysis/start', {
         vehicleInfo,
@@ -43,15 +43,15 @@ export const useDamageAnalysis = () => {
       })
 
       if (!reportResponse.data?.success) {
-        throw new Error(reportResponse.data?.message || 'Rapor oluÅŸturulamadÄ±')
+        throw new Error(reportResponse.data?.message || 'Rapor oluşturulamadı')
       }
 
       const reportId = reportResponse.data.data?.reportId
       if (!reportId) {
-        throw new Error('Rapor ID alÄ±namadÄ±')
+        throw new Error('Rapor ID alınamadı')
       }
 
-      toast.loading('FotoÄŸraflar yÃ¼kleniyor...', { id: toastId })
+      toast.loading('Fotoğraflar yükleniyor...', { id: toastId })
 
       const formData = new FormData()
       files.forEach(file => {
@@ -65,20 +65,20 @@ export const useDamageAnalysis = () => {
       })
 
       if (!uploadResponse.data?.success) {
-        throw new Error(uploadResponse.data?.message || 'FotoÄŸraflar yÃ¼klenemedi')
+        throw new Error(uploadResponse.data?.message || 'Fotoğraflar yüklenemedi')
       }
 
-      toast.loading('AI analizi baÅŸlatÄ±ldÄ±...', { id: toastId })
+      toast.loading('AI analizi başlatıldı...', { id: toastId })
 
       const analysisResponse = await api.post(`/damage-analysis/${reportId}/analyze`, {}, {
         timeout: 600000
       })
 
       if (!analysisResponse.data?.success) {
-        throw new Error(analysisResponse.data?.message || 'AI analizi tamamlanamadÄ±')
+        throw new Error(analysisResponse.data?.message || 'AI analizi tamamlanamadı')
       }
 
-      toast.success('Hasar analizi tamamlandÄ±!', { id: toastId })
+      toast.success('Hasar analizi tamamlandı!', { id: toastId })
 
       return {
         reportId: analysisResponse.data.data?.reportId ?? reportId,
@@ -87,7 +87,7 @@ export const useDamageAnalysis = () => {
       }
     } catch (error: any) {
       console.error('Damage analysis error:', error)
-      const message = error?.response?.data?.message || error?.message || 'Hasar analizi sÄ±rasÄ±nda bir hata oluÅŸtu'
+      const message = error?.response?.data?.message || error?.message || 'Hasar analizi sırasında bir hata oluştu'
       toast.error(message, { id: toastId })
       throw new Error(message)
     } finally {

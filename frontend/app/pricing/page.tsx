@@ -19,36 +19,39 @@ import { Accordion } from '@/components/ui'
 const pricingPlans = [
   {
     id: 'starter',
-    name: 'Başlangıç',
-    price: 0,
-    period: 'ay',
-    description: 'Küçük işlemler için ideal',
+    name: 'Başlangıç Paketi',
+    price: 149,
+    credits: 150,
+    bonus: 1,
+    period: 'tek seferlik',
+    description: 'İlk kez kullanıcılar için',
     features: [
-      '1 ücretsiz analiz',
-      'Temel raporlar',
+      '150 kredi (150 TL değerinde)',
+      '1 TL bonus kredi',
+      '~3 Boya Analizi',
+      '~2 Hasar Analizi',
       'Email destek',
-      'Mobil uygulama erişimi'
+      'Tüm analizlere erişim'
     ],
-    limitations: [
-      'Aylık 5 analiz limiti',
-      'Temel rapor formatı'
-    ],
+    limitations: [],
     popular: false,
     color: 'from-gray-500 to-gray-600'
   },
   {
     id: 'professional',
-    name: 'Profesyonel',
-    price: 99,
-    period: 'ay',
-    description: 'En popüler seçenek',
+    name: 'Profesyonel Paket',
+    price: 649,
+    credits: 750,
+    bonus: 101,
+    period: 'tek seferlik',
+    description: 'En popüler seçenek ⭐',
     features: [
-      'Sınırsız analiz',
-      'Detaylı raporlar',
-      'Öncelikli destek',
-      'API erişimi',
-      'Toplu analiz',
-      'Özel rapor formatları'
+      '750 kredi (750 TL değerinde)',
+      '101 TL bonus kredi (%15.6)',
+      '~15 Boya Analizi',
+      '~10 Hasar Analizi',
+      '~4 Kapsamlı Ekspertiz',
+      'Öncelikli destek'
     ],
     limitations: [],
     popular: true,
@@ -56,17 +59,20 @@ const pricingPlans = [
   },
   {
     id: 'enterprise',
-    name: 'Kurumsal',
-    price: 299,
-    period: 'ay',
-    description: 'Büyük işletmeler için',
+    name: 'Kurumsal Paket',
+    price: 1199,
+    credits: 1500,
+    bonus: 301,
+    period: 'tek seferlik',
+    description: 'Galeri ve kurumsal müşteriler',
     features: [
-      'Tüm Profesyonel özellikler',
-      'Özel entegrasyonlar',
-      '7/24 telefon desteği',
-      'Özel hesap yöneticisi',
-      'Gelişmiş analitikler',
-      'Beyaz etiket çözümü'
+      '1500 kredi (1500 TL değerinde)',
+      '301 TL bonus kredi (%25.1)',
+      '~30 Boya Analizi',
+      '~21 Hasar Analizi',
+      '~8 Kapsamlı Ekspertiz',
+      '7/24 öncelikli destek',
+      'Özel hesap yöneticisi'
     ],
     limitations: [],
     popular: false,
@@ -77,63 +83,67 @@ const pricingPlans = [
 const servicePricing = [
   {
     service: 'Boya Analizi',
-    price: 25,
-    description: 'Araç boyasının durumu ve kalitesi analizi',
-    features: ['Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi']
+    price: 49,
+    description: 'AI destekli boya kalitesi ve renk analizi',
+    features: ['1-5 resim analizi', 'Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi']
   },
   {
     service: 'Hasar Değerlendirmesi',
-    price: 35,
-    description: 'Araç hasarlarının tespiti ve değerlendirmesi',
-    features: ['Çarpışma hasarları', 'Çizik analizi', 'Onarım maliyeti']
+    price: 69,
+    description: 'AI destekli hasar tespiti ve değerlendirme',
+    features: ['1-5 resim analizi', 'Çarpışma hasarları', 'Çizik ve göçük analizi', 'Onarım maliyet tahmini']
+  },
+  {
+    service: 'Motor Sesi Analizi',
+    price: 79,
+    description: 'Ses kaydı ile motor durumu AI analizi',
+    features: ['Çoklu ses dosyası', 'Motor sağlık durumu', 'Anormallik tespiti', 'Detaylı rapor']
   },
   {
     service: 'Değer Tahmini',
-    price: 20,
-    description: 'Araç piyasa değeri tahmini',
-    features: ['Piyasa analizi', 'Değer hesaplama', 'Raporlama']
+    price: 49,
+    description: 'AI tabanlı piyasa değeri hesaplama',
+    features: ['Piyasa analizi', 'Değer hesaplama', 'Karşılaştırma', 'Detaylı rapor']
   },
   {
-    service: 'Tam Expertiz',
-    price: 75,
-    description: 'Tüm analizlerin dahil olduğu kapsamlı rapor',
-    features: ['Tüm analizler', 'Detaylı rapor', 'Uzman görüşü']
+    service: 'Kapsamlı Ekspertiz',
+    price: 179,
+    originalPrice: 246,
+    discount: 67,
+    description: 'Tüm analizleri içeren premium paket',
+    features: ['Tüm analizler dahil', 'Boya + Hasar + Motor + Değer', 'Detaylı kapsamlı rapor', '67 TL tasarruf'],
+    popular: true
   }
 ]
 
 const faqs = [
   {
+    question: 'Kredi sistemi nasıl çalışıyor?',
+    answer: 'Kredi paketlerinden satın aldığınız kredilerle istediğiniz analiz hizmetini kullanabilirsiniz. 1 Kredi = 1 TL değerindedir. Her hizmetin farklı kredi maliyeti vardır. Örneğin Boya Analizi 49 kredi, Kapsamlı Ekspertiz 179 kredi tüketir.'
+  },
+  {
     question: 'Hangi ödeme yöntemlerini kabul ediyorsunuz?',
-    answer: 'Kredi kartı, banka kartı, banka havalesi ve mobil ödeme yöntemlerini kabul ediyoruz. Tüm ödemeler SSL ile güvenli şekilde işlenir.'
+    answer: 'Kredi kartı, banka kartı, banka havalesi ve mobil ödeme yöntemlerini kabul ediyoruz. Tüm ödemeler SSL ile güvenli şekilde şifrelenir ve işlenir.'
   },
   {
-    question: 'Fiyatlarımı değiştirebilir miyim?',
-    answer: 'Evet, istediğiniz zaman planınızı yükseltebilir veya düşürebilirsiniz. Değişiklikler bir sonraki faturalama döneminde geçerli olur.'
+    question: 'Kredilerim ne kadar süre geçerli?',
+    answer: 'Satın aldığınız kredilerin süresiz kullanım hakkı vardır. Hiçbir son kullanma tarihi yoktur, istediğiniz zaman kullanabilirsiniz.'
   },
   {
-    question: 'İptal ettiğimde para iadesi alabilir miyim?',
-    answer: 'Evet, 30 gün içinde iptal ederseniz tam para iadesi alırsınız. İptal işlemi hesap sayfanızdan kolayca yapılabilir.'
+    question: 'Büyük paketlerde bonus ne kadar?',
+    answer: 'Başlangıç paketinde %0.7, Profesyonel pakette %15.6, Kurumsal pakette ise %25.1 bonus kredi kazanırsınız. Büyük paket alarak daha fazla tasarruf edersiniz.'
   },
   {
-    question: 'Kurumsal plan için özel fiyatlandırma var mı?',
-    answer: 'Evet, 100+ kullanıcılı kurumsal müşterilerimiz için özel fiyatlandırma ve indirimler sunuyoruz. İletişime geçin.'
+    question: 'Kurumsal müşteriler için özel paket var mı?',
+    answer: 'Evet, galeri, ekspertiz büroları ve kurumsal müşteriler için 1500 kredilik özel paketimiz bulunmaktadır. Daha büyük hacimler için özel fiyatlandırma da sunuyoruz. Bizimle iletişime geçin.'
   },
   {
-    question: 'API kullanımı için ek ücret var mı?',
-    answer: 'Profesyonel ve Kurumsal planlarda API kullanımı dahildir. Başlangıç planında API erişimi bulunmaz.'
+    question: 'Kullanılmayan krediyi iade alabilir miyim?',
+    answer: 'Satın alımdan sonraki 7 gün içinde ve hiçbir kredi kullanılmamışsa tam para iadesi yapılır. Kısmi kredi iadesi yapılmamaktadır.'
   }
 ]
 
 export default function PricingPage() {
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly')
-
-  const getDiscountedPrice = (price: number) => {
-    return billingPeriod === 'yearly' ? Math.round(price * 10) : price
-  }
-
-  const getSavings = (price: number) => {
-    return Math.round(price * 2)
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -167,40 +177,9 @@ export default function PricingPage() {
               <br />
               <span className="text-gray-800">Fiyatlandırma</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              İhtiyacınıza uygun planı seçin. Tüm planlarımızda ücretsiz deneme süresi ve para iadesi garantisi var.
+            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
+              Kredi satın alın, istediğiniz servisi kullanın. Büyük paketlerde daha fazla bonus kazanın!
             </p>
-          </FadeInUp>
-
-          {/* Billing Toggle */}
-          <FadeInUp delay={0.2}>
-            <div className="flex items-center justify-center mb-12">
-              <div className="bg-gray-100 rounded-lg p-1 flex">
-                <button
-                  onClick={() => setBillingPeriod('monthly')}
-                  className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
-                    billingPeriod === 'monthly'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Aylık
-                </button>
-                <button
-                  onClick={() => setBillingPeriod('yearly')}
-                  className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
-                    billingPeriod === 'yearly'
-                      ? 'bg-white text-gray-900 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Yıllık
-                  <span className="ml-2 bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs">
-                    %20 indirim
-                  </span>
-                </button>
-              </div>
-            </div>
           </FadeInUp>
         </div>
       </section>
@@ -234,16 +213,16 @@ export default function PricingPage() {
 
                   <div className="mb-6">
                     <div className="text-4xl font-bold text-gray-900">
-                      {plan.price === 0 ? 'Ücretsiz' : `${getDiscountedPrice(plan.price)}₺`}
+                      {plan.price}₺
                     </div>
-                    {plan.price > 0 && (
-                      <div className="text-gray-600">
-                        /{plan.period}
-                        {billingPeriod === 'yearly' && (
-                          <span className="text-green-600 ml-2">
-                            (Yılda {getSavings(plan.price)}₺ tasarruf)
-                          </span>
-                        )}
+                    <div className="text-gray-600 text-sm">
+                      {plan.period}
+                    </div>
+                    {plan.bonus && plan.bonus > 0 && (
+                      <div className="mt-2">
+                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                          🎁 +{plan.bonus}₺ Bonus Kredi
+                        </span>
                       </div>
                     )}
                   </div>
@@ -269,7 +248,7 @@ export default function PricingPage() {
                       plan.popular ? 'btn-primary' : 'btn-secondary'
                     }`}
                   >
-                    {plan.price === 0 ? 'Ücretsiz Başla' : 'Planı Seç'}
+                    Paketi Satın Al
                     <ArrowRightIcon className="w-5 h-5 ml-2" />
                   </Link>
                 </motion.div>
@@ -284,32 +263,51 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInUp>
             <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Hizmet Fiyatları
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Tek seferlik analizler için ayrı fiyatlandırma
-              </p>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Analiz Hizmetleri
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              AI destekli profesyonel araç analiz hizmetleri - Kredi ile kullanın
+            </p>
             </div>
           </FadeInUp>
 
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {servicePricing.map((service, index) => (
               <StaggerItem key={index}>
-                <div className="card card-hover p-6 text-center">
+                <div className={`card card-hover p-6 text-center relative ${service.popular ? 'ring-2 ring-blue-500 scale-105' : ''}`}>
+                  {service.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-xs font-medium shadow-lg">
+                        ⭐ En Avantajlı
+                      </span>
+                    </div>
+                  )}
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{service.service}</h3>
                   <p className="text-gray-600 text-sm mb-4">{service.description}</p>
-                  <div className="text-3xl font-bold gradient-text mb-4">{service.price}₺</div>
-                  <ul className="text-sm text-gray-600 space-y-1 mb-6">
+                  
+                  <div className="mb-4">
+                    {service.originalPrice ? (
+                      <div>
+                        <div className="text-sm text-gray-500 line-through">{service.originalPrice}₺</div>
+                        <div className="text-3xl font-bold gradient-text">{service.price}₺</div>
+                        <div className="text-sm text-green-600 font-semibold">{service.discount}₺ tasarruf!</div>
+                      </div>
+                    ) : (
+                      <div className="text-3xl font-bold gradient-text">{service.price}₺</div>
+                    )}
+                  </div>
+                  
+                  <ul className="text-sm text-gray-600 space-y-2 mb-6 text-left">
                     {service.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center">
-                        <CheckCircleIcon className="w-4 h-4 text-green-500 mr-2" />
-                        {feature}
+                      <li key={idx} className="flex items-start">
+                        <CheckCircleIcon className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
-                  <Link href="/register" className="btn btn-primary btn-md w-full">
-                    Başla
+                  <Link href="/register" className={`btn ${service.popular ? 'btn-primary' : 'btn-secondary'} btn-md w-full`}>
+                    Hemen Başla
                   </Link>
                 </div>
               </StaggerItem>

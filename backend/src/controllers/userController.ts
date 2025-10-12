@@ -50,6 +50,11 @@ const prisma = new PrismaClient();
  * - totalPurchased: Toplam satın alınan (TL)
  * - totalUsed: Toplam kullanılan (TL)
  * 
+ * Auto-Create Feature:
+ * - Eğer kullanıcının kredi kaydı yoksa otomatik oluşturur
+ * - Başlangıç bakiyesi: 0 TL
+ * - Eski kullanıcılar için backward compatibility
+ * 
  * @route   GET /api/user/credits
  * @access  Private
  * 
@@ -69,9 +74,26 @@ const prisma = new PrismaClient();
  * }
  */
 export const getUserCredits = async (req: AuthRequest, res: Response): Promise<void> => {
-  const userCredits = await prisma.userCredits.findUnique({
+  // Kullanıcının kredi kaydını bul
+  let userCredits = await prisma.userCredits.findUnique({
     where: { userId: req.user!.id },
   });
+
+  // Eğer kredi kaydı yoksa oluştur (backward compatibility için)
+  if (!userCredits) {
+    console.log(`⚠️ UserCredits not found for user ${req.user!.id}, creating...`);
+    
+    userCredits = await prisma.userCredits.create({
+      data: {
+        userId: req.user!.id,
+        balance: 0,
+        totalPurchased: 0,
+        totalUsed: 0,
+      },
+    });
+    
+    console.log(`✅ UserCredits created for user ${req.user!.id}`);
+  }
 
   res.json({
     success: true,

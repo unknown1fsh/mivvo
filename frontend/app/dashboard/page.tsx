@@ -85,15 +85,15 @@ export default function DashboardPage() {
         console.log('📊 Dashboard - Backend response:', reportsResponse.data)
         console.log('📊 Dashboard - User reports:', userReports)
         
-        // Rapor türü maliyetlerini map'le
+        // Rapor türü maliyetlerini map'le (YENİ FİYATLAR - EKİM 2025)
         const reportCosts: Record<string, number> = {
-          'PAINT_ANALYSIS': 25,
-          'DAMAGE_ANALYSIS': 35,
-          'DAMAGE_ASSESSMENT': 35,
-          'ENGINE_SOUND_ANALYSIS': 30,
-          'VALUE_ESTIMATION': 20,
-          'COMPREHENSIVE_EXPERTISE': 85,
-          'FULL_REPORT': 85
+          'PAINT_ANALYSIS': 49,
+          'DAMAGE_ANALYSIS': 69,
+          'DAMAGE_ASSESSMENT': 69,
+          'ENGINE_SOUND_ANALYSIS': 79,
+          'VALUE_ESTIMATION': 49,
+          'COMPREHENSIVE_EXPERTISE': 179,
+          'FULL_REPORT': 179
         }
         
         // Backend formatını frontend formatına çevir
@@ -105,7 +105,7 @@ export default function DashboardPage() {
           reportType: getReportTypeName(report.reportType),
           status: report.status?.toLowerCase() || 'pending',
           createdAt: new Date(report.createdAt).toLocaleDateString('tr-TR'),
-          totalCost: report.creditCost || reportCosts[report.reportType] || 0
+          totalCost: Number(report.totalCost || report.creditCost || reportCosts[report.reportType] || 0)
         }))
         
         setReports(formattedReports)
@@ -113,7 +113,10 @@ export default function DashboardPage() {
         // İstatistikleri hesapla
         const totalReports = userReports.length
         const completedReports = userReports.filter((r: any) => r.status === 'COMPLETED').length
-        const totalSpent = userReports.reduce((sum: number, r: any) => sum + (r.creditCost || reportCosts[r.reportType] || 0), 0)
+        const totalSpent = userReports.reduce((sum: number, r: any) => {
+          const cost = Number(r.totalCost || r.creditCost || reportCosts[r.reportType] || 0)
+          return sum + cost
+        }, 0)
         
         // Gerçek kredi bakiyesini API'den al
         const realCreditBalance = creditsResponse.data?.success 

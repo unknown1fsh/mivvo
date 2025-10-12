@@ -73,7 +73,7 @@ const analysisTypes: AnalysisType[] = [
       'Boya Yaşı Tahmini',
       'Onarım Maliyet Hesaplama'
     ],
-    aiModels: ['OpenAI GPT-4 Vision', 'Custom CNN Model'],
+    aiModels: ['Mivvo AI GPT-4 Vision', 'Custom CNN Model'],
     processingTime: '3-5 saniye',
     accuracy: 98,
     popularity: 'trending',
@@ -120,7 +120,7 @@ const analysisTypes: AnalysisType[] = [
       '3D Hasar Görselleştirme',
       'Uzman Görüşü Dahil'
     ],
-    aiModels: ['OpenAI GPT-4 Vision', 'YOLO v8', 'Custom Damage CNN'],
+    aiModels: ['Mivvo AI GPT-4 Vision', 'YOLO v8', 'Custom Damage CNN'],
     processingTime: '5-8 saniye',
     accuracy: 96,
     popularity: 'popular',
@@ -167,7 +167,7 @@ const analysisTypes: AnalysisType[] = [
       'Arıza Öncelik Sıralaması',
       'Bakım Önerileri'
     ],
-    aiModels: ['OpenAI Whisper', 'Custom Audio CNN', 'FFT Analysis'],
+    aiModels: ['Mivvo AI Whisper', 'Custom Audio CNN', 'FFT Analysis'],
     processingTime: '4-6 saniye',
     accuracy: 94,
     popularity: 'new',
@@ -214,7 +214,7 @@ const analysisTypes: AnalysisType[] = [
       'Rekabetçi Fiyatlandırma',
       'Yatırım Potansiyeli'
     ],
-    aiModels: ['OpenAI GPT-4', 'Custom ML Model', 'Market Data API'],
+    aiModels: ['Mivvo AI GPT-4', 'Custom ML Model', 'Market Data API'],
     processingTime: '2-4 saniye',
     accuracy: 92,
     popularity: 'popular',
@@ -261,7 +261,7 @@ const analysisTypes: AnalysisType[] = [
       '1 Yıl Veri Saklama',
       '7/24 Destek Hattı'
     ],
-    aiModels: ['OpenAI GPT-4 Vision', 'Custom Ensemble Model', 'Expert System'],
+    aiModels: ['Mivvo AI GPT-4 Vision', 'Custom Ensemble Model', 'Expert System'],
     processingTime: '10-15 saniye',
     accuracy: 99,
     popularity: 'premium',
