@@ -73,8 +73,11 @@ export default function DashboardPage() {
       // Kullanıcı bilgisini al (currentUser tanımla)
       const currentUser = authService.getCurrentUser()
       
-      // Kullanıcı raporlarını çek
-      const reportsResponse = await api.get('/user/reports')
+      // Kredi bakiyesini ve raporları çek
+      const [creditsResponse, reportsResponse] = await Promise.all([
+        api.get('/user/credits'),
+        api.get('/user/reports')
+      ])
       
       if (reportsResponse.data.success) {
         const userReports = reportsResponse.data.data?.reports || []
@@ -112,12 +115,26 @@ export default function DashboardPage() {
         const completedReports = userReports.filter((r: any) => r.status === 'COMPLETED').length
         const totalSpent = userReports.reduce((sum: number, r: any) => sum + (r.creditCost || reportCosts[r.reportType] || 0), 0)
         
+        // Gerçek kredi bakiyesini API'den al
+        const realCreditBalance = creditsResponse.data?.success 
+          ? Number(creditsResponse.data.data?.credits?.balance || 0)
+          : (currentUser?.credits || 0)
+        
         setStats({
           totalReports,
           completedReports,
           totalSpent,
-          creditBalance: currentUser?.credits || 0
+          creditBalance: realCreditBalance
         })
+
+        // localStorage'daki user bilgisini de güncelle
+        if (currentUser && creditsResponse.data?.success) {
+          const updatedUser = {
+            ...currentUser,
+            credits: realCreditBalance
+          }
+          localStorage.setItem('user', JSON.stringify(updatedUser))
+        }
       }
     } catch (error) {
       console.error('Dashboard veri çekme hatası:', error)
