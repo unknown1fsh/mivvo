@@ -61,7 +61,10 @@ const prisma = new PrismaClient();
  */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../uploads/vehicle-garage');
+    // Vercel'de /tmp kullan, local'de uploads klasörü
+    const uploadDir = process.env.VERCEL 
+      ? '/tmp/vehicle-garage'
+      : path.join(__dirname, '../../uploads/vehicle-garage');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
