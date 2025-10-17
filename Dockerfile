@@ -8,12 +8,15 @@ COPY package*.json ./
 COPY backend/package*.json ./backend/
 COPY frontend/package*.json ./frontend/
 
+# Copy Prisma schema first
+COPY backend/prisma ./backend/prisma
+
 # Install all dependencies
 RUN npm install
 RUN cd backend && npm install
 RUN cd frontend && npm install
 
-# Copy source code
+# Copy remaining source code
 COPY . .
 
 # Generate Prisma client
