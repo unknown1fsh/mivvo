@@ -1,6 +1,9 @@
 # Simple Dockerfile for Mivvo Expertiz App
 FROM node:18-alpine
 
+# Install OpenSSL and other dependencies
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 # Copy package files
