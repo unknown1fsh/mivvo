@@ -17,7 +17,24 @@ CREATE TYPE "ImageType" AS ENUM ('EXTERIOR', 'INTERIOR', 'ENGINE', 'DAMAGE', 'PA
 CREATE TYPE "AudioType" AS ENUM ('ENGINE_SOUND', 'EXHAUST_SOUND', 'MECHANICAL_SOUND');
 
 -- CreateEnum
-CREATE TYPE "ServiceType" AS ENUM ('PAINT_ANALYSIS', 'DAMAGE_ASSESSMENT', 'VALUE_ESTIMATION', 'FULL_REPORT', 'ENGINE_SOUND_ANALYSIS');
+CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN', 'EXPERT');
+
+-- CreateEnum
+CREATE TYPE "TransactionType" AS ENUM ('PURCHASE', 'USAGE', 'REFUND', 'DEBIT');
+
+-- CreateEnum
+CREATE TYPE "ReportType" AS ENUM ('FULL', 'PAINT_ANALYSIS', 'DAMAGE_ASSESSMENT', 'VALUE_ESTIMATION', 'ENGINE_SOUND_ANALYSIS');
+
+-- CreateEnum
+CREATE TYPE "ReportStatus" AS ENUM ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "ImageType" AS ENUM ('EXTERIOR', 'INTERIOR', 'ENGINE', 'DAMAGE', 'PAINT');
+
+-- CreateEnum
+CREATE TYPE "AudioType" AS ENUM ('ENGINE_SOUND', 'EXHAUST_SOUND', 'MECHANICAL_SOUND');
+
+-- ServiceType will be created in later migration
 
 -- CreateEnum
 CREATE TYPE "SettingType" AS ENUM ('STRING', 'NUMBER', 'BOOLEAN', 'JSON');
@@ -136,19 +153,7 @@ CREATE TABLE "ai_analysis_results" (
     CONSTRAINT "ai_analysis_results_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "service_pricing" (
-    "id" SERIAL NOT NULL,
-    "service_name" TEXT NOT NULL,
-    "service_type" "ServiceType" NOT NULL,
-    "base_price" DECIMAL(10,2) NOT NULL,
-    "currency" TEXT NOT NULL DEFAULT 'TRY',
-    "is_active" BOOLEAN NOT NULL DEFAULT true,
-    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "service_pricing_pkey" PRIMARY KEY ("id")
-);
+-- service_pricing table will be created in later migration with ServiceType
 
 -- CreateTable
 CREATE TABLE "system_settings" (
