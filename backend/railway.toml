@@ -1,0 +1,15 @@
+# Railway Configuration for Backend Service
+
+[build]
+builder = "nixpacks"
+
+[deploy]
+# Health check endpoint
+healthcheckPath = "/api/health"
+
+# Restart policy
+restartPolicyType = "on_failure"
+
+# Start command
+startCommand = "npm run start"
+
