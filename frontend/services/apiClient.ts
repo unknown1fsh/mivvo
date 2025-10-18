@@ -43,6 +43,15 @@
  * 5) Development → http://localhost:3001
  */
 function resolveApiBaseUrl(): string {
+  // Debug logging
+  console.log('🔍 API Base URL Resolution Debug:', {
+    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    RAILWAY_PUBLIC_DOMAIN: process.env.RAILWAY_PUBLIC_DOMAIN,
+    isClient: typeof window !== 'undefined',
+    currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server'
+  });
+
   // Tek servis fullstack için relative URL kullan
   const apiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim()
   if (apiUrl) {
@@ -63,7 +72,14 @@ function resolveApiBaseUrl(): string {
     return `https://${railwayDomain}`
   }
 
+  // Client-side'da current origin kullan
+  if (typeof window !== 'undefined') {
+    console.log('🌐 Client-side - current origin kullanılıyor:', window.location.origin)
+    return window.location.origin
+  }
+
   // Fallback: relative URL (aynı origin)
+  console.log('⚠️ Fallback - relative URL kullanılıyor')
   return ''
 }
 
