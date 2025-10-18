@@ -31,8 +31,8 @@ import { notFound } from './middleware/notFound';
 dotenv.config();
 
 const app = express();
-// Railway'de backend port 3001'de çalışmalı
-const PORT = process.env.BACKEND_PORT || 3001;
+// Railway'de ana port'u kullan (health check için)
+const PORT = process.env.PORT || 8080;
 
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
