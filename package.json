@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
     "backend": "cd backend && npm run dev",
     "frontend": "cd frontend && npm run dev",
-    "dev:full": "npm run dev:full:prod",
+    "dev:full": "node scripts/dev-full.js",
     "dev:local": "node scripts/dev-full.js",
     "dev:full:prod": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "dev:full:simple": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
