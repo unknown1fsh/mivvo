@@ -31,7 +31,8 @@ import { notFound } from './middleware/notFound';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || process.env.BACKEND_PORT || 3001; // Railway için PORT kullan
+// Railway'de internal port kullan (frontend ile çakışmasın)
+const PORT = process.env.BACKEND_PORT || 3001;
 
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
