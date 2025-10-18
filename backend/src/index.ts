@@ -77,7 +77,9 @@ const corsOptions = {
       // Spesifik Railway domain kontrolü
       const allowedDomains = [
         'mivvo-production.up.railway.app',
-        'mivvo.railway.internal'
+        'mivvo.railway.internal',
+        'www.mivvo.org',
+        'mivvo.org'
       ];
       const isAllowedDomain = origin && allowedDomains.some(domain => origin.includes(domain));
       
