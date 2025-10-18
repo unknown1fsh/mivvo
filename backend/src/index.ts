@@ -31,8 +31,8 @@ import { notFound } from './middleware/notFound';
 dotenv.config();
 
 const app = express();
-// Railway'de ana port'u kullan (tek servis fullstack)
-const PORT = process.env.PORT || 8080;
+// Railway'de backend port 3001'de çalışmalı
+const PORT = process.env.BACKEND_PORT || 3001;
 
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
@@ -158,17 +158,12 @@ app.use('/api/reports', userRoutes);
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Frontend static files serve et
-app.use(express.static(path.join(__dirname, '../../frontend/.next/static')));
-app.use(express.static(path.join(__dirname, '../../frontend/public')));
+// Frontend static files serve et (/app subpath'te)
+app.use('/app', express.static(path.join(__dirname, '../../frontend/.next/static')));
+app.use('/app', express.static(path.join(__dirname, '../../frontend/public')));
 
-// Frontend routes - SPA için catch-all (en son!)
-app.get('*', (req, res) => {
-  // API routes'ları backend'e yönlendir
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  
+// Frontend routes - SPA için catch-all (/app subpath'te)
+app.get('/app*', (req, res) => {
   // Next.js App Router için doğru dosya yolu
   const indexPath = path.join(__dirname, '../../frontend/.next/server/app/page.html');
   
@@ -182,6 +177,11 @@ app.get('*', (req, res) => {
   
   // App Router dosyasını gönder
   return res.sendFile(indexPath);
+});
+
+// Ana sayfa yönlendirmesi
+app.get('/', (req, res) => {
+  res.redirect('/app');
 });
 
 // Error handling middleware
