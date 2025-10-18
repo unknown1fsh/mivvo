@@ -5,7 +5,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
   env: {
-      NEXT_PUBLIC_API_URL: '/api',
+      NEXT_PUBLIC_API_URL: 'http://localhost:5000/api',
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
