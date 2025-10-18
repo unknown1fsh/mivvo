@@ -32,7 +32,7 @@ dotenv.config();
 
 const app = express();
 // Railway'de otomatik port kullan (ayrı servis için)
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 8080;
 
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
@@ -63,6 +63,8 @@ app.use(limiter);
 // CORS configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
+    console.log('🔍 CORS Origin kontrolü:', { origin, nodeEnv: process.env.NODE_ENV });
+    
     // Production ortamında origin kontrolü
     if (process.env.NODE_ENV === 'production') {
       // Railway ve Vercel production'da tüm origin'lere izin ver
@@ -79,8 +81,9 @@ const corsOptions = {
       ];
       const isAllowedDomain = origin && allowedDomains.some(domain => origin.includes(domain));
       
+      // Railway internal requests için origin undefined olabilir
       if (isRailway || isVercel || isAllowedDomain || !origin) {
-        console.log('✅ CORS izni verildi:', origin);
+        console.log('✅ CORS izni verildi:', origin || 'undefined (internal request)');
         callback(null, true);
       } else {
         console.log('❌ CORS reddedildi:', origin);
@@ -90,8 +93,10 @@ const corsOptions = {
       // Development'ta localhost'a izin ver
       const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
       if (!origin || allowedOrigins.includes(origin)) {
+        console.log('✅ Development CORS izni verildi:', origin || 'undefined');
         callback(null, true);
       } else {
+        console.log('❌ Development CORS reddedildi:', origin);
         callback(new Error('CORS policy violation'));
       }
     }

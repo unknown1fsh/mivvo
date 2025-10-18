@@ -56,7 +56,14 @@ function resolveApiBaseUrl(): string {
     return 'http://localhost:3001'
   }
 
-  // Production'da relative URL (aynı origin)
+  // Production'da Railway domain kullan
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN
+  if (railwayDomain) {
+    console.log('🚀 Railway production domain kullanılıyor:', railwayDomain)
+    return `https://${railwayDomain}`
+  }
+
+  // Fallback: relative URL (aynı origin)
   return ''
 }
 
