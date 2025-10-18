@@ -96,7 +96,7 @@ export const getNotifications = asyncHandler(async (req: AuthRequest, res: Respo
 
   const totalPages = Math.ceil(total / limit);
 
-  res.json({
+  return res.json({
     success: true,
     data: {
       notifications,
@@ -147,7 +147,7 @@ export const getNotificationById = asyncHandler(async (req: AuthRequest, res: Re
     });
   }
 
-  res.json({
+  return res.json({
     success: true,
     data: notification,
   });
@@ -201,7 +201,7 @@ export const markNotificationAsRead = asyncHandler(async (req: AuthRequest, res:
     data: { isRead: true },
   });
 
-  res.json({
+  return res.json({
     success: true,
     message: 'Bildirim okundu işaretlendi',
     data: updatedNotification,
@@ -234,7 +234,7 @@ export const markAllNotificationsAsRead = asyncHandler(async (req: AuthRequest, 
     },
   });
 
-  res.json({
+  return res.json({
     success: true,
     message: `${result.count} bildirim okundu işaretlendi`,
     data: {
@@ -281,7 +281,7 @@ export const deleteNotification = asyncHandler(async (req: AuthRequest, res: Res
     where: { id: parseInt(id) },
   });
 
-  res.json({
+  return res.json({
     success: true,
     message: 'Bildirim silindi',
   });
@@ -310,7 +310,7 @@ export const getUnreadCount = asyncHandler(async (req: AuthRequest, res: Respons
     },
   });
 
-  res.json({
+  return res.json({
     success: true,
     data: {
       unreadCount,
