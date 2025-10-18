@@ -38,7 +38,7 @@ export const REPORT_TYPES: ReportType[] = [
   {
     id: 'PAINT_ANALYSIS',
     name: 'Boya Analizi',
-    price: 25,
+    price: 399,
     description: 'Araç boyasının durumu ve kalitesi analizi',
     features: ['Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi'],
     icon: '🎨'
@@ -46,7 +46,7 @@ export const REPORT_TYPES: ReportType[] = [
   {
     id: 'DAMAGE_ANALYSIS',
     name: 'Hasar Analizi',
-    price: 35,
+    price: 499,
     description: 'AI destekli kapsamlı hasar tespiti ve değerlendirmesi',
     features: ['Çarpışma hasarları', 'Çizik analizi', 'Onarım maliyeti', 'Güvenlik riski değerlendirmesi'],
     icon: '🔧'
@@ -54,7 +54,7 @@ export const REPORT_TYPES: ReportType[] = [
   {
     id: 'ENGINE_SOUND_ANALYSIS',
     name: 'Motor Ses Analizi',
-    price: 30,
+    price: 299,
     description: 'Motor sesinden arıza tespiti ve performans analizi',
     features: ['Motor arıza tespiti', 'Performans değerlendirmesi', 'Akustik analiz raporu', 'Arıza öncelik sıralaması'],
     icon: '🎵'
@@ -62,7 +62,7 @@ export const REPORT_TYPES: ReportType[] = [
   {
     id: 'VALUE_ESTIMATION',
     name: 'Değer Tahmini',
-    price: 20,
+    price: 299,
     description: 'Araç piyasa değeri tahmini',
     features: ['Piyasa analizi', 'Değer hesaplama', 'Raporlama'],
     icon: '💰'
@@ -70,7 +70,7 @@ export const REPORT_TYPES: ReportType[] = [
   {
     id: 'FULL_REPORT',
     name: 'Tam Expertiz',
-    price: 85,
+    price: 899,
     description: 'Tüm analizlerin dahil olduğu kapsamlı rapor',
     features: ['Tüm analizler', 'Detaylı rapor', 'Uzman görüşü'],
     icon: '📋',

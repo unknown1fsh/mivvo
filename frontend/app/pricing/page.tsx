@@ -119,7 +119,7 @@ const servicePricing = [
 const faqs = [
   {
     question: 'Kredi sistemi nasıl çalışıyor?',
-    answer: 'Kredi paketlerinden satın aldığınız kredilerle istediğiniz analiz hizmetini kullanabilirsiniz. 1 Kredi = 1 TL değerindedir. Her hizmetin farklı kredi maliyeti vardır. Örneğin Boya Analizi 49 kredi, Kapsamlı Ekspertiz 179 kredi tüketir.'
+    answer: 'Kredi paketlerinden satın aldığınız kredilerle istediğiniz analiz hizmetini kullanabilirsiniz. 1 Kredi = 1 TL değerindedir. Her hizmetin farklı kredi maliyeti vardır. Örneğin Boya Analizi 399 kredi, Kapsamlı Ekspertiz 899 kredi tüketir.'
   },
   {
     question: 'Hangi ödeme yöntemlerini kabul ediyorsunuz?',

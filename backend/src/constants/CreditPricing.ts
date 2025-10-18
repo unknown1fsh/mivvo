@@ -249,11 +249,11 @@ export const SERVICE_COSTS = {
    * Kapsamlı Ekspertiz Servisi
    */
   COMPREHENSIVE_EXPERTISE: {
-    cost: CREDIT_PRICING.COMPREHENSIVE_EXPERTISE,                 // 179 TL
+    cost: CREDIT_PRICING.COMPREHENSIVE_EXPERTISE,                 // 899 TL
     name: 'Kapsamlı Ekspertiz',                                   // Türkçe servis adı
     description: 'Tüm analizleri içeren premium paket',          // Servis açıklaması
-    features: ['Tüm analizler dahil', 'Boya + Hasar + Motor + Değer', 'Detaylı kapsamlı rapor', '67 TL tasarruf'],
-    savings: 67,                                                   // Normal fiyattan tasarruf
-    normalPrice: 246,                                              // Normal toplam fiyat
+    features: ['Tüm analizler dahil', 'Boya + Hasar + Motor + Değer', 'Detaylı kapsamlı rapor', '597 TL tasarruf'],
+    savings: 597,                                                   // Normal fiyattan tasarruf
+    normalPrice: 1496,                                              // Normal toplam fiyat
   },
 };
