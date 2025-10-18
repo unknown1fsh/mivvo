@@ -115,63 +115,88 @@ const generateToken = (id: number): string => {
  * }
  */
 export const register = async (req: Request, res: Response): Promise<void> => {
-  const { email, password, firstName, lastName, phone } = req.body;
+  try {
+    console.log('🔐 Register başlatıldı:', { body: req.body });
+    
+    const { email, password, firstName, lastName, phone } = req.body;
 
-  // Email benzersizlik kontrolü
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (existingUser) {
-    res.status(400).json({
-      success: false,
-      message: 'Bu email adresi zaten kullanılıyor.',
+    // Environment variables kontrolü
+    console.log('🔍 Environment check:', {
+      JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+      DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+      BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS || '12'
     });
-    return;
+
+    // Email benzersizlik kontrolü
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      console.log('❌ Email zaten kullanımda:', email);
+      res.status(400).json({
+        success: false,
+        message: 'Bu email adresi zaten kullanılıyor.',
+      });
+      return;
+    }
+
+    // Şifre hashleme
+    console.log('🔑 Şifre hashleniyor...');
+    const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12'));
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    // Kullanıcı oluşturma
+    console.log('👤 Kullanıcı oluşturuluyor...');
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        firstName,
+        lastName,
+        phone,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    // Kredi hesabı oluşturma
+    console.log('💰 Kredi hesabı oluşturuluyor...');
+    await prisma.userCredits.create({
+      data: {
+        userId: user.id,
+        balance: 0,
+      },
+    });
+
+    // JWT token üretme
+    console.log('🎫 Token oluşturuluyor...');
+    const token = generateToken(user.id);
+
+    console.log('✅ Register başarılı:', { userId: user.id, email: user.email });
+
+    res.status(201).json({
+      success: true,
+      message: 'Kullanıcı başarıyla oluşturuldu.',
+      data: {
+        user,
+        token,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Register hatası:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası oluştu.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-
-  // Şifre hashleme
-  const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12'));
-  const passwordHash = await bcrypt.hash(password, salt);
-
-  // Kullanıcı oluşturma
-  const user = await prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      phone,
-    },
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      role: true,
-      createdAt: true,
-    },
-  });
-
-  // Kredi hesabı oluşturma
-  await prisma.userCredits.create({
-    data: {
-      userId: user.id,
-      balance: 0,
-    },
-  });
-
-  // JWT token üretme
-  const token = generateToken(user.id);
-
-  res.status(201).json({
-    success: true,
-    message: 'Kullanıcı başarıyla oluşturuldu.',
-    data: {
-      user,
-      token,
-    },
-  });
 };
 
 /**
