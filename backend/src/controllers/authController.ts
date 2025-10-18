@@ -194,7 +194,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({
       success: false,
       message: 'Sunucu hatası oluştu.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 };
