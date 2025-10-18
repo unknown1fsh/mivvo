@@ -15,6 +15,9 @@ healthcheckPath = "/health"
 # Restart policy
 restartPolicyType = "on_failure"
 
+# Start command (Procfile ile birlikte)
+startCommand = "npm run start"
+
 # Resource limits (opsiyonel)
 [deploy.resources]
 # CPU ve memory limitleri Railway'nin free tier'ına uygun
