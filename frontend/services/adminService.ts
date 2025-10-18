@@ -212,7 +212,7 @@ export const updateReportStatus = async (
  * Sistem İstatistiklerini Getir
  */
 export const getSystemStats = async (): Promise<any> => {
-  const response = await apiClient.get('/api/admin/stats')
+  const response = await apiClient.get('/admin/stats')
   return response
 }
 
@@ -221,7 +221,7 @@ export const getSystemStats = async (): Promise<any> => {
  */
 export const getDetailedStats = async (): Promise<any> => {
   const response = await apiClient.get(
-    '/api/admin/stats/detailed'
+    '/admin/stats/detailed'
   )
   return response
 }
@@ -243,7 +243,7 @@ export const getTimelineStats = async (
  */
 export const getReportsBreakdown = async (): Promise<any> => {
   const response = await apiClient.get(
-    '/api/admin/stats/reports-breakdown'
+    '/admin/stats/reports-breakdown'
   )
   return response
 }
@@ -254,7 +254,7 @@ export const getReportsBreakdown = async (): Promise<any> => {
  * Servis Fiyatlarını Getir
  */
 export const getServicePricing = async (): Promise<any> => {
-  const response = await apiClient.get('/api/admin/pricing')
+  const response = await apiClient.get('/admin/pricing')
   return response
 }
 
@@ -264,7 +264,7 @@ export const getServicePricing = async (): Promise<any> => {
 export const updateServicePricing = async (payload: {
   pricing: Array<{ id: number; basePrice: number; isActive: boolean }>
 }): Promise<any> => {
-  const response = await apiClient.put('/api/admin/pricing', payload)
+  const response = await apiClient.put('/admin/pricing', payload)
   return response
 }
 
@@ -274,7 +274,7 @@ export const updateServicePricing = async (payload: {
  * Sistem Ayarlarını Getir
  */
 export const getSystemSettings = async (): Promise<any> => {
-  const response = await apiClient.get('/api/admin/settings')
+  const response = await apiClient.get('/admin/settings')
   return response
 }
 
@@ -284,7 +284,7 @@ export const getSystemSettings = async (): Promise<any> => {
 export const updateSystemSettings = async (payload: {
   settings: Array<{ settingKey: string; settingValue: string }>
 }): Promise<any> => {
-  const response = await apiClient.put('/api/admin/settings', payload)
+  const response = await apiClient.put('/admin/settings', payload)
   return response
 }
 

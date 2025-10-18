@@ -99,7 +99,7 @@ export interface ComprehensiveExpertiseResponse {
  * Tam ekspertiz işlemlerini yöneten servis.
  */
 class ComprehensiveExpertiseService {
-  private readonly endpoint = '/api/comprehensive-expertise';
+  private readonly endpoint = '/comprehensive-expertise';
 
   // ===== REPORT CRUD =====
 

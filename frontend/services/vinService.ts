@@ -74,7 +74,7 @@ class VINService {
       }
     }
 
-    const response = await apiClient.post<VINLookupResult>('/api/vin/decode', { vin })
+    const response = await apiClient.post<VINLookupResult>('/vin/decode', { vin })
     
     return {
       success: response.success,
@@ -92,7 +92,7 @@ class VINService {
    * @returns VINLookupResult[]
    */
   async getVINHistory(): Promise<VINLookupResult[]> {
-    const response = await apiClient.get<VINLookupResult[]>('/api/vin/history')
+    const response = await apiClient.get<VINLookupResult[]>('/vin/history')
     
     if (response.success && response.data) {
       return response.data
@@ -128,7 +128,7 @@ class VINService {
    * @returns boolean
    */
   async clearVINHistory(): Promise<boolean> {
-    const response = await apiClient.delete('/api/vin/history')
+    const response = await apiClient.delete('/vin/history')
     return response.success
   }
 
@@ -170,7 +170,7 @@ class VINService {
    * @returns VINLookupResult[]
    */
   async getFavoriteVINs(): Promise<VINLookupResult[]> {
-    const response = await apiClient.get<VINLookupResult[]>('/api/vin/favorites')
+    const response = await apiClient.get<VINLookupResult[]>('/vin/favorites')
     
     if (response.success && response.data) {
       return response.data

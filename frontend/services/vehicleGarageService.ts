@@ -108,7 +108,7 @@ class VehicleGarageService {
    * @returns VehicleGarage[]
    */
   async getVehicleGarage(): Promise<VehicleGarage[]> {
-    const response = await apiClient.get<VehicleGarage[]>('/api/vehicle-garage')
+    const response = await apiClient.get<VehicleGarage[]>('/vehicle-garage')
     
     console.log('🔍 Vehicle garage response:', response)
     
@@ -160,7 +160,7 @@ class VehicleGarageService {
    * @returns VehicleGarageResponse
    */
   async addVehicle(vehicleData: CreateVehicleData): Promise<VehicleGarageResponse> {
-    const response = await apiClient.post<VehicleGarage>('/api/vehicle-garage', vehicleData)
+    const response = await apiClient.post<VehicleGarage>('/vehicle-garage', vehicleData)
     
     return {
       success: response.success,

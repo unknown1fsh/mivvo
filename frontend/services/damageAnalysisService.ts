@@ -96,7 +96,7 @@ export interface DamageArea {
  * Hasar analizi işlemlerini yöneten servis.
  */
 class DamageAnalysisService {
-  private readonly endpoint = '/api/damage-analysis';
+  private readonly endpoint = '/damage-analysis';
 
   // ===== ANALYSIS =====
 

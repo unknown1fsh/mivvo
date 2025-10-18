@@ -90,7 +90,7 @@ class ReportService {
    * @returns ReportResponse
    */
   async createReport(request: CreateReportRequest): Promise<ReportResponse> {
-    const response = await apiClient.post<Report>('/api/reports', request)
+    const response = await apiClient.post<Report>('/reports', request)
     
     return {
       success: response.success,
@@ -269,7 +269,7 @@ class ReportService {
    * @returns ReportType[]
    */
   async getReportTypes(): Promise<ReportType[]> {
-    const response = await apiClient.get<ReportType[]>('/api/reports/types')
+    const response = await apiClient.get<ReportType[]>('/reports/types')
     
     if (response.success && response.data) {
       return response.data as any
@@ -292,7 +292,7 @@ class ReportService {
     reportsByType: Record<string, number>
     reportsByStatus: Record<string, number>
   } | null> {
-    const response = await apiClient.get('/api/reports/stats')
+    const response = await apiClient.get('/reports/stats')
     
     if (response.success && response.data) {
       return response.data as any
@@ -317,7 +317,7 @@ class ReportService {
     type: string
     template: any
   }[]> {
-    const response = await apiClient.get('/api/reports/templates')
+    const response = await apiClient.get('/reports/templates')
     
     if (response.success && response.data) {
       return response.data as any
@@ -341,7 +341,7 @@ class ReportService {
     type: string
     template: any
   }): Promise<boolean> {
-    const response = await apiClient.post('/api/reports/templates', template)
+    const response = await apiClient.post('/reports/templates', template)
     return response.success
   }
 
@@ -383,7 +383,7 @@ class ReportService {
    * @returns Report[]
    */
   async getFavoriteReports(): Promise<Report[]> {
-    const response = await apiClient.get<Report[]>('/api/reports/favorites')
+    const response = await apiClient.get<Report[]>('/reports/favorites')
     
     if (response.success && response.data) {
       return response.data as any

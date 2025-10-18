@@ -115,7 +115,7 @@ class EngineSoundAnalysisService {
       }
     })
 
-    const response = await apiClient.post('/api/engine-sound-analysis/analyze', formData, {
+    const response = await apiClient.post('/engine-sound-analysis/analyze', formData, {
       'Content-Type': 'multipart/form-data'
     })
     
@@ -164,7 +164,7 @@ class EngineSoundAnalysisService {
    * @returns EngineSoundAnalysisHistoryItem[]
    */
   async getAnalysisHistory(): Promise<EngineSoundAnalysisHistoryItem[]> {
-    const response = await apiClient.get<EngineSoundAnalysisHistoryItem[]>('/api/engine-sound-analysis/history')
+    const response = await apiClient.get<EngineSoundAnalysisHistoryItem[]>('/engine-sound-analysis/history')
     
     if (response.success && response.data) {
       return response.data as any
@@ -264,7 +264,7 @@ class EngineSoundAnalysisService {
     worstScore: number
     analysesThisMonth: number
   } | null> {
-    const response = await apiClient.get('/api/engine-sound-analysis/stats')
+    const response = await apiClient.get('/engine-sound-analysis/stats')
     
     if (response.success && response.data) {
       return response.data as any
@@ -287,7 +287,7 @@ class EngineSoundAnalysisService {
     price: number
     features: string[]
   }[]> {
-    const response = await apiClient.get('/api/engine-sound-analysis/types')
+    const response = await apiClient.get('/engine-sound-analysis/types')
     
     if (response.success && response.data) {
       return response.data as any
@@ -321,7 +321,7 @@ class EngineSoundAnalysisService {
       }
     })
 
-    const response = await apiClient.post('/api/engine-sound-analysis/preview', formData, {
+    const response = await apiClient.post('/engine-sound-analysis/preview', formData, {
       'Content-Type': 'multipart/form-data'
     })
     

@@ -42,7 +42,7 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (email: string, password: string) =>
-    api.post('/api/auth/login', { email, password }),
+    api.post('/auth/login', { email, password }),
   
   register: (userData: {
     firstName: string
@@ -51,31 +51,31 @@ export const authAPI = {
     phone?: string
     password: string
   }) =>
-    api.post('/api/auth/register', userData),
+    api.post('/auth/register', userData),
   
   forgotPassword: (email: string) =>
-    api.post('/api/auth/forgot-password', { email }),
+    api.post('/auth/forgot-password', { email }),
   
   resetPassword: (token: string, password: string) =>
-    api.post('/api/auth/reset-password', { token, password }),
+    api.post('/auth/reset-password', { token, password }),
   
   verifyEmail: (token: string) =>
-    api.post('/api/auth/verify-email', { token }),
+    api.post('/auth/verify-email', { token }),
 }
 
 // User API
 export const userAPI = {
   getProfile: () =>
-    api.get('/api/user/profile'),
+    api.get('/user/profile'),
   
   updateProfile: (userData: any) =>
-    api.put('/api/user/profile', userData),
+    api.put('/user/profile', userData),
   
   getCredits: () =>
-    api.get('/api/user/credits'),
+    api.get('/user/credits'),
   
   addCredits: (amount: number) =>
-    api.post('/api/user/credits', { amount }),
+    api.post('/user/credits', { amount }),
 }
 
 // Vehicle API
