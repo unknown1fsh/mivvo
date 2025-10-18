@@ -31,8 +31,8 @@ import { notFound } from './middleware/notFound';
 dotenv.config();
 
 const app = express();
-// Railway'de internal port kullan (frontend ile çakışmasın)
-const PORT = process.env.BACKEND_PORT || 3001;
+// Railway'de ana port'u kullan (health check için)
+const PORT = process.env.PORT || 8080;
 
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
@@ -124,8 +124,20 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Frontend static files serve et
+app.use(express.static(path.join(__dirname, '../../frontend/.next/static')));
+app.use(express.static(path.join(__dirname, '../../frontend/public')));
+
+// Frontend routes - SPA için catch-all
+app.get('*', (req, res) => {
+  // API routes'ları backend'e yönlendir
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  
+  // Diğer tüm routes'ları frontend'e yönlendir
+  res.sendFile(path.join(__dirname, '../../frontend/.next/server/pages/index.html'));
+});
 
 // Health check endpoint - API prefix ile
 app.get('/api/health', (req, res) => {
