@@ -43,35 +43,21 @@
  * 5) Development → http://localhost:3001
  */
 function resolveApiBaseUrl(): string {
-  // Railway için öncelik NEXT_PUBLIC_API_URL
-  const railwayApiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim()
-  if (railwayApiUrl) {
-    console.log('🚀 Railway API URL kullanılıyor:', railwayApiUrl)
-    return railwayApiUrl.replace(/\/$/, '')
+  // Tek servis fullstack için relative URL kullan
+  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim()
+  if (apiUrl) {
+    console.log('🚀 API URL kullanılıyor:', apiUrl)
+    return apiUrl.replace(/\/$/, '')
   }
 
-  const explicit = (process.env.NEXT_PUBLIC_API_BASE_URL || '').trim()
-  if (explicit) {
-    console.log('🔧 Manuel API URL kullanılıyor:', explicit)
-    return explicit.replace(/\/$/, '')
-  }
-
+  // Development için localhost
   if (typeof window !== 'undefined') {
-    // CLIENT SIDE - Railway için mutlaka env variable gerekli
-    console.warn('⚠️ NEXT_PUBLIC_API_URL tanımlı değil! Development mod aktif.')
+    console.log('🔧 Development mod - localhost kullanılıyor')
     return 'http://localhost:3001'
   }
 
-  const vercelUrl = (process.env.VERCEL_URL || '').trim()
-  if (vercelUrl) {
-    console.log('📦 Vercel URL kullanılıyor:', vercelUrl)
-    return `https://${vercelUrl}`
-  }
-
-  // Production fallback: Railway'de env variable zorunlu
-  return process.env.NODE_ENV === 'production'
-    ? '' // Production'da env variable zorunlu
-    : 'http://localhost:3001'
+  // Production'da relative URL (aynı origin)
+  return ''
 }
 
 // ===== INTERFACES =====

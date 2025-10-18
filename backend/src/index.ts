@@ -31,7 +31,7 @@ import { notFound } from './middleware/notFound';
 dotenv.config();
 
 const app = express();
-// Railway'de ana port'u kullan (health check için)
+// Railway'de ana port'u kullan (tek servis için)
 const PORT = process.env.PORT || 8080;
 
 // Trust proxy for Vercel
@@ -155,6 +155,9 @@ app.use('/api/comprehensive-expertise', comprehensiveExpertiseRoutes);
 // Reports endpoint - frontend için alias
 app.use('/api/reports', userRoutes);
 
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Frontend static files serve et
 app.use(express.static(path.join(__dirname, '../../frontend/.next/static')));
 app.use(express.static(path.join(__dirname, '../../frontend/public')));
@@ -166,8 +169,19 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  // Diğer tüm routes'ları frontend'e yönlendir
-  return res.sendFile(path.join(__dirname, '../../frontend/.next/server/pages/index.html'));
+  // Next.js App Router için doğru dosya yolu
+  const indexPath = path.join(__dirname, '../../frontend/.next/server/app/page.html');
+  
+  // Eğer App Router dosyası yoksa, Pages Router'ı dene
+  if (!require('fs').existsSync(indexPath)) {
+    const pagesIndexPath = path.join(__dirname, '../../frontend/.next/server/pages/index.html');
+    if (require('fs').existsSync(pagesIndexPath)) {
+      return res.sendFile(pagesIndexPath);
+    }
+  }
+  
+  // App Router dosyasını gönder
+  return res.sendFile(indexPath);
 });
 
 // Error handling middleware
