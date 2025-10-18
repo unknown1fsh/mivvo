@@ -72,21 +72,91 @@ export class VINService {
    * Rate limit: Yok (free tier)
    */
   private static readonly NHTSA_API_URL = 'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues';
+  
+  /**
+   * Alternatif VIN API URL'leri
+   * 
+   * NHTSA API'den veri alınamazsa alternatif servisler kullanılabilir.
+   */
+  private static readonly ALTERNATIVE_APIS = [
+    'https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvaluesextended',
+    'https://vpic.nhtsa.dot.gov/api/vehicles/decodevin'
+  ];
 
   /**
-   * İngilizce API yanıtlarını Türkçe'ye çevirir
+   * Alternatif API'lerle VIN sorgulama
    * 
-   * NHTSA API İngilizce döndürdüğü için kullanıcıya Türkçe gösterilmesi gerekir.
-   * Her alan için özel translation mapping'i vardır.
+   * Ana API başarısız olursa alternatif API'leri dener.
    * 
-   * @param value - Çevrilecek İngilizce değer
-   * @param field - Hangi alanın çevrileceği (fuelType, transmissionStyle vb.)
-   * @returns Türkçe çeviri veya orijinal değer (çeviri bulunamazsa)
-   * 
-   * @example
-   * translateToTurkish('Gasoline', 'fuelType') // 'Benzin'
-   * translateToTurkish('Automatic', 'transmissionStyle') // 'Otomatik'
+   * @param vin - VIN numarası
+   * @returns Promise<VINData | null>
    */
+  private static async tryAlternativeAPIs(vin: string): Promise<VINData | null> {
+    for (const apiUrl of this.ALTERNATIVE_APIS) {
+      try {
+        console.log(`VIN Service: Trying alternative API: ${apiUrl}`);
+        
+        const response = await axios.get(`${apiUrl}/${vin}?format=json`, {
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'Mivvo-Expertiz/1.0',
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (response.data && response.data.Results && response.data.Results.length > 0) {
+          const result = response.data.Results[0];
+          
+          // Basit veri kontrolü
+          if (result.Make && result.Model) {
+            console.log(`VIN Service: Alternative API success: ${apiUrl}`);
+            return this.processAPIResult(result, vin);
+          }
+        }
+      } catch (error) {
+        console.warn(`VIN Service: Alternative API failed: ${apiUrl}`, error);
+        continue; // Sonraki API'yi dene
+      }
+    }
+    
+    return null; // Tüm alternatifler başarısız
+  }
+
+  /**
+   * API sonucunu işle ve VINData'ya çevir
+   * 
+   * @param result - API'den dönen sonuç
+   * @param vin - Orijinal VIN
+   * @returns VINData
+   */
+  private static processAPIResult(result: any, vin: string): VINData {
+    return {
+      vin: result.VIN || vin,
+      make: result.Make || 'Bilinmiyor',
+      model: result.Model || 'Bilinmiyor',
+      modelYear: result.ModelYear || 'Bilinmiyor',
+      manufacturer: result.Manufacturer || 'Bilinmiyor',
+      plantCountry: this.translateToTurkish(result.PlantCountry || 'Bilinmiyor', 'plantCountry'),
+      vehicleType: this.translateToTurkish(result.VehicleType || 'Bilinmiyor', 'vehicleType'),
+      bodyClass: this.translateToTurkish(result.BodyClass || 'Bilinmiyor', 'bodyClass'),
+      engineCylinders: result.EngineCylinders || 'Bilinmiyor',
+      engineDisplacement: result.EngineDisplacement || 'Bilinmiyor',
+      fuelType: this.translateToTurkish(result.FuelTypePrimary || result.FuelType || 'Bilinmiyor', 'fuelType'),
+      transmissionStyle: this.translateToTurkish(result.TransmissionStyle || 'Bilinmiyor', 'transmissionStyle'),
+      driveType: this.translateToTurkish(result.DriveType || 'Bilinmiyor', 'driveType'),
+      trim: result.Trim || 'Bilinmiyor',
+      series: result.Series || 'Bilinmiyor',
+      doors: result.Doors || 'Bilinmiyor',
+      windows: result.Windows || 'Bilinmiyor',
+      wheelBase: result.WheelBaseLong || result.WheelBase || 'Bilinmiyor',
+      gvwr: result.GVWR || 'Bilinmiyor',
+      plantCity: result.PlantCity || 'Bilinmiyor',
+      plantState: result.PlantState || 'Bilinmiyor',
+      plantCompanyName: result.PlantCompanyName || 'Bilinmiyor',
+      errorCode: result.ErrorCode || '0',
+      errorText: result.ErrorText || ''
+    };
+  }
   private static translateToTurkish(value: string, field: string): string {
     // Boş veya zaten Türkçe ise olduğu gibi döndür
     if (!value || value === 'Bilinmiyor') return value;
@@ -262,82 +332,180 @@ export class VINService {
 
       console.log('VIN Service: Making API call to NHTSA');
       
-      // 2. NHTSA API'ye istek at
-      const response = await axios.get(`${this.NHTSA_API_URL}/${vin}?format=json`, {
-        timeout: 10000, // 10 saniye timeout (API yavaş olabilir)
-        headers: {
-          'User-Agent': 'Mivvo-Expertiz/1.0' // NHTSA API User-Agent gerektirir
-        }
-      });
+      // 2. Ana NHTSA API'ye istek at
+      let vinData = null;
       
-      console.log('VIN Service: NHTSA API response received');
-      
-      // 3. API yanıtını parse et
-      if (response.data && response.data.Results && response.data.Results.length > 0) {
-        const result = response.data.Results[0];
-        console.log('VIN Service: Processing result:', { 
-          vin: result.VIN, 
-          make: result.Make, 
-          model: result.Model,
-          errorCode: result.ErrorCode 
+      try {
+        const response = await axios.get(`${this.NHTSA_API_URL}/${vin}?format=json`, {
+          timeout: 15000, // 15 saniye timeout (API yavaş olabilir)
+          headers: {
+            'User-Agent': 'Mivvo-Expertiz/1.0', // NHTSA API User-Agent gerektirir
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          },
+          validateStatus: function (status) {
+            return status >= 200 && status < 300; // Sadece 2xx status kodlarını kabul et
+          }
         });
         
-        // 4. Hata kontrolü - Sadece kritik hataları yakala
-        const errorCode = result.ErrorCode;
-        const errorText = result.ErrorText || '';
+        console.log('VIN Service: NHTSA API response received');
         
-        // Kritik hatalar:
-        // - Check digit hatası (VIN geçersiz)
-        // - Invalid VIN
-        // - Unable to decode
-        if (errorCode && errorCode !== '0' && errorCode !== 0 && 
-            (errorText.includes('Check Digit') && errorText.includes('does not calculate properly') ||
-             errorText.includes('Invalid') ||
-             errorText.includes('Unable to decode'))) {
-          throw new Error(errorText);
-        }
+        // 3. API yanıtını parse et
+        if (response.data && response.data.Results && response.data.Results.length > 0) {
+          const result = response.data.Results[0];
+          console.log('VIN Service: Processing result:', { 
+            vin: result.VIN, 
+            make: result.Make, 
+            model: result.Model,
+            errorCode: result.ErrorCode 
+          });
+          
+          // 4. Hata kontrolü - Sadece kritik hataları yakala
+          const errorCode = result.ErrorCode;
+          const errorText = result.ErrorText || '';
+          
+          // Kritik hatalar:
+          // - Check digit hatası (VIN geçersiz)
+          // - Invalid VIN
+          // - Unable to decode
+          if (errorCode && errorCode !== '0' && errorCode !== 0) {
+            // Check digit hatası varsa alternatif API'leri deneme, direkt hata ver
+            if (errorText.includes('Check Digit') && errorText.includes('does not calculate properly')) {
+              // BMW VIN'leri için özel durum - check digit hatası olsa bile veri almayı dene
+              if (vin.startsWith('WBA') || vin.startsWith('WBS') || vin.startsWith('WBY')) {
+                console.warn('VIN Service: BMW VIN with check digit error, attempting to get data anyway');
+                // Check digit hatası olsa bile veri işlemeye devam et
+              } else {
+                throw new Error('VIN numarasının 9. hanesi (kontrol hanesi) hatalı. VIN numarasını kontrol edin.');
+              }
+            } else if (errorText.includes('Invalid VIN')) {
+              throw new Error('Geçersiz VIN formatı. 17 haneli VIN numarası girin.');
+            } else if (errorText.includes('Unable to decode')) {
+              throw new Error('VIN numarası çözülemedi. VIN numarasını kontrol edin.');
+            }
+            // Diğer hatalar için uyarı ver ama devam et
+            console.warn('VIN Service: Non-critical error:', errorCode, errorText);
+          }
 
-        // 5. VINData objesi oluştur (Türkçe çevirilerle)
-        return {
-          vin: result.VIN || vin,
-          make: result.Make || 'Bilinmiyor',
-          model: result.Model || 'Bilinmiyor',
-          modelYear: result.ModelYear || 'Bilinmiyor',
-          manufacturer: result.Manufacturer || 'Bilinmiyor',
-          plantCountry: this.translateToTurkish(result.PlantCountry || 'Bilinmiyor', 'plantCountry'),
-          vehicleType: this.translateToTurkish(result.VehicleType || 'Bilinmiyor', 'vehicleType'),
-          bodyClass: this.translateToTurkish(result.BodyClass || 'Bilinmiyor', 'bodyClass'),
-          engineCylinders: result.EngineCylinders || 'Bilinmiyor',
-          engineDisplacement: result.EngineDisplacement || 'Bilinmiyor',
-          fuelType: this.translateToTurkish(result.FuelTypePrimary || 'Bilinmiyor', 'fuelType'),
-          transmissionStyle: this.translateToTurkish(result.TransmissionStyle || 'Bilinmiyor', 'transmissionStyle'),
-          driveType: this.translateToTurkish(result.DriveType || 'Bilinmiyor', 'driveType'),
-          trim: result.Trim || 'Bilinmiyor',
-          series: result.Series || 'Bilinmiyor',
-          doors: result.Doors || 'Bilinmiyor',
-          windows: result.Windows || 'Bilinmiyor',
-          wheelBase: result.WheelBaseLong || 'Bilinmiyor',
-          gvwr: result.GVWR || 'Bilinmiyor',
-          plantCity: result.PlantCity || 'Bilinmiyor',
-          plantState: result.PlantState || 'Bilinmiyor',
-          plantCompanyName: result.PlantCompanyName || 'Bilinmiyor',
-          errorCode: result.ErrorCode || '0',
-          errorText: result.ErrorText || ''
-        };
+          // 5. VINData objesi oluştur (Türkçe çevirilerle)
+          vinData = this.processAPIResult(result, vin);
+        }
+      } catch (apiError) {
+        console.warn('VIN Service: Main API failed, trying alternatives:', apiError);
+        
+        // Sadece bağlantı hatalarında alternatif API'leri dene
+        // Check digit hatası gibi kritik hatalarda alternatif deneme
+        if (apiError instanceof Error && 
+            !apiError.message.includes('kontrol hanesi') && 
+            !apiError.message.includes('Geçersiz VIN') && 
+            !apiError.message.includes('çözülemedi')) {
+          vinData = await this.tryAlternativeAPIs(vin);
+        } else {
+          // Kritik hataları yeniden fırlat
+          throw apiError;
+        }
       }
 
       // API'den sonuç dönmedi
-      return null;
+      return vinData;
     } catch (error) {
       console.error('VIN Service: Error occurred:', error);
       
-      // Hata mesajını kullanıcı dostu hale getir
+      // Axios hatalarını özel olarak işle
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw new Error('VIN sorgulama zaman aşımına uğradı. Lütfen tekrar deneyin.');
+        } else if (error.response) {
+          // HTTP hata kodları
+          const status = error.response.status;
+          if (status === 404) {
+            throw new Error('VIN bilgileri bulunamadı. VIN numarasını kontrol edin.');
+          } else if (status >= 500) {
+            throw new Error('NHTSA API sunucusu hatası. Lütfen daha sonra tekrar deneyin.');
+          } else {
+            throw new Error(`API hatası (${status}): ${error.response.statusText}`);
+          }
+        } else if (error.request) {
+          throw new Error('NHTSA API\'ye bağlanılamadı. İnternet bağlantınızı kontrol edin.');
+        }
+      }
+      
+      // Diğer hatalar
       if (error instanceof Error) {
         throw new Error(`VIN sorgulama hatası: ${error.message}`);
       } else {
         throw new Error('VIN sorgulama sırasında bilinmeyen hata oluştu');
       }
     }
+  }
+
+  /**
+   * VIN Check Digit hesaplama
+   * 
+   * VIN'in 9. karakteri check digit'dir ve VIN'in geçerliliğini kontrol eder.
+   * 
+   * @param vin - VIN numarası (17 karakter)
+   * @returns Doğru check digit karakteri
+   */
+  static calculateCheckDigit(vin: string): string {
+    if (!vin || vin.length !== 17) {
+      throw new Error('VIN 17 karakter olmalıdır');
+    }
+
+    // VIN'deki karakterleri sayısal değerlere çevir
+    const vinChars = vin.split('');
+    const weights = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+    
+    let sum = 0;
+    
+    for (let i = 0; i < 17; i++) {
+      if (i === 8) continue; // Check digit pozisyonunu atla
+      
+      const char = vinChars[i];
+      let value = 0;
+      
+      if (char >= '0' && char <= '9') {
+        value = parseInt(char);
+      } else if (char >= 'A' && char <= 'Z') {
+        // I, O, Q harfleri VIN'de kullanılmaz
+        if (char === 'I' || char === 'O' || char === 'Q') {
+          throw new Error('VIN\'de I, O, Q harfleri kullanılamaz');
+        }
+        
+        // A=1, B=2, ..., H=8, J=9, K=10, ..., N=14, P=15, ..., Z=26
+        if (char <= 'H') {
+          value = char.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+        } else if (char <= 'N') {
+          value = char.charCodeAt(0) - 'A'.charCodeAt(0);
+        } else if (char <= 'Z') {
+          value = char.charCodeAt(0) - 'A'.charCodeAt(0) - 1;
+        }
+      }
+      
+      sum += value * weights[i];
+    }
+    
+    const remainder = sum % 11;
+    const checkDigit = remainder === 10 ? 'X' : remainder.toString();
+    
+    return checkDigit;
+  }
+
+  /**
+   * VIN'in check digit'ini doğrula
+   * 
+   * @param vin - VIN numarası
+   * @returns true: geçerli check digit, false: geçersiz
+   */
+  static validateCheckDigit(vin: string): boolean {
+    if (!vin || vin.length !== 17) {
+      return false;
+    }
+    
+    const actualCheckDigit = vin[8];
+    const calculatedCheckDigit = this.calculateCheckDigit(vin);
+    
+    return actualCheckDigit === calculatedCheckDigit;
   }
 
   /**

@@ -271,6 +271,12 @@ export class VINController {
             success: false,
             message: error.message
           });
+        } else if (error.message.includes('kontrol hanesi')) {
+          res.status(400).json({
+            success: false,
+            message: error.message,
+            suggestion: 'VIN numarasının 9. hanesini kontrol edin. Check digit hesaplama hatası olabilir.'
+          });
         } else if (error.message.includes('VIN sorgulama hatası')) {
           res.status(400).json({
             success: false,

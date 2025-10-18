@@ -287,8 +287,12 @@ export default function VINLookupPage() {
         
         if (errorMessage.includes('No detailed data available')) {
           errorMessage = 'Bu VIN numarası için detaylı bilgi bulunamadı. VIN numarasını kontrol edin veya farklı bir VIN deneyin.';
-        } else if (errorMessage.includes('Check Digit')) {
+        } else if (errorMessage.includes('Check Digit') || errorMessage.includes('kontrol hanesi')) {
           errorMessage = 'VIN numarasının 9. hanesi (kontrol hanesi) hatalı. VIN numarasını kontrol edin.';
+          // Check digit önerisi varsa göster
+          if (data.suggestion) {
+            errorMessage += ' ' + data.suggestion;
+          }
         } else if (errorMessage.includes('Invalid')) {
           errorMessage = 'Geçersiz VIN formatı. 17 haneli VIN numarası girin.';
         }
