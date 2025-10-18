@@ -176,7 +176,7 @@ if (process.env.NODE_ENV === 'production') {
     }
     
     // Frontend sayfaları için index.html döndür
-    res.sendFile(path.join(frontendPath, 'index.html'));
+    return res.sendFile(path.join(frontendPath, 'index.html'));
   });
 }
 
