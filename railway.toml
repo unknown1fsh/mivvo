@@ -1,5 +1,6 @@
 [build]
 builder = "nixpacks"
+buildCommand = "npm run build:clean"
 
 [deploy]
 startCommand = "npm run start:full"

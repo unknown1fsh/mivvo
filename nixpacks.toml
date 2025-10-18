@@ -3,9 +3,9 @@ nixPkgs = ["nodejs_18", "npm"]
 
 [phases.install]
 cmds = [
-  "npm ci",
-  "cd backend && npm ci",
-  "cd frontend && npm ci"
+  "npm ci --cache .npm --prefer-offline",
+  "cd backend && npm ci --cache .npm --prefer-offline",
+  "cd frontend && npm ci --cache .npm --prefer-offline"
 ]
 
 [phases.build]
@@ -19,3 +19,4 @@ cmd = "npm run start:full"
 [variables]
 NODE_ENV = "production"
 PORT = "8080"
+CLEAR_CACHE = "true"
