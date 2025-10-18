@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // Create axios instance
 const api = axios.create({
@@ -42,7 +42,7 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (email: string, password: string) =>
-    api.post('/auth/login', { email, password }),
+    api.post('/api/auth/login', { email, password }),
   
   register: (userData: {
     firstName: string
@@ -51,31 +51,31 @@ export const authAPI = {
     phone?: string
     password: string
   }) =>
-    api.post('/auth/register', userData),
+    api.post('/api/auth/register', userData),
   
   forgotPassword: (email: string) =>
-    api.post('/auth/forgot-password', { email }),
+    api.post('/api/auth/forgot-password', { email }),
   
   resetPassword: (token: string, password: string) =>
-    api.post('/auth/reset-password', { token, password }),
+    api.post('/api/auth/reset-password', { token, password }),
   
   verifyEmail: (token: string) =>
-    api.post('/auth/verify-email', { token }),
+    api.post('/api/auth/verify-email', { token }),
 }
 
 // User API
 export const userAPI = {
   getProfile: () =>
-    api.get('/user/profile'),
+    api.get('/api/user/profile'),
   
   updateProfile: (userData: any) =>
-    api.put('/user/profile', userData),
+    api.put('/api/user/profile', userData),
   
   getCredits: () =>
-    api.get('/user/credits'),
+    api.get('/api/user/credits'),
   
   addCredits: (amount: number) =>
-    api.post('/user/credits', { amount }),
+    api.post('/api/user/credits', { amount }),
 }
 
 // Vehicle API
@@ -101,7 +101,7 @@ export const vehicleAPI = {
       }
     })
     
-    return api.post('/vehicle/reports', formData, {
+    return api.post('/api/vehicle/reports', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -110,16 +110,16 @@ export const vehicleAPI = {
   },
   
   getReports: (page = 1, limit = 10) =>
-    api.get(`/vehicle/reports?page=${page}&limit=${limit}`),
+    api.get(`/api/vehicle/reports?page=${page}&limit=${limit}`),
   
   getReport: (id: string) =>
-    api.get(`/vehicle/reports/${id}`),
+    api.get(`/api/vehicle/reports/${id}`),
   
   updateReport: (id: string, data: any) =>
-    api.put(`/vehicle/reports/${id}`, data),
+    api.put(`/api/vehicle/reports/${id}`, data),
   
   deleteReport: (id: string) =>
-    api.delete(`/vehicle/reports/${id}`),
+    api.delete(`/api/vehicle/reports/${id}`),
 }
 
 // Payment API
@@ -129,52 +129,52 @@ export const paymentAPI = {
     method: string
     packageId?: string
   }) =>
-    api.post('/payment/create', paymentData),
+    api.post('/api/payment/create', paymentData),
   
   getPayments: (page = 1, limit = 10) =>
-    api.get(`/payment/history?page=${page}&limit=${limit}`),
+    api.get(`/api/payment/history?page=${page}&limit=${limit}`),
   
   getPayment: (id: string) =>
-    api.get(`/payment/${id}`),
+    api.get(`/api/payment/${id}`),
   
   processPayment: (id: string, paymentData: any) =>
-    api.post(`/payment/${id}/process`, paymentData),
+    api.post(`/api/payment/${id}/process`, paymentData),
 }
 
 // Admin API
 export const adminAPI = {
   getUsers: (page = 1, limit = 10) =>
-    api.get(`/admin/users?page=${page}&limit=${limit}`),
+    api.get(`/api/admin/users?page=${page}&limit=${limit}`),
   
   getUser: (id: string) =>
-    api.get(`/admin/users/${id}`),
+    api.get(`/api/admin/users/${id}`),
   
   updateUser: (id: string, userData: any) =>
-    api.put(`/admin/users/${id}`, userData),
+    api.put(`/api/admin/users/${id}`, userData),
   
   deleteUser: (id: string) =>
-    api.delete(`/admin/users/${id}`),
+    api.delete(`/api/admin/users/${id}`),
   
   getReports: (page = 1, limit = 10) =>
-    api.get(`/admin/reports?page=${page}&limit=${limit}`),
+    api.get(`/api/admin/reports?page=${page}&limit=${limit}`),
   
   getReport: (id: string) =>
-    api.get(`/admin/reports/${id}`),
+    api.get(`/api/admin/reports/${id}`),
   
   updateReport: (id: string, data: any) =>
-    api.put(`/admin/reports/${id}`, data),
+    api.put(`/api/admin/reports/${id}`, data),
   
   getPayments: (page = 1, limit = 10) =>
-    api.get(`/admin/payments?page=${page}&limit=${limit}`),
+    api.get(`/api/admin/payments?page=${page}&limit=${limit}`),
   
   getStats: () =>
-    api.get('/admin/stats'),
+    api.get('/api/admin/stats'),
   
   getServicePricing: () =>
-    api.get('/admin/service-pricing'),
+    api.get('/api/admin/service-pricing'),
   
   updateServicePricing: (pricing: any) =>
-    api.put('/admin/service-pricing', pricing),
+    api.put('/api/admin/service-pricing', pricing),
 }
 
 // Utility functions

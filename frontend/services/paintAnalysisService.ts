@@ -189,8 +189,8 @@ class PaintAnalysisService {
       }
 
       const response = await fetch(`${process.env.NODE_ENV === 'production' 
-        ? 'https://mivvo-expertiz.vercel.app/api'
-        : 'http://localhost:3001'}/paint-analysis/${reportId}/download`, {
+        ? process.env.NEXT_PUBLIC_API_URL || 'https://mivvo-production.up.railway.app'
+        : 'http://localhost:3001'}/api/paint-analysis/${reportId}/download`, {
         method: 'GET',
         headers,
       })

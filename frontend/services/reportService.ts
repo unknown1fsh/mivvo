@@ -222,8 +222,8 @@ class ReportService {
       }
 
       const response = await fetch(`${process.env.NODE_ENV === 'production' 
-        ? 'https://mivvo-expertiz.vercel.app/api'
-        : 'http://localhost:3001'}/reports/${reportId}/pdf`, {
+        ? process.env.NEXT_PUBLIC_API_URL || 'https://mivvo-production.up.railway.app'
+        : 'http://localhost:3001'}/api/reports/${reportId}/pdf`, {
         method: 'GET',
         headers,
       })
