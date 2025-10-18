@@ -163,22 +163,8 @@ app.use('/api/reports', userRoutes);
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Frontend static files (production'da)
-if (process.env.NODE_ENV === 'production') {
-  const frontendPath = path.join(__dirname, 'frontend');
-  app.use(express.static(frontendPath));
-  
-  // Frontend routes için catch-all
-  app.get('*', (req, res) => {
-    // API routes'ları backend'e yönlendir
-    if (req.path.startsWith('/api/')) {
-      return res.status(404).json({ error: 'API endpoint not found' });
-    }
-    
-    // Frontend sayfaları için index.html döndür
-    return res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-}
+// Vercel serverless functions için frontend static serving kaldırıldı
+// Vercel routing ile frontend dosyaları otomatik serve ediliyor
 
 // Start server
 app.listen(PORT, () => {
