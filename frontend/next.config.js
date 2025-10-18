@@ -14,14 +14,14 @@ const nextConfig = {
   compress: true,
   swcMinify: true,
   trailingSlash: false,
-  // Force rebuild in production
+  // Vercel için optimize edilmiş build ID
   generateBuildId: async () => {
+    if (process.env.VERCEL) {
+      return process.env.VERCEL_GIT_COMMIT_SHA || 'vercel-build';
+    }
     return `build-${Date.now()}`;
   },
-  // Production'da static export
-  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
-  distDir: process.env.NODE_ENV === 'production' ? '../backend/dist/frontend' : '.next',
-  // output: 'standalone', // Vercel için kaldırıldı
+  // Vercel için output ayarları kaldırıldı
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "frontend/package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/next",
+      "config": {
+        "distDir": ".next"
+      }
     },
     {
       "src": "backend/src/index.ts",
@@ -17,20 +20,13 @@
       "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
     },
     {
-      "src": "/_next/static/(.*)",
-      "dest": "/frontend/_next/static/$1"
-    },
-    {
-      "src": "/_next/webpack-hmr",
-      "dest": "/frontend/_next/webpack-hmr"
-    },
-    {
-      "src": "/reports/(.*)",
-      "dest": "/frontend/reports/$1"
-    },
-    {
       "src": "/(.*)",
       "dest": "frontend/$1"
     }
-  ]
+  ],
+  "functions": {
+    "backend/src/index.ts": {
+      "maxDuration": 30
+    }
+  }
 }
