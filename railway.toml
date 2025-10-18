@@ -16,7 +16,7 @@ healthcheckPath = "/api/health"
 restartPolicyType = "on_failure"
 
 # Start command (Procfile ile birlikte)
-startCommand = "npm run start"
+startCommand = "npm run dev:full"
 
 # Resource limits (opsiyonel)
 [deploy.resources]
