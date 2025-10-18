@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Railway'de backend port 5000'de çalışacak
-const BACKEND_URL = 'http://localhost:5000';
+// Railway'de backend port 3001'de çalışacak
+const BACKEND_URL = 'http://localhost:3001';
 
 export async function POST(request: NextRequest) {
   try {
