@@ -101,8 +101,11 @@ class AuthService {
     console.log('🔐 Login başlatıldı:', { email: credentials.email })
     
     try {
-      console.log('📤 API isteği gönderiliyor:', '/api/auth/login')
-      const response = await apiClient.post<LoginResponse>('/api/auth/login', credentials)
+      const endpoint = '/api/auth/login'
+      console.log('🔍 Environment:', process.env.NODE_ENV)
+      console.log('📤 API isteği gönderiliyor:', endpoint)
+      console.log('🔗 Full URL will be:', window.location.origin + endpoint)
+      const response = await apiClient.post<LoginResponse>(endpoint, credentials)
       
       console.log('📥 API yanıtı alındı:', {
         success: response.success,
@@ -186,7 +189,8 @@ class AuthService {
    */
   async register(userData: RegisterData): Promise<AuthResponse | null> {
     try {
-      const response = await apiClient.post<RegisterResponse>('/api/auth/register', userData)
+      const endpoint = '/api/auth/register'
+      const response = await apiClient.post<RegisterResponse>(endpoint, userData)
       
       if (response.success && response.data) {
         // apiClient artık direkt backend response döndürüyor
@@ -236,7 +240,8 @@ class AuthService {
     try {
       // Sadece geçerli token varsa logout API'sini çağır
       if (token) {
-        await apiClient.post('/api/auth/logout')
+        const endpoint = '/api/auth/logout'
+        await apiClient.post(endpoint)
       }
     } catch (error) {
       // Hata durumunda sessizce devam et
@@ -264,7 +269,8 @@ class AuthService {
 
     if (!refreshToken) return null
 
-    const response = await apiClient.post<{ token: string }>('/api/auth/refresh', {
+    const endpoint = '/api/auth/refresh'
+    const response = await apiClient.post<{ token: string }>(endpoint, {
       refreshToken
     })
 
@@ -422,7 +428,8 @@ class AuthService {
    * const sent = await authService.requestPasswordReset('user@example.com')
    */
   async requestPasswordReset(email: string): Promise<boolean> {
-    const response = await apiClient.post('/api/auth/forgot-password', { email })
+    const endpoint = '/api/auth/forgot-password'
+    const response = await apiClient.post(endpoint, { email })
     return response.success
   }
 
@@ -440,7 +447,8 @@ class AuthService {
    * const reset = await authService.resetPassword('token123', 'newpassword')
    */
   async resetPassword(token: string, newPassword: string): Promise<boolean> {
-    const response = await apiClient.post('/api/auth/reset-password', {
+    const endpoint = '/api/auth/reset-password'
+    const response = await apiClient.post(endpoint, {
       token,
       password: newPassword
     })
@@ -460,7 +468,8 @@ class AuthService {
    * const verified = await authService.verifyEmail('token123')
    */
   async verifyEmail(token: string): Promise<boolean> {
-    const response = await apiClient.post('/api/auth/verify-email', { token })
+    const endpoint = '/api/auth/verify-email'
+    const response = await apiClient.post(endpoint, { token })
     return response.success
   }
 
@@ -475,7 +484,8 @@ class AuthService {
    * const sent = await authService.resendVerificationEmail()
    */
   async resendVerificationEmail(): Promise<boolean> {
-    const response = await apiClient.post('/api/auth/resend-verification')
+    const endpoint = '/api/auth/resend-verification'
+    const response = await apiClient.post(endpoint)
     return response.success
   }
 }

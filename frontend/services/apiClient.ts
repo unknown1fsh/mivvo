@@ -52,17 +52,23 @@ function resolveApiBaseUrl(): string {
     currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server'
   });
 
-  // Tek servis fullstack için relative URL kullan
-  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim()
-  if (apiUrl) {
-    console.log('🚀 API URL kullanılıyor:', apiUrl)
-    return apiUrl.replace(/\/$/, '')
+  // Production'da her zaman boş string kullan (Next.js API routes için)
+  if (process.env.NODE_ENV === 'production') {
+    console.log('🚀 Production mod - boş base URL kullanılıyor')
+    return ''
   }
 
   // Development için localhost
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.log('🔧 Development mod - localhost kullanılıyor')
     return 'http://localhost:3001'
+  }
+
+  // Tek servis fullstack için relative URL kullan
+  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim()
+  if (apiUrl) {
+    console.log('🚀 API URL kullanılıyor:', apiUrl)
+    return apiUrl.replace(/\/$/, '')
   }
 
   // Production'da Railway domain kullan

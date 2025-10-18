@@ -37,7 +37,8 @@ export const useDamageAnalysis = () => {
     try {
       toast.loading('Hasar analizi raporu hazırlanıyor...', { id: toastId })
 
-      const reportResponse = await api.post('/api/damage-analysis/start', {
+      const endpoint = process.env.NODE_ENV === 'production' ? '/damage-analysis/start' : '/api/damage-analysis/start'
+      const reportResponse = await api.post(endpoint, {
         vehicleInfo,
         analysisType: 'damage'
       })

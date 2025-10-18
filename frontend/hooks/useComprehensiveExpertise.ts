@@ -19,7 +19,8 @@ export const useComprehensiveExpertise = () => {
       // 1. Analizi başlat
       toast.loading('Tam expertiz başlatılıyor...', { id: 'comprehensive-expertise' })
       
-      const startResponse = await api.post('/api/comprehensive-expertise/start', {
+      const endpoint = process.env.NODE_ENV === 'production' ? '/comprehensive-expertise/start' : '/api/comprehensive-expertise/start'
+      const startResponse = await api.post(endpoint, {
         vehicleInfo: {
           plate: vehicleInfo.plate,
           make: vehicleInfo.make,

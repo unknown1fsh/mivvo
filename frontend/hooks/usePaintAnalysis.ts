@@ -20,7 +20,8 @@ export const usePaintAnalysis = () => {
       setCurrentStep('Analiz başlatılıyor...')
       setProgress(10)
       
-      const startResponse = await api.post('/api/paint-analysis/start', {
+      const endpoint = process.env.NODE_ENV === 'production' ? '/paint-analysis/start' : '/api/paint-analysis/start'
+      const startResponse = await api.post(endpoint, {
         vehicleInfo: {
           plate: vehicleInfo.plate,
           make: vehicleInfo.make,

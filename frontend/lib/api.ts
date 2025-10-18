@@ -42,7 +42,7 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   login: (email: string, password: string) =>
-    api.post('/api/auth/login', { email, password }),
+    api.post(process.env.NODE_ENV === 'production' ? '/auth/login' : '/api/auth/login', { email, password }),
   
   register: (userData: {
     firstName: string
@@ -51,31 +51,31 @@ export const authAPI = {
     phone?: string
     password: string
   }) =>
-    api.post('/api/auth/register', userData),
+    api.post(process.env.NODE_ENV === 'production' ? '/auth/register' : '/api/auth/register', userData),
   
   forgotPassword: (email: string) =>
-    api.post('/api/auth/forgot-password', { email }),
+    api.post(process.env.NODE_ENV === 'production' ? '/auth/forgot-password' : '/api/auth/forgot-password', { email }),
   
   resetPassword: (token: string, password: string) =>
-    api.post('/api/auth/reset-password', { token, password }),
+    api.post(process.env.NODE_ENV === 'production' ? '/auth/reset-password' : '/api/auth/reset-password', { token, password }),
   
   verifyEmail: (token: string) =>
-    api.post('/api/auth/verify-email', { token }),
+    api.post(process.env.NODE_ENV === 'production' ? '/auth/verify-email' : '/api/auth/verify-email', { token }),
 }
 
 // User API
 export const userAPI = {
   getProfile: () =>
-    api.get('/api/user/profile'),
+    api.get(process.env.NODE_ENV === 'production' ? '/user/profile' : '/api/user/profile'),
   
   updateProfile: (userData: any) =>
-    api.put('/api/user/profile', userData),
+    api.put(process.env.NODE_ENV === 'production' ? '/user/profile' : '/api/user/profile', userData),
   
   getCredits: () =>
-    api.get('/api/user/credits'),
+    api.get(process.env.NODE_ENV === 'production' ? '/user/credits' : '/api/user/credits'),
   
   addCredits: (amount: number) =>
-    api.post('/api/user/credits', { amount }),
+    api.post(process.env.NODE_ENV === 'production' ? '/user/credits' : '/api/user/credits', { amount }),
 }
 
 // Vehicle API

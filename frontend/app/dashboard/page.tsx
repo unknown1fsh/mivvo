@@ -74,9 +74,12 @@ export default function DashboardPage() {
       const currentUser = authService.getCurrentUser()
       
       // Kredi bakiyesini ve raporları çek
+      const creditsEndpoint = process.env.NODE_ENV === 'production' ? '/user/credits' : '/api/user/credits'
+      const reportsEndpoint = process.env.NODE_ENV === 'production' ? '/user/reports' : '/api/user/reports'
+      
       const [creditsResponse, reportsResponse] = await Promise.all([
-        api.get('/api/user/credits'),
-        api.get('/api/user/reports')
+        api.get(creditsEndpoint),
+        api.get(reportsEndpoint)
       ])
       
       if (reportsResponse.data.success) {
