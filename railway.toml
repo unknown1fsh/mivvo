@@ -1,28 +1,33 @@
-# Railway Configuration File
-# Bu dosya Railway deployment'ını optimize eder
-
 [build]
-# Build sürecini optimize et
 builder = "nixpacks"
 
 [deploy]
-# Railway'nin otomatik port detection'ını kullan
-# PORT environment variable Railway tarafından otomatik sağlanır
-
-# Health check endpoint'i - API prefix ile
+startCommand = "npm run start:full"
 healthcheckPath = "/api/health"
-
-# Restart policy
+healthcheckTimeout = 300
 restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
 
-# Start command (Procfile ile birlikte)
-startCommand = "npm run dev:full"
+[env]
+NODE_ENV = "production"
+PORT = "3000"
 
-# Resource limits (opsiyonel)
-[deploy.resources]
-# CPU ve memory limitleri Railway'nin free tier'ına uygun
-cpu = "0.5"
-memory = "1Gi"
+# Frontend environment variables
+NEXT_PUBLIC_API_URL = "${{RAILWAY_PUBLIC_DOMAIN}}"
+NEXT_PUBLIC_APP_URL = "${{RAILWAY_PUBLIC_DOMAIN}}"
 
-# Environment variables (Railway dashboard'dan ayarlanacak)
-# Bu dosya sadece konfigürasyon için, gerçek env variables Railway dashboard'da
+# Backend environment variables  
+DATABASE_URL = "${{DATABASE_URL}}"
+JWT_SECRET = "${{JWT_SECRET}}"
+OPENAI_API_KEY = "${{OPENAI_API_KEY}}"
+GOOGLE_AI_API_KEY = "${{GOOGLE_AI_API_KEY}}"
+EMAIL_HOST = "${{EMAIL_HOST}}"
+EMAIL_PORT = "${{EMAIL_PORT}}"
+EMAIL_USER = "${{EMAIL_USER}}"
+EMAIL_PASS = "${{EMAIL_PASS}}"
+UPLOAD_DIR = "/tmp/uploads"
+
+# Security
+CORS_ORIGIN = "${{RAILWAY_PUBLIC_DOMAIN}}"
+RATE_LIMIT_WINDOW_MS = "900000"
+RATE_LIMIT_MAX_REQUESTS = "100"
