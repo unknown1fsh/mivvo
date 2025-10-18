@@ -25,6 +25,7 @@ const schema = yup.object({
   lastName: yup.string().required('Soyad zorunludur'),
   email: yup.string().email('Geçerli bir email adresi giriniz').required('Email zorunludur'),
   phone: yup.string().matches(/^[0-9+\-\s()]+$/, 'Geçerli bir telefon numarası giriniz'),
+  address: yup.string().oneOf(['Çankaya / ANKARA'], 'Sadece Çankaya / ANKARA adresi kabul edilir'),
   currentPassword: yup.string().required('Mevcut şifre zorunludur'),
   newPassword: yup.string().min(6, 'Yeni şifre en az 6 karakter olmalıdır'),
   confirmPassword: yup.string().oneOf([yup.ref('newPassword')], 'Şifreler eşleşmiyor'),
@@ -47,6 +48,7 @@ export default function ProfilePage() {
       lastName: 'Yılmaz',
       email: 'ahmet@email.com',
       phone: '+90 555 123 45 67',
+      address: 'Çankaya / ANKARA',
     }
   })
 
@@ -235,6 +237,29 @@ export default function ProfilePage() {
                         </div>
                         {errors.phone && (
                           <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
+                        )}
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                          Adres
+                        </label>
+                        <div className="relative">
+                          <input
+                            {...register('address')}
+                            type="text"
+                            id="address"
+                            className="input w-full"
+                            value="Çankaya / ANKARA"
+                            readOnly
+                            disabled
+                          />
+                        </div>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Adres bilgisi sabit olarak "Çankaya / ANKARA" olarak ayarlanmıştır.
+                        </p>
+                        {errors.address && (
+                          <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>
                         )}
                       </div>
                     </div>

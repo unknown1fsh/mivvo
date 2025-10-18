@@ -83,35 +83,35 @@ const pricingPlans = [
 const servicePricing = [
   {
     service: 'Boya Analizi',
-    price: 49,
+    price: 399,
     description: 'AI destekli boya kalitesi ve renk analizi',
     features: ['1-5 resim analizi', 'Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi']
   },
   {
     service: 'Hasar Değerlendirmesi',
-    price: 69,
+    price: 499,
     description: 'AI destekli hasar tespiti ve değerlendirme',
     features: ['1-5 resim analizi', 'Çarpışma hasarları', 'Çizik ve göçük analizi', 'Onarım maliyet tahmini']
   },
   {
     service: 'Motor Sesi Analizi',
-    price: 79,
+    price: 299,
     description: 'Ses kaydı ile motor durumu AI analizi',
     features: ['Çoklu ses dosyası', 'Motor sağlık durumu', 'Anormallik tespiti', 'Detaylı rapor']
   },
   {
     service: 'Değer Tahmini',
-    price: 49,
+    price: 299,
     description: 'AI tabanlı piyasa değeri hesaplama',
     features: ['Piyasa analizi', 'Değer hesaplama', 'Karşılaştırma', 'Detaylı rapor']
   },
   {
     service: 'Kapsamlı Ekspertiz',
-    price: 179,
-    originalPrice: 246,
-    discount: 67,
+    price: 899,
+    originalPrice: 1496,
+    discount: 597,
     description: 'Tüm analizleri içeren premium paket',
-    features: ['Tüm analizler dahil', 'Boya + Hasar + Motor + Değer', 'Detaylı kapsamlı rapor', '67 TL tasarruf'],
+    features: ['Tüm analizler dahil', 'Boya + Hasar + Motor + Değer', 'Detaylı kapsamlı rapor', '597 TL tasarruf'],
     popular: true
   }
 ]

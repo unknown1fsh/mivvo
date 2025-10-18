@@ -54,7 +54,7 @@ export default function HomePage() {
   const services = [
     {
       name: 'Boya Analizi',
-      price: '25₺',
+      price: '399₺',
       description: 'Araç boyasının durumu ve kalitesi analizi',
       icon: '🎨',
       features: ['Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi'],
@@ -62,15 +62,23 @@ export default function HomePage() {
     },
     {
       name: 'Hasar Değerlendirmesi',
-      price: '35₺',
+      price: '499₺',
       description: 'Araç hasarlarının tespiti ve değerlendirmesi',
       icon: '🔧',
       features: ['Çarpışma hasarları', 'Çizik analizi', 'Onarım maliyeti'],
       popular: false
     },
     {
+      name: 'Motor Sesi Analizi',
+      price: '299₺',
+      description: 'Ses kaydı ile motor durumu analizi',
+      icon: '🔊',
+      features: ['Ses analizi', 'Motor sağlık durumu', 'Anormallik tespiti'],
+      popular: false
+    },
+    {
       name: 'Değer Tahmini',
-      price: '20₺',
+      price: '299₺',
       description: 'Araç piyasa değeri tahmini',
       icon: '💰',
       features: ['Piyasa analizi', 'Değer hesaplama', 'Raporlama'],
@@ -78,7 +86,7 @@ export default function HomePage() {
     },
     {
       name: 'Tam Expertiz',
-      price: '75₺',
+      price: '899₺',
       description: 'Tüm analizlerin dahil olduğu kapsamlı rapor',
       icon: '📋',
       features: ['Tüm analizler', 'Detaylı rapor', 'Uzman görüşü'],
@@ -118,7 +126,6 @@ export default function HomePage() {
               <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">Ana Sayfa</Link>
               <Link href="/services" className="text-gray-700 hover:text-blue-600 transition-colors">Hizmetler</Link>
               <Link href="/pricing" className="text-gray-700 hover:text-blue-600 transition-colors">Fiyatlar</Link>
-              <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors">Hakkımızda</Link>
               <Link href="/contact" className="text-gray-700 hover:text-blue-600 transition-colors">İletişim</Link>
               <div className="flex items-center space-x-4">
                 <Link href="/login" className="btn btn-ghost btn-md">Giriş Yap</Link>
@@ -149,7 +156,6 @@ export default function HomePage() {
                 <Link href="/" className="block text-gray-700 hover:text-blue-600 transition-colors">Ana Sayfa</Link>
                 <Link href="/services" className="block text-gray-700 hover:text-blue-600 transition-colors">Hizmetler</Link>
                 <Link href="/pricing" className="block text-gray-700 hover:text-blue-600 transition-colors">Fiyatlar</Link>
-                <Link href="/about" className="block text-gray-700 hover:text-blue-600 transition-colors">Hakkımızda</Link>
                 <Link href="/contact" className="block text-gray-700 hover:text-blue-600 transition-colors">İletişim</Link>
                 <div className="pt-4 space-y-2">
                   <Link href="/login" className="block btn btn-ghost btn-md w-full">Giriş Yap</Link>
@@ -384,7 +390,6 @@ export default function HomePage() {
             <div>
               <h3 className="text-lg font-semibold mb-4">Şirket</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about" className="hover:text-white transition-colors">Hakkımızda</Link></li>
                 <li><Link href="/contact" className="hover:text-white transition-colors">İletişim</Link></li>
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Gizlilik</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Kullanım Şartları</Link></li>

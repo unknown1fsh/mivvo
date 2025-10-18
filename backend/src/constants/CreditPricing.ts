@@ -45,9 +45,9 @@ export const CREDIT_PRICING = {
    * - 1-5 resim analizi
    * - Boya kalınlığı, renk uyumu, çizik tespiti
    * - OpenAI maliyeti: ~1.26 TL
-   * - Fiyat: 49 TL (Kâr marjı: %3,789)
+   * - Fiyat: 399 TL (Kâr marjı: %31,571)
    */
-  PAINT_ANALYSIS: 49.0,
+  PAINT_ANALYSIS: 399.0,
 
   /**
    * Hasar Tespiti Maliyeti
@@ -55,9 +55,9 @@ export const CREDIT_PRICING = {
    * - 1-5 resim ile hasar analizi
    * - Çizik, göçük, pas, korozyon, kırık tespiti
    * - OpenAI maliyeti: ~1.26 TL
-   * - Fiyat: 69 TL (Kâr marjı: %5,376)
+   * - Fiyat: 499 TL (Kâr marjı: %39,503)
    */
-  DAMAGE_ANALYSIS: 69.0,
+  DAMAGE_ANALYSIS: 499.0,
 
   /**
    * Motor Sesi Analizi Maliyeti
@@ -65,9 +65,9 @@ export const CREDIT_PRICING = {
    * - Ses kaydı ile motor durumu tespiti
    * - AI ses işleme (Whisper API)
    * - OpenAI maliyeti: ~1.50 TL
-   * - Fiyat: 79 TL (Kâr marjı: %5,167)
+   * - Fiyat: 299 TL (Kâr marjı: %19,833)
    */
-  ENGINE_SOUND_ANALYSIS: 79.0,
+  ENGINE_SOUND_ANALYSIS: 299.0,
 
   /**
    * Değer Tahmini Maliyeti
@@ -75,27 +75,27 @@ export const CREDIT_PRICING = {
    * - Piyasa araştırması ve AI tabanlı değerleme
    * - Hasar ve boya analizleriyle birleştirilir
    * - Kapsamlı veri analizi
-   * - Fiyat: 49 TL
+   * - Fiyat: 299 TL
    */
-  VALUE_ESTIMATION: 49.0,
+  VALUE_ESTIMATION: 299.0,
 
   /**
    * Kapsamlı Ekspertiz Maliyeti
    * 
    * Tüm analizleri içeren premium hizmet paket
-   * - Boya Analizi (49 TL)
-   * - Hasar Analizi (69 TL)
-   * - Motor Sesi (79 TL)
-   * - Değer Tahmini (49 TL)
+   * - Boya Analizi (399 TL)
+   * - Hasar Analizi (499 TL)
+   * - Motor Sesi (299 TL)
+   * - Değer Tahmini (299 TL)
    * 
-   * Normal toplam: 246 TL
-   * Paket fiyatı: 179 TL
-   * Paket tasarrufu: 67 TL (%27 indirim)
+   * Normal toplam: 1,496 TL
+   * Paket fiyatı: 899 TL
+   * Paket tasarrufu: 597 TL (%40 indirim)
    * 
    * OpenAI toplam maliyeti: ~3.60 TL
-   * Kâr marjı: %4,872
+   * Kâr marjı: %24,872
    */
-  COMPREHENSIVE_EXPERTISE: 179.0,
+  COMPREHENSIVE_EXPERTISE: 899.0,
 
   // ===== TOPLU ALIM İNDİRİMLERİ =====
   /**
@@ -209,7 +209,7 @@ export const SERVICE_COSTS = {
    * Boya Analizi Servisi
    */
   PAINT_ANALYSIS: {
-    cost: CREDIT_PRICING.PAINT_ANALYSIS,                          // 49 TL
+    cost: CREDIT_PRICING.PAINT_ANALYSIS,                          // 399 TL
     name: 'Boya Analizi',                                         // Türkçe servis adı
     description: 'AI destekli boya kalitesi ve renk analizi',    // Servis açıklaması
     features: ['1-5 resim analizi', 'Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi'],
@@ -219,7 +219,7 @@ export const SERVICE_COSTS = {
    * Hasar Tespiti Servisi
    */
   DAMAGE_ANALYSIS: {
-    cost: CREDIT_PRICING.DAMAGE_ANALYSIS,                         // 69 TL
+    cost: CREDIT_PRICING.DAMAGE_ANALYSIS,                         // 499 TL
     name: 'Hasar Değerlendirmesi',                                // Türkçe servis adı
     description: 'AI destekli hasar tespiti ve değerlendirme',   // Servis açıklaması
     features: ['1-5 resim analizi', 'Çarpışma hasarları', 'Çizik ve göçük analizi', 'Onarım maliyet tahmini'],
@@ -229,7 +229,7 @@ export const SERVICE_COSTS = {
    * Motor Sesi Analizi Servisi
    */
   ENGINE_SOUND_ANALYSIS: {
-    cost: CREDIT_PRICING.ENGINE_SOUND_ANALYSIS,                   // 79 TL
+    cost: CREDIT_PRICING.ENGINE_SOUND_ANALYSIS,                   // 299 TL
     name: 'Motor Sesi Analizi',                                   // Türkçe servis adı
     description: 'Ses kaydı ile motor durumu AI analizi',        // Servis açıklaması
     features: ['Çoklu ses dosyası', 'Motor sağlık durumu', 'Anormallik tespiti', 'Detaylı rapor'],
@@ -239,7 +239,7 @@ export const SERVICE_COSTS = {
    * Değer Tahmini Servisi
    */
   VALUE_ESTIMATION: {
-    cost: CREDIT_PRICING.VALUE_ESTIMATION,                        // 49 TL
+    cost: CREDIT_PRICING.VALUE_ESTIMATION,                        // 299 TL
     name: 'Değer Tahmini',                                        // Türkçe servis adı
     description: 'AI tabanlı piyasa değeri hesaplama',           // Servis açıklaması
     features: ['Piyasa analizi', 'Değer hesaplama', 'Karşılaştırma', 'Detaylı rapor'],
