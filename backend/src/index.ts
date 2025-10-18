@@ -62,10 +62,29 @@ app.use(limiter);
 // CORS configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
-    // Vercel production ortamında origin kontrolü
+    // Production ortamında origin kontrolü
     if (process.env.NODE_ENV === 'production') {
-      // Vercel'de tüm origin'lere izin ver
-      callback(null, true);
+      // Railway ve Vercel production'da tüm origin'lere izin ver
+      // Railway domain pattern: *.railway.app
+      // Vercel domain pattern: *.vercel.app
+      const isRailway = origin && origin.includes('.railway.app');
+      const isVercel = origin && origin.includes('.vercel.app');
+      const isLocalhost = origin && origin.includes('localhost');
+      
+      // Spesifik Railway domain kontrolü
+      const allowedDomains = [
+        'mivvo-production.up.railway.app',
+        'mivvo.railway.internal'
+      ];
+      const isAllowedDomain = origin && allowedDomains.some(domain => origin.includes(domain));
+      
+      if (isRailway || isVercel || isAllowedDomain || !origin) {
+        console.log('✅ CORS izni verildi:', origin);
+        callback(null, true);
+      } else {
+        console.log('❌ CORS reddedildi:', origin);
+        callback(new Error('CORS policy violation'));
+      }
     } else {
       // Development'ta localhost'a izin ver
       const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];

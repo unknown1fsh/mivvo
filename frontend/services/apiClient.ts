@@ -36,30 +36,41 @@
 /**
  * Production/Preview ortamlarında güvenli base URL çözümleyici.
  * Öncelik sırası:
- * 1) NEXT_PUBLIC_API_BASE_URL (manuel tanımlanırsa)
- * 2) window ortamı (client) → relative (aynı origin)
- * 3) VERCEL_URL (SSR) → https://{vercel_url}
- * 4) Development → http://localhost:3001
+ * 1) NEXT_PUBLIC_API_URL (Railway için zorunlu)
+ * 2) NEXT_PUBLIC_API_BASE_URL (manuel tanımlanırsa)
+ * 3) window ortamı (client) → Railway için env variable gerekli
+ * 4) VERCEL_URL (SSR) → https://{vercel_url}
+ * 5) Development → http://localhost:3001
  */
 function resolveApiBaseUrl(): string {
+  // Railway için öncelik NEXT_PUBLIC_API_URL
+  const railwayApiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim()
+  if (railwayApiUrl) {
+    console.log('🚀 Railway API URL kullanılıyor:', railwayApiUrl)
+    return railwayApiUrl.replace(/\/$/, '')
+  }
+
   const explicit = (process.env.NEXT_PUBLIC_API_BASE_URL || '').trim()
   if (explicit) {
+    console.log('🔧 Manuel API URL kullanılıyor:', explicit)
     return explicit.replace(/\/$/, '')
   }
 
   if (typeof window !== 'undefined') {
-    // Client tarafında relative istekler (aynı origin)
-    return ''
+    // CLIENT SIDE - Railway için mutlaka env variable gerekli
+    console.warn('⚠️ NEXT_PUBLIC_API_URL tanımlı değil! Development mod aktif.')
+    return 'http://localhost:3001'
   }
 
   const vercelUrl = (process.env.VERCEL_URL || '').trim()
   if (vercelUrl) {
+    console.log('📦 Vercel URL kullanılıyor:', vercelUrl)
     return `https://${vercelUrl}`
   }
 
-  // Production fallback: sabit domain; Development: local backend
+  // Production fallback: Railway'de env variable zorunlu
   return process.env.NODE_ENV === 'production'
-    ? 'https://mivvo-expertiz.vercel.app'
+    ? '' // Production'da env variable zorunlu
     : 'http://localhost:3001'
 }
 

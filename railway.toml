@@ -1,0 +1,25 @@
+# Railway Configuration File
+# Bu dosya Railway deployment'ını optimize eder
+
+[build]
+# Build sürecini optimize et
+builder = "nixpacks"
+
+[deploy]
+# Railway'nin otomatik port detection'ını kullan
+# PORT environment variable Railway tarafından otomatik sağlanır
+
+# Health check endpoint'i
+healthcheckPath = "/health"
+
+# Restart policy
+restartPolicyType = "on_failure"
+
+# Resource limits (opsiyonel)
+[deploy.resources]
+# CPU ve memory limitleri Railway'nin free tier'ına uygun
+cpu = "0.5"
+memory = "1Gi"
+
+# Environment variables (Railway dashboard'dan ayarlanacak)
+# Bu dosya sadece konfigürasyon için, gerçek env variables Railway dashboard'da
