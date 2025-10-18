@@ -263,20 +263,11 @@ class UserService {
    * 
    * @returns Kredi bilgileri veya null
    */
-  async getUserCredits(): Promise<{
-    credits: number
-    transactions: {
-      id: string
-      type: 'earned' | 'spent' | 'refunded'
-      amount: number
-      description: string
-      date: string
-    }[]
-  } | null> {
+  async getUserCredits(): Promise<any | null> {
     const response = await apiClient.get('/api/user/credits')
     
     if (response.success && response.data) {
-      return response.data as any
+      return response.data
     }
     
     return null

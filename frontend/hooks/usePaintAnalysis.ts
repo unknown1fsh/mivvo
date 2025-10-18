@@ -20,7 +20,7 @@ export const usePaintAnalysis = () => {
       setCurrentStep('Analiz başlatılıyor...')
       setProgress(10)
       
-      const startResponse = await api.post('/paint-analysis/start', {
+      const startResponse = await api.post('/api/paint-analysis/start', {
         vehicleInfo: {
           plate: vehicleInfo.plate,
           make: vehicleInfo.make,

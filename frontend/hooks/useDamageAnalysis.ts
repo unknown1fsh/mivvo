@@ -37,7 +37,7 @@ export const useDamageAnalysis = () => {
     try {
       toast.loading('Hasar analizi raporu hazırlanıyor...', { id: toastId })
 
-      const reportResponse = await api.post('/damage-analysis/start', {
+      const reportResponse = await api.post('/api/damage-analysis/start', {
         vehicleInfo,
         analysisType: 'damage'
       })

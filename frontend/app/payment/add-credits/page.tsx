@@ -108,7 +108,10 @@ export default function AddCreditsPage() {
       
       // Kredi bakiyesini güncelle
       if (creditsResponse) {
-        setCurrentBalance(Number(creditsResponse.credits))
+        console.log('💰 Credits Response:', creditsResponse)
+        const balance = creditsResponse.credits?.balance || 0
+        console.log('💰 Balance:', balance)
+        setCurrentBalance(Number(balance))
       }
       
       // İşlem geçmişini güncelle

@@ -15,7 +15,7 @@ export const useValueEstimation = () => {
       // 1. Analizi başlat
       toast.loading('Değer tahmini başlatılıyor...', { id: 'value-estimation' })
       
-      const startResponse = await api.post('/value-estimation/start', {
+      const startResponse = await api.post('/api/value-estimation/start', {
         vehicleInfo: {
           plate: vehicleInfo.plate,
           make: vehicleInfo.make,

@@ -75,8 +75,8 @@ export default function DashboardPage() {
       
       // Kredi bakiyesini ve raporları çek
       const [creditsResponse, reportsResponse] = await Promise.all([
-        api.get('/user/credits'),
-        api.get('/user/reports')
+        api.get('/api/user/credits'),
+        api.get('/api/user/reports')
       ])
       
       if (reportsResponse.data.success) {

@@ -22,11 +22,11 @@ model User {
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
   creditTransactions CreditTransaction[]
+  notifications      Notification[]
   payments           Payment[]
   userCredits        UserCredits?
   vehicleGarage      VehicleGarage[]
   vehicleReports     VehicleReport[]
-  notifications      Notification[]
 
   @@map("users")
 }
@@ -238,6 +238,21 @@ model VehicleGarageImage {
   @@map("vehicle_garage_images")
 }
 
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false) @map("is_read")
+  actionUrl String?          @map("action_url")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
 enum Role {
   USER
   ADMIN
@@ -316,19 +331,4 @@ enum NotificationType {
   INFO
   WARNING
   ERROR
-}
-
-model Notification {
-  id          Int              @id @default(autoincrement())
-  userId      Int              @map("user_id")
-  title       String
-  message     String
-  type        NotificationType @default(INFO)
-  isRead      Boolean          @default(false) @map("is_read")
-  actionUrl   String?          @map("action_url")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
 }
