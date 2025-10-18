@@ -24,8 +24,8 @@ model User {
   creditTransactions CreditTransaction[]
   payments           Payment[]
   userCredits        UserCredits?
-  vehicleReports     VehicleReport[]
   vehicleGarage      VehicleGarage[]
+  vehicleReports     VehicleReport[]
 
   @@map("users")
 }
@@ -74,8 +74,8 @@ model VehicleReport {
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @updatedAt @map("updated_at")
   aiAnalysisResults AiAnalysisResult[]
-  vehicleImages     VehicleImage[]
   vehicleAudios     VehicleAudio[]
+  vehicleImages     VehicleImage[]
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   vehicleGarage     VehicleGarage?     @relation(fields: [vehicleGarageId], references: [id])
 
@@ -102,7 +102,7 @@ model VehicleAudio {
   audioName   String        @map("audio_name")
   audioType   AudioType     @map("audio_type")
   fileSize    Int?          @map("file_size")
-  duration    Int?          // seconds
+  duration    Int?
   uploadDate  DateTime      @default(now()) @map("upload_date")
   aiProcessed Boolean       @default(false) @map("ai_processed")
   report      VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
@@ -165,6 +165,78 @@ model Payment {
   @@map("payments")
 }
 
+model VINLookup {
+  id                 Int      @id @default(autoincrement())
+  vin                String   @unique
+  make               String?
+  model              String?
+  modelYear          String?  @map("model_year")
+  manufacturer       String?
+  plantCountry       String?  @map("plant_country")
+  vehicleType        String?  @map("vehicle_type")
+  bodyClass          String?  @map("body_class")
+  engineCylinders    String?  @map("engine_cylinders")
+  engineDisplacement String?  @map("engine_displacement")
+  fuelType           String?  @map("fuel_type")
+  transmissionStyle  String?  @map("transmission_style")
+  driveType          String?  @map("drive_type")
+  trim               String?
+  series             String?
+  doors              String?
+  windows            String?
+  wheelBase          String?  @map("wheel_base")
+  gvwr               String?
+  plantCity          String?  @map("plant_city")
+  plantState         String?  @map("plant_state")
+  plantCompanyName   String?  @map("plant_company_name")
+  errorCode          String?  @map("error_code")
+  errorText          String?  @map("error_text")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("vin_lookups")
+}
+
+model VehicleGarage {
+  id            Int                  @id @default(autoincrement())
+  userId        Int                  @map("user_id")
+  plate         String               @unique
+  brand         String
+  model         String
+  year          Int
+  color         String?
+  mileage       Int?
+  vin           String?              @unique
+  fuelType      String?              @map("fuel_type")
+  transmission  String?
+  engineSize    String?              @map("engine_size")
+  bodyType      String?              @map("body_type")
+  doors         Int?
+  seats         Int?
+  notes         String?
+  isDefault     Boolean              @default(false) @map("is_default")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleImages VehicleGarageImage[]
+  reports       VehicleReport[]
+
+  @@map("vehicle_garage")
+}
+
+model VehicleGarageImage {
+  id              Int           @id @default(autoincrement())
+  vehicleGarageId Int           @map("vehicle_garage_id")
+  imagePath       String        @map("image_path")
+  imageName       String        @map("image_name")
+  imageType       ImageType     @map("image_type")
+  fileSize        Int?          @map("file_size")
+  uploadDate      DateTime      @default(now()) @map("upload_date")
+  vehicleGarage   VehicleGarage @relation(fields: [vehicleGarageId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_garage_images")
+}
+
 enum Role {
   USER
   ADMIN
@@ -181,7 +253,7 @@ enum ReportType {
   FULL_REPORT
   PAINT_ANALYSIS
   DAMAGE_ANALYSIS
-  DAMAGE_ASSESSMENT  // Geçici - eski kayıtlar için
+  DAMAGE_ASSESSMENT
   VALUE_ESTIMATION
   ENGINE_SOUND_ANALYSIS
   COMPREHENSIVE_EXPERTISE
@@ -236,76 +308,4 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
-}
-
-model VINLookup {
-  id                    Int      @id @default(autoincrement())
-  vin                   String   @unique
-  make                  String?
-  model                 String?
-  modelYear             String?  @map("model_year")
-  manufacturer          String?
-  plantCountry          String?  @map("plant_country")
-  vehicleType           String?  @map("vehicle_type")
-  bodyClass             String?  @map("body_class")
-  engineCylinders       String?  @map("engine_cylinders")
-  engineDisplacement    String?  @map("engine_displacement")
-  fuelType              String?  @map("fuel_type")
-  transmissionStyle     String?  @map("transmission_style")
-  driveType             String?  @map("drive_type")
-  trim                  String?
-  series                String?
-  doors                 String?
-  windows               String?
-  wheelBase             String?  @map("wheel_base")
-  gvwr                  String?
-  plantCity             String?  @map("plant_city")
-  plantState            String?  @map("plant_state")
-  plantCompanyName      String?  @map("plant_company_name")
-  errorCode             String?  @map("error_code")
-  errorText             String?  @map("error_text")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
-
-  @@map("vin_lookups")
-}
-
-model VehicleGarage {
-  id                Int                @id @default(autoincrement())
-  userId            Int                @map("user_id")
-  plate             String             @unique
-  brand             String
-  model             String
-  year              Int
-  color             String?
-  mileage           Int?
-  vin               String?            @unique
-  fuelType          String?            @map("fuel_type")
-  transmission      String?
-  engineSize        String?            @map("engine_size")
-  bodyType          String?            @map("body_type")
-  doors             Int?
-  seats             Int?
-  notes             String?
-  isDefault         Boolean            @default(false) @map("is_default")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  updatedAt         DateTime           @updatedAt @map("updated_at")
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicleImages     VehicleGarageImage[]
-  reports           VehicleReport[]
-
-  @@map("vehicle_garage")
-}
-
-model VehicleGarageImage {
-  id                Int           @id @default(autoincrement())
-  vehicleGarageId   Int           @map("vehicle_garage_id")
-  imagePath         String        @map("image_path")
-  imageName         String        @map("image_name")
-  imageType         ImageType     @map("image_type")
-  fileSize          Int?          @map("file_size")
-  uploadDate        DateTime      @default(now()) @map("upload_date")
-  vehicleGarage     VehicleGarage @relation(fields: [vehicleGarageId], references: [id], onDelete: Cascade)
-
-  @@map("vehicle_garage_images")
 }
