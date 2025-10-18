@@ -8,13 +8,17 @@
     "backend": "cd backend && npm run dev",
     "frontend": "cd frontend && npm run dev",
     "dev:full": "node scripts/dev-full.js",
+    "dev:local": "node scripts/dev-full.js",
+    "dev:full:prod": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "dev:full:simple": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "build:clean": "npm run clean && npm run build",
+    "start": "npm run dev:full",
+    "start:full": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
     "start:backend": "cd backend && npm run start",
     "start:frontend": "cd frontend && npm run start",
     "install:all": "npm run install:backend && npm run install:frontend",
@@ -28,7 +32,9 @@
     "db:studio": "cd backend && npx prisma studio",
     "db:reset": "cd backend && npx prisma migrate reset",
     "db:migrate": "cd backend && npx prisma migrate dev",
+    "db:migrate:deploy": "cd backend && npx prisma migrate deploy",
     "db:generate": "cd backend && npx prisma generate",
+    "migrate": "cd backend && npx prisma migrate deploy",
     "lint": "npm run lint:backend && npm run lint:frontend",
     "lint:backend": "cd backend && npm run lint",
     "lint:frontend": "cd frontend && npm run lint",
@@ -39,7 +45,8 @@
   "devDependencies": {
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "wait-on": "^7.2.0"
+    "wait-on": "^7.2.0",
+    "typescript": "^5.3.2"
   },
   "engines": {
     "node": ">=18.0.0",

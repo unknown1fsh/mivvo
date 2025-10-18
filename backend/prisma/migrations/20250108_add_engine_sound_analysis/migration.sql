@@ -1,3 +1,0 @@
--- AlterEnum
-ALTER TYPE "ServiceType" ADD VALUE 'ENGINE_SOUND_ANALYSIS';
-

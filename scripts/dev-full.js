@@ -84,6 +84,77 @@ function checkDependencies() {
   return true;
 }
 
+function checkPrismaClient() {
+  log('🔧 Prisma Client kontrol ediliyor...', 'cyan');
+  
+  const projectRoot = path.resolve(__dirname, '..');
+  const prismaClientPath = path.join(projectRoot, 'backend', 'node_modules', '.prisma', 'client');
+  
+  if (!fs.existsSync(prismaClientPath)) {
+    log('⚠️  Prisma Client generate edilmemiş. Generate ediliyor...', 'yellow');
+    return false;
+  }
+  
+  log('✅ Prisma Client mevcut', 'green');
+  return true;
+}
+
+function generatePrismaClient() {
+  return new Promise((resolve, reject) => {
+    log('🔧 Prisma Client generate ediliyor...', 'cyan');
+    
+    const projectRoot = path.resolve(__dirname, '..');
+    const generateProcess = spawn('npx', ['prisma', 'generate'], {
+      stdio: 'inherit',
+      shell: true,
+      cwd: path.join(projectRoot, 'backend')
+    });
+    
+    generateProcess.on('close', (code) => {
+      if (code === 0) {
+        log('✅ Prisma Client başarıyla generate edildi', 'green');
+        resolve();
+      } else {
+        log('❌ Prisma Client generate hatası', 'red');
+        reject(new Error('Prisma Client generation failed'));
+      }
+    });
+  });
+}
+
+function checkDatabaseConnection() {
+  return new Promise((resolve, reject) => {
+    log('🗄️  Veritabanı bağlantısı kontrol ediliyor...', 'cyan');
+    
+    const projectRoot = path.resolve(__dirname, '..');
+    const checkProcess = spawn('npx', ['prisma', 'db', 'push', '--accept-data-loss'], {
+      stdio: 'pipe',
+      shell: true,
+      cwd: path.join(projectRoot, 'backend')
+    });
+    
+    let output = '';
+    checkProcess.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+    
+    checkProcess.stderr.on('data', (data) => {
+      output += data.toString();
+    });
+    
+    checkProcess.on('close', (code) => {
+      if (code === 0 || output.includes('Database is up to date')) {
+        log('✅ Veritabanı bağlantısı başarılı', 'green');
+        resolve();
+      } else {
+        log('⚠️  Veritabanı bağlantı uyarısı (devam ediliyor)', 'yellow');
+        log(`Çıktı: ${output}`, 'yellow');
+        resolve(); // Devam et, hata değil
+      }
+    });
+  });
+}
+
 function installDependencies() {
   return new Promise((resolve, reject) => {
     log('📥 Bağımlılıklar yükleniyor...', 'cyan');
@@ -191,6 +262,15 @@ async function main() {
       await installDependencies();
     }
     
+    // Prisma Client kontrolü
+    const prismaClientReady = checkPrismaClient();
+    if (!prismaClientReady) {
+      await generatePrismaClient();
+    }
+    
+    // Veritabanı bağlantı kontrolü
+    await checkDatabaseConnection();
+    
     log('🚀 Servisler başlatılıyor...', 'cyan');
     
     // Backend ve Frontend'i paralel başlat
@@ -204,6 +284,7 @@ async function main() {
     log('📱 Frontend: http://localhost:3000', 'cyan');
     log('🔧 Backend API: http://localhost:3001', 'cyan');
     log('🏥 Health Check: http://localhost:3001/health', 'cyan');
+    log('🗄️  Prisma Studio: npx prisma studio (backend klasöründe)', 'cyan');
     log('', 'reset');
     log('Durdurmak için Ctrl+C tuşlarına basın', 'yellow');
     

@@ -1,0 +1,37 @@
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build:backend && npm run build:frontend"
+
+[deploy]
+startCommand = "npm run start:backend"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+[env]
+NODE_ENV = "production"
+PORT = "8080"
+
+# Frontend environment variables (Railway otomatik değişkenlerini kullanarak)
+NEXT_PUBLIC_API_URL = "https://${{RAILWAY_PUBLIC_DOMAIN}}"
+NEXT_PUBLIC_APP_URL = "https://${{RAILWAY_PUBLIC_DOMAIN}}"
+
+# Backend environment variables  
+DATABASE_URL = "${{DATABASE_URL}}"
+JWT_SECRET = "${{JWT_SECRET}}"
+JWT_EXPIRES_IN = "7d"
+BCRYPT_ROUNDS = "12"
+OPENAI_API_KEY = "${{OPENAI_API_KEY}}"
+GOOGLE_AI_API_KEY = "${{GOOGLE_AI_API_KEY}}"
+EMAIL_HOST = "${{EMAIL_HOST}}"
+EMAIL_PORT = "${{EMAIL_PORT}}"
+EMAIL_USER = "${{EMAIL_USER}}"
+EMAIL_PASS = "${{EMAIL_PASS}}"
+UPLOAD_DIR = "/tmp/uploads"
+
+# Security
+CORS_ORIGIN = "${{RAILWAY_PUBLIC_DOMAIN}}"
+CORS_CREDENTIALS = "true"
+RATE_LIMIT_WINDOW_MS = "900000"
+RATE_LIMIT_MAX_REQUESTS = "100"

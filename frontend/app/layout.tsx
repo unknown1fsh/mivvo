@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Poppins } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
@@ -40,7 +40,11 @@ export const metadata: Metadata = {
     title: 'Mivvo Expertiz - Yapay Zeka Destekli Araç Analizi',
     description: 'Yapay zeka teknolojisi ile araç expertizi, boya analizi ve hasar değerlendirmesi yapın.',
   },
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
   themeColor: '#3B82F6',
 }
 

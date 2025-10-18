@@ -5,9 +5,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
   env: {
-      NEXT_PUBLIC_API_URL: process.env.NODE_ENV === 'production' 
-        ? '/api' 
-        : 'http://localhost:3001/api',
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001'),
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -16,6 +14,13 @@ const nextConfig = {
   compress: true,
   swcMinify: true,
   trailingSlash: false,
+  // Force rebuild in production
+  generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
+  // Production'da static export
+  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  distDir: process.env.NODE_ENV === 'production' ? '../backend/dist/frontend' : '.next',
   // output: 'standalone', // Vercel için kaldırıldı
   webpack: (config) => {
     config.resolve.alias = {

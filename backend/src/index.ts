@@ -31,7 +31,8 @@ import { notFound } from './middleware/notFound';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+// Railway'de otomatik port kullan (ayrı servis için)
+const PORT = process.env.PORT || 8080;
 
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
@@ -62,16 +63,40 @@ app.use(limiter);
 // CORS configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
-    // Vercel production ortamında origin kontrolü
+    console.log('🔍 CORS Origin kontrolü:', { origin, nodeEnv: process.env.NODE_ENV });
+    
+    // Production ortamında origin kontrolü
     if (process.env.NODE_ENV === 'production') {
-      // Vercel'de tüm origin'lere izin ver
-      callback(null, true);
+      // Railway ve Vercel production'da tüm origin'lere izin ver
+      // Railway domain pattern: *.railway.app
+      // Vercel domain pattern: *.vercel.app
+      const isRailway = origin && origin.includes('.railway.app');
+      const isVercel = origin && origin.includes('.vercel.app');
+      const isLocalhost = origin && origin.includes('localhost');
+      
+      // Spesifik Railway domain kontrolü
+      const allowedDomains = [
+        'mivvo-production.up.railway.app',
+        'mivvo.railway.internal'
+      ];
+      const isAllowedDomain = origin && allowedDomains.some(domain => origin.includes(domain));
+      
+      // Railway internal requests için origin undefined olabilir
+      if (isRailway || isVercel || isAllowedDomain || !origin) {
+        console.log('✅ CORS izni verildi:', origin || 'undefined (internal request)');
+        callback(null, true);
+      } else {
+        console.log('❌ CORS reddedildi:', origin);
+        callback(new Error('CORS policy violation'));
+      }
     } else {
       // Development'ta localhost'a izin ver
       const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
       if (!origin || allowedOrigins.includes(origin)) {
+        console.log('✅ Development CORS izni verildi:', origin || 'undefined');
         callback(null, true);
       } else {
+        console.log('❌ Development CORS reddedildi:', origin);
         callback(new Error('CORS policy violation'));
       }
     }
@@ -104,16 +129,15 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
+// Health check endpoint - API prefix ile (catch-all'dan önce!)
+app.get('/api/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
+    port: PORT,
+    service: 'mivvo-backend'
   });
 });
 
@@ -136,15 +160,17 @@ app.use('/api/comprehensive-expertise', comprehensiveExpertiseRoutes);
 // Reports endpoint - frontend için alias
 app.use('/api/reports', userRoutes);
 
-// Error handling middleware
-app.use(notFound);
-app.use(errorHandler);
+// Static files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Vercel serverless functions için frontend static serving kaldırıldı
+// Vercel routing ile frontend dosyaları otomatik serve ediliyor
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Mivvo Expertiz Backend Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
 });
 
 // Graceful shutdown
