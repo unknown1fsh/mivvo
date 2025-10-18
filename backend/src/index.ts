@@ -136,7 +136,7 @@ app.get('*', (req, res) => {
   }
   
   // Diğer tüm routes'ları frontend'e yönlendir
-  res.sendFile(path.join(__dirname, '../../frontend/.next/server/pages/index.html'));
+  return res.sendFile(path.join(__dirname, '../../frontend/.next/server/pages/index.html'));
 });
 
 // Health check endpoint - API prefix ile
