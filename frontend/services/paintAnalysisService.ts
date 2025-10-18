@@ -115,7 +115,7 @@ class PaintAnalysisService {
       }
     })
 
-    const response = await apiClient.post<PaintAnalysisResult>('/paint-analysis/analyze', formData, {
+    const response = await apiClient.post<PaintAnalysisResult>('/api/paint-analysis/analyze', formData, {
       'Content-Type': 'multipart/form-data'
     })
     
@@ -155,7 +155,7 @@ class PaintAnalysisService {
    * @returns AnalysisHistoryItem[]
    */
   async getAnalysisHistory(): Promise<AnalysisHistoryItem[]> {
-    const response = await apiClient.get<AnalysisHistoryItem[]>('/paint-analysis/history')
+    const response = await apiClient.get<AnalysisHistoryItem[]>('/api/paint-analysis/history')
     
     if (response.success && response.data) {
       return response.data as any
@@ -255,7 +255,7 @@ class PaintAnalysisService {
     worstScore: number
     analysesThisMonth: number
   } | null> {
-    const response = await apiClient.get('/paint-analysis/stats')
+    const response = await apiClient.get('/api/paint-analysis/stats')
     
     if (response.success && response.data) {
       return response.data as any
@@ -278,7 +278,7 @@ class PaintAnalysisService {
     price: number
     features: string[]
   }[]> {
-    const response = await apiClient.get('/paint-analysis/types')
+    const response = await apiClient.get('/api/paint-analysis/types')
     
     if (response.success && response.data) {
       return response.data as any
@@ -317,7 +317,7 @@ class PaintAnalysisService {
       }
     })
 
-    const response = await apiClient.post('/paint-analysis/preview', formData, {
+    const response = await apiClient.post('/api/paint-analysis/preview', formData, {
       'Content-Type': 'multipart/form-data'
     })
     

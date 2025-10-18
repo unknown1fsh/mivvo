@@ -109,7 +109,7 @@ class UserService {
    * @returns UserProfile veya null
    */
   async getProfile(): Promise<UserProfile | null> {
-    const response = await apiClient.get<UserProfile>('/user/profile')
+    const response = await apiClient.get<UserProfile>('/api/user/profile')
     
     if (response.success && response.data) {
       return response.data
@@ -142,7 +142,7 @@ class UserService {
       }
     })
 
-    const response = await apiClient.put<UserProfile>('/user/profile', formData, {
+    const response = await apiClient.put<UserProfile>('/api/user/profile', formData, {
       'Content-Type': 'multipart/form-data'
     })
     
@@ -163,7 +163,7 @@ class UserService {
    * @returns UserSettings veya null
    */
   async getSettings(): Promise<UserSettings | null> {
-    const response = await apiClient.get<UserSettings>('/user/settings')
+    const response = await apiClient.get<UserSettings>('/api/user/settings')
     
     if (response.success && response.data) {
       return response.data
@@ -182,7 +182,7 @@ class UserService {
    * @returns boolean
    */
   async updateSettings(settings: UpdateSettingsRequest): Promise<boolean> {
-    const response = await apiClient.put('/user/settings', settings)
+    const response = await apiClient.put('/api/user/settings', settings)
     return response.success
   }
 
@@ -196,7 +196,7 @@ class UserService {
    * @returns boolean
    */
   async changePassword(passwordData: ChangePasswordRequest): Promise<boolean> {
-    const response = await apiClient.put('/user/change-password', passwordData)
+    const response = await apiClient.put('/api/user/change-password', passwordData)
     return response.success
   }
 
@@ -210,7 +210,7 @@ class UserService {
    * @returns UserStats veya null
    */
   async getUserStats(): Promise<UserStats | null> {
-    const response = await apiClient.get<UserStats>('/user/stats')
+    const response = await apiClient.get<UserStats>('/api/user/stats')
     
     if (response.success && response.data) {
       return response.data
@@ -273,7 +273,7 @@ class UserService {
       date: string
     }[]
   } | null> {
-    const response = await apiClient.get('/user/credits')
+    const response = await apiClient.get('/api/user/credits')
     
     if (response.success && response.data) {
       return response.data as any
@@ -300,7 +300,7 @@ class UserService {
     if (options.page) queryParams.append('page', options.page.toString())
     if (options.limit) queryParams.append('limit', options.limit.toString())
 
-    const endpoint = `/user/credits/transactions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    const endpoint = `/api/user/credits/transactions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     const response = await apiClient.get(endpoint)
     
     if (response.success && response.data) {
@@ -322,7 +322,7 @@ class UserService {
    * @returns boolean - Başarı durumu
    */
   async purchaseCredits(amount: number, paymentMethod?: string): Promise<boolean> {
-    const response = await apiClient.post('/user/credits/purchase', {
+    const response = await apiClient.post('/api/user/credits/purchase', {
       amount,
       paymentMethod: paymentMethod || 'card'
     })
@@ -344,7 +344,7 @@ class UserService {
    * @returns boolean
    */
   async deleteAccount(password: string): Promise<boolean> {
-    const response = await apiClient.delete('/user/account', {
+    const response = await apiClient.delete('/api/user/account', {
       password
     })
     return response.success
@@ -360,7 +360,7 @@ class UserService {
    * @returns boolean
    */
   async suspendAccount(reason: string): Promise<boolean> {
-    const response = await apiClient.post('/user/suspend', { reason })
+    const response = await apiClient.post('/api/user/suspend', { reason })
     return response.success
   }
 
@@ -372,7 +372,7 @@ class UserService {
    * @returns boolean
    */
   async unsuspendAccount(): Promise<boolean> {
-    const response = await apiClient.post('/user/unsuspend')
+    const response = await apiClient.post('/api/user/unsuspend')
     return response.success
   }
 
@@ -402,7 +402,7 @@ class UserService {
     if (options.limit) queryParams.append('limit', options.limit.toString())
     if (options.unreadOnly) queryParams.append('unreadOnly', 'true')
 
-    const endpoint = `/user/notifications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    const endpoint = `/api/user/notifications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     const response = await apiClient.get(endpoint)
     
     if (response.success && response.data) {
@@ -422,7 +422,7 @@ class UserService {
    * @returns boolean
    */
   async markNotificationAsRead(notificationId: string): Promise<boolean> {
-    const response = await apiClient.put(`/user/notifications/${notificationId}/read`)
+    const response = await apiClient.put(`/api/user/notifications/${notificationId}/read`)
     return response.success
   }
 
@@ -434,7 +434,7 @@ class UserService {
    * @returns boolean
    */
   async markAllNotificationsAsRead(): Promise<boolean> {
-    const response = await apiClient.put('/user/notifications/read-all')
+    const response = await apiClient.put('/api/user/notifications/read-all')
     return response.success
   }
 
@@ -448,7 +448,7 @@ class UserService {
    * @returns boolean
    */
   async deleteNotification(notificationId: string): Promise<boolean> {
-    const response = await apiClient.delete(`/user/notifications/${notificationId}`)
+    const response = await apiClient.delete(`/api/user/notifications/${notificationId}`)
     return response.success
   }
 }
