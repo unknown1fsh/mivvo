@@ -51,7 +51,7 @@ function resolveApiBaseUrl(): string {
   }
 
   // Development için localhost
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
     console.log('🔧 Development mod - localhost kullanılıyor')
     return 'http://localhost:3001'
   }
