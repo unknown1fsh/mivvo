@@ -9,8 +9,8 @@ builder = "nixpacks"
 # Railway'nin otomatik port detection'ını kullan
 # PORT environment variable Railway tarafından otomatik sağlanır
 
-# Health check endpoint'i
-healthcheckPath = "/health"
+# Health check endpoint'i - API prefix ile
+healthcheckPath = "/api/health"
 
 # Restart policy
 restartPolicyType = "on_failure"
