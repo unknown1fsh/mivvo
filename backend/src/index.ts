@@ -22,6 +22,7 @@ import aiTestRoutes from './routes/aiTest';
 import damageAnalysisRoutes from './routes/damageAnalysis';
 import valueEstimationRoutes from './routes/valueEstimation';
 import comprehensiveExpertiseRoutes from './routes/comprehensiveExpertise';
+import notificationRoutes from './routes/notifications';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -158,6 +159,7 @@ app.use('/api/ai-test', aiTestRoutes);
 app.use('/api/damage-analysis', damageAnalysisRoutes);
 app.use('/api/value-estimation', valueEstimationRoutes);
 app.use('/api/comprehensive-expertise', comprehensiveExpertiseRoutes);
+app.use('/api/user/notifications', notificationRoutes);
 
 // Reports endpoint - frontend için alias
 app.use('/api/reports', userRoutes);

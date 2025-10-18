@@ -46,6 +46,7 @@ import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { NotificationService } from '../services/notificationService';
 
 const prisma = new PrismaClient();
 
@@ -178,6 +179,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // JWT token üretme
     console.log('🎫 Token oluşturuluyor...');
     const token = generateToken(user.id);
+
+    // Hoş geldiniz bildirimi oluştur
+    console.log('📢 Hoş geldiniz bildirimi oluşturuluyor...');
+    try {
+      await NotificationService.createWelcomeNotification(user.id, user.firstName);
+    } catch (notificationError) {
+      console.warn('⚠️ Bildirim oluşturulamadı:', notificationError);
+      // Bildirim hatası register işlemini etkilemesin
+    }
 
     console.log('✅ Register başarılı:', { userId: user.id, email: user.email });
 

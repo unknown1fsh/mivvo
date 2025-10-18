@@ -15,6 +15,7 @@ import {
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import { LoadingSpinner } from '@/components/ui'
+import { userService } from '@/services'
 
 interface Notification {
   id: string
@@ -32,56 +33,39 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
 
   useEffect(() => {
-    // TODO: Fetch notifications from API
-    setTimeout(() => {
-      setNotifications([
-        {
-          id: '1',
-          title: 'Rapor Tamamlandı',
-          message: '34 ABC 123 plakalı Toyota Corolla için tam expertiz raporunuz hazır.',
-          type: 'success',
-          isRead: false,
-          createdAt: '2024-01-15T10:30:00Z',
-          actionUrl: '/reports/1'
-        },
-        {
-          id: '2',
-          title: 'Kredi Yüklendi',
-          message: 'Hesabınıza 100₺ kredi yüklendi. Yeni bakiyeniz: 250₺',
-          type: 'info',
-          isRead: false,
-          createdAt: '2024-01-14T15:45:00Z'
-        },
-        {
-          id: '3',
-          title: 'Rapor İşleniyor',
-          message: '06 XYZ 789 plakalı Honda Civic için boya analizi devam ediyor.',
-          type: 'info',
-          isRead: true,
-          createdAt: '2024-01-14T09:20:00Z'
-        },
-        {
-          id: '4',
-          title: 'Ödeme Başarısız',
-          message: 'Son kredi yükleme işleminiz başarısız oldu. Lütfen tekrar deneyin.',
-          type: 'warning',
-          isRead: true,
-          createdAt: '2024-01-13T14:15:00Z',
-          actionUrl: '/payment/add-credits'
-        },
-        {
-          id: '5',
-          title: 'Hoş Geldiniz!',
-          message: 'Mivvo Expertiz\'e hoş geldiniz! İlk raporunuzu oluşturmak için başlayın.',
-          type: 'success',
-          isRead: true,
-          createdAt: '2024-01-12T08:00:00Z',
-          actionUrl: '/vehicle/new-report'
-        }
-      ])
-      setIsLoading(false)
-    }, 1000)
+    fetchNotifications()
   }, [])
+
+  const fetchNotifications = async () => {
+    try {
+      setIsLoading(true)
+      const result = await userService.getNotifications({
+        page: 1,
+        limit: 50
+      })
+      
+      if (result) {
+        // Backend'den gelen veriyi frontend formatına çevir
+        const formattedNotifications = result.notifications.map((notification: any) => ({
+          id: notification.id.toString(),
+          title: notification.title,
+          message: notification.message,
+          type: notification.type.toLowerCase(),
+          isRead: notification.isRead,
+          createdAt: notification.createdAt,
+          actionUrl: notification.actionUrl
+        }))
+        
+        setNotifications(formattedNotifications)
+      }
+    } catch (error) {
+      console.error('Bildirimler yüklenirken hata:', error)
+      // Hata durumunda boş liste göster
+      setNotifications([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -109,24 +93,45 @@ export default function NotificationsPage() {
     }
   }
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, isRead: true }
-          : notification
-      )
-    )
+  const markAsRead = async (id: string) => {
+    try {
+      const success = await userService.markNotificationAsRead(id)
+      if (success) {
+        setNotifications(prev => 
+          prev.map(notification => 
+            notification.id === id 
+              ? { ...notification, isRead: true }
+              : notification
+          )
+        )
+      }
+    } catch (error) {
+      console.error('Bildirim okundu işaretlenirken hata:', error)
+    }
   }
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, isRead: true }))
-    )
+  const markAllAsRead = async () => {
+    try {
+      const success = await userService.markAllNotificationsAsRead()
+      if (success) {
+        setNotifications(prev => 
+          prev.map(notification => ({ ...notification, isRead: true }))
+        )
+      }
+    } catch (error) {
+      console.error('Tüm bildirimler okundu işaretlenirken hata:', error)
+    }
   }
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id))
+  const deleteNotification = async (id: string) => {
+    try {
+      const success = await userService.deleteNotification(id)
+      if (success) {
+        setNotifications(prev => prev.filter(notification => notification.id !== id))
+      }
+    } catch (error) {
+      console.error('Bildirim silinirken hata:', error)
+    }
   }
 
   const filteredNotifications = notifications.filter(notification => {

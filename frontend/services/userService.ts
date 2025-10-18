@@ -383,7 +383,7 @@ class UserService {
     if (options.limit) queryParams.append('limit', options.limit.toString())
     if (options.unreadOnly) queryParams.append('unreadOnly', 'true')
 
-    const endpoint = `/api/user/notifications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    const endpoint = `/user/notifications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
     const response = await apiClient.get(endpoint)
     
     if (response.success && response.data) {
@@ -403,7 +403,7 @@ class UserService {
    * @returns boolean
    */
   async markNotificationAsRead(notificationId: string): Promise<boolean> {
-    const response = await apiClient.put(`/api/user/notifications/${notificationId}/read`)
+    const response = await apiClient.put(`/user/notifications/${notificationId}/read`)
     return response.success
   }
 
@@ -429,7 +429,7 @@ class UserService {
    * @returns boolean
    */
   async deleteNotification(notificationId: string): Promise<boolean> {
-    const response = await apiClient.delete(`/api/user/notifications/${notificationId}`)
+    const response = await apiClient.delete(`/user/notifications/${notificationId}`)
     return response.success
   }
 }
