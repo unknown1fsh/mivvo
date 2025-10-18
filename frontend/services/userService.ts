@@ -283,32 +283,51 @@ class UserService {
   }
 
   /**
+   * Get Credit Transactions (Kredi İşlemleri)
+   * 
+   * Kullanıcının kredi işlem geçmişini getirir.
+   * 
+   * @param options - Pagination ve filtreleme opsiyonları
+   * 
+   * @returns İşlem listesi veya null
+   */
+  async getCreditTransactions(options: {
+    page?: number
+    limit?: number
+  } = {}): Promise<any[] | null> {
+    const queryParams = new URLSearchParams()
+    
+    if (options.page) queryParams.append('page', options.page.toString())
+    if (options.limit) queryParams.append('limit', options.limit.toString())
+
+    const endpoint = `/user/credits/transactions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
+    const response = await apiClient.get(endpoint)
+    
+    if (response.success && response.data) {
+      const data = response.data as any
+      return data.transactions || data
+    }
+    
+    return null
+  }
+
+  /**
    * Purchase Credits (Kredi Satın Al)
    * 
    * Kredi satın alma işlemi başlatır.
    * 
    * @param amount - Satın alınacak kredi miktarı
-   * @param paymentMethod - Ödeme yöntemi
+   * @param paymentMethod - Ödeme yöntemi (opsiyonel)
    * 
-   * @returns Ödeme bilgileri
+   * @returns boolean - Başarı durumu
    */
-  async purchaseCredits(amount: number, paymentMethod: string): Promise<{
-    success: boolean
-    transactionId?: string
-    paymentUrl?: string
-    error?: string
-  }> {
+  async purchaseCredits(amount: number, paymentMethod?: string): Promise<boolean> {
     const response = await apiClient.post('/user/credits/purchase', {
       amount,
-      paymentMethod
+      paymentMethod: paymentMethod || 'card'
     })
     
-    return {
-      success: response.success,
-      transactionId: (response.data as any)?.transactionId,
-      paymentUrl: (response.data as any)?.paymentUrl,
-      error: response.error
-    }
+    return response.success
   }
 
   // ===== ACCOUNT MANAGEMENT =====

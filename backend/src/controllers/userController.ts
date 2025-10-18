@@ -290,6 +290,57 @@ export const getUserReports = async (req: AuthRequest, res: Response): Promise<v
 };
 
 /**
+ * Kredi İşlem Geçmişi
+ * 
+ * Kullanıcının kredi işlem geçmişini getirir.
+ * 
+ * @route   GET /api/user/credits/transactions
+ * @access  Private
+ * 
+ * @returns 200 - İşlem listesi
+ */
+export const getCreditTransactions = async (req: AuthRequest, res: Response): Promise<void> => {
+  const userId = req.user!.id;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+  const skip = (page - 1) * limit;
+
+  const [transactions, total] = await Promise.all([
+    prisma.creditTransaction.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        transactionType: true,
+        amount: true,
+        description: true,
+        createdAt: true,
+      },
+    }),
+    prisma.creditTransaction.count({ where: { userId } }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  res.json({
+    success: true,
+    data: {
+      transactions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    },
+  });
+};
+
+/**
  * Hesap Silme
  * 
  * Kullanıcı hesabını ve ilişkili tüm verileri siler.

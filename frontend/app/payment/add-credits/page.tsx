@@ -18,6 +18,7 @@ import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import toast from 'react-hot-toast'
+import { userService } from '@/services'
 
 const schema = yup.object({
   amount: yup.number().min(10, 'Minimum 10₺ yükleyebilirsiniz').required('Tutar zorunludur'),
@@ -28,19 +29,19 @@ type FormData = yup.InferType<typeof schema>
 
 interface CreditTransaction {
   id: string
-  type: 'purchase' | 'usage'
+  type: 'purchase' | 'usage' | string
   amount: number
   description: string
   date: string
-  status: 'completed' | 'pending' | 'failed'
+  status: 'completed' | 'pending' | 'failed' | string
 }
 
 const creditPackages = [
   {
     id: 'starter',
     name: 'Başlangıç Paketi',
-    credits: 50,
-    price: 50,
+    credits: 300,
+    price: 300,
     bonus: 0,
     description: 'Küçük işlemler için ideal',
     popular: false
@@ -48,18 +49,18 @@ const creditPackages = [
   {
     id: 'standard',
     name: 'Standart Paket',
-    credits: 150,
-    price: 100,
-    bonus: 50,
+    credits: 500,
+    price: 500,
+    bonus: 0,
     description: 'En popüler seçenek',
     popular: true
   },
   {
     id: 'premium',
     name: 'Premium Paket',
-    credits: 400,
-    price: 200,
-    bonus: 200,
+    credits: 700,
+    price: 700,
+    bonus: 0,
     description: 'Büyük işlemler için',
     popular: false
   },
@@ -67,8 +68,8 @@ const creditPackages = [
     id: 'enterprise',
     name: 'Kurumsal Paket',
     credits: 1000,
-    price: 400,
-    bonus: 600,
+    price: 1000,
+    bonus: 0,
     description: 'Profesyonel kullanım',
     popular: false
   }
@@ -78,7 +79,8 @@ export default function AddCreditsPage() {
   const [selectedPackage, setSelectedPackage] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [transactions, setTransactions] = useState<CreditTransaction[]>([])
-  const [currentBalance, setCurrentBalance] = useState(150)
+  const [currentBalance, setCurrentBalance] = useState(0)
+  const [isLoadingData, setIsLoadingData] = useState(true)
 
   const {
     register,
@@ -91,44 +93,64 @@ export default function AddCreditsPage() {
   })
 
   useEffect(() => {
-    // TODO: Fetch transactions from API
-    setTransactions([
-      {
-        id: '1',
-        type: 'purchase',
-        amount: 100,
-        description: 'Standart Paket Satın Alma',
-        date: '2024-01-15',
-        status: 'completed'
-      },
-      {
-        id: '2',
-        type: 'usage',
-        amount: -25,
-        description: 'Boya Analizi',
-        date: '2024-01-14',
-        status: 'completed'
-      },
-      {
-        id: '3',
-        type: 'usage',
-        amount: -75,
-        description: 'Tam Expertiz',
-        date: '2024-01-13',
-        status: 'completed'
-      }
-    ])
+    fetchData()
   }, [])
+
+  const fetchData = async () => {
+    try {
+      setIsLoadingData(true)
+      
+      // Kredi bakiyesini ve işlem geçmişini paralel olarak çek
+      const [creditsResponse, transactionsResponse] = await Promise.all([
+        userService.getUserCredits(),
+        userService.getCreditTransactions()
+      ])
+      
+      // Kredi bakiyesini güncelle
+      if (creditsResponse) {
+        setCurrentBalance(Number(creditsResponse.credits))
+      }
+      
+      // İşlem geçmişini güncelle
+      if (transactionsResponse) {
+        const formattedTransactions = transactionsResponse.map((transaction: any) => ({
+          id: transaction.id.toString(),
+          type: transaction.transactionType === 'PURCHASE' ? 'purchase' : 'usage',
+          amount: transaction.transactionType === 'PURCHASE' ? Number(transaction.amount) : -Number(transaction.amount),
+          description: transaction.description || (transaction.transactionType === 'PURCHASE' ? 'Kredi Yükleme' : 'Kredi Kullanımı'),
+          date: new Date(transaction.createdAt).toLocaleDateString('tr-TR'),
+          status: 'completed'
+        }))
+        setTransactions(formattedTransactions)
+      }
+    } catch (error) {
+      console.error('Veri yüklenirken hata:', error)
+      toast.error('Veriler yüklenirken bir hata oluştu')
+    } finally {
+      setIsLoadingData(false)
+    }
+  }
 
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
-      // TODO: API call to process payment
-      console.log('Payment data:', data)
-      toast.success('Ödeme başarıyla tamamlandı!')
-      // Redirect to dashboard
-    } catch (error) {
-      toast.error('Ödeme işlemi başarısız!')
+      // Kredi yükleme işlemi
+      const success = await userService.purchaseCredits(data.amount)
+      
+      if (success) {
+        toast.success('Kredi başarıyla yüklendi!')
+        // Verileri yeniden yükle
+        await fetchData()
+        // Formu temizle
+        setSelectedPackage(null)
+        setValue('amount', 0)
+        setValue('paymentMethod', '')
+      } else {
+        toast.error('Kredi yükleme işlemi başarısız!')
+      }
+    } catch (error: any) {
+      console.error('Ödeme hatası:', error)
+      toast.error(error.response?.data?.message || 'Ödeme işlemi başarısız!')
     } finally {
       setIsLoading(false)
     }
@@ -182,7 +204,13 @@ export default function AddCreditsPage() {
               <div>
                 <h1 className="text-2xl font-bold mb-2">Kredi Bakiyeniz</h1>
                 <p className="text-blue-100 mb-4">Mevcut kredi bakiyenizi görüntüleyin ve yeni kredi yükleyin</p>
-                <div className="text-4xl font-bold">{currentBalance}₺</div>
+                <div className="text-4xl font-bold">
+                  {isLoadingData ? (
+                    <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    `${currentBalance}₺`
+                  )}
+                </div>
               </div>
               <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center">
                 <CurrencyDollarIcon className="w-10 h-10" />
@@ -364,7 +392,12 @@ export default function AddCreditsPage() {
               <div className="card p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">İşlem Geçmişi</h2>
                 
-                {transactions.length === 0 ? (
+                {isLoadingData ? (
+                  <div className="text-center py-8">
+                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600">İşlem geçmişi yükleniyor...</p>
+                  </div>
+                ) : transactions.length === 0 ? (
                   <div className="text-center py-8">
                     <ClockIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">Henüz işlem yok</p>

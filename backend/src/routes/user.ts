@@ -34,6 +34,7 @@ import {
   getUserCredits,
   purchaseCredits,
   getCreditHistory,
+  getCreditTransactions,
   getUserReports,
   deleteAccount,
 } from '../controllers/userController';
@@ -97,6 +98,21 @@ router.post('/credits/purchase', asyncHandler(purchaseCredits));
  * - pagination: Sayfalama bilgisi
  */
 router.get('/credits/history', asyncHandler(getCreditHistory));
+
+/**
+ * GET /user/credits/transactions
+ * 
+ * Kredi işlem geçmişi (detaylı).
+ * 
+ * Query:
+ * - page?: number
+ * - limit?: number
+ * 
+ * Response:
+ * - transactions: Kredi işlemleri detayları
+ * - pagination: Sayfalama bilgisi
+ */
+router.get('/credits/transactions', asyncHandler(getCreditTransactions));
 
 // ===== USER REPORTS ROUTES (KULLANICI RAPORLARI) =====
 
