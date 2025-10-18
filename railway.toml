@@ -1,9 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm run build:clean"
+buildCommand = "npm run build:backend && npm run build:frontend"
 
 [deploy]
-startCommand = "npm run start:full"
+startCommand = "npm run start:backend"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"

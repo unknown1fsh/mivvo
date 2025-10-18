@@ -18,6 +18,9 @@ const nextConfig = {
   generateBuildId: async () => {
     return `build-${Date.now()}`;
   },
+  // Production'da static export
+  output: process.env.NODE_ENV === 'production' ? 'export' : undefined,
+  distDir: process.env.NODE_ENV === 'production' ? '../backend/dist/frontend' : '.next',
   // output: 'standalone', // Vercel için kaldırıldı
   webpack: (config) => {
     config.resolve.alias = {
