@@ -156,7 +156,17 @@ export const getUserById = async (req: AuthRequest, res: Response): Promise<void
 
   const user = await prisma.user.findUnique({
     where: { id: parseInt(id) },
-    include: {
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true,
       userCredits: true,
       creditTransactions: {
         orderBy: { createdAt: 'desc' },
@@ -764,7 +774,19 @@ export const addUserCredits = async (req: AuthRequest, res: Response): Promise<v
 
   const user = await prisma.user.findUnique({
     where: { id: parseInt(id) },
-    include: { userCredits: true },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true,
+      userCredits: true,
+    },
   });
 
   if (!user) {
@@ -846,7 +868,19 @@ export const resetUserCredits = async (req: AuthRequest, res: Response): Promise
 
   const user = await prisma.user.findUnique({
     where: { id: parseInt(id) },
-    include: { userCredits: true },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true,
+      userCredits: true,
+    },
   });
 
   if (!user) {
@@ -915,7 +949,19 @@ export const refundUserCredits = async (req: AuthRequest, res: Response): Promis
 
   const user = await prisma.user.findUnique({
     where: { id: parseInt(id) },
-    include: { userCredits: true },
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      role: true,
+      isActive: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true,
+      userCredits: true,
+    },
   });
 
   if (!user) {
