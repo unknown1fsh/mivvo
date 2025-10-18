@@ -169,45 +169,32 @@ app.get('*', (req, res) => {
     return res.status(404).json({ error: 'API endpoint not found' });
   }
   
-  // Next.js App Router için doğru dosya yolu
-  const indexPath = path.join(__dirname, '../../frontend/.next/server/app/page.html');
-  
-  // Eğer App Router dosyası yoksa, Pages Router'ı dene
-  if (!require('fs').existsSync(indexPath)) {
-    const pagesIndexPath = path.join(__dirname, '../../frontend/.next/server/pages/index.html');
-    if (require('fs').existsSync(pagesIndexPath)) {
-      return res.sendFile(pagesIndexPath);
-    }
-  }
-  
-  // App Router dosyasını gönder
-  return res.sendFile(indexPath);
-});
-
-// Frontend static files serve et
-app.use(express.static(path.join(__dirname, '../../frontend/.next/static')));
-app.use(express.static(path.join(__dirname, '../../frontend/public')));
-
-// Frontend routes - SPA için catch-all (en son!)
-app.get('*', (req, res) => {
-  // API routes'ları backend'e yönlendir
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ error: 'API endpoint not found' });
-  }
-  
-  // Next.js App Router için doğru dosya yolu
-  const indexPath = path.join(__dirname, '../../frontend/.next/server/app/page.html');
-  
-  // Eğer App Router dosyası yoksa, Pages Router'ı dene
-  if (!require('fs').existsSync(indexPath)) {
-    const pagesIndexPath = path.join(__dirname, '../../frontend/.next/server/pages/index.html');
-    if (require('fs').existsSync(pagesIndexPath)) {
-      return res.sendFile(pagesIndexPath);
-    }
-  }
-  
-  // App Router dosyasını gönder
-  return res.sendFile(indexPath);
+  // Basit HTML response döndür
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Mivvo Expertiz</title>
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .logo { font-size: 2em; color: #3B82F6; margin-bottom: 20px; }
+        .message { color: #666; margin-bottom: 30px; }
+        .btn { background: #3B82F6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="logo">🚗 Mivvo Expertiz</div>
+        <div class="message">Yapay zeka destekli araç expertiz uygulaması</div>
+        <p>Backend API çalışıyor! Frontend yakında yüklenecek...</p>
+        <a href="/api/health" class="btn">API Health Check</a>
+      </div>
+    </body>
+    </html>
+  `);
 });
 
 // Error handling middleware
