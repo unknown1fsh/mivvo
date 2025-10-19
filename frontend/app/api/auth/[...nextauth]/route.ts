@@ -151,7 +151,7 @@ const authOptions: NextAuthOptions = {
         token.firstName = user.firstName
         token.lastName = user.lastName
         token.role = user.role
-        token.emailVerified = user.emailVerified
+        token.emailVerified = Boolean(user.emailVerified)
       }
 
       // OAuth sign in
@@ -180,7 +180,7 @@ const authOptions: NextAuthOptions = {
             token.firstName = data.data.user.firstName
             token.lastName = data.data.user.lastName
             token.role = data.data.user.role
-            token.emailVerified = data.data.user.emailVerified
+            token.emailVerified = Boolean(data.data.user.emailVerified)
             token.id = data.data.user.id.toString()
           }
         } catch (error) {
@@ -252,7 +252,6 @@ const authOptions: NextAuthOptions = {
    */
   pages: {
     signIn: '/login',
-    signUp: '/register',
     error: '/login', // OAuth hatalarında login sayfasına yönlendir
   },
 

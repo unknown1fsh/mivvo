@@ -48,6 +48,8 @@ interface UseNextAuthReturn {
   isAuthenticated: boolean
   isEmailVerified: boolean
   userRole: string | undefined
+  signInWithGoogle: (callbackUrl?: string) => Promise<void>
+  signInWithFacebook: (callbackUrl?: string) => Promise<void>
 }
 
 /**
@@ -114,6 +116,8 @@ export function useNextAuth(): UseNextAuthReturn {
     isAuthenticated: !!session?.user,
     isEmailVerified: session?.user?.emailVerified ?? false,
     userRole: session?.user?.role,
+    signInWithGoogle: (callbackUrl?: string) => signInWithProvider('google', callbackUrl),
+    signInWithFacebook: (callbackUrl?: string) => signInWithProvider('facebook', callbackUrl),
   }
 }
 

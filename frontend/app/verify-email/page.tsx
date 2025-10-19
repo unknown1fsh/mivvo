@@ -15,7 +15,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -31,7 +31,7 @@ import toast from 'react-hot-toast'
 
 type VerificationStatus = 'loading' | 'success' | 'error' | 'expired' | 'invalid'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const [status, setStatus] = useState<VerificationStatus>('loading')
   const [message, setMessage] = useState('')
   const [isResending, setIsResending] = useState(false)
@@ -309,5 +309,23 @@ export default function VerifyEmailPage() {
         </div>
       </motion.div>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="card p-8 text-center">
+            <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-6" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Yükleniyor...</h1>
+            <p className="text-gray-600">Email doğrulama sayfası yükleniyor...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }

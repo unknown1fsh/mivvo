@@ -54,7 +54,7 @@ export function EmailVerificationGuard({
   /**
    * Email Doğrulama Gerekli mi Kontrol Et
    */
-  const isEmailVerificationRequired = user && !user.emailVerified
+  const isEmailVerificationRequired = user && !(user as any).emailVerified
 
   /**
    * Modal Aç
