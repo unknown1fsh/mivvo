@@ -15,7 +15,6 @@ model User {
   firstName          String              @map("first_name")
   lastName           String              @map("last_name")
   phone              String?
-  address            String?             @default("Çankaya / ANKARA")
   role               Role                @default(USER)
   isActive           Boolean             @default(true) @map("is_active")
   emailVerified      Boolean             @default(false) @map("email_verified")
