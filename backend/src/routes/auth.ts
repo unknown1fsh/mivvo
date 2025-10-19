@@ -46,6 +46,8 @@ import {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  resendVerification,
+  oauthLogin,
 } from '../controllers/authController';
 
 const router = Router();
@@ -189,6 +191,35 @@ router.post('/reset-password', asyncHandler(resetPassword));
  * - token: Email verification token
  */
 router.get('/verify-email/:token', asyncHandler(verifyEmail));
+
+/**
+ * POST /auth/resend-verification
+ * 
+ * Email doğrulama token'ını yeniden gönder.
+ * 
+ * Email doğrulama linkini tekrar gönderir.
+ * 
+ * Body:
+ * - email: string
+ */
+router.post('/resend-verification', asyncHandler(resendVerification));
+
+/**
+ * POST /auth/oauth
+ * 
+ * OAuth ile giriş (Google, Facebook).
+ * 
+ * OAuth provider'lar ile giriş yapar.
+ * 
+ * Body:
+ * - provider: string (google, facebook)
+ * - providerId: string
+ * - email: string
+ * - name: string
+ * - image?: string
+ * - accessToken?: string
+ */
+router.post('/oauth', asyncHandler(oauthLogin));
 
 // ===== PROTECTED ROUTES (KORUMALІ ROTALAR) =====
 

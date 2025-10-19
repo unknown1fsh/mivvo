@@ -47,6 +47,7 @@ import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { NotificationService } from '../services/notificationService';
+import { emailService } from '../services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -147,7 +148,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_ROUNDS || '12'));
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // Kullanıcı oluşturma
+    // Kullanıcı oluşturma (emailVerified: true olarak - geçici olarak devre dışı)
     console.log('👤 Kullanıcı oluşturuluyor...');
     const user = await prisma.user.create({
       data: {
@@ -156,6 +157,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         firstName,
         lastName,
         phone,
+        emailVerified: true, // Geçici olarak email doğrulama devre dışı
       },
       select: {
         id: true,
@@ -163,6 +165,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         firstName: true,
         lastName: true,
         role: true,
+        emailVerified: true,
         createdAt: true,
       },
     });
@@ -176,8 +179,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    // JWT token üretme
-    console.log('🎫 Token oluşturuluyor...');
+    // Email doğrulama işlemi - GEÇİCİ OLARAK TAMAMEN DEVRE DIŞI
+    console.log('📧 Email doğrulama özelliği geçici olarak devre dışı');
+
+    // JWT token üretme (login için)
+    console.log('🎫 Login token oluşturuluyor...');
     const token = generateToken(user.id);
 
     // Hoş geldiniz bildirimi oluştur
@@ -197,6 +203,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       data: {
         user,
         token,
+        emailVerificationSent: false, // Geçici olarak devre dışı
       },
     });
   } catch (error) {
@@ -572,10 +579,13 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     { expiresIn: '1h' }
   );
 
-  // TODO: Email gönderme servisi eklenecek
+  // Şifre sıfırlama email'i gönderme - GEÇİCİ OLARAK DEVRE DIŞI
+  console.log('📧 Email gönderme özelliği geçici olarak devre dışı');
+  
+  // Development modunda token'ı döndür
   res.json({
     success: true,
-    message: 'Şifre sıfırlama bağlantısı email adresinize gönderildi.',
+    message: 'Şifre sıfırlama token\'ı oluşturuldu. (Email gönderme devre dışı)',
     // Development modunda token'ı döndür
     ...(process.env.NODE_ENV === 'development' && { resetToken }),
   });
@@ -687,20 +697,310 @@ export const verifyEmail = async (req: Request, res: Response): Promise<void> =>
       throw new Error('Invalid token type');
     }
 
+    // Kullanıcı kontrolü
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id },
+      select: { id: true, email: true, emailVerified: true, firstName: true, lastName: true }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı.',
+      });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.json({
+        success: true,
+        message: 'Email adresi zaten doğrulanmış.',
+      });
+      return;
+    }
+
     // Email doğrulama
     await prisma.user.update({
       where: { id: decoded.id },
       data: { emailVerified: true },
     });
 
+    // Hoş geldiniz bildirimi oluştur
+    try {
+      await NotificationService.createNotification({
+        userId: user.id,
+        title: 'Email Doğrulandı',
+        message: 'Email adresiniz başarıyla doğrulandı. Artık tüm özelliklerimize erişebilirsiniz.',
+        type: 'SUCCESS'
+      });
+    } catch (notificationError) {
+      console.warn('⚠️ Bildirim oluşturulamadı:', notificationError);
+    }
+
     res.json({
       success: true,
       message: 'Email adresi başarıyla doğrulandı.',
     });
   } catch (error) {
+    console.error('❌ Email doğrulama hatası:', error);
     res.status(400).json({
       success: false,
       message: 'Geçersiz veya süresi dolmuş token.',
+    });
+  }
+};
+
+/**
+ * Email Doğrulama Token'ı Yeniden Gönder (Resend Verification)
+ * 
+ * Email doğrulama token'ını yeniden gönderir.
+ * 
+ * İşlem Akışı:
+ * 1. Kullanıcı bulma (email)
+ * 2. Email zaten doğrulanmış mı kontrol
+ * 3. Yeni verification token üretme
+ * 4. Email gönderme
+ * 
+ * @route   POST /api/auth/resend-verification
+ * @access  Public
+ * 
+ * @param req.body.email - Email adresi
+ * 
+ * @returns 200 - Email gönderildi
+ * @returns 404 - Kullanıcı bulunamadı
+ * @returns 400 - Email zaten doğrulanmış
+ * 
+ * @example
+ * POST /api/auth/resend-verification
+ * Body: {
+ *   "email": "user@example.com"
+ * }
+ */
+export const resendVerification = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  try {
+    // Kullanıcı bulma
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, emailVerified: true, firstName: true, lastName: true }
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'Bu email adresi ile kayıtlı kullanıcı bulunamadı.',
+      });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(400).json({
+        success: false,
+        message: 'Email adresi zaten doğrulanmış.',
+      });
+      return;
+    }
+
+    // Yeni verification token üretme (24 saat geçerli)
+    const verificationToken = jwt.sign(
+      { id: user.id, type: 'email_verification' },
+      process.env.JWT_SECRET!,
+      { expiresIn: '24h' }
+    );
+
+    // Email doğrulama email'i gönderme - GEÇİCİ OLARAK DEVRE DIŞI
+    console.log('📧 Email gönderme özelliği geçici olarak devre dışı');
+    
+    res.json({
+      success: true,
+      message: 'Email doğrulama özelliği geçici olarak devre dışı.',
+    });
+  } catch (error) {
+    console.error('❌ Resend verification hatası:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası oluştu.',
+    });
+  }
+};
+
+/**
+ * OAuth Login (OAuth ile Giriş)
+ * 
+ * Google, Facebook gibi OAuth provider'lar ile giriş yapar.
+ * 
+ * İşlem Akışı:
+ * 1. OAuth provider'dan gelen bilgileri kontrol et
+ * 2. Mevcut kullanıcı var mı kontrol et (email ile)
+ * 3. Varsa mevcut kullanıcıyı döndür, yoksa yeni oluştur
+ * 4. OAuth kullanıcıları otomatik olarak email doğrulanmış sayılır
+ * 5. JWT token üret ve döndür
+ * 
+ * @route   POST /api/auth/oauth
+ * @access  Public
+ * 
+ * @param req.body.provider - OAuth provider (google, facebook)
+ * @param req.body.providerId - Provider'dan gelen kullanıcı ID'si
+ * @param req.body.email - Kullanıcı email adresi
+ * @param req.body.name - Kullanıcı adı
+ * @param req.body.image - Kullanıcı profil resmi URL'si (opsiyonel)
+ * @param req.body.accessToken - OAuth access token (opsiyonel)
+ * 
+ * @returns 200 - Kullanıcı ve token
+ * @returns 400 - Geçersiz OAuth verileri
+ * 
+ * @example
+ * POST /api/auth/oauth
+ * Body: {
+ *   "provider": "google",
+ *   "providerId": "google_user_id",
+ *   "email": "user@gmail.com",
+ *   "name": "John Doe",
+ *   "image": "https://example.com/avatar.jpg",
+ *   "accessToken": "oauth_access_token"
+ * }
+ */
+export const oauthLogin = async (req: Request, res: Response): Promise<void> => {
+  const { provider, providerId, email, name, image, accessToken } = req.body;
+
+  try {
+    console.log('🔐 OAuth login başlatıldı:', { provider, email });
+
+    // Gerekli alanları kontrol et
+    if (!provider || !providerId || !email || !name) {
+      res.status(400).json({
+        success: false,
+        message: 'Geçersiz OAuth verileri.',
+      });
+      return;
+    }
+
+    // Desteklenen provider'ları kontrol et
+    if (!['google', 'facebook'].includes(provider)) {
+      res.status(400).json({
+        success: false,
+        message: 'Desteklenmeyen OAuth provider.',
+      });
+      return;
+    }
+
+    // Email formatını kontrol et
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      res.status(400).json({
+        success: false,
+        message: 'Geçersiz email formatı.',
+      });
+      return;
+    }
+
+    // İsim bilgisini parse et (firstName, lastName)
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Mevcut kullanıcıyı bul (email ile)
+    let user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (user) {
+      console.log('👤 Mevcut kullanıcı bulundu:', { userId: user.id, email: user.email });
+      
+      // Kullanıcı bilgilerini güncelle (OAuth bilgileri ile)
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          firstName: firstName || user.firstName,
+          lastName: lastName || user.lastName,
+          // OAuth kullanıcıları otomatik olarak email doğrulanmış sayılır
+          emailVerified: true,
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          emailVerified: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+    } else {
+      console.log('👤 Yeni OAuth kullanıcı oluşturuluyor...');
+      
+      // Yeni kullanıcı oluştur
+      user = await prisma.user.create({
+        data: {
+          email,
+          firstName,
+          lastName,
+          // OAuth kullanıcıları için rastgele şifre oluştur (asla kullanılmayacak)
+          passwordHash: await bcrypt.hash(`oauth_${providerId}_${Date.now()}`, 12),
+          // OAuth kullanıcıları otomatik olarak email doğrulanmış sayılır
+          emailVerified: true,
+          role: 'USER',
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          emailVerified: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      // Kredi hesabı oluştur
+      await prisma.userCredits.create({
+        data: {
+          userId: user.id,
+          balance: 0,
+        },
+      });
+
+      // Hoş geldiniz bildirimi oluştur
+      try {
+        await NotificationService.createWelcomeNotification(user.id, user.firstName);
+      } catch (notificationError) {
+        console.warn('⚠️ Bildirim oluşturulamadı:', notificationError);
+      }
+
+      console.log('✅ Yeni OAuth kullanıcı oluşturuldu:', { userId: user.id, email: user.email });
+    }
+
+    // JWT token üretme
+    const token = generateToken(user.id);
+
+    console.log('✅ OAuth login başarılı:', { userId: user.id, email: user.email, provider });
+
+    res.json({
+      success: true,
+      message: `${provider} ile giriş başarılı.`,
+      data: {
+        user,
+        token,
+      },
+    });
+  } catch (error) {
+    console.error('❌ OAuth login hatası:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Sunucu hatası oluştu.',
     });
   }
 };

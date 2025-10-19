@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import { LoadingSpinner } from '@/components/ui'
 import { userService } from '@/services'
+import { useNotifications } from '@/hooks/useNotifications'
 
 interface Notification {
   id: string
@@ -28,44 +29,16 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
+  const {
+    unreadCount,
+    notifications,
+    isLoading,
+    refreshNotifications,
+    markAsRead,
+    markAllAsRead
+  } = useNotifications()
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [])
-
-  const fetchNotifications = async () => {
-    try {
-      setIsLoading(true)
-      const result = await userService.getNotifications({
-        page: 1,
-        limit: 50
-      })
-      
-      if (result) {
-        // Backend'den gelen veriyi frontend formatına çevir
-        const formattedNotifications = result.notifications.map((notification: any) => ({
-          id: notification.id.toString(),
-          title: notification.title,
-          message: notification.message,
-          type: notification.type.toLowerCase(),
-          isRead: notification.isRead,
-          createdAt: notification.createdAt,
-          actionUrl: notification.actionUrl
-        }))
-        
-        setNotifications(formattedNotifications)
-      }
-    } catch (error) {
-      console.error('Bildirimler yüklenirken hata:', error)
-      // Hata durumunda boş liste göster
-      setNotifications([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -93,41 +66,13 @@ export default function NotificationsPage() {
     }
   }
 
-  const markAsRead = async (id: string) => {
-    try {
-      const success = await userService.markNotificationAsRead(id)
-      if (success) {
-        setNotifications(prev => 
-          prev.map(notification => 
-            notification.id === id 
-              ? { ...notification, isRead: true }
-              : notification
-          )
-        )
-      }
-    } catch (error) {
-      console.error('Bildirim okundu işaretlenirken hata:', error)
-    }
-  }
-
-  const markAllAsRead = async () => {
-    try {
-      const success = await userService.markAllNotificationsAsRead()
-      if (success) {
-        setNotifications(prev => 
-          prev.map(notification => ({ ...notification, isRead: true }))
-        )
-      }
-    } catch (error) {
-      console.error('Tüm bildirimler okundu işaretlenirken hata:', error)
-    }
-  }
 
   const deleteNotification = async (id: string) => {
     try {
       const success = await userService.deleteNotification(id)
       if (success) {
-        setNotifications(prev => prev.filter(notification => notification.id !== id))
+        // Bildirimler silindikten sonra listeyi yenile
+        refreshNotifications()
       }
     } catch (error) {
       console.error('Bildirim silinirken hata:', error)
@@ -140,7 +85,6 @@ export default function NotificationsPage() {
     return true
   })
 
-  const unreadCount = notifications.filter(n => !n.isRead).length
 
   if (isLoading) {
     return (

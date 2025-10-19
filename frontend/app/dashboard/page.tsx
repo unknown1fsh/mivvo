@@ -24,6 +24,10 @@ import { useRouter } from 'next/navigation'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import { ProgressBar, LoadingSpinner } from '@/components/ui'
 import { authService } from '@/services/authService'
+import { userService } from '@/services/userService'
+import { useUnreadNotificationCount } from '@/hooks/useNotifications'
+import { EmailVerificationBanner } from '@/components/features/EmailVerificationBanner'
+import { EmailVerificationGuard } from '@/components/features/EmailVerificationGuard'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 
@@ -56,6 +60,7 @@ export default function DashboardPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const unreadNotificationCount = useUnreadNotificationCount()
 
   useEffect(() => {
     // Kullanıcı bilgilerini al
@@ -226,9 +231,11 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-4">
               <Link href="/notifications" className="p-2 text-gray-400 hover:text-gray-600 relative">
                 <BellIcon className="w-6 h-6" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  3
-                </span>
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {unreadNotificationCount}
+                  </span>
+                )}
               </Link>
               <Link href="/settings" className="p-2 text-gray-400 hover:text-gray-600">
                 <CogIcon className="w-6 h-6" />
@@ -255,6 +262,14 @@ export default function DashboardPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Email Verification Banner - GEÇİCİ OLARAK DEVRE DIŞI */}
+        {false && user && !user.emailVerified && (
+          <EmailVerificationBanner 
+            userEmail={user.email}
+            className="mb-6"
+          />
+        )}
+
         {/* Welcome Section */}
         <FadeInUp>
           <div className="mb-8">
@@ -327,26 +342,41 @@ export default function DashboardPage() {
           <div className="card p-6 mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link href="/vehicle/new-report" className="btn btn-primary btn-lg flex items-center justify-center">
-                <PlusIcon className="w-5 h-5 mr-2" />
-                Yeni Rapor Oluştur
-              </Link>
-              <Link href="/vin-lookup" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
-                <TruckIcon className="w-5 h-5 mr-2" />
-                Şasi Sorgula
-              </Link>
-              <Link href="/vehicle-garage" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white">
-                <TruckIcon className="w-5 h-5 mr-2" />
-                Araç Garajım
-              </Link>
-              <Link href="/vehicle/upload-images" className="btn btn-secondary btn-lg flex items-center justify-center">
-                <CameraIcon className="w-5 h-5 mr-2" />
-                Resim Yükle
-              </Link>
-              <Link href="/payment/add-credits" className="btn btn-secondary btn-lg flex items-center justify-center">
-                <CreditCardIcon className="w-5 h-5 mr-2" />
-                Kredi Yükle
-              </Link>
+              {/* Email Verification Guard - GEÇİCİ OLARAK DEVRE DIŞI */}
+              <div>
+                <Link href="/vehicle/new-report" className="btn btn-primary btn-lg flex items-center justify-center">
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Yeni Rapor Oluştur
+                </Link>
+              </div>
+              
+              <div>
+                <Link href="/vin-lookup" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white">
+                  <TruckIcon className="w-5 h-5 mr-2" />
+                  Şasi Sorgula
+                </Link>
+              </div>
+              
+              <div>
+                <Link href="/vehicle-garage" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white">
+                  <TruckIcon className="w-5 h-5 mr-2" />
+                  Araç Garajım
+                </Link>
+              </div>
+              
+              <div>
+                <Link href="/vehicle/upload-images" className="btn btn-secondary btn-lg flex items-center justify-center">
+                  <CameraIcon className="w-5 h-5 mr-2" />
+                  Resim Yükle
+                </Link>
+              </div>
+              
+              <div>
+                <Link href="/payment/add-credits" className="btn btn-secondary btn-lg flex items-center justify-center">
+                  <CreditCardIcon className="w-5 h-5 mr-2" />
+                  Kredi Yükle
+                </Link>
+              </div>
             </div>
           </div>
         </FadeInUp>
