@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   SparklesIcon,
@@ -15,6 +15,8 @@ import {
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
 import { Accordion } from '@/components/ui'
+import { authService } from '@/services/authService'
+import { pricingService } from '@/services/pricingService'
 
 const pricingPlans = [
   {
@@ -25,17 +27,21 @@ const pricingPlans = [
     bonus: 1,
     period: 'tek seferlik',
     description: 'İlk kez kullanıcılar için',
+    originalPrice: null,
+    discount: null,
     features: [
       '150 kredi (150 TL değerinde)',
       '1 TL bonus kredi',
-      '~3 Boya Analizi',
-      '~2 Hasar Analizi',
+      '~3 Boya Analizi (399₺)',
+      '~2 Hasar Analizi (499₺)',
+      '~1 Motor Sesi Analizi (299₺)',
       'Email destek',
       'Tüm analizlere erişim'
     ],
     limitations: [],
     popular: false,
-    color: 'from-gray-500 to-gray-600'
+    color: 'from-gray-500 to-gray-600',
+    badge: null
   },
   {
     id: 'professional',
@@ -45,17 +51,21 @@ const pricingPlans = [
     bonus: 101,
     period: 'tek seferlik',
     description: 'En popüler seçenek ⭐',
+    originalPrice: 750,
+    discount: 101,
     features: [
       '750 kredi (750 TL değerinde)',
       '101 TL bonus kredi (%15.6)',
-      '~15 Boya Analizi',
-      '~10 Hasar Analizi',
-      '~4 Kapsamlı Ekspertiz',
-      'Öncelikli destek'
+      '~15 Boya Analizi (399₺)',
+      '~10 Hasar Analizi (499₺)',
+      '~4 Kapsamlı Ekspertiz (899₺)',
+      'Öncelikli destek',
+      '7/24 WhatsApp destek'
     ],
     limitations: [],
     popular: true,
-    color: 'from-blue-500 to-purple-600'
+    color: 'from-blue-500 to-purple-600',
+    badge: 'En Popüler'
   },
   {
     id: 'enterprise',
@@ -65,18 +75,22 @@ const pricingPlans = [
     bonus: 301,
     period: 'tek seferlik',
     description: 'Galeri ve kurumsal müşteriler',
+    originalPrice: 1500,
+    discount: 301,
     features: [
       '1500 kredi (1500 TL değerinde)',
       '301 TL bonus kredi (%25.1)',
-      '~30 Boya Analizi',
-      '~21 Hasar Analizi',
-      '~8 Kapsamlı Ekspertiz',
+      '~30 Boya Analizi (399₺)',
+      '~21 Hasar Analizi (499₺)',
+      '~8 Kapsamlı Ekspertiz (899₺)',
       '7/24 öncelikli destek',
-      'Özel hesap yöneticisi'
+      'Özel hesap yöneticisi',
+      'Toplu işlem indirimleri'
     ],
     limitations: [],
     popular: false,
-    color: 'from-purple-500 to-pink-600'
+    color: 'from-purple-500 to-pink-600',
+    badge: 'Kurumsal'
   }
 ]
 
@@ -85,25 +99,33 @@ const servicePricing = [
     service: 'Boya Analizi',
     price: 399,
     description: 'AI destekli boya kalitesi ve renk analizi',
-    features: ['1-5 resim analizi', 'Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi']
+    features: ['1-5 resim analizi', 'Renk eşleştirme', 'Çizik tespiti', 'Kalite değerlendirmesi'],
+    popular: false,
+    badge: null
   },
   {
     service: 'Hasar Değerlendirmesi',
     price: 499,
     description: 'AI destekli hasar tespiti ve değerlendirme',
-    features: ['1-5 resim analizi', 'Çarpışma hasarları', 'Çizik ve göçük analizi', 'Onarım maliyet tahmini']
+    features: ['1-5 resim analizi', 'Çarpışma hasarları', 'Çizik ve göçük analizi', 'Onarım maliyet tahmini'],
+    popular: false,
+    badge: null
   },
   {
     service: 'Motor Sesi Analizi',
     price: 299,
     description: 'Ses kaydı ile motor durumu AI analizi',
-    features: ['Çoklu ses dosyası', 'Motor sağlık durumu', 'Anormallik tespiti', 'Detaylı rapor']
+    features: ['Çoklu ses dosyası', 'Motor sağlık durumu', 'Anormallik tespiti', 'Detaylı rapor'],
+    popular: false,
+    badge: null
   },
   {
     service: 'Değer Tahmini',
     price: 299,
     description: 'AI tabanlı piyasa değeri hesaplama',
-    features: ['Piyasa analizi', 'Değer hesaplama', 'Karşılaştırma', 'Detaylı rapor']
+    features: ['Piyasa analizi', 'Değer hesaplama', 'Karşılaştırma', 'Detaylı rapor'],
+    popular: false,
+    badge: null
   },
   {
     service: 'Kapsamlı Ekspertiz',
@@ -112,38 +134,68 @@ const servicePricing = [
     discount: 597,
     description: 'Tüm analizleri içeren premium paket',
     features: ['Tüm analizler dahil', 'Boya + Hasar + Motor + Değer', 'Detaylı kapsamlı rapor', '597 TL tasarruf'],
-    popular: true
+    popular: true,
+    badge: 'En Avantajlı'
   }
 ]
 
 const faqs = [
   {
     question: 'Kredi sistemi nasıl çalışıyor?',
-    answer: 'Kredi paketlerinden satın aldığınız kredilerle istediğiniz analiz hizmetini kullanabilirsiniz. 1 Kredi = 1 TL değerindedir. Her hizmetin farklı kredi maliyeti vardır. Örneğin Boya Analizi 399 kredi, Kapsamlı Ekspertiz 899 kredi tüketir.'
+    answer: 'Kredi paketlerinden satın aldığınız kredilerle istediğiniz analiz hizmetini kullanabilirsiniz. 1 Kredi = 1 TL değerindedir. Her hizmetin farklı kredi maliyeti vardır. Örneğin Boya Analizi 399 kredi, Hasar Analizi 499 kredi, Kapsamlı Ekspertiz 899 kredi tüketir.'
+  },
+  {
+    question: 'Yılbaşı kampanyası ne kadar sürecek?',
+    answer: 'Yılbaşı kampanyası sınırlı süre için geçerlidir. Profesyonel pakette %15.6, Kurumsal pakette %25.1 bonus kredi kazanabilirsiniz. Kampanya bitmeden fırsatı kaçırmayın!'
   },
   {
     question: 'Hangi ödeme yöntemlerini kabul ediyorsunuz?',
-    answer: 'Kredi kartı, banka kartı, banka havalesi ve mobil ödeme yöntemlerini kabul ediyoruz. Tüm ödemeler SSL ile güvenli şekilde şifrelenir ve işlenir.'
+    answer: 'Kredi kartı, banka kartı, banka havalesi ve mobil ödeme yöntemlerini kabul ediyoruz. Tüm ödemeler SSL ile güvenli şekilde şifrelenir ve işlenir. Anında kredi aktarımı yapılır.'
   },
   {
     question: 'Kredilerim ne kadar süre geçerli?',
-    answer: 'Satın aldığınız kredilerin süresiz kullanım hakkı vardır. Hiçbir son kullanma tarihi yoktur, istediğiniz zaman kullanabilirsiniz.'
+    answer: 'Satın aldığınız kredilerin süresiz kullanım hakkı vardır. Hiçbir son kullanma tarihi yoktur, istediğiniz zaman kullanabilirsiniz. Bonus krediler de aynı şekilde süresizdir.'
   },
   {
-    question: 'Büyük paketlerde bonus ne kadar?',
-    answer: 'Başlangıç paketinde %0.7, Profesyonel pakette %15.6, Kurumsal pakette ise %25.1 bonus kredi kazanırsınız. Büyük paket alarak daha fazla tasarruf edersiniz.'
+    question: 'İlk alışveriş indirimi nasıl alabilirim?',
+    answer: 'Yeni kullanıcılara özel %10 ek indirim kampanyamız bulunmaktadır. İlk kredi paketi alışverişyerinizde bu indirim otomatik olarak uygulanır. Kampanya detayları için iletişime geçin.'
   },
   {
     question: 'Kurumsal müşteriler için özel paket var mı?',
-    answer: 'Evet, galeri, ekspertiz büroları ve kurumsal müşteriler için 1500 kredilik özel paketimiz bulunmaktadır. Daha büyük hacimler için özel fiyatlandırma da sunuyoruz. Bizimle iletişime geçin.'
+    answer: 'Evet, galeri, ekspertiz büroları ve kurumsal müşteriler için 1500 kredilik özel paketimiz bulunmaktadır. %25.1 bonus kredi ile büyük tasarruf sağlarsınız. Daha büyük hacimler için özel fiyatlandırma da sunuyoruz.'
   },
   {
     question: 'Kullanılmayan krediyi iade alabilir miyim?',
-    answer: 'Satın alımdan sonraki 7 gün içinde ve hiçbir kredi kullanılmamışsa tam para iadesi yapılır. Kısmi kredi iadesi yapılmamaktadır.'
+    answer: 'Satın alımdan sonraki 7 gün içinde ve hiçbir kredi kullanılmamışsa tam para iadesi yapılır. Kısmi kredi iadesi yapılmamaktadır. Güven garantimiz kapsamında koşulsuz para iadesi sunuyoruz.'
+  },
+  {
+    question: 'Kapsamlı Ekspertiz paketi ne kadar tasarruf sağlar?',
+    answer: 'Kapsamlı Ekspertiz paketi (899₺) ile 597₺ tasarruf edersiniz! Normal fiyatlar: Boya Analizi (399₺) + Hasar Analizi (499₺) + Motor Sesi (299₺) + Değer Tahmini (299₺) = 1496₺. Paket fiyatı: 899₺. Tasarruf: 597₺ (%40 indirim).'
   }
 ]
 
 export default function PricingPage() {
+  const [user, setUser] = useState<any>(null)
+  const [pricingPackages, setPricingPackages] = useState<any[]>([])
+
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser()
+    setUser(currentUser)
+    
+    // Backend'ten paket bilgilerini çek
+    fetchPricingPackages()
+  }, [])
+  
+  const fetchPricingPackages = async () => {
+    try {
+      const packages = await pricingService.getPricingPackages()
+      setPricingPackages(packages)
+    } catch (error) {
+      console.error('Pricing packages fetch error:', error)
+      // Fallback olarak mevcut pricingPlans'ı kullan
+      setPricingPackages(pricingPlans)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -172,14 +224,39 @@ export default function PricingPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeInUp>
+            <div className="mb-6">
+              <span className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
+                🎉 Yılbaşı Kampanyası - %25'e Varan Bonus!
+              </span>
+            </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              <span className="gradient-text">Basit ve Şeffaf</span>
+              <span className="gradient-text">Cazip Fiyatlar</span>
               <br />
-              <span className="text-gray-800">Fiyatlandırma</span>
+              <span className="text-gray-800">Maksimum Tasarruf</span>
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-              Kredi satın alın, istediğiniz servisi kullanın. Büyük paketlerde daha fazla bonus kazanın!
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Kredi paketleri ile büyük tasarruf edin! Profesyonel pakette %15.6, Kurumsal pakette %25.1 bonus kazanın.
             </p>
+            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 mb-8">
+              <div className="flex items-center">
+                <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>7/24 WhatsApp Destek</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Anında Kredi Aktarımı</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="w-5 h-5 text-green-500 mr-2" />
+                <span>Güvenli Ödeme</span>
+              </div>
+            </div>
+            
+            {/* Money Back Guarantee Badge */}
+            <div className="inline-flex items-center px-6 py-3 rounded-full text-lg font-semibold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg animate-pulse">
+              <ShieldCheckIcon className="w-6 h-6 mr-3" />
+              %100 Para İade Garantisi - Raporunuz oluşmazsa bakiyeniz anında iade edilir
+            </div>
           </FadeInUp>
         </div>
       </section>
@@ -188,7 +265,7 @@ export default function PricingPage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {pricingPlans.map((plan) => (
+            {(pricingPackages.length > 0 ? pricingPackages : pricingPlans).map((plan) => (
               <StaggerItem key={plan.id}>
                 <motion.div
                   whileHover={{ scale: 1.02 }}
@@ -196,10 +273,10 @@ export default function PricingPage() {
                     plan.popular ? 'ring-2 ring-blue-500' : ''
                   }`}
                 >
-                  {plan.popular && (
+                  {plan.badge && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                       <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
-                        En Popüler
+                        {plan.badge}
                       </span>
                     </div>
                   )}
@@ -212,10 +289,18 @@ export default function PricingPage() {
                   <p className="text-gray-600 mb-6">{plan.description}</p>
 
                   <div className="mb-6">
-                    <div className="text-4xl font-bold text-gray-900">
-                      {plan.price}₺
-                    </div>
-                    <div className="text-gray-600 text-sm">
+                    {plan.originalPrice ? (
+                      <div>
+                        <div className="text-sm text-gray-500 line-through">{plan.originalPrice}₺</div>
+                        <div className="text-4xl font-bold gradient-text">{plan.price}₺</div>
+                        <div className="text-sm text-green-600 font-semibold">🎁 {plan.discount}₺ tasarruf!</div>
+                      </div>
+                    ) : (
+                      <div className="text-4xl font-bold text-gray-900">
+                        {plan.price}₺
+                      </div>
+                    )}
+                    <div className="text-gray-600 text-sm mt-2">
                       {plan.period}
                     </div>
                     {plan.bonus && plan.bonus > 0 && (
@@ -243,18 +328,73 @@ export default function PricingPage() {
                   </ul>
 
                   <Link
-                    href="/register"
+                    href={user ? `/dashboard/purchase?package=${plan.id}` : "/register"}
                     className={`btn w-full btn-lg ${
                       plan.popular ? 'btn-primary' : 'btn-secondary'
                     }`}
                   >
-                    Paketi Satın Al
+                    {user ? 'Satın Al' : 'Paketi Satın Al'}
                     <ArrowRightIcon className="w-5 h-5 ml-2" />
                   </Link>
                 </motion.div>
               </StaggerItem>
             ))}
           </StaggerContainer>
+        </div>
+      </section>
+
+      {/* Special Offers */}
+      <section className="py-20 bg-gradient-to-r from-green-500 to-blue-600 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInUp>
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                🎉 Özel Kampanyalar
+              </h2>
+              <p className="text-xl text-green-100 max-w-3xl mx-auto">
+                Sınırlı süre için geçerli özel fırsatlar - Kaçırmayın!
+              </p>
+            </div>
+          </FadeInUp>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <StaggerItem>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/20">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">İlk Alışveriş İndirimi</h3>
+                <p className="text-green-100 mb-4">Yeni kullanıcılara özel %10 ek indirim</p>
+                <div className="text-3xl font-bold text-white mb-2">%10</div>
+                <div className="text-sm text-green-100">İlk kredi paketi alışverişinde</div>
+              </div>
+            </StaggerItem>
+
+            <StaggerItem>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/20">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">⚡</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Hızlı Teslimat</h3>
+                <p className="text-green-100 mb-4">Kredileriniz anında hesabınıza yüklenir</p>
+                <div className="text-3xl font-bold text-white mb-2">0 Saniye</div>
+                <div className="text-sm text-green-100">Otomatik kredi aktarımı</div>
+              </div>
+            </StaggerItem>
+
+            <StaggerItem>
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/20">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🛡️</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Güven Garantisi</h3>
+                <p className="text-green-100 mb-4">7 gün içinde memnun kalmazsanız para iadesi</p>
+                <div className="text-3xl font-bold text-white mb-2">7 Gün</div>
+                <div className="text-sm text-green-100">Koşulsuz para iadesi</div>
+              </div>
+            </StaggerItem>
+          </div>
         </div>
       </section>
 
@@ -276,10 +416,10 @@ export default function PricingPage() {
             {servicePricing.map((service, index) => (
               <StaggerItem key={index}>
                 <div className={`card card-hover p-6 text-center relative ${service.popular ? 'ring-2 ring-blue-500 scale-105' : ''}`}>
-                  {service.popular && (
+                  {service.badge && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                       <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-xs font-medium shadow-lg">
-                        ⭐ En Avantajlı
+                        ⭐ {service.badge}
                       </span>
                     </div>
                   )}
@@ -306,8 +446,8 @@ export default function PricingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/register" className={`btn ${service.popular ? 'btn-primary' : 'btn-secondary'} btn-md w-full`}>
-                    Hemen Başla
+                  <Link href={user ? `/dashboard/purchase?package=${service.service.toLowerCase().replace(' ', '-')}` : "/register"} className={`btn ${service.popular ? 'btn-primary' : 'btn-secondary'} btn-md w-full`}>
+                    {user ? 'Satın Al' : 'Hemen Başla'}
                   </Link>
                 </div>
               </StaggerItem>
@@ -347,19 +487,38 @@ export default function PricingPage() {
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeInUp>
+            <div className="mb-6">
+              <span className="bg-white/20 text-white px-6 py-2 rounded-full text-sm font-semibold">
+                ⏰ Sınırlı Süre - %25 Bonus Krediler!
+              </span>
+            </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Hemen Başlayın
+              Hemen Başlayın ve Tasarruf Edin!
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Ücretsiz deneme ile başlayın, istediğiniz zaman iptal edin. Hiçbir gizli ücret yok.
+              Yılbaşı kampanyası ile büyük tasarruf fırsatı! Profesyonel pakette %15.6, Kurumsal pakette %25.1 bonus kazanın.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register" className="btn bg-white text-blue-600 hover:bg-gray-100 btn-lg shadow-xl">
-                Ücretsiz Deneme Başlat
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+              <Link href={user ? "/dashboard/purchase?package=professional" : "/register"} className="btn bg-white text-blue-600 hover:bg-gray-100 btn-lg shadow-xl">
+                🎁 {user ? 'Bonus Kredi Al' : 'Bonus Kredi Al'}
               </Link>
               <Link href="/contact" className="btn border-white text-white hover:bg-white hover:text-blue-600 btn-lg">
-                Satış Ekibiyle Konuş
+                💬 WhatsApp Destek
               </Link>
+            </div>
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-blue-100">
+              <div className="flex items-center">
+                <CheckCircleIcon className="w-5 h-5 text-green-400 mr-2" />
+                <span>Anında Kredi Aktarımı</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="w-5 h-5 text-green-400 mr-2" />
+                <span>7 Gün Para İadesi</span>
+              </div>
+              <div className="flex items-center">
+                <CheckCircleIcon className="w-5 h-5 text-green-400 mr-2" />
+                <span>SSL Güvenli Ödeme</span>
+              </div>
             </div>
           </FadeInUp>
         </div>
@@ -404,7 +563,7 @@ export default function PricingPage() {
                 <li><Link href="/about" className="hover:text-white transition-colors">Hakkımızda</Link></li>
                 <li><Link href="/privacy" className="hover:text-white transition-colors">Gizlilik</Link></li>
                 <li><Link href="/terms" className="hover:text-white transition-colors">Kullanım Şartları</Link></li>
-                <li><Link href="/careers" className="hover:text-white transition-colors">Kariyer</Link></li>
+                <li><span className="text-gray-500 cursor-not-allowed">Kariyer (Yakında)</span></li>
               </ul>
             </div>
           </div>

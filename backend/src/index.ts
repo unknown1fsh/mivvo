@@ -23,13 +23,26 @@ import damageAnalysisRoutes from './routes/damageAnalysis';
 import valueEstimationRoutes from './routes/valueEstimation';
 import comprehensiveExpertiseRoutes from './routes/comprehensiveExpertise';
 import notificationRoutes from './routes/notifications';
+import pricingRoutes from './routes/pricing';
+import contactRoutes from './routes/contact';
+import careerRoutes from './routes/career';
+import reportRoutes from './routes/report';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
+import { requestLogger } from './middleware/requestLogger';
+import { databaseLoggerMiddleware } from './middleware/databaseLogger';
+import { PrismaClient } from '@prisma/client';
 
 // Load environment variables
 dotenv.config();
+
+// Force set OpenAI API key if not set
+if (!process.env.OPENAI_API_KEY) {
+  console.log('⚠️ OpenAI API Key bulunamadı! Lütfen .env dosyasında OPENAI_API_KEY değişkenini ayarlayın.');
+  console.log('🔗 API Key almak için: https://platform.openai.com/account/api-keys');
+}
 
 const app = express();
 // Railway'de otomatik port kullan (ayrı servis için)
@@ -125,12 +138,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Logging middleware
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined'));
-}
+// Logging middleware - Winston ile entegre
+app.use(requestLogger);
 
 // Health check endpoint - API prefix ile (catch-all'dan önce!)
 app.get('/api/health', (req, res) => {
@@ -160,9 +169,12 @@ app.use('/api/damage-analysis', damageAnalysisRoutes);
 app.use('/api/value-estimation', valueEstimationRoutes);
 app.use('/api/comprehensive-expertise', comprehensiveExpertiseRoutes);
 app.use('/api/user/notifications', notificationRoutes);
+app.use('/api/pricing', pricingRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/career', careerRoutes);
 
-// Reports endpoint - frontend için alias
-app.use('/api/reports', userRoutes);
+// Reports endpoint - yeni report controller
+app.use('/api/reports', reportRoutes);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -170,11 +182,17 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Vercel serverless functions için frontend static serving kaldırıldı
 // Vercel routing ile frontend dosyaları otomatik serve ediliyor
 
+// Prisma Client ve Database Logger Setup
+const prisma = new PrismaClient();
+prisma.$use(databaseLoggerMiddleware);
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Mivvo Expertiz Backend Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`📝 Logging: Winston + Morgan entegrasyonu aktif`);
+  console.log(`🗄️ Database: Prisma middleware logger aktif`);
 });
 
 // Graceful shutdown

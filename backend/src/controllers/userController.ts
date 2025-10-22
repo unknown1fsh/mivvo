@@ -373,6 +373,65 @@ export const getCreditTransactions = async (req: AuthRequest, res: Response): Pr
  *   "confirmDeletion": true
  * }
  */
+/**
+ * Rehberi Görüldü Olarak İşaretle
+ * 
+ * Kullanıcının onboarding rehberini tamamladığını işaretler.
+ * 
+ * İş Akışı:
+ * 1. hasSeenGuide alanını true yap
+ * 2. updatedAt timestamp güncelle
+ * 
+ * @route   PATCH /api/user/guide-seen
+ * @access  Private
+ * 
+ * @returns 200 - Başarılı güncelleme
+ * @returns 401 - Yetkisiz erişim
+ * @returns 500 - Sunucu hatası
+ * 
+ * @example
+ * PATCH /api/user/guide-seen
+ * Response: { success: true, message: "Rehber görüldü olarak işaretlendi" }
+ */
+export const markGuideAsSeen = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Yetkilendirme gerekli'
+      });
+      return;
+    }
+
+    // hasSeenGuide alanını true yap
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        hasSeenGuide: true,
+        updatedAt: new Date()
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Rehber görüldü olarak işaretlendi',
+      data: {
+        hasSeenGuide: true,
+        updatedAt: new Date()
+      }
+    });
+
+  } catch (error) {
+    console.error('Rehber işaretleme hatası:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Rehber işaretlenirken hata oluştu'
+    });
+  }
+};
+
 export const deleteAccount = async (req: AuthRequest, res: Response): Promise<void> => {
   // TODO: Hesap silme implementasyonu
   // - Şifre doğrulama

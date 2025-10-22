@@ -173,29 +173,29 @@ ${damageInfo ? `
 🔧 TESPİT EDİLEN HASAR BİLGİLERİ:
 ⚠️ ÖNEMLİ: Bu araçta yapay zeka ile tespit edilmiş hasarlar mevcut!
 
-Hasar Sayısı: ${damageInfo.damageAreas.length}
-Toplam Tamir Maliyeti: ${damageInfo.overallAssessment.totalRepairCost.toLocaleString('tr-TR')} TL
-Hasar Seviyesi: ${damageInfo.overallAssessment.damageLevel}
-Araç Durumu: ${damageInfo.overallAssessment.vehicleCondition}
-Güvenlik Durumu: ${damageInfo.safetyAssessment.roadworthiness}
-Yapısal Bütünlük: ${damageInfo.technicalAnalysis.structuralIntegrity}
+Hasar Sayısı: ${damageInfo.hasarAlanları.length}
+Toplam Tamir Maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL
+Hasar Seviyesi: ${damageInfo.genelDeğerlendirme.hasarSeviyesi}
+Araç Durumu: ${damageInfo.genelDeğerlendirme.araçDurumu}
+Güvenlik Durumu: ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu}
+Yapısal Bütünlük: ${damageInfo.teknikAnaliz.yapısalBütünlük}
 
 Detaylı Hasarlar:
-${damageInfo.damageAreas.map((damage, i) => `
-${i + 1}. ${damage.type} - ${damage.area} bölgesi
-   - Şiddet: ${damage.severity}
-   - Tamir Maliyeti: ${damage.repairCost.toLocaleString('tr-TR')} TL
-   - Güvenlik Etkisi: ${damage.safetyImpact}
-   - Öncelik: ${damage.repairPriority}
-   - Açıklama: ${damage.description}`).join('')}
+${damageInfo.hasarAlanları.map((damage, i) => `
+${i + 1}. ${damage.tür} - ${damage.bölge} bölgesi
+   - Şiddet: ${damage.şiddet}
+   - Tamir Maliyeti: ${damage.onarımMaliyeti.toLocaleString('tr-TR')} TL
+   - Güvenlik Etkisi: ${damage.güvenlikEtkisi}
+   - Öncelik: ${damage.onarımÖnceliği}
+   - Açıklama: ${damage.açıklama}`).join('')}
 
 🚨 KRİTİK: Bu hasar bilgileri değer tahminini ÖNEMLİ ÖLÇÜDE ETKİLEMELİ:
-- Toplam tamir maliyeti: ${damageInfo.overallAssessment.totalRepairCost.toLocaleString('tr-TR')} TL → Bu tutarı fiyattan DÜŞ
-- Hasar geçmişi nedeniyle ek %${Math.min(damageInfo.damageAreas.length * 5, 25)} değer kaybı uygula
+- Toplam tamir maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL → Bu tutarı fiyattan DÜŞ
+- Hasar geçmişi nedeniyle ek %${Math.min(damageInfo.hasarAlanları.length * 5, 25)} değer kaybı uygula
 - Kritik hasarlar için ekstra %10-15 değer kaybı
-- Yapısal hasar varsa (${damageInfo.technicalAnalysis.frameDamage ? 'EVET' : 'Hayır'}): ${damageInfo.technicalAnalysis.frameDamage ? 'EK %20-30 DEĞER KAYBI!' : 'Ekstra düşüş yok'}
-- Güvenlik riski ${damageInfo.safetyAssessment.roadworthiness === 'unsafe' ? 'VAR - EK %15 DÜŞÜŞ' : damageInfo.safetyAssessment.roadworthiness === 'conditional' ? 'ORTA - EK %8 DÜŞÜŞ' : 'YOK'}
-- Piyasa değer etkisi: ${damageInfo.overallAssessment.marketValueImpact}%
+- Yapısal hasar varsa (${damageInfo.teknikAnaliz.şasiHasarı ? 'EVET' : 'Hayır'}): ${damageInfo.teknikAnaliz.şasiHasarı ? 'EK %20-30 DEĞER KAYBI!' : 'Ekstra düşüş yok'}
+- Güvenlik riski ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? 'VAR - EK %15 DÜŞÜŞ' : damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'koşullu' ? 'ORTA - EK %8 DÜŞÜŞ' : 'YOK'}
+- Piyasa değer etkisi: ${damageInfo.genelDeğerlendirme.piyasaDeğeriEtkisi}%
 - Hasarlı araçlar piyasada %30-50 daha zor satılır, talebi çok düşüktür
 - Alıcılar hasarlı araçlar için çok daha düşük fiyat teklif eder
 ` : ''}
@@ -243,8 +243,8 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     ]
   },
   "vehicleCondition": {
-    "overallCondition": ${damageInfo ? `"${damageInfo.overallAssessment.vehicleCondition === 'damaged' ? 'Hasarlı araç - Ciddi onarım gerekli' : damageInfo.overallAssessment.vehicleCondition === 'poor' ? 'Kötü durumda - Kapsamlı tamir lazım' : damageInfo.overallAssessment.vehicleCondition === 'fair' ? 'Orta durumda - Bazı hasarlar var' : 'İyi durumda'}"` : '"İyi durumda - Bakımlı araç"'},
-    "conditionScore": ${damageInfo ? Math.max(20, 85 - (damageInfo.damageAreas.length * 8) - (damageInfo.technicalAnalysis.frameDamage ? 25 : 0)) : 82},
+    "overallCondition": ${damageInfo ? `"${damageInfo.genelDeğerlendirme.araçDurumu === 'hasarlı' ? 'Hasarlı araç - Ciddi onarım gerekli' : damageInfo.genelDeğerlendirme.araçDurumu === 'ağır_hasar' ? 'Kötü durumda - Kapsamlı tamir lazım' : damageInfo.genelDeğerlendirme.araçDurumu === 'hafif_hasar' ? 'Orta durumda - Bazı hasarlar var' : 'İyi durumda'}"` : '"İyi durumda - Bakımlı araç"'},
+    "conditionScore": ${damageInfo ? Math.max(20, 85 - (damageInfo.hasarAlanları.length * 8) - (damageInfo.teknikAnaliz.şasiHasarı ? 25 : 0)) : 82},
     "mileageImpact": "Ortalama kilometre - Değer kaybı normal seviyede",
     "ageImpact": "${vehicleAge} yıllık araç - Yaşına göre ${damageInfo ? 'hasarlı' : 'iyi'} durumda",
     "maintenanceImpact": ${damageInfo ? '"Hasarlar mevcut - Değer kaybı var"' : '"Düzenli bakım yapılmış - Artı değer sağlıyor"'},
@@ -253,12 +253,12 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     "serviceRecords": true,
     "modifications": [],
     "conditionNotes": [
-      ${damageInfo ? `"⚠️ HASAR TESPİT EDİLDİ: ${damageInfo.damageAreas.length} adet hasar mevcut",
-      "Tamir maliyeti: ${damageInfo.overallAssessment.totalRepairCost.toLocaleString('tr-TR')} TL",
-      "Yapısal durum: ${damageInfo.technicalAnalysis.structuralIntegrity}",
-      "Güvenlik: ${damageInfo.safetyAssessment.roadworthiness}",
-      ${damageInfo.technicalAnalysis.frameDamage ? '"🚨 Yapısal hasar mevcut - Ciddi sorun",' : ''}
-      ${damageInfo.safetyAssessment.criticalIssues.length > 0 ? `"Kritik sorunlar: ${damageInfo.safetyAssessment.criticalIssues.join(', ')}"` : ''}` : `${hasImages ? '"Fotoğraflarda araç temiz ve bakımlı görünüyor",' : ''}
+      ${damageInfo ? `"⚠️ HASAR TESPİT EDİLDİ: ${damageInfo.hasarAlanları.length} adet hasar mevcut",
+      "Tamir maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL",
+      "Yapısal durum: ${damageInfo.teknikAnaliz.yapısalBütünlük}",
+      "Güvenlik: ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu}",
+      ${damageInfo.teknikAnaliz.şasiHasarı ? '"🚨 Yapısal hasar mevcut - Ciddi sorun",' : ''}
+      ${damageInfo.güvenlikDeğerlendirmesi.kritikSorunlar.length > 0 ? `"Kritik sorunlar: ${damageInfo.güvenlikDeğerlendirmesi.kritikSorunlar.join(', ')}"` : ''}` : `${hasImages ? '"Fotoğraflarda araç temiz ve bakımlı görünüyor",' : ''}
       "Genel durum yaşına göre çok iyi",
       "Orijinal parçalar kullanılmış",
       "Düzenli servis bakımları yapılmış"`}
@@ -267,15 +267,15 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
   "priceBreakdown": {
     "baseValue": 750000,
     "mileageAdjustment": -35000,
-    "conditionAdjustment": ${damageInfo ? -Math.abs(damageInfo.overallAssessment.totalRepairCost) : 15000},
+    "conditionAdjustment": ${damageInfo ? -Math.abs(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti) : 15000},
     "featuresAdjustment": 8000,
     "marketAdjustment": -25000,
     "regionalAdjustment": -15000,
     "seasonalAdjustment": -13000,
-    ${damageInfo ? `"damageRepairCost": -${damageInfo.overallAssessment.totalRepairCost},` : ''}
-    ${damageInfo ? `"damageHistoryPenalty": -${Math.min(damageInfo.damageAreas.length * 5000, 50000)},` : ''}
-    ${damageInfo && damageInfo.technicalAnalysis.frameDamage ? '"structuralDamagePenalty": -80000,' : ''}
-    ${damageInfo && damageInfo.safetyAssessment.roadworthiness === 'unsafe' ? '"safetyRiskPenalty": -40000,' : ''}
+    ${damageInfo ? `"damageRepairCost": -${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti},` : ''}
+    ${damageInfo ? `"damageHistoryPenalty": -${Math.min(damageInfo.hasarAlanları.length * 5000, 50000)},` : ''}
+    ${damageInfo && damageInfo.teknikAnaliz.şasiHasarı ? '"structuralDamagePenalty": -80000,' : ''}
+    ${damageInfo && damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? '"safetyRiskPenalty": -40000,' : ''}
     "finalValue": ${damageInfo ? 'HASAR NEDENİYLE HESAPLA' : 685000},
     "breakdown": [
       {
@@ -290,24 +290,24 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
       },
       ${damageInfo ? `{
         "factor": "⚠️ HASAR TAMİR MALİYETİ",
-        "impact": -${damageInfo.overallAssessment.totalRepairCost},
-        "description": "${damageInfo.damageAreas.length} adet hasar tespit edildi - Tamir maliyeti düşülmeli"
+        "impact": -${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti},
+        "description": "${damageInfo.hasarAlanları.length} adet hasar tespit edildi - Tamir maliyeti düşülmeli"
       },
       {
         "factor": "⚠️ HASAR GEÇMİŞİ CEZASI",
-        "impact": -${Math.min(damageInfo.damageAreas.length * 5000, 50000)},
-        "description": "Hasarlı araç geçmişi - Piyasa değeri düşüşü (-%${Math.min(damageInfo.damageAreas.length * 3, 15)})"
+        "impact": -${Math.min(damageInfo.hasarAlanları.length * 5000, 50000)},
+        "description": "Hasarlı araç geçmişi - Piyasa değeri düşüşü (-%${Math.min(damageInfo.hasarAlanları.length * 3, 15)})"
       },` : `{
         "factor": "Genel Durum ve Bakım",
         "impact": 15000,
         "description": "İyi bakım, temiz araç, düzenli servis (+%2.2)"
       },`}
-      ${damageInfo && damageInfo.technicalAnalysis.frameDamage ? `{
+      ${damageInfo && damageInfo.teknikAnaliz.şasiHasarı ? `{
         "factor": "🚨 YAPISAL HASAR CEZASI",
         "impact": -80000,
         "description": "Şase/yapısal hasar mevcut - Ciddi değer kaybı (-%20)"
       },` : ''}
-      ${damageInfo && damageInfo.safetyAssessment.roadworthiness === 'unsafe' ? `{
+      ${damageInfo && damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? `{
         "factor": "🚨 GÜVENLİK RİSKİ CEZASI",
         "impact": -40000,
         "description": "Araç sürüş güvenliği riskli - Ek değer düşüşü (-%12)"
@@ -348,9 +348,9 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     ],
     "marketDisadvantages": [
       ${damageInfo ? `"🚨 HASAR GEÇMİŞİ VAR - Alıcılar çok temkinli olacak",
-      "🚨 TAMİR MALİYETİ YÜKSEK - ${damageInfo.overallAssessment.totalRepairCost.toLocaleString('tr-TR')} TL",
-      ${damageInfo.technicalAnalysis.frameDamage ? '"🚨 YAPISAL HASAR - Çok zor satılır, büyük değer kaybı",' : ''}
-      ${damageInfo.safetyAssessment.roadworthiness === 'unsafe' ? '"🚨 GÜVENLİK RİSKİ - Alıcılar kaçınacak",' : ''}
+      "🚨 TAMİR MALİYETİ YÜKSEK - ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL",
+      ${damageInfo.teknikAnaliz.şasiHasarı ? '"🚨 YAPISAL HASAR - Çok zor satılır, büyük değer kaybı",' : ''}
+      ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? '"🚨 GÜVENLİK RİSKİ - Alıcılar kaçınacak",' : ''}
       "⚠️ Hasarlı araçlar %50-70 daha yavaş satılır",
       "⚠️ Alıcılar hasarlı araçlar için çok düşük fiyat teklif eder",` : ''}
       "⚠️ 2. el piyasada bol bulunuyor - Rekabet var",
@@ -368,16 +368,16 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     "investmentGrade": ${damageInfo ? '"Kötü Yatırım (D)"' : '"İyi Yatırım (B+)"'},
     "appreciationPotential": ${damageInfo ? '"Negatif - Değer kaybı devam edecek"' : '"Yıllık %2-3 değer artışı (enflasyon altında)"'},
     "depreciationRate": ${damageInfo ? `"Yıllık %25-35 değer kaybı - Hasarlı araç riski yüksek"` : '"Yıllık %10-12 değer kaybı (sektör ortalaması %15)"'},
-    "holdingCostPerMonth": ${damageInfo ? `"Aylık ${4500 + Math.floor(damageInfo.overallAssessment.totalRepairCost / 12)} TL (sigorta, vergi, bakım + tamir)"` : '"Aylık 4.500 TL (sigorta, vergi, bakım)"'},
-    "liquidityScore": ${damageInfo ? Math.max(20, 88 - (damageInfo.damageAreas.length * 10)) : 88},
+    "holdingCostPerMonth": ${damageInfo ? `"Aylık ${4500 + Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti / 12)} TL (sigorta, vergi, bakım + tamir)"` : '"Aylık 4.500 TL (sigorta, vergi, bakım)"'},
+    "liquidityScore": ${damageInfo ? Math.max(20, 88 - (damageInfo.hasarAlanları.length * 10)) : 88},
     "riskLevel": ${damageInfo ? '"Yüksek risk - Hasarlı araç"' : '"Düşük risk - Güvenli yatırım"'},
     "investmentHorizon": ${damageInfo ? '"Tamir sonrası hemen satış önerilir - Değer hızla kaybediyor"' : '"1-2 yıl içinde satış önerilir - Değer kaybı yavaşlıyor"'},
     "investmentNotes": [
       ${damageInfo ? `"🚨 HASAR MEVCUT - Yatırım riski çok yüksek",
-      "⚠️ Tamir maliyeti: ${damageInfo.overallAssessment.totalRepairCost.toLocaleString('tr-TR')} TL",
+      "⚠️ Tamir maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL",
       "📉 Likidite düşük - Satış çok zor, 60-90 gün sürebilir",
       "💸 Alıcılar hasarlı araçlar için %30-50 düşük fiyat teklif eder",
-      ${damageInfo.technicalAnalysis.frameDamage ? '"🚨 Yapısal hasar - Satış neredeyse imkansız",' : ''}
+      ${damageInfo.teknikAnaliz.şasiHasarı ? '"🚨 Yapısal hasar - Satış neredeyse imkansız",' : ''}
       "⏰ Her geçen gün değer daha da kaybediyor"` : `"💰 Değer kaybı yavaşlıyor - İyi tutma süresi",
       "🚀 Likidite çok yüksek - 15-20 günde satılır",
       "🔧 Bakım maliyetleri düşük - Ekonomik araç",
@@ -419,14 +419,14 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     "improvementSuggestions": [
       ${damageInfo ? `{
         "action": "🚨 ÖNCELİK 1: Tüm hasarları onar",
-        "cost": ${damageInfo.overallAssessment.totalRepairCost},
-        "valueIncrease": ${Math.floor(damageInfo.overallAssessment.totalRepairCost * 0.6)},
+        "cost": ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti},
+        "valueIncrease": ${Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti * 0.6)},
         "description": "Hasarlar giderilmeden satış çok zor - En az %60'ını geri alırsın"
       },
-      ${damageInfo.technicalAnalysis.frameDamage ? `{
+      ${damageInfo.teknikAnaliz.şasiHasarı ? `{
         "action": "🚨 Yapısal onarım YAP",
-        "cost": ${Math.floor(damageInfo.overallAssessment.totalRepairCost * 0.5)},
-        "valueIncrease": ${Math.floor(damageInfo.overallAssessment.totalRepairCost * 0.4)},
+        "cost": ${Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti * 0.5)},
+        "valueIncrease": ${Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti * 0.4)},
         "description": "Yapısal hasar olan araçlar neredeyse satılmaz"
       },` : ''}
       {
@@ -536,8 +536,8 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
       try {
         console.log('[AI] Değer tahmini için önce hasar analizi yapılıyor...')
         damageInfo = await DamageDetectionService.detectDamage(imagePaths[0], vehicleInfo)
-        console.log(`[AI] Hasar analizi tamamlandı: ${damageInfo.damageAreas.length} hasar tespit edildi`)
-        console.log(`[AI] Toplam tamir maliyeti: ${damageInfo.overallAssessment.totalRepairCost} TL`)
+        console.log(`[AI] Hasar analizi tamamlandı: ${damageInfo.hasarAlanları.length} hasar tespit edildi`)
+        console.log(`[AI] Toplam tamir maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti} TL`)
       } catch (error) {
         console.warn('[AI] Hasar analizi yapılamadı, hasar bilgisi olmadan devam ediliyor:', error)
       }
@@ -578,7 +578,7 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
       })
     }
 
-    const response = await this.openaiClient.chat.completions.create({
+    const response = await this.openaiClient!.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.2,
       messages

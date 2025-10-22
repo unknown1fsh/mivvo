@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? '/api' : 'http://localhost:3001')
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 // Create axios instance
 const api = axios.create({
@@ -139,6 +139,136 @@ export const paymentAPI = {
   
   processPayment: (id: string, paymentData: any) =>
     api.post(`/api/payment/${id}/process`, paymentData),
+}
+
+// Analysis API
+export const analysisAPI = {
+  // Damage Analysis
+  damageAnalysis: {
+    start: (vehicleInfo: { plate: string; make?: string; model?: string; year?: number }) =>
+      api.post('/api/damage-analysis/start', { vehicleInfo }),
+    
+    uploadImages: (reportId: string, images: File[]) => {
+      const formData = new FormData()
+      images.forEach((image, index) => {
+        formData.append('images', image)
+      })
+      return api.post(`/api/damage-analysis/${reportId}/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000,
+      })
+    },
+    
+    analyze: (reportId: string) =>
+      api.post(`/api/damage-analysis/${reportId}/analyze`, {}, { timeout: 300000 }),
+    
+    getReport: (reportId: string) =>
+      api.get(`/api/damage-analysis/${reportId}`),
+  },
+  
+  // Paint Analysis
+  paintAnalysis: {
+    start: (vehicleInfo: { plate: string; make?: string; model?: string; year?: number }) =>
+      api.post('/api/paint-analysis/start', { vehicleInfo }),
+    
+    uploadImages: (reportId: string, images: File[]) => {
+      const formData = new FormData()
+      images.forEach((image, index) => {
+        formData.append('images', image)
+      })
+      return api.post(`/api/paint-analysis/${reportId}/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000,
+      })
+    },
+    
+    analyze: (reportId: string) =>
+      api.post(`/api/paint-analysis/${reportId}/analyze`, {}, { timeout: 300000 }),
+    
+    getReport: (reportId: string) =>
+      api.get(`/api/paint-analysis/${reportId}`),
+  },
+  
+  // Audio Analysis
+  audioAnalysis: {
+    analyze: (vehicleInfo: { plate: string; make?: string; model?: string; year?: number }, audioFiles: File[]) => {
+      const formData = new FormData()
+      formData.append('vehicleInfo', JSON.stringify(vehicleInfo))
+      audioFiles.forEach((audio, index) => {
+        formData.append('audioFiles', audio)
+      })
+      return api.post('/api/engine-sound-analysis/analyze', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000,
+      })
+    },
+    
+    getReport: (reportId: string) =>
+      api.get(`/api/engine-sound-analysis/${reportId}`),
+    
+    getHistory: () =>
+      api.get('/api/engine-sound-analysis/history'),
+    
+    getStatus: (reportId: string) =>
+      api.get(`/api/engine-sound-analysis/${reportId}/status`),
+  },
+  
+  // Value Estimation
+  valueEstimation: {
+    start: (vehicleInfo: { plate: string; make?: string; model?: string; year?: number }) =>
+      api.post('/api/value-estimation/start', { vehicleInfo }),
+    
+    uploadImages: (reportId: string, images: File[]) => {
+      const formData = new FormData()
+      images.forEach((image, index) => {
+        formData.append('images', image)
+      })
+      return api.post(`/api/value-estimation/${reportId}/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000,
+      })
+    },
+    
+    analyze: (reportId: string) =>
+      api.post(`/api/value-estimation/${reportId}/analyze`, {}, { timeout: 300000 }),
+    
+    getReport: (reportId: string) =>
+      api.get(`/api/value-estimation/${reportId}`),
+  },
+  
+  // Comprehensive Expertise
+  comprehensiveExpertise: {
+    start: (vehicleInfo: { plate: string; make?: string; model?: string; year?: number }) =>
+      api.post('/api/comprehensive-expertise/start', { vehicleInfo }),
+    
+    uploadImages: (reportId: string, images: File[]) => {
+      const formData = new FormData()
+      images.forEach((image, index) => {
+        formData.append('images', image)
+      })
+      return api.post(`/api/comprehensive-expertise/${reportId}/upload-images`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000,
+      })
+    },
+    
+    uploadAudio: (reportId: string, audioFiles: File[]) => {
+      const formData = new FormData()
+      audioFiles.forEach((audio, index) => {
+        formData.append('audioFiles', audio)
+      })
+      return api.post(`/api/comprehensive-expertise/${reportId}/upload-audio`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 300000,
+      })
+    },
+    
+    analyze: (reportId: string) =>
+      api.post(`/api/comprehensive-expertise/${reportId}/analyze`, {}, { timeout: 600000 }),
+    
+    getReport: (reportId: string) =>
+      api.get(`/api/comprehensive-expertise/${reportId}`),
+  },
 }
 
 // Admin API

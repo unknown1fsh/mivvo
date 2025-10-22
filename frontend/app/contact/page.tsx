@@ -5,23 +5,20 @@ import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { toast } from 'react-hot-toast'
 import { 
   SparklesIcon,
   PhoneIcon,
   EnvelopeIcon,
-  MapPinIcon,
-  ClockIcon,
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon,
   UserIcon,
-  BuildingOfficeIcon,
-  GlobeAltIcon
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
-import toast from 'react-hot-toast'
+import { contactService, ContactInquiryData } from '@/services/contactService'
 
 const schema = yup.object({
   name: yup.string().required('Ad soyad zorunludur'),
@@ -37,32 +34,25 @@ type FormData = yup.InferType<typeof schema>
 
 const contactInfo = [
   {
-    icon: PhoneIcon,
-    title: 'Telefon',
-    details: ['+90 212 555 0123', '+90 532 555 0123'],
-    description: 'Pazartesi - Cuma: 09:00 - 18:00',
-    color: 'from-green-500 to-emerald-500'
-  },
-  {
     icon: EnvelopeIcon,
     title: 'Email',
-    details: ['info@mivvo.com', 'destek@mivvo.com'],
+    details: ['sce@scegrup.com'],
     description: '24 saat içinde yanıt veriyoruz',
     color: 'from-blue-500 to-cyan-500'
   },
   {
-    icon: MapPinIcon,
-    title: 'Adres',
-    details: ['Maslak Mahallesi', 'Büyükdere Caddesi No:123', 'Sarıyer/İstanbul'],
-    description: 'Ofisimizi ziyaret edebilirsiniz',
-    color: 'from-purple-500 to-pink-500'
+    icon: ChatBubbleLeftRightIcon,
+    title: 'WhatsApp Destek',
+    details: ['+90 543 392 92 30'],
+    description: 'WhatsApp üzerinden destek alın',
+    color: 'from-green-500 to-emerald-500'
   },
   {
-    icon: ClockIcon,
-    title: 'Çalışma Saatleri',
-    details: ['Pazartesi - Cuma: 09:00 - 18:00', 'Cumartesi: 10:00 - 16:00'],
-    description: 'Pazar günleri kapalıyız',
-    color: 'from-orange-500 to-red-500'
+    icon: PhoneIcon,
+    title: 'İletişim No',
+    details: ['0850 888 1 889'],
+    description: 'Pazartesi - Cuma: 09:00 - 18:00',
+    color: 'from-purple-500 to-pink-500'
   }
 ]
 
@@ -134,13 +124,22 @@ export default function ContactPage() {
   const onSubmit = async (data: FormData) => {
     setIsLoading(true)
     try {
-      // TODO: API call to send contact form
-      console.log('Contact form data:', data)
+      const inquiryData: ContactInquiryData = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone || undefined,
+        company: data.company || undefined,
+        subject: data.subject,
+        message: data.message,
+        inquiryType: data.inquiryType as any
+      }
+
+      await contactService.submitContactInquiry(inquiryData)
       toast.success('Mesajınız başarıyla gönderildi! En kısa sürede size dönüş yapacağız.')
       setIsSubmitted(true)
       reset()
-    } catch (error) {
-      toast.error('Mesaj gönderilemedi! Lütfen tekrar deneyin.')
+    } catch (error: any) {
+      toast.error(error.message || 'Mesaj gönderilemedi! Lütfen tekrar deneyin.')
     } finally {
       setIsLoading(false)
     }
@@ -224,7 +223,7 @@ export default function ContactPage() {
       {/* Contact Info Cards */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {contactInfo.map((info, index) => (
               <StaggerItem key={index}>
                 <div className="card card-hover p-6 text-center group">
@@ -233,9 +232,24 @@ export default function ContactPage() {
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">{info.title}</h3>
                   <div className="space-y-1 mb-3">
-                    {info.details.map((detail, idx) => (
-                      <p key={idx} className="text-gray-700 text-sm">{detail}</p>
-                    ))}
+                    {info.details.map((detail, idx) => {
+                      if (info.title === 'WhatsApp Destek') {
+                        return (
+                          <a 
+                            key={idx} 
+                            href={`https://wa.me/905433929230`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-600 hover:text-green-700 text-sm font-medium transition-colors cursor-pointer"
+                          >
+                            {detail}
+                          </a>
+                        )
+                      }
+                      return (
+                        <p key={idx} className="text-gray-700 text-sm">{detail}</p>
+                      )
+                    })}
                   </div>
                   <p className="text-gray-500 text-xs">{info.description}</p>
                 </div>
@@ -420,24 +434,29 @@ export default function ContactPage() {
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">Hızlı İletişim</h3>
                   <div className="space-y-4">
                     <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-                      <PhoneIcon className="w-6 h-6 text-blue-600 mr-3" />
+                      <EnvelopeIcon className="w-6 h-6 text-blue-600 mr-3" />
                       <div>
-                        <p className="font-medium text-gray-900">Acil Destek</p>
-                        <p className="text-sm text-gray-600">+90 532 555 0123</p>
+                        <p className="font-medium text-gray-900">Email</p>
+                        <p className="text-sm text-gray-600">sce@scegrup.com</p>
                       </div>
                     </div>
-                    <div className="flex items-center p-3 bg-green-50 rounded-lg">
-                      <EnvelopeIcon className="w-6 h-6 text-green-600 mr-3" />
+                    <a 
+                      href="https://wa.me/905433929230"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors cursor-pointer"
+                    >
+                      <ChatBubbleLeftRightIcon className="w-6 h-6 text-green-600 mr-3" />
                       <div>
-                        <p className="font-medium text-gray-900">Email Destek</p>
-                        <p className="text-sm text-gray-600">destek@mivvo.com</p>
+                        <p className="font-medium text-gray-900">WhatsApp Destek</p>
+                        <p className="text-sm text-green-600 font-medium">+90 543 392 92 30</p>
                       </div>
-                    </div>
+                    </a>
                     <div className="flex items-center p-3 bg-purple-50 rounded-lg">
-                      <GlobeAltIcon className="w-6 h-6 text-purple-600 mr-3" />
+                      <PhoneIcon className="w-6 h-6 text-purple-600 mr-3" />
                       <div>
-                        <p className="font-medium text-gray-900">Canlı Destek</p>
-                        <p className="text-sm text-gray-600">7/24 Online</p>
+                        <p className="font-medium text-gray-900">İletişim No</p>
+                        <p className="text-sm text-gray-600">0850 888 1 889</p>
                       </div>
                     </div>
                   </div>
@@ -456,82 +475,12 @@ export default function ContactPage() {
                   </div>
                 </div>
 
-                {/* Office Hours */}
-                <div className="card p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Ofis Saatleri</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Pazartesi - Cuma</span>
-                      <span className="font-medium">09:00 - 18:00</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Cumartesi</span>
-                      <span className="font-medium">10:00 - 16:00</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Pazar</span>
-                      <span className="font-medium text-red-600">Kapalı</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </FadeInUp>
           </div>
         </div>
       </section>
 
-      {/* Map Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeInUp>
-            <div className="text-center mb-12">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">Ofisimizi Ziyaret Edin</h2>
-              <p className="text-xl text-gray-600">Randevu alarak ofisimizi ziyaret edebilirsiniz</p>
-            </div>
-          </FadeInUp>
-
-          <div className="card p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Adres Bilgileri</h3>
-                <div className="space-y-4">
-                  <div className="flex items-start">
-                    <MapPinIcon className="w-6 h-6 text-blue-600 mr-3 mt-1" />
-                    <div>
-                      <p className="font-medium text-gray-900">Mivvo Expertiz A.Ş.</p>
-                      <p className="text-gray-600">Maslak Mahallesi</p>
-                      <p className="text-gray-600">Büyükdere Caddesi No:123</p>
-                      <p className="text-gray-600">Sarıyer/İstanbul 34485</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <PhoneIcon className="w-6 h-6 text-green-600 mr-3 mt-1" />
-                    <div>
-                      <p className="font-medium text-gray-900">Telefon</p>
-                      <p className="text-gray-600">+90 212 555 0123</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start">
-                    <EnvelopeIcon className="w-6 h-6 text-purple-600 mr-3 mt-1" />
-                    <div>
-                      <p className="font-medium text-gray-900">Email</p>
-                      <p className="text-gray-600">info@mivvo.com</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gray-100 rounded-lg flex items-center justify-center h-64">
-                <div className="text-center text-gray-500">
-                  <MapPinIcon className="w-12 h-12 mx-auto mb-2" />
-                  <p>Harita burada görünecek</p>
-                  <p className="text-sm">Google Maps entegrasyonu</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 relative overflow-hidden">
@@ -545,11 +494,14 @@ export default function ContactPage() {
               Sorularınız için beklemeyin. Uzman ekibimiz size yardımcı olmaya hazır.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="tel:+905325550123" className="btn bg-white text-blue-600 hover:bg-gray-100 btn-lg shadow-xl">
+              <a href="tel:08508881889" className="btn bg-white text-blue-600 hover:bg-gray-100 btn-lg shadow-xl">
                 Hemen Ara
               </a>
-              <a href="mailto:info@mivvo.com" className="btn border-white text-white hover:bg-white hover:text-blue-600 btn-lg">
+              <a href="mailto:sce@scegrup.com" className="btn border-white text-white hover:bg-white hover:text-blue-600 btn-lg">
                 Email Gönder
+              </a>
+              <a href="https://wa.me/905433929230" target="_blank" rel="noopener noreferrer" className="btn bg-green-500 text-white hover:bg-green-600 btn-lg shadow-xl">
+                WhatsApp'tan Yaz
               </a>
             </div>
           </FadeInUp>
@@ -574,9 +526,18 @@ export default function ContactPage() {
             <div>
               <h3 className="text-lg font-semibold mb-4">İletişim</h3>
               <ul className="space-y-2 text-gray-400">
-                <li>+90 212 555 0123</li>
-                <li>info@mivvo.com</li>
-                <li>Maslak, İstanbul</li>
+                <li>0850 888 1 889</li>
+                <li>sce@scegrup.com</li>
+                <li>
+                  <a 
+                    href="https://wa.me/905433929230"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-400 hover:text-green-300 transition-colors"
+                  >
+                    +90 543 392 92 30 (WhatsApp)
+                  </a>
+                </li>
               </ul>
             </div>
             <div>

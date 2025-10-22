@@ -24,6 +24,9 @@ import {
   ChevronRightIcon,
   Cog6ToothIcon,
   BellIcon,
+  Bars3Icon,
+  XMarkIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -33,6 +36,12 @@ import { LineChart } from '@/components/admin/LineChart'
 import { DoughnutChart } from '@/components/admin/DoughnutChart'
 import { BarChart } from '@/components/admin/BarChart'
 import { UserDetailModal } from '@/components/admin/UserDetailModal'
+import ReportStatistics from '@/components/admin/ReportStatistics'
+import ReportMonitoring from '@/components/admin/ReportMonitoring'
+import ReportDetailModal from '@/components/admin/ReportDetailModal'
+import ExportMenu from '@/components/admin/ExportMenu'
+import RealTimeMonitor from '@/components/admin/RealTimeMonitor'
+import AdvancedFilters from '@/components/admin/AdvancedFilters'
 import { authService } from '@/services/authService'
 import adminService from '@/services/adminService'
 import { AdminUser, AdminUserDetail, DetailedStats, TimelineData, ReportBreakdown } from '@/types/admin'
@@ -41,9 +50,12 @@ import toast from 'react-hot-toast'
 
 export default function AdminPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports' | 'statistics' | 'monitoring' | 'filters' | 'export' | 'realtime'>('dashboard')
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null)
+  const [currentFilters, setCurrentFilters] = useState<any>({})
 
   // Dashboard State
   const [detailedStats, setDetailedStats] = useState<DetailedStats | null>(null)
@@ -66,13 +78,25 @@ export default function AdminPage() {
 
   // Auth Check
   useEffect(() => {
-    const user = authService.getCurrentUser()
-    if (!user || user.role !== 'ADMIN') {
-      toast.error('Bu sayfaya erişim yetkiniz yok')
-      router.push('/dashboard')
-      return
+    const checkAuth = async () => {
+      // Admin token'ı kontrol et
+      const adminToken = localStorage.getItem('admin_token')
+      const adminUser = localStorage.getItem('admin_user')
+      
+      
+      if (!adminToken || !adminUser) {
+        toast.error('Admin girişi yapmanız gerekiyor')
+        router.push('/admin/login')
+        return
+      }
+      
+      // Token'ı cookie'ye de kaydet (middleware için)
+      document.cookie = `admin_token=${adminToken}; path=/; max-age=${4 * 60 * 60}` // 4 saat
+      
+      fetchInitialData()
     }
-    fetchInitialData()
+    
+    checkAuth()
   }, [router])
 
   const fetchInitialData = async () => {
@@ -90,6 +114,14 @@ export default function AdminPage() {
     }
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_user')
+    document.cookie = 'admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT'
+    toast.success('Çıkış yapıldı')
+    router.push('/admin/login')
+  }
+
   const fetchDashboardData = async () => {
     try {
       const [statsRes, timelineRes, breakdownRes] = await Promise.all([
@@ -101,9 +133,11 @@ export default function AdminPage() {
       if (statsRes && statsRes.data) {
         setDetailedStats(statsRes.data)
       }
+      
       if (timelineRes && timelineRes.data) {
         setTimelineData(timelineRes.data.timeline)
       }
+      
       if (breakdownRes && breakdownRes.data) {
         setReportsBreakdown(breakdownRes.data.breakdown)
       }
@@ -282,7 +316,34 @@ export default function AdminPage() {
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between h-16 lg:hidden">
+            <div className="flex items-center space-x-3">
+              <Link href="/dashboard" className="text-gray-500 hover:text-gray-700 flex items-center">
+                <ArrowLeftIcon className="w-6 h-6" />
+                <span className="ml-1 text-sm">Dashboard</span>
+              </Link>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <SparklesIcon className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-lg font-bold gradient-text">Admin</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            >
+              {isMobileMenuOpen ? (
+                <XMarkIcon className="w-6 h-6" />
+              ) : (
+                <Bars3Icon className="w-6 h-6" />
+              )}
+            </button>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden lg:flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
                 <ArrowLeftIcon className="w-5 h-5 mr-2" />
@@ -303,11 +364,61 @@ export default function AdminPage() {
               >
                 <ArrowPathIcon className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
+              <button
+                onClick={handleLogout}
+                className="btn btn-danger"
+              >
+                <XMarkIcon className="w-5 h-5 mr-2" />
+                Çıkış Yap
+              </button>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex space-x-8 -mb-px">
+          {/* Mobile Menu */}
+          {isMobileMenuOpen && (
+            <div className="lg:hidden border-t border-gray-200 py-4">
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { key: 'dashboard', label: 'Dashboard', icon: ChartBarIcon },
+                  { key: 'users', label: 'Kullanıcılar', icon: UsersIcon },
+                  { key: 'reports', label: 'Raporlar', icon: DocumentTextIcon },
+                  { key: 'statistics', label: 'İstatistikler', icon: SparklesIcon },
+                  { key: 'monitoring', label: 'İzleme', icon: EyeIcon },
+                  { key: 'filters', label: 'Filtreler', icon: FunnelIcon },
+                  { key: 'export', label: 'Dışa Aktar', icon: CurrencyDollarIcon },
+                  { key: 'realtime', label: 'Canlı', icon: BellIcon }
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => {
+                      setActiveTab(tab.key as any)
+                      setIsMobileMenuOpen(false)
+                    }}
+                    className={`p-3 rounded-lg text-left transition-colors ${
+                      activeTab === tab.key
+                        ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <tab.icon className="w-5 h-5 mb-1" />
+                    <div className="text-sm font-medium">{tab.label}</div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <button
+                  onClick={handleLogout}
+                  className="w-full p-3 rounded-lg text-left transition-colors text-red-600 hover:bg-red-50"
+                >
+                  <XMarkIcon className="w-5 h-5 mb-1" />
+                  <div className="text-sm font-medium">Çıkış Yap</div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Desktop Tabs */}
+          <div className="hidden lg:flex space-x-8 -mb-px">
             <button
               onClick={() => setActiveTab('dashboard')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -346,6 +457,61 @@ export default function AdminPage() {
             >
               <DocumentTextIcon className="w-5 h-5 inline-block mr-2" />
               Raporlar
+            </button>
+            <button
+              onClick={() => setActiveTab('statistics')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'statistics'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <SparklesIcon className="w-5 h-5 inline-block mr-2" />
+              İstatistikler
+            </button>
+            <button
+              onClick={() => setActiveTab('monitoring')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'monitoring'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <EyeIcon className="w-5 h-5 inline-block mr-2" />
+              İzleme
+            </button>
+            <button
+              onClick={() => setActiveTab('filters')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'filters'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <FunnelIcon className="w-5 h-5 inline-block mr-2" />
+              Filtreler
+            </button>
+            <button
+              onClick={() => setActiveTab('export')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'export'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <CurrencyDollarIcon className="w-5 h-5 inline-block mr-2" />
+              Dışa Aktar
+            </button>
+            <button
+              onClick={() => setActiveTab('realtime')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'realtime'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <BellIcon className="w-5 h-5 inline-block mr-2" />
+              Canlı İzleme
             </button>
           </div>
         </div>
@@ -755,6 +921,120 @@ export default function AdminPage() {
               </div>
             </motion.div>
           )}
+
+          {/* Statistics Tab */}
+          {activeTab === 'statistics' && (
+            <motion.div
+              key="statistics"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <ReportStatistics />
+            </motion.div>
+          )}
+
+          {/* Monitoring Tab */}
+          {activeTab === 'monitoring' && (
+            <motion.div
+              key="monitoring"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <ReportMonitoring />
+            </motion.div>
+          )}
+
+          {/* Filters Tab */}
+          {activeTab === 'filters' && (
+            <motion.div
+              key="filters"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <AdvancedFilters 
+                onFiltersChange={setCurrentFilters}
+                onExport={(filters) => {
+                  // Export logic will be handled by ExportMenu
+                  console.log('Export with filters:', filters)
+                }}
+                initialFilters={currentFilters}
+              />
+            </motion.div>
+          )}
+
+          {/* Export Tab */}
+          {activeTab === 'export' && (
+            <motion.div
+              key="export"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <ExportMenu 
+                filters={currentFilters}
+                onExport={async (format, params) => {
+                  try {
+                    toast.loading(`${format.toUpperCase()} dışa aktarılıyor...`)
+                    
+                    let blob: Blob
+                    let filename: string
+                    
+                    switch (format) {
+                      case 'csv':
+                        blob = await adminService.exportReportsCSV(params)
+                        filename = `raporlar-${params.period || 'all'}.csv`
+                        break
+                      case 'pdf':
+                        blob = await adminService.exportReportsPDF(params)
+                        filename = `raporlar-${params.period || 'all'}.pdf`
+                        break
+                      case 'excel':
+                        blob = await adminService.exportReportsExcel(params)
+                        filename = `raporlar-${params.period || 'all'}.xlsx`
+                        break
+                    }
+                    
+                    // Dosyayı indir
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = filename
+                    document.body.appendChild(a)
+                    a.click()
+                    document.body.removeChild(a)
+                    window.URL.revokeObjectURL(url)
+                    
+                    toast.dismiss()
+                    toast.success(`${format.toUpperCase()} dosyası başarıyla indirildi`)
+                  } catch (err) {
+                    toast.dismiss()
+                    toast.error(`${format.toUpperCase()} dışa aktarma başarısız`)
+                    console.error('Export error:', err)
+                  }
+                }}
+              />
+            </motion.div>
+          )}
+
+          {/* Real-time Monitoring Tab */}
+          {activeTab === 'realtime' && (
+            <motion.div
+              key="realtime"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <RealTimeMonitor 
+                onStatsUpdate={(stats) => {
+                  console.log('Real-time stats updated:', stats)
+                }}
+                refreshInterval={30000}
+              />
+            </motion.div>
+          )}
         </AnimatePresence>
       </div>
 
@@ -775,6 +1055,13 @@ export default function AdminPage() {
         onResetCredits={handleResetCredits}
         onRefundCredits={handleRefundCredits}
         onRefresh={handleRefreshUserDetail}
+      />
+
+      {/* Report Detail Modal */}
+      <ReportDetailModal
+        reportId={selectedReportId}
+        isOpen={!!selectedReportId}
+        onClose={() => setSelectedReportId(null)}
       />
     </div>
   )

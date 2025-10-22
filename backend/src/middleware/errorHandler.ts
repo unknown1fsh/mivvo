@@ -24,6 +24,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { BaseException } from '../exceptions/BaseException';
 import { ErrorResponse } from '../dto/response/ApiResponseDTO';
+import { logError, createErrorContext, createRequestContext } from '../utils/logger';
 
 /**
  * Custom Error Interface
@@ -63,13 +64,15 @@ export const errorHandler = (
   next: NextFunction
 ): void => {
   // ===== HATA LOGLAMA =====
-  // Console'a detaylı hata bilgisi yaz (monitoring için)
-  console.error('🔥 Error:', {
-    message: err.message,                                            // Hata mesajı
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined, // Stack trace (sadece dev'de)
-    path: req.path,                                                  // Hangi endpoint'te oluştu
-    method: req.method,                                              // HTTP metodu (GET, POST vb.)
-    timestamp: new Date().toISOString(),                            // Hata zamanı
+  // Winston ile detaylı hata loglama
+  const requestContext = createRequestContext(req);
+  const errorContext = createErrorContext(err, req);
+  
+  logError('Application Error Occurred', err, {
+    request: requestContext,
+    error: errorContext,
+    severity: 'error',
+    environment: process.env.NODE_ENV,
   });
 
   // ===== CUSTOM EXCEPTION HANDLING =====

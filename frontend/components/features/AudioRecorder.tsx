@@ -153,7 +153,7 @@ export const AudioRecorder = ({ onAudiosChange, maxRecordings = 3, onNext, onPre
           <div className="flex items-center justify-center space-x-4">
             <Button
               onClick={handleRecordToggle}
-              variant={isRecording ? "danger" : "primary"}
+              variant={isRecording ? "destructive" : "primary"}
               size="lg"
               className="w-20 h-20 rounded-full"
               disabled={recordedAudios.length >= maxRecordings && !isRecording}

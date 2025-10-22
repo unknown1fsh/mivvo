@@ -1,450 +1,393 @@
 /**
- * Payment Controller (Ödeme Controller)
+ * Payment Controller (Ödeme Kontrolcüsü)
  * 
- * Clean Architecture - Controller Layer (API Katmanı)
+ * Clean Architecture - Controller Layer (Kontrolcü Katmanı)
  * 
- * Bu controller, ödeme işlemlerini yönetir.
+ * Bu dosya, ödeme işlemlerini yönetir.
  * 
  * Sorumluluklar:
- * - Ödeme oluşturma
- * - Ödeme işleme (Iyzico entegrasyonu - TODO)
- * - Ödeme geçmişi
- * - İade işlemleri
- * - Ödeme yöntemleri listeleme
+ * - Ödeme başlatma
+ * - Ödeme doğrulama
+ * - Kredi yükleme
+ * - Transaction kayıtları
  * 
- * İş Akışı:
- * 1. Ödeme kaydı oluştur (PENDING)
- * 2. Payment gateway'e ilet (Iyzico - TODO)
- * 3. Callback/webhook ile sonucu al
- * 4. Başarılıysa: Kredi ekle + COMPLETED
- * 5. Başarısızsa: FAILED
- * 
- * Özellikler:
- * - Kredi otomatik ekleme
- * - CreditTransaction kaydı
- * - İade mekanizması
- * - Ödeme limitleri (50-5000 TL)
- * 
- * TODO:
- * - Iyzico API entegrasyonu
- * - Webhook endpoint
- * - 3D Secure desteği
- * 
- * Endpoints:
- * - POST /api/payment/create (Ödeme oluştur)
- * - POST /api/payment/process (Ödeme işle)
- * - POST /api/payment/refund (İade)
- * - GET /api/payment/methods (Ödeme yöntemleri)
- * - GET /api/payment/history (Ödeme geçmişi)
+ * Kullanım:
+ * - POST /api/payments/initiate - Ödeme başlat
+ * - POST /api/payments/verify - Ödeme doğrula
+ * - POST /api/payments/refund - Para iadesi
  */
 
-import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import { AuthRequest } from '../middleware/auth';
-import { asyncHandler } from '../middleware/errorHandler';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Request, Response } from 'express'
+import { AuthRequest } from '../middleware/auth'
+import { CREDIT_PRICING } from '../constants/CreditPricing'
+import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
+
+// ===== INTERFACES =====
+
+export interface PaymentInitiateRequest {
+  packageId: 'starter' | 'professional' | 'enterprise'
+  paymentMethod: 'CREDIT_CARD' | 'BANK_TRANSFER' | 'DIGITAL_WALLET'
+  amount: number
+}
+
+export interface PaymentInitiateResponse {
+  success: boolean
+  message: string
+  data?: {
+    paymentId: string
+    paymentUrl?: string
+    amount: number
+    package: any
+  }
+}
+
+export interface PaymentVerifyRequest {
+  paymentId: string
+  transactionId?: string
+  status: 'success' | 'failed' | 'pending'
+}
 
 // ===== CONTROLLER METHODS =====
 
 /**
- * Ödeme Oluştur
+ * Ödeme İşlemini Başlat
  * 
- * Yeni bir ödeme kaydı oluşturur (PENDING durumunda).
- * 
- * İşlem Akışı:
- * 1. Tutar doğrulama (min-max limit)
- * 2. Payment kaydı oluştur (PENDING)
- * 3. Reference number generate (PAY_timestamp)
- * 4. Kullanıcıya döndür
- * 
- * Tutar Limitleri:
- * - Minimum: 50 TL
- * - Maksimum: 5000 TL
- * 
- * Sonraki Adım:
- * - Frontend: Payment gateway'e yönlendir
- * - Backend: processPayment ile tamamla
- * 
- * @route   POST /api/payment/create
+ * @route   POST /api/payments/initiate
  * @access  Private
  * 
- * @param req.body.amount - Ödeme tutarı (TL)
- * @param req.body.paymentMethod - Ödeme yöntemi (CREDIT_CARD, BANK_TRANSFER, DIGITAL_WALLET)
- * 
- * @returns 201 - Oluşturulan ödeme kaydı
- * @returns 400 - Geçersiz tutar
- * 
- * @example
- * POST /api/payment/create
- * Body: {
- *   "amount": 100,
- *   "paymentMethod": "CREDIT_CARD"
- * }
- */
-export const createPayment = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { amount, paymentMethod } = req.body;
-
-  // Tutar limitleri
-  const minAmount = 50;
-  const maxAmount = 5000;
-  
-  if (amount < minAmount || amount > maxAmount) {
-    res.status(400).json({
-      success: false,
-      message: `Ödeme tutarı ${minAmount}-${maxAmount} TL arasında olmalıdır.`,
-    });
-    return;
-  }
-
-  // Ödeme kaydı oluştur
-  const payment = await prisma.payment.create({
-    data: {
-      userId: req.user!.id,
-      amount,
-      paymentMethod,
-      paymentStatus: 'PENDING',
-      paymentProvider: 'iyzico', // Default provider
-      referenceNumber: `PAY_${Date.now()}`, // Unique reference
-    },
-  });
-
-  res.status(201).json({
-    success: true,
-    message: 'Ödeme işlemi başlatıldı.',
-    data: { payment },
-  });
-};
-
-/**
- * Ödeme Yöntemlerini Getir
- * 
- * Mevcut ödeme yöntemlerini listeler.
- * 
- * Ödeme Yöntemleri:
- * - CREDIT_CARD: Kredi kartı (Visa, Mastercard, Amex)
- * - BANK_TRANSFER: Banka havalesi/EFT
- * - DIGITAL_WALLET: Dijital cüzdan (Papara, İninal, PayTR)
- * 
- * @route   GET /api/payment/methods
- * @access  Private
- * 
- * @returns 200 - Ödeme yöntemleri listesi
+ * @returns 200 - Ödeme başlatıldı
+ * @returns 400 - Geçersiz paket
+ * @returns 401 - Yetkisiz erişim
+ * @returns 500 - Sunucu hatası
  * 
  * @example
- * GET /api/payment/methods
+ * POST /api/payments/initiate
+ * Body: { packageId: 'professional', paymentMethod: 'card' }
+ * Response: { success: true, data: { paymentId: '...', amount: 649 } }
  */
-export const getPaymentMethods = async (req: AuthRequest, res: Response): Promise<void> => {
-  const paymentMethods = [
-    {
-      id: 'CREDIT_CARD',
-      name: 'Kredi Kartı',
-      description: 'Visa, Mastercard, American Express',
-      icon: '💳',
-    },
-    {
-      id: 'BANK_TRANSFER',
-      name: 'Banka Havalesi',
-      description: 'EFT/Havale ile ödeme',
-      icon: '🏦',
-    },
-    {
-      id: 'DIGITAL_WALLET',
-      name: 'Dijital Cüzdan',
-      description: 'Papara, İninal, PayTR',
-      icon: '📱',
-    },
-  ];
+export const initiatePayment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { packageId, paymentMethod }: PaymentInitiateRequest = req.body
+    const userId = req.user?.id
 
-  res.json({
-    success: true,
-    data: { paymentMethods },
-  });
-};
-
-/**
- * Ödeme İşle
- * 
- * Ödemeyi işler ve sonucu günceller.
- * 
- * İşlem Akışı:
- * 1. Payment kaydı kontrolü (PENDING mi?)
- * 2. Payment gateway'e istek (Iyzico - TODO)
- * 3. Sonuç başarılıysa:
- *    - Payment status: COMPLETED
- *    - TransactionId güncelle
- *    - Kredi ekle (UserCredits)
- *    - CreditTransaction oluştur
- * 4. Başarısızsa: Payment status: FAILED
- * 
- * TODO:
- * - Iyzico API entegrasyonu
- * - 3D Secure callback
- * - Webhook handling
- * 
- * Şu anda: Simülasyon (90% başarı)
- * 
- * @route   POST /api/payment/process
- * @access  Private
- * 
- * @param req.body.paymentId - Payment ID
- * @param req.body.paymentData - Ödeme verileri (kart bilgisi vb.)
- * 
- * @returns 200 - Ödeme başarılı
- * @returns 400 - Ödeme başarısız veya zaten işlenmiş
- * @returns 404 - Payment bulunamadı
- * 
- * @example
- * POST /api/payment/process
- * Body: {
- *   "paymentId": 123,
- *   "paymentData": { ... }
- * }
- */
-export const processPayment = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { paymentId, paymentData } = req.body;
-
-  // TODO: Implement actual payment processing with Iyzico
-  // For now, simulate successful payment
-  
-  // Payment kaydı kontrolü
-  const payment = await prisma.payment.findFirst({
-    where: {
-      id: parseInt(paymentId),
-      userId: req.user!.id,
-    },
-  });
-
-  if (!payment) {
-    res.status(404).json({
-      success: false,
-      message: 'Ödeme bulunamadı.',
-    });
-    return;
-  }
-
-  // Ödeme durumu kontrolü
-  if (payment.paymentStatus !== 'PENDING') {
-    res.status(400).json({
-      success: false,
-      message: 'Bu ödeme zaten işlenmiş.',
-    });
-    return;
-  }
-
-  // Ödeme simülasyonu (90% başarı - demo için)
-  const isSuccessful = Math.random() > 0.1;
-
-  if (isSuccessful) {
-    // Ödeme başarılı
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: {
-        paymentStatus: 'COMPLETED',
-        transactionId: `TXN_${Date.now()}`,
-      },
-    });
-
-    // Kullanıcıya kredi ekle
-    const userCredits = await prisma.userCredits.findUnique({
-      where: { userId: req.user!.id },
-    });
-
-    if (userCredits) {
-        await prisma.userCredits.update({
-          where: { userId: req.user!.id },
-          data: {
-            balance: userCredits.balance.add(payment.amount),
-            totalPurchased: userCredits.totalPurchased.add(payment.amount),
-          },
-        });
-
-      // CreditTransaction kaydı (audit trail)
-      await prisma.creditTransaction.create({
-        data: {
-          userId: req.user!.id,
-          transactionType: 'PURCHASE',
-          amount: payment.amount,
-          description: 'Kredi satın alma',
-          referenceId: payment.referenceNumber,
-        },
-      });
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Yetkilendirme gerekli'
+      })
+      return
     }
+
+    // Paket bilgilerini CREDIT_PRICING'den al
+    let packageData: any = null
+    
+    switch (packageId) {
+      case 'starter':
+        packageData = CREDIT_PRICING.PACKAGES.STARTER
+        break
+      case 'professional':
+        packageData = CREDIT_PRICING.PACKAGES.PROFESSIONAL
+        break
+      case 'enterprise':
+        packageData = CREDIT_PRICING.PACKAGES.ENTERPRISE
+        break
+      default:
+        res.status(400).json({
+          success: false,
+          message: 'Geçersiz paket ID'
+        })
+        return
+    }
+
+    // Ödeme kaydı oluştur (pending status)
+    const paymentRecord = await prisma.payment.create({
+      data: {
+        userId,
+        amount: packageData.price,
+        paymentMethod,
+        paymentStatus: 'PENDING',
+        currency: 'TRY',
+        paymentProvider: 'mock-gateway',
+        referenceNumber: `PKG-${packageId}-${Date.now()}`
+      }
+    })
+
+    // TODO: Gerçek ödeme gateway entegrasyonu
+    // Şimdilik mock response
+    const paymentUrl = `https://payment-gateway.com/pay/${paymentRecord.id}`
 
     res.json({
       success: true,
-      message: 'Ödeme başarıyla tamamlandı.',
-      data: { 
-        payment: {
-          ...payment,
-          paymentStatus: 'COMPLETED',
-        },
-      },
-    });
-  } else {
-    // Ödeme başarısız
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: { paymentStatus: 'FAILED' },
-    });
+      message: 'Ödeme işlemi başlatıldı',
+      data: {
+        paymentId: paymentRecord.id,
+        paymentUrl,
+        amount: packageData.price,
+        package: {
+          id: packageId,
+          credits: packageData.credits,
+          bonus: packageData.realValue - packageData.price,
+          price: packageData.price
+        }
+      }
+    })
 
-    res.status(400).json({
+  } catch (error) {
+    console.error('Payment initiation error:', error)
+    res.status(500).json({
       success: false,
-      message: 'Ödeme işlemi başarısız oldu.',
-    });
+      message: 'Ödeme işlemi başlatılamadı'
+    })
   }
-};
+}
 
 /**
- * Ödeme Geçmişi
+ * Ödeme İşlemini Doğrula ve Kredi Yükle
  * 
- * Kullanıcının tüm ödemelerini listeler.
- * 
- * Özellikler:
- * - Pagination (page, limit)
- * - Filtreleme (status)
- * - Tarih sıralı (yeni önce)
- * 
- * @route   GET /api/payment/history
+ * @route   POST /api/payments/verify
  * @access  Private
  * 
- * @param req.query.page - Sayfa numarası
- * @param req.query.limit - Sayfa boyutu
- * @param req.query.status - Durum filtresi (PENDING, COMPLETED, FAILED, REFUNDED)
- * 
- * @returns 200 - Ödeme geçmişi (paginated)
- * 
- * @example
- * GET /api/payment/history?page=1&limit=10&status=COMPLETED
+ * @returns 200 - Ödeme doğrulandı ve kredi yüklendi
+ * @returns 400 - Geçersiz ödeme
+ * @returns 404 - Ödeme bulunamadı
+ * @returns 500 - Sunucu hatası
  */
-export const getPaymentHistory = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { page = 1, limit = 10, status } = req.query;
+export const verifyPayment = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { paymentId, status }: PaymentVerifyRequest = req.body
+    const userId = req.user?.id
 
-  // Where clause
-  const where: any = { userId: req.user!.id };
-  if (status) {
-    where.paymentStatus = status;
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Yetkilendirme gerekli'
+      })
+      return
+    }
+
+    // Ödeme kaydını bul
+    const payment = await prisma.payment.findFirst({
+      where: {
+        id: parseInt(paymentId),
+        userId
+      }
+    })
+
+    if (!payment) {
+      res.status(404).json({
+        success: false,
+        message: 'Ödeme kaydı bulunamadı'
+      })
+      return
+    }
+
+    if (payment.paymentStatus !== 'PENDING') {
+      res.status(400).json({
+        success: false,
+        message: 'Bu ödeme zaten işlenmiş'
+      })
+      return
+    }
+
+    if (status === 'success') {
+      // Paket bilgilerini al - referenceNumber'dan packageId çıkar
+      const packageId = payment.referenceNumber?.split('-')[1] || 'professional'
+      let packageData: any = null
+      
+      switch (packageId) {
+        case 'starter':
+          packageData = CREDIT_PRICING.PACKAGES.STARTER
+          break
+        case 'professional':
+          packageData = CREDIT_PRICING.PACKAGES.PROFESSIONAL
+          break
+        case 'enterprise':
+          packageData = CREDIT_PRICING.PACKAGES.ENTERPRISE
+          break
+      }
+
+      // Transaction başlat
+      await prisma.$transaction(async (tx) => {
+        // Ödeme durumunu güncelle
+        await tx.payment.update({
+          where: { id: parseInt(paymentId) },
+          data: {
+            paymentStatus: 'COMPLETED'
+          }
+        })
+
+        // Kullanıcı kredilerini güncelle
+        const userCredits = await tx.userCredits.findUnique({
+          where: { userId }
+        })
+
+        if (!userCredits) {
+          throw new Error('Kullanıcı kredisi bulunamadı')
+        }
+
+        const newBalance = userCredits.balance.add(packageData.credits)
+        const newTotalPurchased = userCredits.totalPurchased.add(packageData.price)
+
+        await tx.userCredits.update({
+          where: { userId },
+          data: {
+            balance: newBalance,
+            totalPurchased: newTotalPurchased
+          }
+        })
+
+        // Credit transaction kaydı oluştur
+        await tx.creditTransaction.create({
+          data: {
+            userId,
+            transactionType: 'PURCHASE',
+            amount: packageData.credits,
+            description: `${packageData.credits} kredi satın alma (${packageId} paketi)`,
+            referenceId: paymentId
+          }
+        })
+
+        // Bonus kredi varsa ekle
+        const bonusCredits = packageData.realValue - packageData.price
+        if (bonusCredits > 0) {
+          const newBalanceWithBonus = newBalance.add(bonusCredits)
+          
+          await tx.userCredits.update({
+            where: { userId },
+            data: {
+              balance: newBalanceWithBonus
+            }
+          })
+
+          await tx.creditTransaction.create({
+            data: {
+              userId,
+              transactionType: 'PURCHASE',
+              amount: bonusCredits,
+              description: `${bonusCredits} TL bonus kredi`,
+              referenceId: paymentId
+            }
+          })
+        }
+      })
+
+      res.json({
+        success: true,
+        message: 'Ödeme başarıyla tamamlandı ve krediler yüklendi',
+        data: {
+          creditsAdded: packageData.credits,
+          bonusCredits: packageData.realValue - packageData.price,
+          newBalance: await getUserCreditBalance(userId)
+        }
+      })
+
+    } else {
+      // Ödeme başarısız
+      await prisma.payment.update({
+        where: { id: parseInt(paymentId) },
+        data: {
+          paymentStatus: 'FAILED'
+        }
+      })
+
+      res.json({
+        success: false,
+        message: 'Ödeme başarısız oldu'
+      })
+    }
+
+  } catch (error) {
+    console.error('Payment verification error:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Ödeme doğrulanamadı'
+    })
   }
-
-  const payments = await prisma.payment.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    skip: (Number(page) - 1) * Number(limit),
-    take: Number(limit),
-  });
-
-  const total = await prisma.payment.count({ where });
-
-  res.json({
-    success: true,
-    data: {
-      payments,
-      pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total,
-        pages: Math.ceil(total / Number(limit)),
-      },
-    },
-  });
-};
+}
 
 /**
- * Ödeme İadesi
+ * Para İadesi
  * 
- * Tamamlanmış bir ödemeyi iade eder.
- * 
- * İşlem Akışı:
- * 1. Payment kontrolü (COMPLETED olmalı)
- * 2. İade işlemi (payment gateway - TODO)
- * 3. Payment status: REFUNDED
- * 4. Kullanıcıdan kredi düş
- * 5. CreditTransaction oluştur (REFUND)
- * 
- * TODO:
- * - Iyzico refund API
- * - Kısmi iade desteği
- * - İade süresi kontrolü (30 gün)
- * 
- * @route   POST /api/payment/refund
+ * @route   POST /api/payments/refund
  * @access  Private
  * 
- * @param req.body.paymentId - Payment ID
- * @param req.body.reason - İade nedeni
- * 
- * @returns 200 - İade işlemi başlatıldı
- * @returns 404 - İade edilebilir ödeme bulunamadı
- * 
- * @example
- * POST /api/payment/refund
- * Body: {
- *   "paymentId": 123,
- *   "reason": "Kullanılmadı"
- * }
+ * @returns 200 - İade başlatıldı
+ * @returns 400 - İade edilemez
+ * @returns 500 - Sunucu hatası
  */
 export const refundPayment = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { paymentId, reason } = req.body;
+  try {
+    const { paymentId } = req.body
+    const userId = req.user?.id
 
-  // Payment kontrolü (COMPLETED olmalı)
-  const payment = await prisma.payment.findFirst({
-    where: {
-      id: parseInt(paymentId),
-      userId: req.user!.id,
-      paymentStatus: 'COMPLETED',
-    },
-  });
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Yetkilendirme gerekli'
+      })
+      return
+    }
 
-  if (!payment) {
-    res.status(404).json({
+    // Ödeme kaydını bul
+    const payment = await prisma.payment.findFirst({
+      where: {
+        id: parseInt(paymentId),
+        userId,
+        paymentStatus: 'COMPLETED'
+      }
+    })
+
+    if (!payment) {
+      res.status(404).json({
+        success: false,
+        message: 'Tamamlanmış ödeme bulunamadı'
+      })
+      return
+    }
+
+    // 7 gün kontrolü
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+    if (payment.updatedAt && payment.updatedAt < sevenDaysAgo) {
+      res.status(400).json({
+        success: false,
+        message: 'İade süresi dolmuş (7 gün)'
+      })
+      return
+    }
+
+    // TODO: Gerçek ödeme gateway'den iade işlemi
+    // Şimdilik mock
+    await prisma.payment.update({
+      where: { id: parseInt(paymentId) },
+      data: {
+        paymentStatus: 'REFUNDED'
+      }
+    })
+
+    res.json({
+      success: true,
+      message: 'İade işlemi başlatıldı'
+    })
+
+  } catch (error) {
+    console.error('Payment refund error:', error)
+    res.status(500).json({
       success: false,
-      message: 'İade edilebilir ödeme bulunamadı.',
-    });
-    return;
+      message: 'İade işlemi başlatılamadı'
+    })
   }
+}
 
-  // TODO: Implement actual refund processing
-  // For now, just update status
-  
-  // Payment status güncelle
-  await prisma.payment.update({
-    where: { id: payment.id },
-    data: { paymentStatus: 'REFUNDED' },
-  });
+// ===== HELPER FUNCTIONS =====
 
-  // Kullanıcıdan kredi düş
+async function getUserCreditBalance(userId: number): Promise<number> {
   const userCredits = await prisma.userCredits.findUnique({
-    where: { userId: req.user!.id },
-  });
-
-  if (userCredits) {
-    await prisma.userCredits.update({
-      where: { userId: req.user!.id },
-      data: {
-        balance: Decimal.max(userCredits.balance.sub(payment.amount), new Decimal(0)), // Negatif olmasın
-      },
-    });
-
-    // CreditTransaction oluştur (REFUND)
-    await prisma.creditTransaction.create({
-      data: {
-        userId: req.user!.id,
-        transactionType: 'REFUND',
-        amount: -payment.amount, // Negatif miktar
-        description: `İade: ${reason}`,
-        referenceId: payment.referenceNumber,
-      },
-    });
-  }
-
-  res.json({
-    success: true,
-    message: 'İade işlemi başlatıldı.',
-    data: { 
-      payment: {
-        ...payment,
-        paymentStatus: 'REFUNDED',
-      },
-    },
-  });
-};
+    where: { userId }
+  })
+  
+  return userCredits ? Number(userCredits.balance) : 0
+}

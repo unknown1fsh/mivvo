@@ -244,6 +244,114 @@ export const ERROR_MESSAGES = {
      * HTTP 422
      */
     CORRUPTED: 'Dosya bozuk',
+
+    /**
+     * Dosya sağlanmadı
+     *
+     * Kullanım: Dosya upload edilmedi
+     * HTTP 400
+     */
+    FILE_NOT_PROVIDED: 'Dosya yüklenmedi. Lütfen bir dosya seçin.',
+  },
+
+  // ===== DOSYA KALİTE HATALARI (FILE QUALITY) =====
+  FILE_QUALITY: {
+    /**
+     * Resim çok bulanık
+     * 
+     * Kullanım: Blur detection algoritması bulanıklık tespit etti
+     * HTTP 422
+     * KULLANICI DOSTU: Ne yapması gerektiğini söyleyen mesaj
+     */
+    IMAGE_TOO_BLURRY: 'Resim çok bulanık. Lütfen net bir fotoğraf çekin. Kamerayı sabit tutun ve doğal ışıkta çekim yapın.',
+
+    /**
+     * Resim çözünürlüğü çok düşük
+     * 
+     * Kullanım: Minimum boyut gereksinimleri karşılanmıyor
+     * HTTP 422
+     */
+    IMAGE_TOO_SMALL: 'Resim çözünürlüğü çok düşük. Minimum 800x600 piksel gerekli. Lütfen daha yüksek çözünürlükte çekin.',
+
+    /**
+     * Resim boyutu çok büyük
+     * 
+     * Kullanım: Maksimum boyut limiti aşılıyor
+     * HTTP 413
+     */
+    IMAGE_TOO_LARGE: 'Resim boyutu 10MB üzerinde. Lütfen dosyayı sıkıştırın veya daha düşük çözünürlükte çekin.',
+
+    /**
+     * Resim oranı uygun değil
+     * 
+     * Kullanım: Aspect ratio çok düşük veya yüksek
+     * HTTP 422
+     */
+    IMAGE_ASPECT_RATIO_INVALID: 'Resim oranı uygun değil. Normal bir perspektiften çekin, çok dar veya geniş açılı çekim yapmayın.',
+
+    /**
+     * Ses kaydı çok kısa
+     * 
+     * Kullanım: Minimum süre gereksinimi karşılanmıyor
+     * HTTP 422
+     */
+    AUDIO_TOO_SHORT: 'Ses kaydı çok kısa. Minimum 10 saniye gerekli. Lütfen daha uzun kayıt yapın.',
+
+    /**
+     * Ses kaydı çok uzun
+     * 
+     * Kullanım: Maksimum süre limiti aşılıyor
+     * HTTP 413
+     */
+    AUDIO_TOO_LONG: 'Ses kaydı çok uzun. Maksimum 60 saniye gerekli. Lütfen kısa bir kayıt yapın.',
+
+    /**
+     * Ses seviyesi çok düşük
+     * 
+     * Kullanım: Volume threshold altında
+     * HTTP 422
+     */
+    AUDIO_TOO_QUIET: 'Ses seviyesi çok düşük. Motora daha yakın kayıt yapın. Telefonu motor bölgesine yaklaştırın.',
+
+    /**
+     * Çok fazla arka plan gürültüsü
+     * 
+     * Kullanım: Signal-to-noise ratio çok düşük
+     * HTTP 422
+     */
+    AUDIO_TOO_NOISY: 'Çok fazla arka plan gürültüsü. Sessiz ortamda kayıt yapın. Rüzgar, trafik veya konuşma sesi olmasın.',
+
+    /**
+     * Ses kaydı çok sessiz
+     * 
+     * Kullanım: Silence ratio çok yüksek
+     * HTTP 422
+     */
+    AUDIO_TOO_SILENT: 'Kayıt çok sessiz. Motor sesini net duyacak şekilde kayıt yapın. Motor çalışırken kayıt yapın.',
+
+    /**
+     * Dosya formatı desteklenmiyor
+     * 
+     * Kullanım: Format validation hatası
+     * HTTP 415
+     */
+    UNSUPPORTED_FORMAT: 'Bu dosya formatı desteklenmiyor. Lütfen desteklenen formatlardan birini kullanın.',
+
+    /**
+     * Dosya kalitesi yetersiz
+     * 
+     * Kullanım: Genel kalite kontrol hatası
+     * HTTP 422
+     */
+    INSUFFICIENT_QUALITY: 'Dosya kalitesi analiz için yetersiz. Lütfen daha kaliteli bir dosya yükleyin.',
+
+    /**
+     * Dosya içeriği uygun değil
+     * 
+     * Kullanım: Content validation hatası (örneğin araç fotoğrafı değil)
+     * HTTP 422
+     */
+    INVALID_CONTENT: 'Dosya içeriği uygun değil. Lütfen araç ile ilgili fotoğraf veya ses kaydı yükleyin.',
   },
 
   // ===== AI ANALİZ HATALARI (ANALYSIS) =====
@@ -280,7 +388,25 @@ export const ERROR_MESSAGES = {
      * HTTP 500
      * KULLANICI DOSTU: Kredi iade edildi mesajı ile
      */
-    AI_FAILED_WITH_REFUND: 'AI analizi tamamlanamadı. Kredileriniz iade edilmiştir. Lütfen tekrar deneyiniz.',
+    AI_FAILED_WITH_REFUND: 'Analiz şu anda tamamlanamadı. Merak etmeyin, kredi bakiyeniz korundu ve hesabınıza geri yüklendi. Lütfen birkaç dakika içinde tekrar deneyin.',
+
+    /**
+     * AI analizi zaman aşımı - Kredi iade edildi
+     * 
+     * Kullanım: Analiz timeout, kredi iade edildi
+     * HTTP 504
+     * KULLANICI DOSTU: Kredi iade edildi mesajı ile
+     */
+    AI_TIMEOUT_WITH_REFUND: 'Analiz beklenenden uzun sürdü. Ücret alınmadı, bakiyeniz eksiksiz korundu. Lütfen tekrar deneyin.',
+
+    /**
+     * AI servis yoğunluğu - Kredi iade edildi
+     * 
+     * Kullanım: Rate limit veya sistem yoğunluğu, kredi iade edildi
+     * HTTP 429
+     * KULLANICI DOSTU: Kredi iade edildi mesajı ile
+     */
+    AI_RATE_LIMIT_WITH_REFUND: 'Sistem yoğunluğu nedeniyle analiz gerçekleştirilemedi. Bakiyeniz korundu, hiçbir ücret yansımadı. Birkaç dakika sonra tekrar deneyin.',
 
     /**
      * Yetersiz veri

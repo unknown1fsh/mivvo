@@ -35,6 +35,10 @@
     @apply text-gray-600 hover:text-gray-900 hover:bg-gray-100;
   }
   
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+  
   .btn-lg {
     @apply h-12 px-8 text-base;
   }

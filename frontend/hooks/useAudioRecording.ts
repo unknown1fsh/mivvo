@@ -169,9 +169,18 @@ export const useAudioRecording = () => {
         toast.error(response.error || 'Analiz sırasında hata oluştu')
         return null
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Motor sesi analizi hatası:', error)
-      toast.error('Analiz sırasında hata oluştu')
+      
+      const message = error.response?.data?.message || error.message || 'Analiz sırasında hata oluştu'
+      
+      // Kredi iadesi mesajını özel olarak göster
+      if (message.includes('iade') || error.response?.data?.creditRefunded) {
+        toast.success('💳 ' + message, { duration: 5000 })
+      } else {
+        toast.error(message)
+      }
+      
       return null
     } finally {
       setIsAnalyzing(false)

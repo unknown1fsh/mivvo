@@ -45,6 +45,10 @@ import { Request, Response } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { AudioAnalysisService } from '../services/audioAnalysisService';
+import { refundCreditForFailedAnalysis } from '../utils/creditRefund';
+import { ERROR_MESSAGES } from '../constants/ErrorMessages';
+import { CREDIT_PRICING } from '../constants/CreditPricing';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -329,9 +333,30 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
       });
     } catch (error) {
       console.error('Motor sesi analizi hatası:', error);
+      
+      // Analiz başarısız oldu - Krediyi iade et
+      try {
+        const userId = req.user!.id
+        const serviceCost = CREDIT_PRICING.ENGINE_SOUND_ANALYSIS
+        
+        await refundCreditForFailedAnalysis(
+          userId,
+          report.id,
+          serviceCost,
+          'Motor sesi analizi AI servisi başarısız'
+        )
+        
+        console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
+      } catch (refundError) {
+        console.error('❌ Kredi iade hatası:', refundError)
+      }
+      
       await prisma.vehicleReport.update({
         where: { id: report.id },
-        data: { status: 'FAILED' },
+        data: { 
+          status: 'FAILED',
+          expertNotes: 'Motor sesi analizi başarısız oldu. Kredi iade edildi.'
+        },
       });
     }
   }, 5000); // 5 saniye sonra analiz tamamlanır

@@ -51,7 +51,7 @@ export const useValueEstimation = () => {
             }
           }
 
-          await api.post(`/value-estimation/${reportId}/upload`, formData, {
+          await api.post(`/api/value-estimation/${reportId}/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           })
           
@@ -62,7 +62,7 @@ export const useValueEstimation = () => {
       // 3. AI analizi gerçekleştir
       toast.loading('Mivvo AI ile piyasa analizi yapılıyor...', { id: 'value-estimation' })
       
-      const analyzeResponse = await api.post(`/value-estimation/${reportId}/analyze`)
+      const analyzeResponse = await api.post(`/api/value-estimation/${reportId}/analyze`)
 
       if (!analyzeResponse.data.success) {
         throw new Error(analyzeResponse.data.message || 'Analiz gerçekleştirilemedi')
@@ -82,7 +82,16 @@ export const useValueEstimation = () => {
     } catch (error: any) {
       console.error('❌ Değer tahmini hatası:', error)
       toast.dismiss('value-estimation')
-      toast.error(error.response?.data?.message || error.message || 'Değer tahmini başarısız oldu')
+      
+      const message = error.response?.data?.message || error.message || 'Değer tahmini başarısız oldu'
+      
+      // Kredi iadesi mesajını özel olarak göster
+      if (message.includes('iade') || error.response?.data?.creditRefunded) {
+        toast.success('💳 ' + message, { duration: 5000 })
+      } else {
+        toast.error(message)
+      }
+      
       throw error
     } finally {
       setIsAnalyzing(false)

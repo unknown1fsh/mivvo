@@ -37,6 +37,7 @@ import OpenAI from 'openai'
 import fs from 'fs/promises'
 import crypto from 'crypto'
 import path from 'path'
+import { AIHelpers } from '../utils/aiRateLimiter'
 
 // ===== TİP TANIMLARI =====
 
@@ -115,7 +116,7 @@ export interface EngineIssue {
  * 
  * Environment variable'dan model adı alınır, yoksa default kullanılır
  */
-const OPENAI_MODEL = process.env.OPENAI_AUDIO_MODEL ?? 'gpt-4o-mini'
+const OPENAI_MODEL = process.env.OPENAI_AUDIO_MODEL ?? 'gpt-4o'
 
 /**
  * AudioAnalysisService Sınıfı
@@ -220,7 +221,7 @@ export class AudioAnalysisService {
       // 4. GPT-4'e transcription + metadata ile analiz yaptır
       const prompt = this.buildPrompt(vehicleInfo) + `\n\n📊 Ses Kaydı Analizi:\n- Süre: ${metadata.duration.toFixed(1)} saniye\n- Format: ${metadata.format}\n- Whisper Transcription: "${transcription.text}"\n\nBu ses kaydına ve transcription'a göre motor durumunu analiz et.`
       
-      const response = await this.openaiClient.chat.completions.create({
+      const response = await this.openaiClient!.chat.completions.create({
         model: 'gpt-4o',
         temperature: 0.1,
         messages: [
@@ -324,7 +325,7 @@ export class AudioAnalysisService {
 
 Bu bilgilere ve araç özelliklerine göre profesyonel bir motor ses analizi yap.`
 
-      const response = await this.openaiClient.chat.completions.create({
+      const response = await this.openaiClient!.chat.completions.create({
         model: 'gpt-4o',
         temperature: 0.1,
         messages: [
@@ -469,18 +470,30 @@ Bu bilgilere ve araç özelliklerine göre profesyonel bir motor ses analizi yap
 - Yıl: ${vehicleInfo.year || 'Bilinmiyor'}
 - Plaka: ${vehicleInfo.plate || 'Bilinmiyor'}` : ''
 
-    return `Bu motor sesine göre aracın motor sesi analizini yapar mısın?
+    return `Sen uzman bir motor mühendisisin. YÜKSEK KALİTELİ motor ses kaydını analiz ederek detaylı motor durumu raporu hazırlıyorsun.
 
 ${vehicleContext}
 
 🎯 ÖNEMLİ: Cevap TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
-📋 ANALİZ YAP:
-1. Motor sesini detaylı analiz et
-2. RPM, frekans ve titreşim durumunu değerlendir
-3. Varsa arızaları tespit et
+📋 YÜKSEK KALİTE SES ANALİZİ:
+1. Motor sesini detaylı analiz et - yüksek kalite kayıt sayesinde tüm detayları duyabilirsin
+2. RPM, frekans ve titreşim durumunu değerlendir - ses kalitesi yüksek olduğu için hassas ölçümler yapabilirsin
+3. Varsa arızaları tespit et - net ses kaydında en küçük anormallikleri bile tespit edebilirsin
 4. Her bulguyu Türkçe açıkla
 5. Gerçekçi maliyet tahminleri ver (Türkiye 2025 fiyatları)
+
+⚠️ SADECE MOTOR SES VE MEKANİK ANALİZ:
+- ✅ RPM, titreşim, motor sesi, frekans analizi
+- ✅ Motor sağlığı, arıza tespiti, performans
+- ✅ Mekanik sorunlar (motor, vites, fren, süspansiyon SESİNDEN ANLAŞILABİLENLER)
+- ❌ KAPORTA HASARI, BOYA KALİTESİ, GÖRSEL ANALİZ YAPMA
+
+🔍 SES KALİTE ANALİZİ:
+- Bu yüksek kaliteli ses kaydında motor sesi net duyuluyor
+- RPM değişimleri, titreşimler, anormallikler tespit edilebilir
+- Motor sesinin pürüzsüzlüğü, tutarlılığı değerlendirilebilir
+- Arka plan gürültüsü minimize edilmiş, motor sesi ön planda
 
 💰 MALİYET HESAPLAMA (Türkiye 2025):
 - Motor revizyonu: 15.000-35.000 TL
@@ -603,20 +616,22 @@ SES DOSYASI: ${audioPath}
 Lütfen motor sesini analiz et ve yukarıdaki formatta JSON döndür.`
 
     // OpenAI chat completion çağrısı
-    const response = await this.openaiClient.chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: 0.1, // Düşük temperature = tutarlı sonuçlar
-      messages: [
-        {
-          role: 'system',
-          content: 'Sen deneyimli bir motor uzmanısın. Çıktıyı geçerli JSON olarak üret. Tüm metinler Türkçe olmalı.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ]
-    })
+    const response = await AIHelpers.callAudio(() =>
+      this.openaiClient!.chat.completions.create({
+        model: OPENAI_MODEL,
+        temperature: 0.1, // Düşük temperature = tutarlı sonuçlar
+        messages: [
+          {
+            role: 'system',
+            content: 'Sen deneyimli bir motor uzmanısın. Yüksek kaliteli ses kayıtlarını analiz ederek detaylı motor analizi yaparsın. Çıktıyı geçerli JSON olarak üret. Tüm metinler Türkçe olmalı.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      })
+    )
 
     // Yanıtı al
     const text = response.choices?.[0]?.message?.content

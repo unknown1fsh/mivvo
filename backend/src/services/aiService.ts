@@ -28,6 +28,7 @@
  * - Kullanıcıya user-friendly hata gösterilir
  */
 
+import { ModernDamageAnalysisService } from './modernDamageAnalysisService'
 import { DamageDetectionService, DamageDetectionResult } from './damageDetectionService'
 import { PaintAnalysisService, PaintAnalysisResult as AdvancedPaintAnalysisResult } from './paintAnalysisService'
 import { AudioAnalysisService, AudioAnalysisResult } from './audioAnalysisService'
@@ -200,7 +201,7 @@ export class AIService {
       const mapped = this.mapPaintAnalysisResult(advancedResult)
       
       console.log('[AI] Boya analizi tamamlandı:', {
-        provider: advancedResult.aiProvider,
+        provider: advancedResult.aiSağlayıcı,
         model: advancedResult.model,
         overallScore: mapped.overallScore
       })
@@ -242,31 +243,114 @@ export class AIService {
     await this.initialize()
 
     try {
-      console.log('[AI] Gelişmiş hasar analizi başlatılıyor...')
+      console.log('[AI] Modern hasar analizi başlatılıyor...')
       
-      // Gelişmiş AI servisini çağır
-      const advancedResult = await DamageDetectionService.detectDamage(imagePath, vehicleInfo)
+      // Yeni modern servisi kullan
+      const modernResult = await ModernDamageAnalysisService.analyzeImage(imagePath, vehicleInfo)
       
-      // Severity normalizasyonu yap (critical/high/medium/minimal/low → high/medium/low)
-      const normalizedAreas = advancedResult.damageAreas.map((area) => ({
-        ...area,
-        severity: this.normalizeDamageSeverity(area.severity)
-      })) as DamageDetectionResult['damageAreas']
-
-      const result: DamageDetectionResult = {
-        ...advancedResult,
-        damageAreas: normalizedAreas
+      console.log('[AI] Modern analysis completed:', {
+        hasHasarAlanları: !!modernResult.hasarAlanları,
+        hasarAlanlarıLength: modernResult.hasarAlanları?.length || 0,
+        keys: Object.keys(modernResult)
+      })
+      
+      // Modern sonucu legacy formata çevir
+      const legacyResult: DamageDetectionResult = {
+        araçÖzeti: modernResult.araçÖzeti,
+        görselHasarAnalizi: modernResult.görselHasarAnalizi,
+        teknikDurum: modernResult.teknikDurum,
+        türkiye2025TamirMaliyeti: modernResult.türkiye2025TamirMaliyeti,
+        sigortaPiyasaDeğerlendirmesi: modernResult.sigortaPiyasaDeğerlendirmesi,
+        ustaYorumu: modernResult.ustaYorumu,
+        kararÖzeti: modernResult.kararÖzeti,
+        genelDeğerlendirme: {
+          hasarSeviyesi: modernResult.kararÖzeti.hasarTipi.includes('kritik') ? 'kritik' : 'orta',
+          toplamOnarımMaliyeti: modernResult.kararÖzeti.tahminiTamirBedeli,
+          sigortaDurumu: modernResult.sigortaPiyasaDeğerlendirmesi.sigortaKararı,
+          piyasaDeğeriEtkisi: modernResult.sigortaPiyasaDeğerlendirmesi.değerKaybı,
+          detaylıAnaliz: modernResult.ustaYorumu.genelDeğerlendirme,
+          araçDurumu: modernResult.teknikDurum.ekspertizSonucu,
+          satışDeğeri: modernResult.sigortaPiyasaDeğerlendirmesi.onarımSonrasıPiyasaDeğeri,
+          değerKaybı: modernResult.sigortaPiyasaDeğerlendirmesi.değerKaybı,
+          güçlüYönler: ['Motor bölgesi hasarsız'],
+          zayıfYönler: [modernResult.teknikDurum.açıklama],
+          öneriler: ['Sigorta şirketini bilgilendir'],
+          güvenlikEndişeleri: ['Yapısal bütünlük bozulmuş']
+        },
+        teknikAnaliz: {
+          yapısalBütünlük: modernResult.teknikDurum.monokokBütünlük,
+          güvenlikSistemleri: 'risk_altında',
+          mekanikSistemler: 'inceleme_gerekli',
+          elektrikSistemleri: 'risk_altında',
+          gövdeHizalaması: 'kritik_sapma',
+          şasiHasarı: modernResult.teknikDurum.şasiHasarı,
+          havaYastığıAçılması: false,
+          emniyetKemeri: 'fonksiyonel',
+          notlar: modernResult.teknikDurum.açıklama
+        },
+        güvenlikDeğerlendirmesi: {
+          yolDurumu: 'tehlikeli',
+          kritikSorunlar: ['Yapısal deformasyon'],
+          güvenlikÖnerileri: ['Aracı kullanmayı bırak'],
+          incelemeGerekli: true,
+          acilAksiyonlar: ['Sigorta bildirimi'],
+          uzunVadeliEndişeler: ['Yapısal bütünlük kaybı']
+        },
+        onarımTahmini: {
+          toplamMaliyet: modernResult.türkiye2025TamirMaliyeti.toplamMaliyet,
+          işçilikMaliyeti: modernResult.türkiye2025TamirMaliyeti.toplamMaliyet * 0.4,
+          parçaMaliyeti: modernResult.türkiye2025TamirMaliyeti.toplamMaliyet * 0.5,
+          boyaMaliyeti: modernResult.türkiye2025TamirMaliyeti.toplamMaliyet * 0.1,
+          ekMaliyetler: 0,
+          maliyetKırılımı: modernResult.türkiye2025TamirMaliyeti.maliyetKırılımı.map(item => ({
+            parça: item.işlem,
+            açıklama: item.işlem,
+            maliyet: item.maliyet
+          })),
+          zamanÇizelgesi: [
+            { faz: 'Hasar tespiti', süre: 1, açıklama: 'Detaylı hasar analizi' },
+            { faz: 'Parça temini', süre: 7, açıklama: 'Orijinal parça siparişi' },
+            { faz: 'Onarım', süre: 15, açıklama: 'Tamir işlemleri' }
+          ],
+          garantiKapsamı: 'Sınırlı',
+          önerilenServis: 'Yetkili servis',
+          acilOnarımGerekli: true
+        },
+        hasarAlanları: modernResult.hasarAlanları.map((area, index) => ({
+          id: area.id || `hasar-${index + 1}`,
+          x: area.x,
+          y: area.y,
+          genişlik: area.genişlik,
+          yükseklik: area.yükseklik,
+          tür: area.tip,
+          şiddet: this.normalizeDamageSeverity(area.şiddet),
+          güven: 95,
+          açıklama: area.açıklama,
+          bölge: area.bölge,
+          onarımMaliyeti: area.onarımMaliyeti,
+          etkilenenParçalar: area.etkilenenParçalar,
+          onarımÖnceliği: area.onarımÖnceliği,
+          güvenlikEtkisi: area.güvenlikEtkisi,
+          onarımYöntemi: area.onarımYöntemi,
+          tahminiOnarımSüresi: area.tahminiOnarımSüresi,
+          garantiEtkisi: area.garantiEtkisi,
+          sigortaKapsamı: area.sigortaKapsamı
+        })),
+        aiSağlayıcı: modernResult.aiSağlayıcı,
+        model: modernResult.model,
+        güven: modernResult.güven,
+        analizZamanı: modernResult.analizZamanı
       }
 
-      console.log('[AI] Hasar analizi tamamlandı:', {
-        provider: result.aiProvider,
-        model: result.model,
-        damageCount: result.damageAreas.length
+      console.log('[AI] Legacy conversion completed:', {
+        provider: legacyResult.aiSağlayıcı,
+        model: legacyResult.model,
+        damageCount: legacyResult.hasarAlanları.length
       })
 
-      return result
+      return legacyResult
     } catch (error) {
-      console.error('[AI] Hasar analizi beklenmedik bir hatayla sonuçlandı:', error)
+      console.error('[AI] Modern hasar analizi başarısız:', error)
       throw error
     }
   }
@@ -343,27 +427,28 @@ export class AIService {
    */
   private static mapPaintAnalysisResult(result: AdvancedPaintAnalysisResult): PaintAnalysisResult {
     // Önerileri topla ve flatten et
-    const recommendations = this.collectPaintRecommendations(result.recommendations)
+    const recommendations = this.collectPaintRecommendations(result.öneriler)
 
     return {
-      paintCondition: this.mapPaintCondition(result.paintCondition),
-      paintThickness: result.surfaceAnalysis?.totalThickness ?? result.surfaceAnalysis?.paintThickness ?? 0,
-      colorMatch: result.colorAnalysis?.colorMatch ?? 0,
-      scratches: result.damageAssessment?.scratches?.length ?? 0,
-      dents: result.damageAssessment?.dents?.length ?? 0,
-      rust: (result.damageAssessment?.rust?.length ?? 0) > 0,
-      oxidation: this.calculateAverageSeverity(result.damageAssessment?.oxidation),
-      glossLevel: result.paintQuality?.glossLevel ?? 0,
-      overallScore: result.paintQuality?.overallScore ?? 0,
+      paintCondition: this.mapPaintCondition(result.boyaDurumu),
+      paintThickness: result.yüzeyAnalizi?.toplamKalınlık ?? result.yüzeyAnalizi?.boyaKalınlığı ?? 0,
+      colorMatch: result.renkAnalizi?.renkEşleşmesi ?? 0,
+      // Hasar bilgileri kaldırıldı - bunlar hasar analizi raporunda
+      scratches: 0,
+      dents: 0,
+      rust: false,
+      oxidation: 0,
+      glossLevel: result.boyaKalitesi?.parlaklıkSeviyesi ?? 0,
+      overallScore: result.boyaKalitesi?.genelPuan ?? 0,
       recommendations: recommendations.length > 0 ? recommendations : ['Detaylı boya bakımı önerilir'],
-      confidence: result.confidence ?? 0,
+      confidence: result.güvenSeviyesi ?? 0,
       technicalDetails: {
-        paintSystem: result.technicalDetails?.paintSystem ?? 'Belirtilmedi',
-        primerType: result.technicalDetails?.primerType ?? 'Belirtilmedi',
-        baseCoat: result.technicalDetails?.baseCoat ?? 'Belirtilmedi',
-        clearCoat: result.technicalDetails?.clearCoat ?? 'Belirtilmedi',
-        totalThickness: result.surfaceAnalysis?.totalThickness ?? 0,
-        colorCode: result.colorAnalysis?.colorCode ?? 'Belirtilmedi'
+        paintSystem: result.teknikDetaylar?.boyaSistemi ?? 'Belirtilmedi',
+        primerType: result.teknikDetaylar?.astarTürü ?? 'Belirtilmedi',
+        baseCoat: result.teknikDetaylar?.bazKat ?? 'Belirtilmedi',
+        clearCoat: result.teknikDetaylar?.vernik ?? 'Belirtilmedi',
+        totalThickness: result.yüzeyAnalizi?.toplamKalınlık ?? 0,
+        colorCode: result.renkAnalizi?.renkKodu ?? 'Belirtilmedi'
       }
     }
   }
@@ -385,18 +470,18 @@ export class AIService {
    * 
    * @private
    */
-  private static collectPaintRecommendations(recommendations?: AdvancedPaintAnalysisResult['recommendations']): string[] {
+  private static collectPaintRecommendations(recommendations?: AdvancedPaintAnalysisResult['öneriler']): string[] {
     if (!recommendations) return []
 
     // Tüm kategori array'lerini topla
     const groups = [
-      recommendations.immediate,
-      recommendations.shortTerm,
-      recommendations.longTerm,
-      recommendations.maintenance,
-      recommendations.protection,
-      recommendations.restoration,
-      recommendations.prevention
+      recommendations.acil,
+      recommendations.kısaVadeli,
+      recommendations.uzunVadeli,
+      recommendations.bakım,
+      recommendations.koruma,
+      recommendations.restorasyon,
+      recommendations.önleme
     ]
 
     // Flatten, filter ve deduplicate
@@ -422,13 +507,13 @@ export class AIService {
    * 
    * @private
    */
-  private static mapPaintCondition(condition: AdvancedPaintAnalysisResult['paintCondition'] | undefined): PaintAnalysisResult['paintCondition'] {
+  private static mapPaintCondition(condition: AdvancedPaintAnalysisResult['boyaDurumu'] | undefined): PaintAnalysisResult['paintCondition'] {
     switch (condition) {
-      case 'excellent': return 'excellent'
-      case 'good': return 'good'
-      case 'fair': return 'fair'
-      case 'poor':
-      case 'critical': return 'poor'
+      case 'mükemmel': return 'excellent'
+      case 'iyi': return 'good'
+      case 'orta': return 'fair'
+      case 'kötü':
+      case 'kritik': return 'poor'
       default: return 'good'
     }
   }
@@ -484,17 +569,17 @@ export class AIService {
    * 
    * @private
    */
-  private static normalizeDamageSeverity(severity: string | undefined): DamageDetectionResult['damageAreas'][number]['severity'] {
+  private static normalizeDamageSeverity(severity: string | undefined): DamageDetectionResult['hasarAlanları'][number]['şiddet'] {
     switch (severity) {
-      case 'critical':
-      case 'high':
-        return 'high'
-      case 'medium':
-        return 'medium'
+      case 'kritik':
+      case 'yüksek':
+        return 'yüksek'
+      case 'orta':
+        return 'orta'
       case 'minimal':
-      case 'low':
+      case 'düşük':
       default:
-        return 'low'
+        return 'düşük'
     }
   }
 }

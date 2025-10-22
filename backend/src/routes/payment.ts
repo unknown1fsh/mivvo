@@ -38,10 +38,8 @@ import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import {
-  createPayment,
-  getPaymentMethods,
-  processPayment,
-  getPaymentHistory,
+  initiatePayment,
+  verifyPayment,
   refundPayment,
 } from '../controllers/paymentController';
 
@@ -101,7 +99,7 @@ const refundValidation = [
  *   - BANK_TRANSFER: Banka havalesi (🏦)
  *   - DIGITAL_WALLET: Dijital cüzdan (📱)
  */
-router.get('/methods', asyncHandler(getPaymentMethods));
+// router.get('/methods', asyncHandler(getPaymentMethods)); // Removed deprecated endpoint
 
 /**
  * POST /payment/create
@@ -129,7 +127,7 @@ router.get('/methods', asyncHandler(getPaymentMethods));
  * Response:
  * - payment: Oluşturulan ödeme kaydı
  */
-router.post('/create', createPaymentValidation, asyncHandler(createPayment));
+// router.post('/create', createPaymentValidation, asyncHandler(createPayment)); // Removed deprecated endpoint
 
 /**
  * POST /payment/process
@@ -160,7 +158,7 @@ router.post('/create', createPaymentValidation, asyncHandler(createPayment));
  * Response:
  * - payment: Güncellenmiş ödeme
  */
-router.post('/process', asyncHandler(processPayment));
+// router.post('/process', asyncHandler(processPayment)); // Removed deprecated endpoint
 
 /**
  * GET /payment/history
@@ -176,7 +174,7 @@ router.post('/process', asyncHandler(processPayment));
  * - payments: Ödeme listesi
  * - pagination: Sayfalama bilgisi
  */
-router.get('/history', asyncHandler(getPaymentHistory));
+// router.get('/history', asyncHandler(getPaymentHistory)); // Removed deprecated endpoint
 
 /**
  * POST /payment/refund

@@ -191,17 +191,41 @@ function startBackend() {
     
     backendProcess.stdout.on('data', (data) => {
       const output = data.toString();
+      const timestamp = new Date().toISOString();
+      
+      // Backend loglarını mavi renkte göster
+      const lines = output.split('\n').filter(line => line.trim());
+      lines.forEach(line => {
+        if (line.includes('Server running on port')) {
+          log(`✅ [${timestamp}] Backend başarıyla başlatıldı`, 'green');
+        } else if (line.includes('Winston Logger başlatıldı')) {
+          log(`📝 [${timestamp}] ${line}`, 'cyan');
+        } else if (line.includes('HTTP Request') || line.includes('API')) {
+          log(`🌐 [${timestamp}] ${line}`, 'magenta');
+        } else if (line.includes('Database Operation')) {
+          log(`🗄️ [${timestamp}] ${line}`, 'yellow');
+        } else if (line.includes('Error') || line.includes('error')) {
+          log(`❌ [${timestamp}] ${line}`, 'red');
+        } else {
+          log(`🔧 [${timestamp}] ${line}`, 'blue');
+        }
+      });
+      
       if (output.includes('Server running on port')) {
-        log('✅ Backend başarıyla başlatıldı', 'green');
         resolve(backendProcess);
       }
     });
     
     backendProcess.stderr.on('data', (data) => {
       const error = data.toString();
+      const timestamp = new Date().toISOString();
+      
       if (error.includes('Error') || error.includes('EADDRINUSE')) {
-        log(`❌ Backend hatası: ${error}`, 'red');
+        log(`❌ [${timestamp}] Backend hatası: ${error}`, 'red');
         reject(new Error(error));
+      } else {
+        // Stderr'ı da logla ama hata olarak işaretleme
+        log(`⚠️ [${timestamp}] ${error}`, 'yellow');
       }
     });
     
@@ -226,17 +250,41 @@ function startFrontend() {
     
     frontendProcess.stdout.on('data', (data) => {
       const output = data.toString();
+      const timestamp = new Date().toISOString();
+      
+      // Frontend loglarını magenta renkte göster
+      const lines = output.split('\n').filter(line => line.trim());
+      lines.forEach(line => {
+        if (line.includes('Local:') || line.includes('Ready')) {
+          log(`✅ [${timestamp}] Frontend başarıyla başlatıldı`, 'green');
+        } else if (line.includes('Frontend Logger başlatıldı')) {
+          log(`📝 [${timestamp}] ${line}`, 'cyan');
+        } else if (line.includes('API Request') || line.includes('API Response')) {
+          log(`🌐 [${timestamp}] ${line}`, 'blue');
+        } else if (line.includes('Component') || line.includes('State')) {
+          log(`⚛️ [${timestamp}] ${line}`, 'yellow');
+        } else if (line.includes('Error') || line.includes('error')) {
+          log(`❌ [${timestamp}] ${line}`, 'red');
+        } else {
+          log(`🎨 [${timestamp}] ${line}`, 'magenta');
+        }
+      });
+      
       if (output.includes('Local:') || output.includes('Ready')) {
-        log('✅ Frontend başarıyla başlatıldı', 'green');
         resolve(frontendProcess);
       }
     });
     
     frontendProcess.stderr.on('data', (data) => {
       const error = data.toString();
+      const timestamp = new Date().toISOString();
+      
       if (error.includes('Error') || error.includes('EADDRINUSE')) {
-        log(`❌ Frontend hatası: ${error}`, 'red');
+        log(`❌ [${timestamp}] Frontend hatası: ${error}`, 'red');
         reject(new Error(error));
+      } else {
+        // Stderr'ı da logla ama hata olarak işaretleme
+        log(`⚠️ [${timestamp}] ${error}`, 'yellow');
       }
     });
     

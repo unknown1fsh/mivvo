@@ -9,7 +9,8 @@ import {
   CameraIcon,
   ChartBarIcon,
   DocumentTextIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  SpeakerWaveIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -18,7 +19,7 @@ const services = [
   {
     id: 'PAINT_ANALYSIS',
     name: 'Boya Analizi',
-    price: 25,
+    price: 399,
     description: 'Araç boyasının durumu ve kalitesi analizi',
     features: [
       'Renk eşleştirme ve kalite kontrolü',
@@ -35,7 +36,7 @@ const services = [
   {
     id: 'DAMAGE_ASSESSMENT',
     name: 'Hasar Değerlendirmesi',
-    price: 35,
+    price: 499,
     description: 'Araç hasarlarının tespiti ve değerlendirmesi',
     features: [
       'Çarpışma hasarları tespiti',
@@ -52,7 +53,7 @@ const services = [
   {
     id: 'VALUE_ESTIMATION',
     name: 'Değer Tahmini',
-    price: 20,
+    price: 299,
     description: 'Araç piyasa değeri tahmini',
     features: [
       'Piyasa analizi ve karşılaştırma',
@@ -67,10 +68,27 @@ const services = [
     accuracy: '97.2%'
   },
   {
+    id: 'ENGINE_SOUND_ANALYSIS',
+    name: 'Motor Ses Analizi',
+    price: 299,
+    description: 'Motor ses analizi ile motor durumu tespiti',
+    features: [
+      'Motor sesi kayıt analizi',
+      'Anormal ses tespiti',
+      'Motor arıza ön teşhisi',
+      'Ses frekans analizi',
+      'Motor sağlık raporu'
+    ],
+    icon: '🔊',
+    color: 'from-indigo-500 to-blue-500',
+    duration: '8-12 dakika',
+    accuracy: '96.8%'
+  },
+  {
     id: 'FULL_REPORT',
     name: 'Tam Expertiz',
-    price: 75,
-    description: 'Tüm analizlerin dahil olduğu kapsamlı rapor',
+    price: 899,
+    description: 'Tüm analizlerin dahil olduğu kapsamlı rapor (Orijinal: 1,496₺ - 597₺ tasarruf)',
     features: [
       'Tüm analiz türleri dahil',
       'Detaylı teknik rapor',
@@ -80,7 +98,7 @@ const services = [
     ],
     icon: '📋',
     color: 'from-orange-500 to-red-500',
-    duration: '20-30 dakika',
+    duration: '25-35 dakika',
     accuracy: '99.9%',
     popular: true
   }
@@ -179,10 +197,29 @@ export default function ServicesPage() {
         </div>
       </section>
 
+      {/* Money Back Guarantee Banner */}
+      <section className="py-8 bg-gradient-to-r from-green-500 to-emerald-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInUp>
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4">
+                <ShieldCheckIcon className="w-8 h-8 text-white mr-3" />
+                <h2 className="text-2xl md:text-3xl font-bold text-white">
+                  %100 Para İade Garantisi
+                </h2>
+              </div>
+              <p className="text-lg text-green-100 max-w-2xl mx-auto">
+                Raporunuz oluşmazsa bakiyeniz anında iade edilir. Hiçbir risk almadan deneyebilirsiniz.
+              </p>
+            </div>
+          </FadeInUp>
+        </div>
+      </section>
+
       {/* Services Grid */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             {services.map((service) => (
               <StaggerItem key={service.id}>
                 <motion.div
@@ -352,6 +389,7 @@ export default function ServicesPage() {
                 <li><Link href="/services" className="hover:text-white transition-colors">Boya Analizi</Link></li>
                 <li><Link href="/services" className="hover:text-white transition-colors">Hasar Değerlendirmesi</Link></li>
                 <li><Link href="/services" className="hover:text-white transition-colors">Değer Tahmini</Link></li>
+                <li><Link href="/services" className="hover:text-white transition-colors">Motor Ses Analizi</Link></li>
                 <li><Link href="/services" className="hover:text-white transition-colors">Tam Expertiz</Link></li>
               </ul>
             </div>

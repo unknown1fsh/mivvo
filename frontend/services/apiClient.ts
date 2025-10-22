@@ -1,35 +1,4 @@
-/**
- * API Client (API İstemci)
- * 
- * Clean Architecture - Service Layer (Servis Katmanı)
- * 
- * Bu dosya, tüm HTTP isteklerini yöneten merkezi API istemcisidir.
- * 
- * Sorumluluklar:
- * - HTTP isteklerini (GET, POST, PUT, DELETE, PATCH) yönetme
- * - JWT token yönetimi (Authorization header)
- * - Request/Response interceptor
- * - Hata yönetimi ve loglama
- * - File upload desteği
- * - Timeout yönetimi
- * 
- * Özellikler:
- * - Singleton pattern
- * - TypeScript generic support
- * - Environment-aware (dev/prod)
- * - FormData desteği (multipart/form-data)
- * - Automatic token injection
- * - Detaylı console loglama
- * - 401 durumunda auto-logout
- * 
- * Kullanım:
- * ```typescript
- * import { apiClient } from './apiClient'
- * 
- * const response = await apiClient.get<User>('/users/me')
- * const response = await apiClient.post<Report>('/reports', { data })
- * ```
- */
+import { logger } from '../lib/logger';
 
 // ===== API BASE URL RESOLVER =====
 
@@ -185,16 +154,14 @@ class ApiClient {
     }
 
     // Detaylı console log
-    console.log('🌐 API İsteği:', {
-      method,
-      url,
+    logger.apiRequest(method, url, {
       endpoint,
       baseURL: this.baseURL,
       hasToken: !!token,
       tokenLength: token?.length,
       headers: requestHeaders,
       body: body ? (body instanceof FormData ? 'FormData' : body) : 'No body'
-    })
+    });
 
     try {
       // AbortController ile timeout
@@ -206,14 +173,14 @@ class ApiClient {
       if (body instanceof FormData) {
         delete requestHeaders['Content-Type']
         requestBody = body
-        console.log('📁 FormData kullanılıyor, Content-Type header kaldırıldı')
+        logger.debug('FormData kullanılıyor, Content-Type header kaldırıldı', {}, 'API', 'FORM_DATA')
       } else if (body) {
         requestBody = JSON.stringify(body)
-        console.log('📝 JSON body hazırlandı:', body)
+        logger.debug('JSON body hazırlandı', { body }, 'API', 'JSON_BODY')
       }
 
       // Fetch isteği
-      console.log('🚀 Fetch isteği gönderiliyor...')
+      logger.debug('Fetch isteği gönderiliyor...', {}, 'API', 'FETCH')
       const response = await fetch(url, {
         method,
         headers: requestHeaders,
@@ -224,24 +191,23 @@ class ApiClient {
       clearTimeout(timeoutId)
 
       // Response loglama
-      console.log('📡 Response alındı:', {
-        status: response.status,
+      logger.apiResponse(method, url, response.status, undefined, {
         statusText: response.statusText,
         ok: response.ok,
         headers: Object.fromEntries(response.headers.entries())
-      })
+      });
 
       // HTTP hata kontrolü
       if (!response.ok) {
-        console.error('❌ HTTP Hatası:', {
+        logger.apiError(method, url, new Error(`HTTP ${response.status}: ${response.statusText}`), {
           status: response.status,
           statusText: response.statusText,
           url
-        })
+        });
 
         // 401 hatası durumunda token'ı temizle (unauthorized)
         if (response.status === 401) {
-          console.log('🔒 401 hatası - Token temizleniyor')
+          logger.warn('401 hatası - Token temizleniyor', {}, 'API', 'AUTH_CLEAR')
           if (typeof window !== 'undefined') {
             localStorage.removeItem('auth_token')
             localStorage.removeItem('user')
@@ -277,19 +243,18 @@ class ApiClient {
 
       // Response data parse
       const data = await response.json()
-      console.log('✅ Response data parse edildi:', data)
+      logger.debug('Response data parse edildi', { data }, 'API', 'PARSE')
       
       // Backend zaten {success, data} formatında dönüyor, direkt return et
       return data
     } catch (error) {
       // Hata loglama
-      console.error('💥 API Request Error:', error)
-      console.error('💥 Error details:', {
+      logger.apiError(method, url, error, {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         url,
         method
-      })
+      });
 
       // Abort (timeout/navigasyon) durumlarını daha anlaşılır hale getir ve idempotent GET isteğinde tek seferlik retry yap
       const isAborted = (error as any)?.name === 'AbortError' ||
@@ -297,7 +262,7 @@ class ApiClient {
 
       if (isAborted && method === 'GET') {
         try {
-          console.warn('⏳ Abort tespit edildi, GET isteği tek seferlik yeniden deneniyor (timeoutsuz)...')
+          logger.warn('Abort tespit edildi, GET isteği tek seferlik yeniden deneniyor (timeoutsuz)...', {}, 'API', 'RETRY')
           const retryResponse = await fetch(url, {
             method,
             headers: {
@@ -310,12 +275,13 @@ class ApiClient {
           }
 
           const data = await retryResponse.json()
+          logger.info('Retry başarılı', { method, url }, 'API', 'RETRY_SUCCESS')
           return {
             success: true,
             data,
           }
         } catch (retryErr) {
-          console.error('❌ Retry başarısız:', retryErr)
+          logger.error('Retry başarısız', { error: retryErr }, 'API', 'RETRY_FAILED')
           return {
             success: false,
             error: 'İstek iptal edildi veya zaman aşımına uğradı',

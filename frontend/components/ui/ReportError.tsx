@@ -124,7 +124,7 @@ export function ReportError({
   showDashboardLink = true,
   showSupportLink = true
 }: ReportErrorProps) {
-  const config = errorConfig[type]
+  const config = errorConfig[type] || errorConfig.generic
   const Icon = config.icon
   const displayTitle = title || config.title
   const displayMessage = message || config.message

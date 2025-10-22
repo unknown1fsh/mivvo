@@ -173,7 +173,7 @@ export const damageDetection = asyncHandler(async (req: AuthRequest, res: Respon
     
     // AI ile hasar tespiti
     const damageAreas: DamageDetectionResult = await AIService.detectDamage(imagePath);
-    const areas = damageAreas?.damageAreas || [];
+    const areas = damageAreas?.hasarAlanları || [];
     console.log('✅ AI hasar tespiti tamamlandı:', areas.length, 'hasar tespit edildi');
 
     // Genel analiz sonucu hesapla

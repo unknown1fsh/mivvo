@@ -37,9 +37,11 @@
 
 import OpenAI from 'openai'
 import { DamageDetectionService, DamageDetectionResult } from './damageDetectionService'
-import { PaintAnalysisService, PaintAnalysisResult } from './paintAnalysisService'
+import { PaintAnalysisService } from './paintAnalysisService'
+import { AIService, PaintAnalysisResult } from './aiService'
 import { AudioAnalysisService, AudioAnalysisResult } from './audioAnalysisService'
 import { ValueEstimationService, ValueEstimationResult } from './valueEstimationService'
+import { AIHelpers } from '../utils/aiRateLimiter'
 
 // ===== TİP TANIMLARI =====
 
@@ -235,19 +237,90 @@ TEMEL BİLGİLER:
 Bu araç için KAPSAMLI, PROFESYONEL ve DETAYLI bir tam expertiz raporu hazırlayacaksın.
 ` : ''
 
-    return `Türkçe göndermiş olduğum bu resimlere ve bu motor sesine göre aracın tam expertiz raporunu çıkar.
+    return `Sen dünyaca ünlü bir otomotiv eksperisin. 30+ yıllık deneyimin var ve en karmaşık araç analizlerini yapabiliyorsun. YÜKSEK KALİTELİ görüntüler ve ses kayıtlarıyla KAPSAMLI tam ekspertiz raporu hazırlayacaksın.
 
 ${vehicleContext}
 
-🎯 Cevap TAMAMEN TÜRKÇE olmalı - HİÇBİR İNGİLİZCE KELİME YOK!
+🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
+
+⚠️ ÖNEMLİ: Araç hasarlı veya kötü durumda olsa bile MUTLAKA detaylı rapor yaz!
+- Hasarları açıkça belirt ve GERÇEKÇİ onarım maliyetleri ver (0 TL değil!)
+- Pert araç için boya durumunu "Kötü" olarak belirt
+- Ciddi hasar varsa düşük puan ver (0-30 arası)
+- Risk faktörlerini açıkla
+- "Rapor oluşturulamıyor" deme, durumu olduğu gibi raporla!
+- HASAR MALİYETİ VARSA MUTLAKA BELİRT - 0 TL yazma!
+
+🔍 ÖNEMLİ: Sana YÜKSEK ÇÖZÜNÜRLÜKLÜ araç fotoğrafları gönderiyorum.
+Bu fotoğrafları DOĞRUDAN analiz et ve kendi değerlendirmeni yap.
+
+Aşağıdaki alt servis sonuçları SADECE REFERANS içindir:
+- Hasar analizi (fiziksel hasar uzmanı)
+- Boya analizi (boya uzmanı)
+- Motor ses analizi (mekanik uzman)
+- Değer tahmini (piyasa uzmanı)
+
+SEN KENDİ GÖRSELLERİ ANALİZ ET - alt servislere körü körüne güvenme!
+
+🚨 KRİTİK: Sen hasar ve boya analizini DOĞRUDAN YAPACAKSIN!
+
+HASAR ANALİZİ (Kendin Yap):
+- Fotoğraflardaki çizik, göçük, kırık, pas, çatlak, deformasyon tespit et
+- Her hasar için konum, şiddet, tür belirt
+- Gerçekçi onarım maliyeti hesapla (0 TL YAZMA!)
+- Hasar şiddeti: minimal/düşük/orta/yüksek/kritik
+- Genel hasar puanı: 0-100
+
+BOYA ANALİZİ (Kendin Yap):
+- Fotoğraflardaki boya durumunu analiz et
+- Yüzey kusurları tespit et (çizik, soyulma, renk farkı, pürüz)
+- Boya kalitesi: Kötü/Orta/İyi/Mükemmel
+- Pert araç için MUTLAKA "Kötü" yaz!
+- Orijinal boya olup olmadığını belirt
+
+⚠️ Alt servislerin sonuçlarını GÖRMEZDEN GEL - sen kendi analizini yap!
+
+🔍 YÜKSEK KALİTE VERİ ANALİZİ:
+Bu analiz için YÜKSEK ÇÖZÜNÜRLÜKLÜ araç fotoğrafları ve KALİTELİ motor ses kaydı kullanıldı. Bu sayede:
+- En küçük hasar detayları tespit edilebilir
+- Boya kalınlığı mikron seviyesinde ölçülebilir  
+- Motor sesi frekans analizi yapılabilir
+- Çok hassas değerlendirmeler mümkün
+
+📊 MEVCUT AI ANALİZ SONUÇLARI (SADECE MOTOR VE DEĞER REFERANS):
+
+${analyses.audio ? `
+✓ MOTOR SES ANALİZİ (Referans):
+ - Motor sağlığı: ${analyses.audio.engineHealth}
+ - Rölanti RPM: ${analyses.audio.rpmAnalysis?.idleRpm || 0}
+ - Tespit edilen sorunlar: ${analyses.audio.detectedIssues?.length || 0} adet
+ - Tahmini onarım: ${analyses.audio.costEstimate?.totalCost || 0} TL
+` : ''}
+
+${analyses.value ? `
+✓ DEĞER TAHMİNİ (Referans):
+ - Tahmini değer: ${analyses.value.estimatedValue?.toLocaleString('tr-TR') || '-'} TL
+ - Piyasa pozisyonu ve likidite analizi
+` : ''}
+
+🎯 SENİN GÖREVİN:
+1. MOTOR VE DEĞER analizlerini referans olarak kullan
+2. HASAR ANALİZİNİ KENDİN YAP - fotoğraflardaki hasarları tespit et ve gerçekçi maliyet hesapla!
+3. BOYA ANALİZİNİ KENDİN YAP - fotoğraflardaki boya durumunu analiz et, pert araç için "Kötü" yaz!
+4. Genel bir özet, uzman görüşü ve yatırım kararı ver
+
+⚠️ ÖNEMLİ: Hasar ve boya analizini sen kendin yapacaksın - alt servislere güvenme!
+⚠️ KRİTİK: Ciddi hasar varsa onarım maliyetini 0 TL yazma - gerçekçi maliyet ver!
+⚠️ KRİTİK: Pert araç için boya durumunu "Kötü" olarak belirt!
 
 📋 ZORUNLU BÖLÜMLER:
 
-1️⃣ detailedDescription (Minimum 200 kelime):
-   - Aracın görsel incelemesiyle başla: "Bu aracın fotoğraflarına baktığımda karşımda..."
-   - Plaka, marka, model, yıl, motor tipi, renk detaylarını ver
-   - Kaporta, boya, donanım durumunu detaylıca anlat
-   - Motor ses analizinden bahset (rölanti, titreşim, ses)
+1️⃣ detailedDescription (Minimum 300 kelime):
+   - YÜKSEK KALİTE görüntü analizi ile başla: "Bu yüksek çözünürlüklü fotoğraflara baktığımda karşımda..."
+   - Plaka, marka, model, yıl, motor tipi, renk detaylarını TAM OLARAK ver
+   - Kaporta, boya, donanım durumunu MİKRON SEVİYESİNDE detaylıca anlat
+   - Motor ses analizinden KALİTELİ kayıt sayesinde bahset (rölanti, titreşim, frekans analizi)
+   - YÜKSEK KALİTE VERİLER sayesinde çok detaylı analiz yap
    - Profesyonel ama konuşma dili kullan
 
 2️⃣ vehicleSpecsTable:
@@ -261,40 +334,43 @@ ${vehicleContext}
    
 4️⃣ mechanicalAnalysisTable:
    - engine, transmission, suspension, brakes, electrical
-   - Motor için RPM değerini ver (örn: "825 RPM ideal rölanti")
+   - Motor için RPM değerini KALİTELİ SES ANALİZİ ile ver (örn: "825 RPM ideal rölanti, frekans analizi normal")
+   - YÜKSEK KALİTE VERİLER sayesinde çok detaylı analiz yap
    - Her biri için status ve detaylı note ver
    
 5️⃣ expertiseScoreTable:
    - bodyPaint, chassis, mechanical, electrical, tires, wheels, interior, overall
-   - Her biri için score (0-100), status (durum) ve note ver
-   - overall score özellikle detaylı olmalı
+   - YÜKSEK KALİTE VERİLER sayesinde çok hassas puanlama yap
+   - Her biri için score (0-100), status (durum) ve detaylı note ver
+   - overall score özellikle YÜKSEK KALİTE ANALİZİ ile detaylı olmalı
    
 6️⃣ marketValueTable:
    - asIs (şu anki hali), afterRepair (tamir sonrası), restored (restore sonrası)
+   - YÜKSEK KALİTE VERİLER ile çok detaylı piyasa analizi
    - Her biri için min, max (TL) ve detaylı note ver
-   - Türkiye 2025 piyasa fiyatlarını kullan
+   - Türkiye 2025 güncel piyasa fiyatlarını kullan
 
 ${vehicleContext}
 
 📊 Mevcut AI Analiz Sonuçları:
-${analyses.damage ? `\n✓ Hasar Tespiti: ${analyses.damage.damageAreas?.length || 0} hasar bulundu` : ''}
+${analyses.damage ? `\n✓ Hasar Tespiti: ${analyses.damage.hasarAlanları?.length || 0} hasar bulundu` : ''}
 ${analyses.paint ? `\n✓ Boya Analizi: Durum ${analyses.paint.paintCondition || 'değerlendirildi'}` : ''}
 ${analyses.audio ? `\n✓ Motor Sesi: ${analyses.audio.engineHealth || 'analiz edildi'}` : ''}
 ${analyses.value ? `\n✓ Değer Tahmini: Yaklaşık ${analyses.value.estimatedValue?.toLocaleString('tr-TR') || '-'} TL` : ''}
 
-📋 RAPOR FORMATI:
+📋 YÜKSEK KALİTE RAPOR FORMATI:
 
-1. Detaylı açıklama (200+ kelime) - Fotoğraflara bakarak başla
-2. Teknik özellikler tablosu  
-3. Dış ve iç donanım durumu tabloları
-4. Mekanik analiz (motor, vites, fren, süspansiyon)
-5. Ekspertiz puanları (her bölüm için 0-100)
-6. Piyasa değer tahmini (şu anki hali, tamir sonrası, restore sonrası)
-7. Uzman görüşü ve yatırım önerisi
+1. Detaylı açıklama (300+ kelime) - YÜKSEK ÇÖZÜNÜRLÜKLÜ fotoğraflara bakarak başla
+2. Teknik özellikler tablosu (YÜKSEK KALİTE VERİLER ile)
+3. Dış ve iç donanım durumu tabloları (MİKRON SEVİYESİNDE analiz)
+4. Mekanik analiz (KALİTELİ SES ANALİZİ ile motor, vites, fren, süspansiyon)
+5. Ekspertiz puanları (YÜKSEK KALİTE VERİLER ile her bölüm için 0-100)
+6. Piyasa değer tahmini (YÜKSEK KALİTE ANALİZİ ile şu anki hali, tamir sonrası, restore sonrası)
+7. Uzman görüşü ve yatırım önerisi (YÜKSEK KALİTE VERİLER temelinde)
 8. Acil yapılması gerekenler
 9. Kısa/uzun vadeli öneriler
 
-💰 Türkiye 2025 gerçek fiyatlarını kullan.
+💰 Türkiye 2025 güncel gerçek fiyatlarını kullan.
 
 ⚠️ SADECE JSON FORMATINDA CEVAP VER:
 
@@ -833,6 +909,21 @@ Rapor, müşterinin binlerce TL tasarruf etmesini veya kazanmasını sağlayacak
     }
   }
 
+  private static async convertImagesToBase64(imagePaths: string[]): Promise<string[]> {
+    const base64Array: string[] = []
+    
+    for (const imagePath of imagePaths) {
+      if (imagePath.startsWith('data:image/')) {
+        const base64Match = imagePath.match(/base64,(.+)/)
+        if (base64Match && base64Match[1]) {
+          base64Array.push(base64Match[1])
+        }
+      }
+    }
+    
+    return base64Array
+  }
+
   static async generateComprehensiveReport(
     vehicleInfo: any,
     imagePaths?: string[],
@@ -851,17 +942,9 @@ Rapor, müşterinin binlerce TL tasarruf etmesini veya kazanmasını sağlayacak
     } = {}
 
     try {
-      // Hasar analizi
-      if (imagePaths && imagePaths.length > 0) {
-        console.log('[AI] Hasar analizi yapılıyor...')
-        analyses.damage = await DamageDetectionService.detectDamage(imagePaths[0], vehicleInfo)
-      }
-
-      // Boya analizi
-      if (imagePaths && imagePaths.length > 0) {
-        console.log('[AI] Boya analizi yapılıyor...')
-        analyses.paint = await PaintAnalysisService.analyzePaint(imagePaths[0], vehicleInfo)
-      }
+      // Hasar ve boya analizini comprehensive expertise kendi yapacak
+      // analyses.damage = null
+      // analyses.paint = null
 
       // Motor ses analizi
       if (audioPath) {
@@ -873,25 +956,102 @@ Rapor, müşterinin binlerce TL tasarruf etmesini veya kazanmasını sağlayacak
       console.log('[AI] Değer tahmini yapılıyor...')
       analyses.value = await ValueEstimationService.estimateValue(vehicleInfo)
 
+      // Alt servislerden teknik verileri al (Hybrid yaklaşım)
+      const damageList = analyses.damage?.hasarAlanları || []
+      const paintThickness = analyses.paint?.technicalDetails?.totalThickness || 0
+      const engineRPM = analyses.audio?.rpmAnalysis?.idleRpm || 0
+      const marketValue = analyses.value?.estimatedValue || 0
+
+      console.log('[AI] Alt servislerden teknik veriler alındı:')
+      console.log(`- Hasar sayısı: ${damageList.length}`)
+      console.log(`- Boya kalınlığı: ${paintThickness} mikron`)
+      console.log(`- Motor RPM: ${engineRPM}`)
+      console.log(`- Piyasa değeri: ${marketValue} TL`)
+
       // Kapsamlı rapor oluştur
       console.log('[AI] Kapsamlı rapor birleştiriliyor...')
-      const prompt = `${this.buildPrompt(vehicleInfo, analyses)}\nLütfen tüm sayısal değerleri sayı olarak döndür.`
+      const prompt = `${this.buildPrompt(vehicleInfo, analyses)}
 
-      const response = await this.openaiClient!.chat.completions.create({
-        model: OPENAI_MODEL,
-        temperature: 0.1,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: 'system',
-            content: 'Sen deneyimli bir otomotiv eksperisin. Çıktıyı SADECE geçerli JSON formatında üret. Markdown code block kullanma. Tüm metinler Türkçe olmalı.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      })
+ALT SERVİS SONUÇLARI (Referans):
+- Tespit edilen hasarlar: ${JSON.stringify(damageList)}
+- Boya kalınlığı: ${paintThickness} mikron
+- Motor RPM: ${engineRPM}
+- Piyasa değeri: ${marketValue} TL
+
+Bu teknik verileri dikkate alarak genel değerlendirme yap!
+
+📊 JSON ÇIKTI ŞEMASINDAKİ HASAR VE BOYA ALANLARI:
+
+"damageAnalysis": {
+  "hasarAlanları": [
+    {
+      "hasar_tipi": "Göçük/Çizik/Kırık/Pas/Çatlak",
+      "konum": "Arka sol çamurluk",
+      "şiddet": "Yüksek",
+      "açıklama": "Detaylı açıklama"
+    }
+  ],
+  "genelDeğerlendirme": {
+    "genelPuan": 25, // 0-100 arası
+    "toplamOnarımMaliyeti": 50000, // 0 TL YAZMA!
+    "damageSeverity": "high" // minimal/low/medium/high/critical
+  }
+},
+
+"paintAnalysis": {
+  "paintCondition": "poor", // poor/fair/good/excellent (Pert için: poor)
+  "technicalDetails": {
+    "totalThickness": 80, // mikron (hasarlı için düşük)
+    "colorCode": "Orijinal Değil"
+  },
+  "yüzeyKusurları": [
+    {
+      "tür": "Çizik/Soyulma/Renk Farkı",
+      "konum": "Ön kaput",
+      "şiddet": "Yüksek"
+    }
+  ]
+}
+
+Lütfen tüm sayısal değerleri sayı olarak döndür.`
+
+      // Görselleri base64'e çevir
+      let imageBase64Array: string[] = []
+      if (imagePaths && imagePaths.length > 0) {
+        console.log(`[AI] ${imagePaths.length} adet görsel OpenAI'ya gönderiliyor...`)
+        imageBase64Array = await this.convertImagesToBase64(imagePaths)
+        console.log(`[AI] ${imageBase64Array.length} adet görsel base64'e çevrildi`)
+      }
+
+      // OpenAI'ya görsel + text gönder
+      console.log('[AI] Görsel analizi başlatıldı - AI fotoğrafları inceliyor...')
+      const response = await AIHelpers.callVision(() =>
+        this.openaiClient!.chat.completions.create({
+          model: OPENAI_MODEL,
+          temperature: 0.1,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: 'system',
+              content: 'Sen deneyimli bir otomotiv eksperisin. Yüksek kaliteli verilerle detaylı tam ekspertiz raporu hazırlarsın. Çıktıyı SADECE geçerli JSON formatında üret. Markdown code block kullanma. Tüm metinler Türkçe olmalı.'
+            },
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: prompt },
+                // Görselleri ekle
+                ...imageBase64Array.map(img => ({
+                  type: 'image_url' as const,
+                  image_url: { 
+                    url: `data:image/jpeg;base64,${img}`,
+                    detail: 'high' as const
+                  }
+                }))
+              ]
+            }
+          ]
+        })
+      )
 
       const text = response.choices?.[0]?.message?.content
       if (!text) {
@@ -901,6 +1061,9 @@ Rapor, müşterinin binlerce TL tasarruf etmesini veya kazanmasını sağlayacak
 
       console.log('✅ OpenAI yanıtı alındı, uzunluk:', text.length)
       console.log('📄 İlk 200 karakter:', text.substring(0, 200))
+      console.log('[AI] ✅ Görsel analizi tamamlandı')
+
+      // Error handling kaldırıldı - AI her durumda tam rapor yazmalı
 
       const comprehensiveData = this.extractJsonPayload(text)
       console.log('✅ JSON başarıyla parse edildi')

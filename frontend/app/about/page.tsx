@@ -13,7 +13,8 @@ import {
   ClockIcon,
   CheckCircleIcon,
   StarIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -52,89 +53,104 @@ const values = [
   }
 ]
 
-const team = [
+const advantages = [
   {
-    name: 'Dr. Ahmet Yılmaz',
-    role: 'Kurucu & CEO',
-    image: '👨‍💼',
-    description: '15 yıllık otomotiv sektörü deneyimi. Yapay zeka ve makine öğrenmesi uzmanı.',
-    expertise: ['Yapay Zeka', 'Otomotiv', 'İş Geliştirme']
-  },
-  {
-    name: 'Elif Demir',
-    role: 'CTO',
-    image: '👩‍💻',
-    description: 'Yazılım geliştirme ve sistem mimarisi konularında uzman. 10+ yıl deneyim.',
-    expertise: ['Yazılım Geliştirme', 'Sistem Mimarisi', 'DevOps']
-  },
-  {
-    name: 'Mehmet Kaya',
-    role: 'AI Araştırma Direktörü',
-    image: '👨‍🔬',
-    description: 'Makine öğrenmesi ve görüntü işleme alanında doktora sahibi.',
-    expertise: ['Makine Öğrenmesi', 'Görüntü İşleme', 'Derin Öğrenme']
-  },
-  {
-    name: 'Ayşe Özkan',
-    role: 'Müşteri Deneyimi Müdürü',
-    image: '👩‍💼',
-    description: 'Müşteri ilişkileri ve kullanıcı deneyimi tasarımı uzmanı.',
-    expertise: ['UX/UI Tasarım', 'Müşteri İlişkileri', 'Pazarlama']
-  }
-]
-
-const milestones = [
-  {
-    year: '2020',
-    title: 'Kuruluş',
-    description: 'Mivvo Expertiz\'in kuruluşu ve ilk AI algoritmalarının geliştirilmesi'
-  },
-  {
-    year: '2021',
-    title: 'İlk Prototip',
-    description: 'Boya analizi için ilk AI modelinin başarıyla test edilmesi'
-  },
-  {
-    year: '2022',
-    title: 'Beta Sürüm',
-    description: 'Seçili kullanıcılarla beta test sürecinin başlatılması'
-  },
-  {
-    year: '2023',
-    title: 'Lansman',
-    description: 'Genel kullanıma açılması ve ilk 1000 müşteriye ulaşılması'
-  },
-  {
-    year: '2024',
-    title: 'Büyüme',
-    description: '10.000+ analiz ve yeni özelliklerin eklenmesi'
-  }
-]
-
-const achievements = [
-  {
-    icon: TrophyIcon,
-    title: 'En İyi AI Startup',
-    description: '2023 Türkiye Teknoloji Ödülleri',
-    year: '2023'
-  },
-  {
-    icon: StarIcon,
-    title: 'Müşteri Memnuniyeti',
-    description: '4.9/5 ortalama müşteri puanı',
-    year: '2024'
+    icon: ClockIcon,
+    title: 'Hızlı Sonuç',
+    description: 'Geleneksel expertiz 1-2 gün sürerken, bizim sistemimizde sadece 2 dakika',
+    color: 'from-blue-500 to-cyan-500'
   },
   {
     icon: ShieldCheckIcon,
-    title: 'ISO 27001 Sertifikası',
-    description: 'Bilgi güvenliği yönetim sistemi',
-    year: '2023'
+    title: '%100 Para İade Garantisi',
+    description: 'Raporunuz oluşmazsa bakiyeniz anında iade edilir',
+    color: 'from-green-500 to-emerald-500',
+    highlight: true
+  },
+  {
+    icon: GlobeAltIcon,
+    title: '7/24 Hizmet',
+    description: 'İstediğiniz zaman, istediğiniz yerden analiz yapabilirsiniz',
+    color: 'from-purple-500 to-indigo-500'
   },
   {
     icon: ChartBarIcon,
     title: '%99.9 Doğruluk',
-    description: 'AI analiz doğruluk oranı',
-    year: '2024'
+    description: 'AI teknolojimiz ile en yüksek doğruluk oranı',
+    color: 'from-orange-500 to-red-500'
+  },
+  {
+    icon: CurrencyDollarIcon,
+    title: 'Büyük Tasarruf',
+    description: 'Geleneksel expertiz 4.000-12.000₺, bizim fiyatımız 299-899₺',
+    color: 'from-green-500 to-emerald-500',
+    highlight: true
+  }
+]
+
+const technologyFeatures = [
+  {
+    icon: SparklesIcon,
+    title: 'Yapay Zeka Teknolojisi',
+    description: 'En gelişmiş makine öğrenmesi algoritmaları ile analiz',
+    details: ['Derin öğrenme modelleri', 'Görüntü işleme', 'Ses analizi']
+  },
+  {
+    icon: ShieldCheckIcon,
+    title: 'Güvenlik & Gizlilik',
+    description: 'Verileriniz en yüksek güvenlik standartlarında korunur',
+    details: ['SSL şifreleme', 'ISO 27001 sertifikası', 'KVKK uyumlu']
+  },
+  {
+    icon: ChartBarIcon,
+    title: 'Sürekli Gelişim',
+    description: 'AI modellerimiz sürekli öğrenerek daha da gelişiyor',
+    details: ['Otomatik model güncellemeleri', 'Performans optimizasyonu', 'Yeni özellik eklemeleri']
+  }
+]
+
+const testimonials = [
+  {
+    name: 'Mehmet K.',
+    rating: 5,
+    comment: 'Çok hızlı ve doğru sonuç aldım. Geleneksel expertizden çok daha pratik.',
+    date: '2024-01-15',
+    vehicle: '2020 BMW 320i'
+  },
+  {
+    name: 'Ayşe D.',
+    rating: 5,
+    comment: 'Para iade garantisi sayesinde hiç endişe etmeden denedim. Harika bir hizmet!',
+    date: '2024-01-10',
+    vehicle: '2019 Mercedes C200'
+  },
+  {
+    name: 'Ali M.',
+    rating: 5,
+    comment: 'AI teknolojisi gerçekten etkileyici. Sonuçlar çok detaylı ve güvenilir.',
+    date: '2024-01-08',
+    vehicle: '2021 Audi A4'
+  },
+  {
+    name: 'Fatma S.',
+    rating: 5,
+    comment: '7/24 hizmet vermeleri çok büyük avantaj. Gece bile analiz yapabiliyorum.',
+    date: '2024-01-05',
+    vehicle: '2020 Volkswagen Passat'
+  },
+  {
+    name: 'Can Y.',
+    rating: 5,
+    comment: 'Fiyatlar çok uygun ve kalite mükemmel. Kesinlikle tavsiye ederim.',
+    date: '2024-01-03',
+    vehicle: '2018 Ford Focus'
+  },
+  {
+    name: 'Zeynep A.',
+    rating: 5,
+    comment: 'Müşteri hizmetleri çok ilgili. Her sorumu anında yanıtladılar.',
+    date: '2024-01-01',
+    vehicle: '2019 Toyota Corolla'
   }
 ]
 
@@ -277,37 +293,148 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team Section */}
+      {/* Why Choose Us Section */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInUp>
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Ekibimiz
+                Neden Bizi Seçmeli?
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Alanında uzman profesyonellerden oluşan dinamik ekibimiz
+                Geleneksel expertizden farklı olarak sunduğumuz benzersiz avantajlar
               </p>
             </div>
           </FadeInUp>
 
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
+            {advantages.map((advantage, index) => (
               <StaggerItem key={index}>
-                <div className="card card-hover p-6 text-center">
-                  <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
-                    {member.image}
+                <div className={`card card-hover p-8 text-center group relative ${advantage.highlight ? 'ring-2 ring-green-500 ring-opacity-50' : ''}`}>
+                  {advantage.highlight && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                      ⭐ ÖNE ÇIKAN
+                    </div>
+                  )}
+                  <div className={`w-16 h-16 bg-gradient-to-r ${advantage.color} rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                    <advantage.icon className="w-8 h-8 text-white" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{member.name}</h3>
-                  <p className="text-blue-600 font-medium mb-3">{member.role}</p>
-                  <p className="text-gray-600 text-sm mb-4">{member.description}</p>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {member.expertise.map((skill, idx) => (
-                      <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                        {skill}
-                      </span>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">{advantage.title}</h3>
+                  <p className="text-gray-600 leading-relaxed">{advantage.description}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+
+          {/* Comparison Table */}
+          <FadeInUp delay={0.3}>
+            <div className="mt-20">
+              <h3 className="text-3xl font-bold text-center text-gray-900 mb-4">
+                Geleneksel Expertiz vs Mivvo Expertiz
+              </h3>
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center px-6 py-3 rounded-full text-lg font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg mb-4">
+                  <CurrencyDollarIcon className="w-6 h-6 mr-2" />
+                  Geleneksel Expertiz: 4.000-12.000₺
+                </div>
+                <div className="text-2xl text-gray-600 mb-2">VS</div>
+                <div className="inline-flex items-center px-6 py-3 rounded-full text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg">
+                  <CurrencyDollarIcon className="w-6 h-6 mr-2" />
+                  Mivvo Expertiz: 299-899₺
+                </div>
+                <div className="mt-4">
+                  <span className="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-lg font-bold">
+                    🎉 3.700-11.100₺ TASARRUF!
+                  </span>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                      <tr>
+                        <th className="px-6 py-4 text-left font-semibold">Özellik</th>
+                        <th className="px-6 py-4 text-center font-semibold">Geleneksel Expertiz</th>
+                        <th className="px-6 py-4 text-center font-semibold">Mivvo Expertiz</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Süre</td>
+                        <td className="px-6 py-4 text-center text-gray-600">1-2 gün</td>
+                        <td className="px-6 py-4 text-center text-green-600 font-semibold">2 dakika</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50 bg-red-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Maliyet</td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="text-red-600 font-bold text-lg">4.000-12.000₺</div>
+                          <div className="text-xs text-gray-500">Geleneksel expertiz</div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="text-green-600 font-bold text-lg">299-899₺</div>
+                          <div className="text-xs text-green-500">Mivvo Expertiz</div>
+                          <div className="mt-2">
+                            <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">
+                              💰 3.700-11.100₺ TASARRUF!
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Erişilebilirlik</td>
+                        <td className="px-6 py-4 text-center text-gray-600">Randevu gerekli</td>
+                        <td className="px-6 py-4 text-center text-green-600 font-semibold">7/24 online</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Doğruluk</td>
+                        <td className="px-6 py-4 text-center text-gray-600">%85-90</td>
+                        <td className="px-6 py-4 text-center text-green-600 font-semibold">%99.9</td>
+                      </tr>
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-900">Para İade</td>
+                        <td className="px-6 py-4 text-center text-gray-600">Yok</td>
+                        <td className="px-6 py-4 text-center text-green-600 font-semibold">%100 Garanti</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </FadeInUp>
+        </div>
+      </section>
+
+      {/* Technology Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInUp>
+            <div className="text-center mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Teknolojimiz
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                En gelişmiş yapay zeka teknolojisi ile güvenilir analiz hizmetleri
+              </p>
+            </div>
+          </FadeInUp>
+
+          <StaggerContainer className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {technologyFeatures.map((feature, index) => (
+              <StaggerItem key={index}>
+                <div className="card card-hover p-8 h-full">
+                  <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6">
+                    <feature.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-gray-900 mb-4">{feature.title}</h3>
+                  <p className="text-gray-600 mb-6 leading-relaxed">{feature.description}</p>
+                  <ul className="space-y-2">
+                    {feature.details.map((detail, idx) => (
+                      <li key={idx} className="flex items-center text-gray-700">
+                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                        <span>{detail}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               </StaggerItem>
             ))}
@@ -315,70 +442,46 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Timeline Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FadeInUp>
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Yolculuğumuz
-              </h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Mivvo Expertiz'in kuruluşundan bugüne kadar olan önemli kilometre taşları
-              </p>
-            </div>
-          </FadeInUp>
-
-          <div className="relative">
-            <div className="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500"></div>
-            
-            <StaggerContainer className="space-y-12">
-              {milestones.map((milestone, index) => (
-                <StaggerItem key={index}>
-                  <div className={`flex items-center ${index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'}`}>
-                    <div className={`w-1/2 ${index % 2 === 0 ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
-                      <div className="card p-6">
-                        <div className="text-2xl font-bold text-blue-600 mb-2">{milestone.year}</div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">{milestone.title}</h3>
-                        <p className="text-gray-600">{milestone.description}</p>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center relative z-10">
-                      <div className="w-4 h-4 bg-white rounded-full"></div>
-                    </div>
-                    <div className="w-1/2"></div>
-                  </div>
-                </StaggerItem>
-              ))}
-            </StaggerContainer>
-          </div>
-        </div>
-      </section>
-
-      {/* Achievements Section */}
+      {/* Testimonials Section */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInUp>
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Başarılarımız
+                Müşteri Görüşleri
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Aldığımız ödüller ve elde ettiğimiz başarılar
+                Binlerce memnun müşterimizin deneyimleri
               </p>
+              <div className="mt-6 flex items-center justify-center">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <StarIcon key={i} className="w-8 h-8 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+                <span className="ml-3 text-2xl font-bold text-gray-900">4.9/5</span>
+                <span className="ml-2 text-gray-600">(10,000+ değerlendirme)</span>
+              </div>
             </div>
           </FadeInUp>
 
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {achievements.map((achievement, index) => (
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
               <StaggerItem key={index}>
-                <div className="card card-hover p-6 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <achievement.icon className="w-8 h-8 text-white" />
+                <div className="card card-hover p-6 h-full">
+                  <div className="flex items-center mb-4">
+                    <div className="flex items-center">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <StarIcon key={i} className="w-5 h-5 text-yellow-400 fill-current" />
+                      ))}
+                    </div>
+                    <span className="ml-2 text-sm text-gray-500">{testimonial.date}</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">{achievement.title}</h3>
-                  <p className="text-gray-600 text-sm mb-2">{achievement.description}</p>
-                  <div className="text-blue-600 font-medium">{achievement.year}</div>
+                  <p className="text-gray-700 mb-4 leading-relaxed">"{testimonial.comment}"</p>
+                  <div className="border-t pt-4">
+                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                    <div className="text-sm text-gray-500">{testimonial.vehicle}</div>
+                  </div>
                 </div>
               </StaggerItem>
             ))}
@@ -403,9 +506,9 @@ export default function AboutPage() {
                 İletişime Geç
                 <ArrowRightIcon className="w-5 h-5 ml-2" />
               </Link>
-              <Link href="/careers" className="btn border-white text-white hover:bg-white hover:text-blue-600 btn-lg">
-                Kariyer Fırsatları
-              </Link>
+              <span className="btn border-white text-white opacity-50 cursor-not-allowed btn-lg">
+                Kariyer Fırsatları (Yakında)
+              </span>
             </div>
           </FadeInUp>
         </div>
@@ -430,7 +533,7 @@ export default function AboutPage() {
               <h3 className="text-lg font-semibold mb-4">Şirket</h3>
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/about" className="hover:text-white transition-colors">Hakkımızda</Link></li>
-                <li><Link href="/careers" className="hover:text-white transition-colors">Kariyer</Link></li>
+                <li><span className="text-gray-500 cursor-not-allowed">Kariyer (Yakında)</span></li>
                 <li><Link href="/press" className="hover:text-white transition-colors">Basın</Link></li>
                 <li><Link href="/investors" className="hover:text-white transition-colors">Yatırımcılar</Link></li>
               </ul>

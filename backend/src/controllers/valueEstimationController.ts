@@ -36,6 +36,9 @@ import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { AuthRequest } from '../middleware/auth'
 import { ValueEstimationService } from '../services/valueEstimationService'
+import { refundCreditForFailedAnalysis } from '../utils/creditRefund'
+import { ERROR_MESSAGES } from '../constants/ErrorMessages'
+import { CREDIT_PRICING } from '../constants/CreditPricing'
 import multer from 'multer'
 
 const prisma = new PrismaClient()
@@ -325,11 +328,37 @@ export class ValueEstimationController {
 
     } catch (error) {
       console.error('❌ Değer tahmini hatası:', error)
-      res.status(500).json({
-        success: false,
-        message: 'Değer tahmini gerçekleştirilemedi',
-        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-      })
+      
+      // Analiz başarısız oldu - Krediyi iade et
+      try {
+        const userId = req.user!.id
+        const serviceCost = CREDIT_PRICING.VALUE_ESTIMATION
+        
+        await refundCreditForFailedAnalysis(
+          userId,
+          parseInt(req.params.reportId),
+          serviceCost,
+          'Değer tahmini AI servisi başarısız'
+        )
+        
+        console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
+        
+        res.status(500).json({
+          success: false,
+          message: ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND,
+          creditRefunded: true,
+          refundedAmount: serviceCost,
+          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+        })
+      } catch (refundError) {
+        console.error('❌ Kredi iade hatası:', refundError)
+        
+        res.status(500).json({
+          success: false,
+          message: 'Değer tahmini gerçekleştirilemedi',
+          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+        })
+      }
     }
   }
 

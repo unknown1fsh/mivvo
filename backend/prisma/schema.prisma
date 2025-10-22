@@ -18,6 +18,7 @@ model User {
   role               Role                @default(USER)
   isActive           Boolean             @default(true) @map("is_active")
   emailVerified      Boolean             @default(false) @map("email_verified")
+  hasSeenGuide       Boolean             @default(false) @map("has_seen_guide")
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
   creditTransactions CreditTransaction[]
@@ -330,4 +331,68 @@ enum NotificationType {
   INFO
   WARNING
   ERROR
+}
+
+model ContactInquiry {
+  id          Int              @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  subject     String
+  message     String           @db.Text
+  inquiryType InquiryType
+  status      InquiryStatus    @default(PENDING)
+  notes       String?          @db.Text
+  assignedTo  Int?             @map("assigned_to")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  
+  @@map("contact_inquiries")
+}
+
+model CareerApplication {
+  id          Int                    @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String
+  position    String
+  department  String?
+  experience  Int?
+  education   String?
+  coverLetter String?                @db.Text
+  resumeUrl   String?                @map("resume_url")
+  linkedIn    String?                @map("linkedin_url")
+  portfolio   String?                @map("portfolio_url")
+  status      ApplicationStatus      @default(PENDING)
+  notes       String?                @db.Text
+  assignedTo  Int?                   @map("assigned_to")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+  
+  @@map("career_applications")
+}
+
+enum InquiryType {
+  GENERAL
+  TECHNICAL
+  SALES
+  PARTNERSHIP
+  MEDIA
+  CAREER
+}
+
+enum InquiryStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  INTERVIEW
+  REJECTED
+  ACCEPTED
 }

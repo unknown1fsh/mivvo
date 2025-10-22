@@ -123,9 +123,9 @@ export const ReportSummary = ({
         <Button variant="secondary" onClick={onPrev}>
           Geri
         </Button>
-        <Button 
+        <Button
           onClick={onSubmit}
-          loading={isLoading}
+          disabled={isLoading}
           size="lg"
         >
           {isLoading ? 'Oluşturuluyor...' : 'Rapor Oluştur'}

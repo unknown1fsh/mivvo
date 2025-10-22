@@ -80,3 +80,39 @@ export * from './common'
  * Hasar analizi raporları ile ilgili tüm tipler.
  */
 export * from './damageAnalysis'
+
+// ===== PAINT ANALYSIS TYPES =====
+
+/**
+ * Boya Analizi Tipleri
+ * 
+ * Boya analizi raporları ile ilgili tüm tipler.
+ */
+export * from './paintAnalysis'
+
+// ===== AUDIO ANALYSIS TYPES =====
+
+/**
+ * Ses Analizi Tipleri
+ * 
+ * Ses analizi raporları ile ilgili tüm tipler.
+ */
+export * from './audioAnalysis'
+
+// ===== VALUE ESTIMATION TYPES =====
+
+/**
+ * Değer Tahmini Tipleri
+ * 
+ * Değer tahmini raporları ile ilgili tüm tipler.
+ */
+export * from './valueEstimation'
+
+// ===== COMPREHENSIVE EXPERTISE TYPES =====
+
+/**
+ * Kapsamlı Ekspertiz Tipleri
+ * 
+ * Kapsamlı ekspertiz raporları ile ilgili tüm tipler.
+ */
+export * from './comprehensiveExpertise'

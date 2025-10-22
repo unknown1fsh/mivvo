@@ -13,7 +13,6 @@ import Link from 'next/link'
 import { FadeInUp } from '@/components/motion'
 import { ProgressBar } from '@/components/ui'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 
 // Types
 import { ReportType, VehicleInfo, UploadedImage } from '@/types'

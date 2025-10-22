@@ -149,24 +149,34 @@ export function useUnreadNotificationCount(): number {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
+    let isMounted = true
+    
     const fetchUnreadCount = async () => {
       try {
+        console.log('🔔 Unread notification count fetching...')
+        
         const result = await userService.getNotifications({ unreadOnly: true })
-        if (result) {
-          setUnreadCount(result.unreadCount || 0)
+        
+        if (isMounted && result) {
+          const count = result.unreadCount || 0
+          console.log('🔔 Unread notification count:', count)
+          setUnreadCount(count)
         }
       } catch (error) {
-        console.error('Okunmamış bildirim sayısı yüklenirken hata:', error)
-        setUnreadCount(0)
+        console.error('❌ Okunmamış bildirim sayısı yüklenirken hata:', error)
+        if (isMounted) {
+          setUnreadCount(0)
+        }
       }
     }
 
+    // Sadece ilk mount'ta çalış
     fetchUnreadCount()
     
-    // 30 saniyede bir yenile
-    const interval = setInterval(fetchUnreadCount, 30000)
-    return () => clearInterval(interval)
-  }, [])
+    return () => {
+      isMounted = false
+    }
+  }, []) // Boş dependency array - sadece mount/unmount
 
   return unreadCount
 }

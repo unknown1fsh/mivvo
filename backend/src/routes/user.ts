@@ -37,6 +37,7 @@ import {
   getCreditTransactions,
   getUserReports,
   deleteAccount,
+  markGuideAsSeen,
 } from '../controllers/userController';
 
 const router = Router();
@@ -134,6 +135,25 @@ router.get('/credits/transactions', asyncHandler(getCreditTransactions));
 router.get('/reports', asyncHandler(getUserReports));
 
 // ===== ACCOUNT MANAGEMENT ROUTES (HESAP YÖNETİMİ) =====
+
+/**
+ * PATCH /user/guide-seen
+ * 
+ * Kullanıcının rehberi gördüğünü işaretle.
+ * 
+ * İş Akışı:
+ * 1. hasSeenGuide alanını true yap
+ * 2. updatedAt timestamp güncelle
+ * 
+ * Response:
+ * - success: true
+ * - message: "Rehber görüldü olarak işaretlendi"
+ * 
+ * Kullanım:
+ * - İlk login sonrası rehber gösterildikten sonra
+ * - Kullanıcı rehberi tamamladığında
+ */
+router.patch('/guide-seen', asyncHandler(markGuideAsSeen));
 
 /**
  * DELETE /user/account

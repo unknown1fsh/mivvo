@@ -19,7 +19,7 @@ export const useComprehensiveExpertise = () => {
       // 1. Analizi başlat
       toast.loading('Tam expertiz başlatılıyor...', { id: 'comprehensive-expertise' })
       
-      const endpoint = process.env.NODE_ENV === 'production' ? '/comprehensive-expertise/start' : '/api/comprehensive-expertise/start'
+      const endpoint = '/api/comprehensive-expertise/start'
       const startResponse = await api.post(endpoint, {
         vehicleInfo: {
           plate: vehicleInfo.plate,
@@ -51,7 +51,7 @@ export const useComprehensiveExpertise = () => {
           }
         }
 
-        await api.post(`/comprehensive-expertise/${reportId}/upload-images`, formData, {
+        await api.post(`/api/comprehensive-expertise/${reportId}/upload-images`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         
@@ -70,7 +70,7 @@ export const useComprehensiveExpertise = () => {
           }
         }
 
-        await api.post(`/comprehensive-expertise/${reportId}/upload-audio`, formData, {
+        await api.post(`/api/comprehensive-expertise/${reportId}/upload-audio`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         
@@ -80,7 +80,7 @@ export const useComprehensiveExpertise = () => {
       // 4. Kapsamlı AI analizi gerçekleştir
       toast.loading('Mivvo AI ile kapsamlı analiz yapılıyor...', { id: 'comprehensive-expertise' })
       
-      const analyzeResponse = await api.post(`/comprehensive-expertise/${reportId}/analyze`)
+      const analyzeResponse = await api.post(`/api/comprehensive-expertise/${reportId}/analyze`)
 
       if (!analyzeResponse.data.success) {
         throw new Error(analyzeResponse.data.message || 'Analiz gerçekleştirilemedi')
@@ -100,7 +100,16 @@ export const useComprehensiveExpertise = () => {
     } catch (error: any) {
       console.error('❌ Tam expertiz hatası:', error)
       toast.dismiss('comprehensive-expertise')
-      toast.error(error.response?.data?.message || error.message || 'Tam expertiz başarısız oldu')
+      
+      const message = error.response?.data?.message || error.message || 'Tam expertiz başarısız oldu'
+      
+      // Kredi iadesi mesajını özel olarak göster
+      if (message.includes('iade') || error.response?.data?.creditRefunded) {
+        toast.success('💳 ' + message, { duration: 5000 })
+      } else {
+        toast.error(message)
+      }
+      
       throw error
     } finally {
       setIsAnalyzing(false)

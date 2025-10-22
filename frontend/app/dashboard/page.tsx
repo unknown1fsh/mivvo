@@ -28,6 +28,7 @@ import { userService } from '@/services/userService'
 import { useUnreadNotificationCount } from '@/hooks/useNotifications'
 import { EmailVerificationBanner } from '@/components/features/EmailVerificationBanner'
 import { EmailVerificationGuard } from '@/components/features/EmailVerificationGuard'
+import { pricingService } from '@/services/pricingService'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
 
@@ -60,6 +61,7 @@ export default function DashboardPage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
+  const [pricingPackages, setPricingPackages] = useState<any[]>([])
   const unreadNotificationCount = useUnreadNotificationCount()
 
   useEffect(() => {
@@ -69,6 +71,34 @@ export default function DashboardPage() {
     
     // Gerçek API'den veri çek
     fetchDashboardData()
+    fetchPricingPackages()
+  }, [])
+
+  // Global error handler for uncaught promise rejections
+  useEffect(() => {
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('🚨 Dashboard - Uncaught Promise Rejection:', event.reason)
+      
+      // Prevent the default browser behavior
+      event.preventDefault()
+      
+      // Log the error for debugging
+      if (event.reason && typeof event.reason === 'object') {
+        console.error('Dashboard error details:', {
+          name: event.reason.name,
+          message: event.reason.message,
+          code: event.reason.code,
+          httpStatus: event.reason.httpStatus,
+          httpError: event.reason.httpError
+        })
+      }
+    }
+
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+    
+    return () => {
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
   }, [])
 
   const fetchDashboardData = async () => {
@@ -78,13 +108,33 @@ export default function DashboardPage() {
       // Kullanıcı bilgisini al (currentUser tanımla)
       const currentUser = authService.getCurrentUser()
       
+      if (!currentUser) {
+        console.error('❌ Kullanıcı bilgisi bulunamadı')
+        toast.error('Kullanıcı bilgisi bulunamadı')
+        return
+      }
+      
+      console.log('👤 Dashboard - Current user:', { 
+        id: currentUser.id, 
+        email: currentUser.email,
+        hasToken: !!localStorage.getItem('auth_token')
+      })
+      
       // Kredi bakiyesini ve raporları çek
-      const creditsEndpoint = process.env.NODE_ENV === 'production' ? '/user/credits' : '/api/user/credits'
-      const reportsEndpoint = process.env.NODE_ENV === 'production' ? '/user/reports' : '/api/user/reports'
+      const creditsEndpoint = '/api/user/credits'
+      const reportsEndpoint = '/api/user/reports'
+      
+      console.log('📡 Dashboard - API endpoints:', { creditsEndpoint, reportsEndpoint })
       
       const [creditsResponse, reportsResponse] = await Promise.all([
-        api.get(creditsEndpoint),
-        api.get(reportsEndpoint)
+        api.get(creditsEndpoint).catch(err => {
+          console.error('❌ Credits API hatası:', err)
+          return { data: { success: false, error: err.message } }
+        }),
+        api.get(reportsEndpoint).catch(err => {
+          console.error('❌ Reports API hatası:', err)
+          return { data: { success: false, error: err.message } }
+        })
       ])
       
       if (reportsResponse.data.success) {
@@ -192,6 +242,65 @@ export default function DashboardPage() {
     }
   }
 
+  const fetchPricingPackages = async () => {
+    try {
+      console.log('📦 Dashboard - Pricing packages fetching...')
+      const packages = await pricingService.getPricingPackages()
+      
+      console.log('📦 Dashboard - Pricing packages received:', packages)
+      
+      // Dashboard için kısaltılmış versiyon
+      const dashboardPackages = packages.map(pkg => ({
+        id: pkg.id,
+        name: pkg.name.replace(' Paketi', '').replace(' Paket', ''),
+        price: pkg.price,
+        credits: pkg.credits,
+        bonus: pkg.bonus,
+        popular: pkg.popular,
+        badge: pkg.badge
+      }))
+      
+      console.log('📦 Dashboard - Processed packages:', dashboardPackages)
+      setPricingPackages(dashboardPackages)
+    } catch (error) {
+      console.error('❌ Pricing packages fetch error:', error)
+      
+      // Fallback olarak static data kullan
+      const fallbackPackages = [
+        {
+          id: 'starter',
+          name: 'Başlangıç',
+          price: 299,
+          credits: 300,
+          bonus: 10,
+          popular: false,
+          badge: null
+        },
+        {
+          id: 'professional',
+          name: 'Profesyonel',
+          price: 649,
+          credits: 750,
+          bonus: 101,
+          popular: true,
+          badge: 'En Popüler'
+        },
+        {
+          id: 'enterprise',
+          name: 'Kurumsal',
+          price: 1199,
+          credits: 1500,
+          bonus: 301,
+          popular: false,
+          badge: 'Kurumsal'
+        }
+      ]
+      
+      console.log('📦 Dashboard - Using fallback packages:', fallbackPackages)
+      setPricingPackages(fallbackPackages)
+    }
+  }
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'completed':
@@ -240,6 +349,17 @@ export default function DashboardPage() {
               <Link href="/settings" className="p-2 text-gray-400 hover:text-gray-600">
                 <CogIcon className="w-6 h-6" />
               </Link>
+              {user?.role === 'ADMIN' && (
+                <Link 
+                  href="/admin" 
+                  className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                  title="Admin Paneline Git"
+                >
+                  <SparklesIcon className="w-5 h-5" />
+                  <span className="text-sm font-semibold hidden sm:inline">Admin Panel</span>
+                  <span className="text-sm font-semibold sm:hidden">Admin</span>
+                </Link>
+              )}
               <Link href="/profile" className="flex items-center space-x-2 hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">
                 <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
                   <UserIcon className="w-5 h-5 text-gray-600" />
@@ -336,6 +456,52 @@ export default function DashboardPage() {
             </div>
           </StaggerItem>
         </StaggerContainer>
+
+        {/* Special Offers - Stats kartlarından sonra, Quick Actions'dan önce */}
+        <FadeInUp delay={0.1}>
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Özel Kampanyalar</h2>
+              <span className="text-sm text-green-600 font-semibold">Sınırlı Süre!</span>
+            </div>
+            
+            <p className="text-sm text-gray-600 max-w-2xl mb-6">
+              Tek analiz 299₺'den başlayan fiyatlarla kredi paketlerinden büyük tasarruf edin! 
+              En düşük analiz fiyatımız 299₺ - Başlangıç paketi ile 1 tam analiz yapabilirsiniz.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {pricingPackages.map((pkg) => (
+                <div key={pkg.id} className={`card p-6 ${pkg.popular ? 'ring-2 ring-blue-500' : ''}`}>
+                  {pkg.badge && (
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                      {pkg.badge}
+                    </span>
+                  )}
+                  <h3 className="text-lg font-bold mt-2">{pkg.name}</h3>
+                  <div className="text-3xl font-bold gradient-text my-3">{pkg.price}₺</div>
+                  <div className="text-sm text-green-600 mb-3">🎁 +{pkg.bonus}₺ Bonus</div>
+                  <ul className="text-sm space-y-2 mb-4">
+                    <li className="flex items-center">
+                      <CheckCircleIcon className="w-4 h-4 text-green-500 mr-2" />
+                      {pkg.credits} Kredi
+                    </li>
+                    <li className="flex items-center">
+                      <CheckCircleIcon className="w-4 h-4 text-green-500 mr-2" />
+                      %{((pkg.bonus/pkg.credits)*100).toFixed(1)} Bonus
+                    </li>
+                  </ul>
+                  <Link
+                    href={`/dashboard/purchase?package=${pkg.id}`}
+                    className={`btn btn-sm w-full ${pkg.popular ? 'btn-primary' : 'btn-secondary'}`}
+                  >
+                    Satın Al
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </section>
+        </FadeInUp>
 
         {/* Quick Actions */}
         <FadeInUp delay={0.2}>

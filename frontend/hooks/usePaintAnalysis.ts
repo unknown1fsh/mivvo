@@ -20,7 +20,7 @@ export const usePaintAnalysis = () => {
       setCurrentStep('Analiz başlatılıyor...')
       setProgress(10)
       
-      const endpoint = process.env.NODE_ENV === 'production' ? '/paint-analysis/start' : '/api/paint-analysis/start'
+      const endpoint = '/api/paint-analysis/start'
       const startResponse = await api.post(endpoint, {
         vehicleInfo: {
           plate: vehicleInfo.plate,
@@ -81,7 +81,7 @@ export const usePaintAnalysis = () => {
         // Eğer formData'da resim varsa yükle
         if (formData.has('images')) {
           console.log('📤 Resimler backend\'e yükleniyor...')
-          await api.post(`/paint-analysis/${reportId}/upload`, formData, {
+          await api.post(`/api/paint-analysis/${reportId}/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           })
           console.log('✅ Resimler başarıyla yüklendi')
@@ -98,7 +98,7 @@ export const usePaintAnalysis = () => {
       setCurrentStep('AI analizi yapılıyor...')
       setProgress(60)
       
-      const analyzeResponse = await api.post(`/paint-analysis/${reportId}/analyze`)
+      const analyzeResponse = await api.post(`/api/paint-analysis/${reportId}/analyze`)
 
       if (!analyzeResponse.data.success) {
         throw new Error(analyzeResponse.data.message || 'Analiz gerçekleştirilemedi')
@@ -141,7 +141,13 @@ export const usePaintAnalysis = () => {
         errorMessage = error.message
       }
       
-      toast.error(errorMessage)
+      // Kredi iadesi mesajını özel olarak göster
+      if (errorMessage.includes('iade') || error.response?.data?.creditRefunded) {
+        toast.success('💳 ' + errorMessage, { duration: 5000 })
+      } else {
+        toast.error(errorMessage)
+      }
+      
       throw error
     } finally {
       setIsAnalyzing(false)
