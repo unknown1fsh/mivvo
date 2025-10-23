@@ -43,13 +43,14 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { NotificationService } from '../services/notificationService';
 import { emailService } from '../services/emailService';
+import { getPrismaClient } from '../utils/prisma';
 
-const prisma = new PrismaClient();
+// Optimized Prisma Client
+const prisma = getPrismaClient();
 
 // ===== HELPER FUNCTIONS =====
 
@@ -249,83 +250,76 @@ export const register = async (req: Request, res: Response): Promise<void> => {
  * }
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
-  
-  console.log('🔐 Backend login başlatıldı:', { email, hasPassword: !!password });
+  try {
+    const { email, password } = req.body;
+    
+    // Production'da minimal logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔐 Backend login başlatıldı:', { email, hasPassword: !!password });
+    }
 
-  // Kullanıcı bulma
-  console.log('🔍 Kullanıcı aranıyor:', email);
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: {
-      id: true,
-      email: true,
-      passwordHash: true,
-      firstName: true,
-      lastName: true,
-      role: true,
-      isActive: true,
-    },
-  });
-
-  console.log('👤 Kullanıcı bulundu:', {
-    found: !!user,
-    isActive: user?.isActive,
-    userId: user?.id,
-    userEmail: user?.email
-  });
-
-  // Kullanıcı ve aktiflik kontrolü
-  if (!user || !user.isActive) {
-    console.error('❌ Kullanıcı bulunamadı veya aktif değil');
-    res.status(401).json({
-      success: false,
-      message: 'Geçersiz email veya şifre.',
+    // Kullanıcı bulma - sadece gerekli alanları seç
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+      },
     });
-    return;
-  }
 
-  // Şifre doğrulama
-  console.log('🔑 Şifre kontrol ediliyor...');
-  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-  console.log('🔑 Şifre kontrol sonucu:', { isValid: isPasswordValid });
-  
-  if (!isPasswordValid) {
-    console.error('❌ Şifre yanlış');
-    res.status(401).json({
+    // Kullanıcı ve aktiflik kontrolü
+    if (!user || !user.isActive) {
+      res.status(401).json({
+        success: false,
+        message: 'Geçersiz email veya şifre.',
+      });
+      return;
+    }
+
+    // Şifre doğrulama
+    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    
+    if (!isPasswordValid) {
+      res.status(401).json({
+        success: false,
+        message: 'Geçersiz email veya şifre.',
+      });
+      return;
+    }
+
+    // JWT token üretme
+    const token = generateToken(user.id);
+
+    // Şifre hash'ini response'dan çıkar
+    const { passwordHash, ...userWithoutPassword } = user;
+
+    const responseData = {
+      success: true,
+      message: 'Giriş başarılı.',
+      data: {
+        user: userWithoutPassword,
+        token,
+      },
+    };
+
+    // Production'da minimal logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Login başarılı:', { userEmail: user.email });
+    }
+
+    res.json(responseData);
+  } catch (error) {
+    console.error('❌ Login hatası:', error);
+    res.status(500).json({
       success: false,
-      message: 'Geçersiz email veya şifre.',
+      message: 'Sunucu hatası oluştu.',
     });
-    return;
   }
-
-  // JWT token üretme
-  console.log('🎫 Token oluşturuluyor...');
-  const token = generateToken(user.id);
-  console.log('🎫 Token oluşturuldu:', { tokenLength: token.length });
-
-  // Şifre hash'ini response'dan çıkar
-  const { passwordHash, ...userWithoutPassword } = user;
-
-  const responseData = {
-    success: true,
-    message: 'Giriş başarılı.',
-    data: {
-      user: userWithoutPassword,
-      token,
-    },
-  };
-
-  console.log('✅ Login başarılı - Response hazırlanıyor:', {
-    success: responseData.success,
-    hasUser: !!responseData.data.user,
-    hasToken: !!responseData.data.token,
-    userEmail: responseData.data.user.email,
-    fullResponse: responseData
-  });
-
-  console.log('📤 Response gönderiliyor:', JSON.stringify(responseData, null, 2));
-  res.json(responseData);
 };
 
 /**

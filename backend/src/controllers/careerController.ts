@@ -20,14 +20,14 @@
  */
 
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // Multer konfigürasyonu - CV upload için
 const storage = multer.diskStorage({

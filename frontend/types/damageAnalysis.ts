@@ -395,7 +395,7 @@ export enum DamageSeverity {
  * 
  * Hasar konumları
  */
-export enum DamageArea {
+export enum DamageLocation {
   ÖN = 'ön',
   ARKA = 'arka',
   SOL = 'sol',

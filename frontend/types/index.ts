@@ -89,6 +89,7 @@ export * from './damageAnalysis'
  * Boya analizi raporları ile ilgili tüm tipler.
  */
 export * from './paintAnalysis'
+// Note: PaintAnalysisResult is also exported from './vehicle' - using the one from paintAnalysis
 
 // ===== AUDIO ANALYSIS TYPES =====
 

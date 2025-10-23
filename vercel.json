@@ -1,0 +1,100 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    },
+    {
+      "src": "backend/dist/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/auth/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/user/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/vehicle/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/payment/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/admin/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/vin/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/paint-analysis/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/engine-sound-analysis/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/vehicle-garage/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/ai-analysis/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/ai-test/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/damage-analysis/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/value-estimation/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/comprehensive-expertise/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/pricing/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/contact/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/career/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/reports/(.*)",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/api/health",
+      "dest": "backend/dist/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
+    }
+  ],
+  "installCommand": "npm run install:all",
+  "buildCommand": "npm run build",
+  "outputDirectory": "frontend/.next",
+  "framework": "nextjs"
+}
+

@@ -82,7 +82,8 @@ const authOptions: NextAuthOptions = {
 
         try {
           // Backend API'ye login isteği gönder
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/login`, {
+          const backendUrl = process.env.BACKEND_URL || 'https://mivvo-backend-production.up.railway.app'
+          const response = await fetch(`${backendUrl}/api/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -158,7 +159,7 @@ const authOptions: NextAuthOptions = {
       if (account && (account.provider === 'google' || account.provider === 'facebook')) {
         try {
           // Backend'e OAuth kullanıcısı gönder
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/oauth`, {
+          const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/oauth`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

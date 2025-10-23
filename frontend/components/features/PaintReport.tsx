@@ -18,10 +18,10 @@ import {
   SparklesIcon,
   StarIcon
 } from '@heroicons/react/24/outline'
-import { PaintAnalysisResult } from '@/types'
+import { PaintAnalysisResult } from '@/types/paintAnalysis'
 
 interface PaintReportProps {
-  report: PaintAnalysisResult
+  report: any
   vehicleInfo: {
     plate: string
     brand: string
@@ -34,7 +34,7 @@ interface PaintReportProps {
 
 export function PaintReport({ report, vehicleInfo, onGeneratePDF, isGeneratingPDF }: PaintReportProps) {
   // Backend'den gelen veriyi direkt kullan - artık mapping gerek yok
-  const data = report || {}
+  const data = report as any
   
   // Debug: Gelen veriyi kontrol et
   console.log('🎨 PaintReport Debug:', {
@@ -80,12 +80,12 @@ export function PaintReport({ report, vehicleInfo, onGeneratePDF, isGeneratingPD
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
-            <div className="text-4xl font-bold text-gray-900 mb-2">{data.boyaKalitesi?.genelSkor || 0}</div>
+            <div className="text-4xl font-bold text-gray-900 mb-2">{data.boyaKalitesi?.genelPuan || 0}</div>
             <div className="text-sm text-gray-500">Genel Puan</div>
             <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
               <div 
                 className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${data.boyaKalitesi?.genelSkor || 0}%` }}
+                style={{ width: `${data.boyaKalitesi?.genelPuan || 0}%` }}
               />
             </div>
           </div>

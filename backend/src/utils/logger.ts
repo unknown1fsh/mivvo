@@ -98,70 +98,75 @@ const jsonFormat = winston.format.combine(
 
 /**
  * Log dosyaları için dizin
+ * Vercel'de dosya sistemi erişimi olmadığı için sadece konsol kullan
  */
-const logDir = path.join(process.cwd(), 'logs');
+const logDir = process.env.VERCEL ? '/tmp/logs' : path.join(process.cwd(), 'logs');
 
 // ===== TRANSPORTS =====
 
 /**
  * Transport Konfigürasyonları
+ * Vercel'de sadece konsol transport kullan
  */
 
-// Konsol transport (development için)
+// Konsol transport (her zaman aktif)
 const consoleTransport = new winston.transports.Console({
   level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
   format: consoleFormat,
 });
 
-// Genel log dosyası (tüm seviyeler)
-const appFileTransport = new DailyRotateFile({
+// Vercel'de dosya transport'ları devre dışı bırak
+const isVercel = process.env.VERCEL;
+
+// Genel log dosyası (sadece local development için)
+const appFileTransport = !isVercel ? new DailyRotateFile({
   filename: path.join(logDir, 'app-%DATE%.log'),
   datePattern: 'YYYY-MM-DD',
   maxSize: '20m',
   maxFiles: '30d',
   format: jsonFormat,
   level: 'debug',
-});
+}) : null;
 
-// Hata log dosyası (sadece error ve warn)
-const errorFileTransport = new DailyRotateFile({
+// Hata log dosyası (sadece local development için)
+const errorFileTransport = !isVercel ? new DailyRotateFile({
   filename: path.join(logDir, 'error-%DATE%.log'),
   datePattern: 'YYYY-MM-DD',
   maxSize: '20m',
   maxFiles: '30d',
   format: jsonFormat,
   level: 'warn',
-});
+}) : null;
 
-// HTTP request log dosyası
-const httpFileTransport = new DailyRotateFile({
+// HTTP request log dosyası (sadece local development için)
+const httpFileTransport = !isVercel ? new DailyRotateFile({
   filename: path.join(logDir, 'http-%DATE%.log'),
   datePattern: 'YYYY-MM-DD',
   maxSize: '20m',
   maxFiles: '30d',
   format: jsonFormat,
   level: 'http',
-});
+}) : null;
 
-// Database operation log dosyası
-const databaseFileTransport = new DailyRotateFile({
+// Database operation log dosyası (sadece local development için)
+const databaseFileTransport = !isVercel ? new DailyRotateFile({
   filename: path.join(logDir, 'database-%DATE%.log'),
   datePattern: 'YYYY-MM-DD',
   maxSize: '20m',
   maxFiles: '30d',
   format: jsonFormat,
   level: 'debug',
-});
+}) : null;
 
-// AI Analysis log dosyası
-const aiAnalysisFileTransport = new DailyRotateFile({
+// AI Analysis log dosyası (sadece local development için)
+const aiAnalysisFileTransport = !isVercel ? new DailyRotateFile({
   filename: path.join(logDir, 'ai-analysis-%DATE%.log'),
   datePattern: 'YYYY-MM-DD',
   maxSize: '20m',
   maxFiles: '30d',
   format: jsonFormat,
   level: 'debug',
-});
+}) : null;
 
 // ===== LOGGER INSTANCE =====
 
@@ -169,14 +174,15 @@ const aiAnalysisFileTransport = new DailyRotateFile({
  * Ana Logger Instance
  * 
  * Tüm uygulama için merkezi logger
+ * Vercel'de sadece konsol transport kullan
  */
 const logger = winston.createLogger({
   levels: logLevels,
   level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
   transports: [
     consoleTransport,
-    appFileTransport,
-    errorFileTransport,
+    ...(appFileTransport ? [appFileTransport] : []),
+    ...(errorFileTransport ? [errorFileTransport] : []),
   ],
   // Hata durumunda exit yapma
   exitOnError: false,
@@ -188,13 +194,14 @@ const logger = winston.createLogger({
  * HTTP Request Logger
  * 
  * Sadece HTTP istekleri için
+ * Vercel'de sadece konsol transport kullan
  */
 export const httpLogger = winston.createLogger({
   levels: logLevels,
   level: 'http',
   transports: [
     consoleTransport,
-    httpFileTransport,
+    ...(httpFileTransport ? [httpFileTransport] : []),
   ],
   exitOnError: false,
 });
@@ -203,13 +210,14 @@ export const httpLogger = winston.createLogger({
  * Database Logger
  * 
  * Sadece database operasyonları için
+ * Vercel'de sadece konsol transport kullan
  */
 export const databaseLogger = winston.createLogger({
   levels: logLevels,
   level: 'debug',
   transports: [
     consoleTransport,
-    databaseFileTransport,
+    ...(databaseFileTransport ? [databaseFileTransport] : []),
   ],
   exitOnError: false,
 });
@@ -218,13 +226,14 @@ export const databaseLogger = winston.createLogger({
  * AI Analysis Logger
  * 
  * Sadece AI analiz işlemleri için
+ * Vercel'de sadece konsol transport kullan
  */
 export const aiAnalysisLogger = winston.createLogger({
   levels: logLevels,
   level: 'debug',
   transports: [
     consoleTransport,
-    aiAnalysisFileTransport,
+    ...(aiAnalysisFileTransport ? [aiAnalysisFileTransport] : []),
   ],
   exitOnError: false,
 });

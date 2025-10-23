@@ -32,11 +32,11 @@
  */
 
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { getPrismaClient } from '../utils/prisma';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // ===== CONTROLLER METHODS =====
 

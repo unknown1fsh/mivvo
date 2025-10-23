@@ -92,20 +92,21 @@ export interface PackageDetailsResponse {
 export const getPricingPackages = async (): Promise<PricingPackage[]> => {
   try {
     const response = await apiClient.get('/api/pricing/packages')
+    const data = response.data as any
     
     console.log('📦 Pricing packages response:', response)
     
     // Response formatını kontrol et
-    if (response.success && response.data && response.data.packages) {
-      console.log('✅ Pricing packages başarıyla alındı:', response.data.packages)
-      return response.data.packages
-    } else if (response.data && response.data.packages) {
+    if (data.success && data.data && data.data.packages) {
+      console.log('✅ Pricing packages başarıyla alındı:', data.data.packages)
+      return data.data.packages
+    } else if (data.packages) {
       // Alternatif format kontrolü
-      console.log('✅ Pricing packages (alt format) başarıyla alındı:', response.data.packages)
-      return response.data.packages
+      console.log('✅ Pricing packages (alt format) başarıyla alındı:', data.packages)
+      return data.packages
     } else {
       console.error('❌ Pricing packages format hatası:', response)
-      throw new Error(response.message || response.error || 'Paketler getirilemedi')
+      throw new Error(data.message || data.error || 'Paketler getirilemedi')
     }
   } catch (error: any) {
     console.error('💥 Pricing packages fetch error:', error)
@@ -127,20 +128,21 @@ export const getPricingPackages = async (): Promise<PricingPackage[]> => {
 export const getActiveCampaigns = async (): Promise<Campaign[]> => {
   try {
     const response = await apiClient.get('/api/pricing/campaigns')
+    const data = response.data as any
     
     console.log('🎯 Campaigns response:', response)
     
     // Response formatını kontrol et
-    if (response.success && response.data && response.data.campaigns) {
-      console.log('✅ Campaigns başarıyla alındı:', response.data.campaigns)
-      return response.data.campaigns
-    } else if (response.data && response.data.campaigns) {
+    if (data.success && data.data && data.data.campaigns) {
+      console.log('✅ Campaigns başarıyla alındı:', data.data.campaigns)
+      return data.data.campaigns
+    } else if (data.campaigns) {
       // Alternatif format kontrolü
-      console.log('✅ Campaigns (alt format) başarıyla alındı:', response.data.campaigns)
-      return response.data.campaigns
+      console.log('✅ Campaigns (alt format) başarıyla alındı:', data.campaigns)
+      return data.campaigns
     } else {
       console.error('❌ Campaigns format hatası:', response)
-      throw new Error(response.message || response.error || 'Kampanyalar getirilemedi')
+      throw new Error(data.message || data.error || 'Kampanyalar getirilemedi')
     }
   } catch (error: any) {
     console.error('💥 Campaigns fetch error:', error)
@@ -163,20 +165,21 @@ export const getActiveCampaigns = async (): Promise<Campaign[]> => {
 export const getPackageDetails = async (packageId: string): Promise<any> => {
   try {
     const response = await apiClient.get(`/api/pricing/packages/${packageId}`)
+    const data = response.data as any
     
     console.log('📋 Package details response:', response)
     
     // Response formatını kontrol et
-    if (response.success && response.data && response.data.package) {
-      console.log('✅ Package details başarıyla alındı:', response.data.package)
-      return response.data.package
-    } else if (response.data && response.data.package) {
+    if (data.success && data.data && data.data.package) {
+      console.log('✅ Package details başarıyla alındı:', data.data.package)
+      return data.data.package
+    } else if (data.package) {
       // Alternatif format kontrolü
-      console.log('✅ Package details (alt format) başarıyla alındı:', response.data.package)
-      return response.data.package
+      console.log('✅ Package details (alt format) başarıyla alındı:', data.package)
+      return data.package
     } else {
       console.error('❌ Package details format hatası:', response)
-      throw new Error(response.message || response.error || 'Paket detayları getirilemedi')
+      throw new Error(data.message || data.error || 'Paket detayları getirilemedi')
     }
   } catch (error: any) {
     console.error('💥 Package details fetch error:', error)

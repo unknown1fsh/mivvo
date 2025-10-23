@@ -36,6 +36,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate } from '../middleware/auth';
+import { createRateLimit } from '../utils/rateLimit';
 import {
   register,
   login,
@@ -51,6 +52,14 @@ import {
 } from '../controllers/authController';
 
 const router = Router();
+
+// ===== RATE LIMITING MIDDLEWARE =====
+
+// Login için özel rate limiting (veritabanı kotasını korumak için)
+const loginRateLimit = createRateLimit(5, 15 * 60 * 1000); // 15 dakikada 5 login denemesi
+const registerRateLimit = createRateLimit(3, 60 * 60 * 1000); // 1 saatte 3 kayıt
+const passwordResetRateLimit = createRateLimit(3, 60 * 60 * 1000); // 1 saatte 3 şifre sıfırlama
+const generalRateLimit = createRateLimit(100, 15 * 60 * 1000); // 15 dakikada 100 istek
 
 // ===== VALIDATION MIDDLEWARE =====
 
@@ -124,6 +133,7 @@ const updateProfileValidation = [
  * Yeni kullanıcı kaydı.
  * 
  * Middleware:
+ * - registerRateLimit: Rate limiting (1 saatte 3 kayıt)
  * - registerValidation: Input validation
  * - asyncHandler: Async error handling
  * 
@@ -134,7 +144,7 @@ const updateProfileValidation = [
  * - lastName: string
  * - phone?: string
  */
-router.post('/register', registerValidation, asyncHandler(register));
+router.post('/register', registerRateLimit, registerValidation, asyncHandler(register));
 
 /**
  * POST /auth/login
@@ -142,6 +152,7 @@ router.post('/register', registerValidation, asyncHandler(register));
  * Kullanıcı girişi.
  * 
  * Middleware:
+ * - loginRateLimit: Rate limiting (15 dakikada 5 login denemesi)
  * - loginValidation: Input validation
  * - asyncHandler: Async error handling
  * 
@@ -153,24 +164,32 @@ router.post('/register', registerValidation, asyncHandler(register));
  * - token: JWT token
  * - user: Kullanıcı bilgileri
  */
-router.post('/login', loginValidation, asyncHandler(login));
+router.post('/login', loginRateLimit, loginValidation, asyncHandler(login));
 
 /**
  * POST /auth/forgot-password
  * 
  * Şifre sıfırlama talebi.
  * 
+ * Middleware:
+ * - passwordResetRateLimit: Rate limiting (1 saatte 3 şifre sıfırlama)
+ * - asyncHandler: Async error handling
+ * 
  * Email ile şifre sıfırlama linki gönderilir.
  * 
  * Body:
  * - email: string
  */
-router.post('/forgot-password', asyncHandler(forgotPassword));
+router.post('/forgot-password', passwordResetRateLimit, asyncHandler(forgotPassword));
 
 /**
  * POST /auth/reset-password
  * 
  * Şifre sıfırlama (token ile).
+ * 
+ * Middleware:
+ * - passwordResetRateLimit: Rate limiting
+ * - asyncHandler: Async error handling
  * 
  * Forgot-password ile gönderilen token kullanılır.
  * 
@@ -178,36 +197,48 @@ router.post('/forgot-password', asyncHandler(forgotPassword));
  * - token: string
  * - newPassword: string
  */
-router.post('/reset-password', asyncHandler(resetPassword));
+router.post('/reset-password', passwordResetRateLimit, asyncHandler(resetPassword));
 
 /**
  * GET /auth/verify-email/:token
  * 
  * Email adresi doğrulama.
  * 
+ * Middleware:
+ * - generalRateLimit: Rate limiting
+ * - asyncHandler: Async error handling
+ * 
  * Kayıt sonrası gönderilen email link'i ile doğrulama.
  * 
  * Params:
  * - token: Email verification token
  */
-router.get('/verify-email/:token', asyncHandler(verifyEmail));
+router.get('/verify-email/:token', generalRateLimit, asyncHandler(verifyEmail));
 
 /**
  * POST /auth/resend-verification
  * 
  * Email doğrulama token'ını yeniden gönder.
  * 
+ * Middleware:
+ * - passwordResetRateLimit: Rate limiting
+ * - asyncHandler: Async error handling
+ * 
  * Email doğrulama linkini tekrar gönderir.
  * 
  * Body:
  * - email: string
  */
-router.post('/resend-verification', asyncHandler(resendVerification));
+router.post('/resend-verification', passwordResetRateLimit, asyncHandler(resendVerification));
 
 /**
  * POST /auth/oauth
  * 
  * OAuth ile giriş (Google, Facebook).
+ * 
+ * Middleware:
+ * - loginRateLimit: Rate limiting
+ * - asyncHandler: Async error handling
  * 
  * OAuth provider'lar ile giriş yapar.
  * 
@@ -219,7 +250,7 @@ router.post('/resend-verification', asyncHandler(resendVerification));
  * - image?: string
  * - accessToken?: string
  */
-router.post('/oauth', asyncHandler(oauthLogin));
+router.post('/oauth', loginRateLimit, asyncHandler(oauthLogin));
 
 // ===== PROTECTED ROUTES (KORUMALІ ROTALAR) =====
 
@@ -240,17 +271,25 @@ router.use(authenticate); // All routes below require authentication
  * 
  * Kullanıcı çıkışı.
  * 
+ * Middleware:
+ * - generalRateLimit: Rate limiting
+ * - asyncHandler: Async error handling
+ * 
  * JWT token invalidate edilir (blacklist'e eklenir).
  * 
  * Headers:
  * - Authorization: Bearer {token}
  */
-router.post('/logout', asyncHandler(logout));
+router.post('/logout', generalRateLimit, asyncHandler(logout));
 
 /**
  * GET /auth/profile
  * 
  * Kullanıcı profil bilgilerini getir.
+ * 
+ * Middleware:
+ * - generalRateLimit: Rate limiting
+ * - asyncHandler: Async error handling
  * 
  * JWT token'dan user ID alınır ve profil döndürülür.
  * 
@@ -260,7 +299,7 @@ router.post('/logout', asyncHandler(logout));
  * Response:
  * - id, email, firstName, lastName, phone, role, credits, vb.
  */
-router.get('/profile', asyncHandler(getProfile));
+router.get('/profile', generalRateLimit, asyncHandler(getProfile));
 
 /**
  * PUT /auth/profile
@@ -268,6 +307,7 @@ router.get('/profile', asyncHandler(getProfile));
  * Kullanıcı profil bilgilerini güncelle.
  * 
  * Middleware:
+ * - generalRateLimit: Rate limiting
  * - updateProfileValidation: Input validation
  * - asyncHandler: Async error handling
  * 
@@ -279,7 +319,7 @@ router.get('/profile', asyncHandler(getProfile));
  * - lastName?: string
  * - phone?: string
  */
-router.put('/profile', updateProfileValidation, asyncHandler(updateProfile));
+router.put('/profile', generalRateLimit, updateProfileValidation, asyncHandler(updateProfile));
 
 /**
  * PUT /auth/change-password
@@ -287,6 +327,7 @@ router.put('/profile', updateProfileValidation, asyncHandler(updateProfile));
  * Kullanıcı şifresini değiştir.
  * 
  * Middleware:
+ * - generalRateLimit: Rate limiting
  * - changePasswordValidation: Input validation
  * - asyncHandler: Async error handling
  * 
@@ -297,6 +338,6 @@ router.put('/profile', updateProfileValidation, asyncHandler(updateProfile));
  * - currentPassword: string (mevcut şifre)
  * - newPassword: string (yeni şifre)
  */
-router.put('/change-password', changePasswordValidation, asyncHandler(changePassword));
+router.put('/change-password', generalRateLimit, changePasswordValidation, asyncHandler(changePassword));
 
 export default router;

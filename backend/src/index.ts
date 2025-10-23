@@ -33,7 +33,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
 import { requestLogger } from './middleware/requestLogger';
 import { databaseLoggerMiddleware } from './middleware/databaseLogger';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient, disconnectPrisma } from './utils/prisma';
 
 // Load environment variables
 dotenv.config();
@@ -183,11 +183,18 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Vercel routing ile frontend dosyaları otomatik serve ediliyor
 
 // Prisma Client ve Database Logger Setup
-const prisma = new PrismaClient();
-prisma.$use(databaseLoggerMiddleware);
+const prisma = getPrismaClient();
+
+// Production'da sadece error logları kullan
+if (process.env.NODE_ENV === 'production') {
+  // Production'da database logger'ı devre dışı bırak (kota tasarrufu için)
+  console.log('🔧 Production modu: Database logger devre dışı');
+} else {
+  prisma.$use(databaseLoggerMiddleware);
+}
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Mivvo Expertiz Backend Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
@@ -196,14 +203,20 @@ app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
-  process.exit(0);
+process.on('SIGTERM', async () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  server.close(async () => {
+    await disconnectPrisma();
+    process.exit(0);
+  });
 });
 
-process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
-  process.exit(0);
+process.on('SIGINT', async () => {
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  server.close(async () => {
+    await disconnectPrisma();
+    process.exit(0);
+  });
 });
 
 export default app;

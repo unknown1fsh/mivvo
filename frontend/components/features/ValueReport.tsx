@@ -33,7 +33,7 @@ interface ValueReportProps {
 }
 
 export function ValueReport({ data, vehicleInfo, showActions = false }: ValueReportProps) {
-  const getRiskColor = (risk: RiskLevel) => {
+  const getRiskColor = (risk: RiskLevel | 'unknown') => {
     switch (risk) {
       case 'low': return 'text-green-600 bg-green-100'
       case 'medium': return 'text-yellow-600 bg-yellow-100'
@@ -42,7 +42,7 @@ export function ValueReport({ data, vehicleInfo, showActions = false }: ValueRep
     }
   }
 
-  const getRiskDescription = (risk: RiskLevel) => {
+  const getRiskDescription = (risk: RiskLevel | 'unknown') => {
     switch (risk) {
       case 'low': return 'Düşük Risk'
       case 'medium': return 'Orta Risk'
@@ -86,11 +86,11 @@ export function ValueReport({ data, vehicleInfo, showActions = false }: ValueRep
           </div>
           
           <div className="text-center">
-            <div className={`text-2xl font-bold mb-2 ${getRiskColor(data.investmentAnalysis?.riskLevel || 'unknown').split(' ')[0]}`}>
-              {getRiskDescription(data.investmentAnalysis?.riskLevel || 'unknown')}
+            <div className={`text-2xl font-bold mb-2 ${getRiskColor((data.investmentAnalysis?.riskLevel || 'unknown') as any).split(' ')[0]}`}>
+              {getRiskDescription((data.investmentAnalysis?.riskLevel || 'unknown') as any)}
             </div>
             <div className="text-sm text-gray-500">Yatırım Riski</div>
-            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2 ${getRiskColor(data.investmentAnalysis?.riskLevel || 'unknown')}`}>
+            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2 ${getRiskColor((data.investmentAnalysis?.riskLevel || 'unknown') as any)}`}>
               {data.investmentAnalysis?.riskLevel || 'Bilinmiyor'}
             </div>
           </div>

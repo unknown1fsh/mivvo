@@ -20,9 +20,9 @@
 import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { CREDIT_PRICING } from '../constants/CreditPricing'
-import { PrismaClient } from '@prisma/client'
+import { getPrismaClient } from '../utils/prisma'
 
-const prisma = new PrismaClient()
+const prisma = getPrismaClient()
 
 // ===== INTERFACES =====
 

@@ -208,7 +208,7 @@ export const hardDeleteUser = async (
   userId: number,
   payload: HardDeleteUserPayload
 ): Promise<any> => {
-  const response = await adminApiClient.delete(
+  const response = await (adminApiClient as any).delete(
     `/api/admin/users/${userId}/hard-delete`,
     { data: payload }
   )

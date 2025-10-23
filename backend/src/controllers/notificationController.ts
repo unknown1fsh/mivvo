@@ -28,11 +28,11 @@
  */
 
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma';
 import { asyncHandler } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 /**
  * Bildirim Listesi Getir

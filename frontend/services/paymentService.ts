@@ -82,11 +82,12 @@ export interface RefundResponse {
 export const initiatePayment = async (request: PaymentInitiateRequest): Promise<PaymentInitiateResponse> => {
   try {
     const response = await apiClient.post('/payment/initiate', request)
+    const data = response.data as any
     
-    if (response.data.success) {
-      return response.data
+    if (data.success) {
+      return data
     } else {
-      throw new Error(response.data.message || 'Ödeme başlatılamadı')
+      throw new Error(data.message || 'Ödeme başlatılamadı')
     }
   } catch (error: any) {
     console.error('Payment initiation error:', error)
@@ -111,11 +112,12 @@ export const initiatePayment = async (request: PaymentInitiateRequest): Promise<
 export const verifyPayment = async (request: PaymentVerifyRequest): Promise<PaymentVerifyResponse> => {
   try {
     const response = await apiClient.post('/payment/verify', request)
+    const data = response.data as any
     
-    if (response.data.success) {
-      return response.data
+    if (data.success) {
+      return data
     } else {
-      throw new Error(response.data.message || 'Ödeme doğrulanamadı')
+      throw new Error(data.message || 'Ödeme doğrulanamadı')
     }
   } catch (error: any) {
     console.error('Payment verification error:', error)
@@ -140,11 +142,12 @@ export const verifyPayment = async (request: PaymentVerifyRequest): Promise<Paym
 export const refundPayment = async (request: RefundRequest): Promise<RefundResponse> => {
   try {
     const response = await apiClient.post('/payment/refund', request)
+    const data = response.data as any
     
-    if (response.data.success) {
-      return response.data
+    if (data.success) {
+      return data
     } else {
-      throw new Error(response.data.message || 'İade işlemi başlatılamadı')
+      throw new Error(data.message || 'İade işlemi başlatılamadı')
     }
   } catch (error: any) {
     console.error('Payment refund error:', error)

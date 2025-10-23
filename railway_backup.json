@@ -1,0 +1,1405 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "slmsrcncnr@gmail.com",
+      "passwordHash": "$2a$12$5qN2kmAHWVOFtUfpOlWrP.2DCBkO.8ksrQ8I3U1Mna0xLrxDopCOu",
+      "firstName": "Selim Sercan",
+      "lastName": "ÇINAR",
+      "phone": "+905531405662",
+      "role": "ADMIN",
+      "isActive": true,
+      "emailVerified": false,
+      "createdAt": "2025-10-18T15:25:32.000Z",
+      "updatedAt": "2025-10-18T15:25:32.000Z"
+    },
+    {
+      "id": 2,
+      "email": "sce@scegrup.com",
+      "passwordHash": "$2a$12$q3BWbN95ThBnBb.Ng7ece.nDnSRu1TjxS2QKjc3RNmXlxyXphHTDi",
+      "firstName": "ERCAN",
+      "lastName": "Erguler",
+      "phone": "+905433929230",
+      "role": "ADMIN",
+      "isActive": true,
+      "emailVerified": false,
+      "createdAt": "2025-10-18T17:18:26.000Z",
+      "updatedAt": "2025-10-18T17:18:26.000Z"
+    },
+    {
+      "id": 3,
+      "email": "cengizhanyurdutek@hotmail.com",
+      "passwordHash": "$2a$12$EYtBR467Elutr3ph0O2u6.kNUTbe4mBpMYdFLVUpXTygc3kbM/YUW",
+      "firstName": "Cengizhan",
+      "lastName": "YURDUTEK",
+      "phone": "+90 555 555 55 55",
+      "role": "USER",
+      "isActive": true,
+      "emailVerified": true,
+      "createdAt": "2025-10-19T09:10:03.825Z",
+      "updatedAt": "2025-10-19T09:10:03.825Z"
+    }
+  ],
+  "userCredits": [
+    {
+      "id": 2,
+      "userId": 2,
+      "balance": "0",
+      "totalPurchased": "0",
+      "totalUsed": "0",
+      "createdAt": "2025-10-18T14:18:26.194Z",
+      "updatedAt": "2025-10-18T14:18:26.194Z"
+    },
+    {
+      "id": 3,
+      "userId": 3,
+      "balance": "0",
+      "totalPurchased": "0",
+      "totalUsed": "0",
+      "createdAt": "2025-10-19T09:10:04.018Z",
+      "updatedAt": "2025-10-19T09:10:04.018Z"
+    },
+    {
+      "id": 1,
+      "userId": 1,
+      "balance": "501",
+      "totalPurchased": "1000",
+      "totalUsed": "0",
+      "createdAt": "2025-10-18T12:25:32.536Z",
+      "updatedAt": "2025-10-19T09:14:29.528Z"
+    }
+  ],
+  "creditTransactions": [
+    {
+      "id": 1,
+      "userId": 1,
+      "transactionType": "PURCHASE",
+      "amount": "1000",
+      "description": "",
+      "referenceId": "admin_add_1_1760796785094",
+      "createdAt": "2025-10-18T14:13:05.095Z"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "transactionType": "USAGE",
+      "amount": "-499",
+      "description": "Hasar Analizi - AI servisi kullanımı",
+      "referenceId": "2",
+      "createdAt": "2025-10-19T09:14:29.707Z"
+    }
+  ],
+  "vehicleReports": [
+    {
+      "id": 1,
+      "userId": 1,
+      "vehicleGarageId": null,
+      "vehiclePlate": "34 ABC 123",
+      "vehicleBrand": "Toyota",
+      "vehicleModel": "Corolla",
+      "vehicleYear": 2021,
+      "vehicleColor": null,
+      "mileage": null,
+      "reportType": "PAINT_ANALYSIS",
+      "status": "COMPLETED",
+      "aiAnalysisData": {
+        "model": "OpenAI",
+        "aiProvider": "OpenAI",
+        "confidence": 95,
+        "costEstimate": {
+          "timeline": [
+            {
+              "phase": "Hazırlık ve Temizlik",
+              "duration": 2,
+              "description": "Detaylı yıkama ve yüzey hazırlığı"
+            },
+            {
+              "phase": "Yüzey Düzeltme",
+              "duration": 3,
+              "description": "Portakal kabuğu efekti giderme ve düzeltme"
+            },
+            {
+              "phase": "Parlatma",
+              "duration": 4,
+              "description": "Profesyonel parlatma ve düzeltme"
+            },
+            {
+              "phase": "Koruyucu Uygulama",
+              "duration": 6,
+              "description": "Seramik kaplama uygulaması ve kurutma"
+            },
+            {
+              "phase": "Kalite Kontrol",
+              "duration": 1,
+              "description": "Detaylı kontrol ve teslim"
+            }
+          ],
+          "warranty": {
+            "covered": true,
+            "duration": "2 yıl veya 40.000 km",
+            "conditions": [
+              "Yetkili serviste yapılmalı",
+              "Orijinal malzeme kullanılmalı",
+              "Düzenli bakım takibi yapılmalı",
+              "Garanti belgesi saklanmalı"
+            ]
+          },
+          "breakdown": [
+            {
+              "cost": 800,
+              "category": "Yüzey Düzeltme",
+              "description": "Portakal kabuğu efekti giderme ve parlatma"
+            },
+            {
+              "cost": 650,
+              "category": "Gloss İyileştirme",
+              "description": "Profesyonel parlatma ve gloss artırma"
+            },
+            {
+              "cost": 1200,
+              "category": "Koruyucu Uygulama",
+              "description": "Seramik kaplama uygulaması"
+            }
+          ],
+          "laborCost": 1200,
+          "paintCost": 150,
+          "totalCost": 2450,
+          "materialCost": 800,
+          "clearCoatCost": 50,
+          "additionalCosts": 0,
+          "preparationCost": 250
+        },
+        "paintDefects": {
+          "colorIssues": [],
+          "glossProblems": [],
+          "surfaceDefects": [
+            {
+              "id": "yuzey-001",
+              "size": 2,
+              "type": "orange_peel",
+              "location": "Ön kaput merkez bölgesi",
+              "severity": "düşük",
+              "repairCost": 800,
+              "repairable": true,
+              "description": "Hafif portakal kabuğu efekti tespit edildi. Fabrika çıkışı standartlarında. Görsel etki minimal."
+            }
+          ],
+          "totalDefectScore": 5,
+          "thicknessVariations": []
+        },
+        "paintQuality": {
+          "adhesion": 95,
+          "durability": 80,
+          "glossLevel": 80,
+          "smoothness": 75,
+          "uniformity": 90,
+          "overallScore": 85,
+          "uvProtection": 75,
+          "weatherResistance": 85
+        },
+        "colorAnalysis": {
+          "pearl": false,
+          "metallic": true,
+          "colorCode": "1G3",
+          "colorName": "Gümüş Metalik",
+          "colorDepth": 85,
+          "colorMatch": 95,
+          "colorFading": 15,
+          "colorFamily": "Gümüş",
+          "colorHistory": [
+            "Orijinal fabrika boyası"
+          ],
+          "colorShifting": 5,
+          "colorVibrance": 80,
+          "originalColor": true,
+          "repaintDetected": false,
+          "colorConsistency": 90
+        },
+        "paintCondition": "iyi",
+        "recommendations": {
+          "longTerm": [
+            "Yılda 2 kez detaylı temizlik ve parlatma",
+            "UV koruma yenilenmeli",
+            "Boya kalınlığı takibi yapılmalı"
+          ],
+          "immediate": [
+            "Portakal kabuğu efekti hafif parlatma ile giderilebilir"
+          ],
+          "shortTerm": [
+            "Seramik kaplama uygulanmalı",
+            "Düzenli yıkama programı başlatılmalı",
+            "Boya koruyucu film değerlendirilmeli"
+          ],
+          "prevention": [
+            "Düzenli bakım programı oluştur",
+            "Kapalı park kullan",
+            "Ağaç reçinesi ve kuş pisliğinden koru",
+            "Kimyasal maddelerden uzak tut"
+          ],
+          "protection": [
+            "Seramik kaplama önerilir",
+            "Boya koruma filmi değerlendirilebilir",
+            "UV koruyucu uygulama şart",
+            "Çevresel faktörlere karşı önlem"
+          ],
+          "maintenance": [
+            "Haftada 1 kez yıkama",
+            "Ayda 1 kez balmumu uygulaması",
+            "3 ayda 1 detaylı temizlik",
+            "Yılda 1 profesyonel parlatma"
+          ],
+          "qualityImprovement": [
+            "Yüzey pürüzlülüğü azaltılmalı",
+            "Gloss seviyesi artırılabilir",
+            "Renk derinliği geliştirilebilir"
+          ]
+        },
+        "surfaceAnalysis": {
+          "dirt": 10,
+          "runs": 5,
+          "sags": 3,
+          "orangePeel": 15,
+          "contamination": 8,
+          "paintThickness": 127,
+          "surfaceDefects": [
+            {
+              "size": 2,
+              "type": "orange_peel",
+              "location": "Ön kaput merkez bölgesi",
+              "severity": "düşük",
+              "repairCost": 800,
+              "repairable": true,
+              "description": "Hafif portakal kabuğu efekti tespit edildi. Fabrika çıkışı standartlarında. Görsel etki minimal."
+            }
+          ],
+          "totalThickness": 127,
+          "primerThickness": 28,
+          "surfaceRoughness": 20,
+          "baseCoatThickness": 48,
+          "clearCoatThickness": 51,
+          "thicknessUniformity": 85
+        },
+        "technicalDetails": {
+          "baseCoat": "Metalik Baz Kat",
+          "paintAge": 3,
+          "clearCoat": "UV Korumalı Vernik",
+          "paintType": "Akrilik Poliüretan",
+          "paintBrand": "OEM Fabrika Boyası",
+          "primerType": "Epoksi Astar",
+          "lastRepaint": 0,
+          "paintLayers": 3,
+          "paintSystem": "3 Katlı Sistem (Astar + Baz + Vernik)",
+          "curingMethod": "Fırın Kurutma 80°C",
+          "qualityGrade": "OEM",
+          "applicationMethod": "Elektrostatik Püskürtme"
+        },
+        "analysisTimestamp": "2025-10-19T09:12:05.201Z"
+      },
+      "expertNotes": null,
+      "totalCost": "25",
+      "createdAt": "2025-10-19T09:12:02.192Z",
+      "updatedAt": "2025-10-19T09:12:30.479Z"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "vehicleGarageId": null,
+      "vehiclePlate": "34 ABC 123",
+      "vehicleBrand": "Toyota",
+      "vehicleModel": "Corolla",
+      "vehicleYear": 2021,
+      "vehicleColor": null,
+      "mileage": null,
+      "reportType": "DAMAGE_ASSESSMENT",
+      "status": "COMPLETED",
+      "aiAnalysisData": {
+        "summary": {
+          "strengths": [
+            "👍 Genel durum çok iyi - Sadece kozmetik hasarlar",
+            "✅ Yapısal bütünlük tam korunmuş",
+            "🔒 Paslanma/korozyon tespit edilmedi"
+          ],
+          "weaknesses": [
+            "🚨 2 adet KRİTİK HASAR - Acil müdahale gerekli"
+          ],
+          "totalDamages": 2,
+          "safetyConcerns": [
+            "🚨 2 adet kritik hasar - Güvenlik riski yüksek"
+          ],
+          "criticalDamages": 2,
+          "insuranceImpact": "Kapsam dışı",
+          "recommendations": [
+            "🚨 ACİL: Aracı kullanmayın, derhal servise götürün"
+          ],
+          "marketValueImpact": 25,
+          "estimatedRepairCost": 6500
+        },
+        "overallScore": 15,
+        "totalDamages": 2,
+        "damageSeverity": "critical",
+        "analysisResults": [
+          {
+            "imageId": 2,
+            "imagePath": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAGCAegDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6N0pTE00EsZDRJv3evtXmviQ6jq2szpeafNPphb92qDBA+td3448eWWjX9rbwqjXIdfNA7r71yGqfG3w9ofiAy390YrYNlrfaSqj0ru5uU4Yq6PD/ABz4g8beF9YRdE026XTccjZuwfrmq83xa8anT0je1mCngylOP519KWfjjwd4gga6t9Q+1WzfM0ZThabc6t4E1qzt49NjhuIzIRjYRz371op3M5xPmuL4sanbJEt/p893xz5YAr0/SfiLZ69aQRQWz2s/GQ5ycV6f/wAIR4WcoZLC3jz7f/XrN1Xwlo2kafdXttptuvloxEg4PQ+9XzdTn5bspyXi2tmkglVj/FVy11eOR7V5JF244FeMeDfFGr+KrnUoorTfEqkLg+9d/pllqNnb28t5Z4SJecmtoVSJ0zpdcuzK/LbV25FZFrriPbyQucqo65qv4s8TWt1Cot12lVAIANcLf+MbLSdNfzP9YwI5BpyqhCmeu6V4gX+zpDCdxi4wKxbTxtHqCqxdFjjn5BHcGuR8G+KYbHTpLiVg0M43ZPbiufWyieaeGG9ZNzNNgD1Oa8+XvO53RjZHsen6xaeIbrxU+5fkgUp78iub8d+LNM8Nf2TJFOnmfZirqD3NcPptvqVjp2otYyO8k8eCemea8Bkh8SeNvFlxp7TStJC5ULnOAKnlNki/qLHUvilCyyYiZ1cDPcnNfRt1cLLf2Vk0UgkLY354NfPtjon9k+N7KG9fFyhTIPWvetWkz4v0ZRLtDy8gfQ01EVTRHM/GXxZc6BpIt4JMHKjnnFeG65/a+uXkclxfKYiBhVBFeqfHyxm8h3UGYBx/OvFtc1uVporcK1uyBTuUHmhxIizbLXGjW7xh2beOoNet6XqJtfCEczxO+WUE59a8Siiur3yHlnfy++a9gFxG3gMxxT5ZXXNZOJ1pjdSe1ecGFgoIGea57VhIk6tCdw9qyLrVF84RRuS1MvdXl0mEPKdwI7muexpY6+0vWdVYkJtXkEVkajbWuq3Keeyne2DXES+Jbq9n3QyNGmMYBrn9R8R3ljfhWkZthz1osO9j1v8A4RPSrNvMjAd16AGuZ1uOz0ict9jkJIzkHis6z8Uz3Vor7ihYZ3A1cl8ZFLcC606O6X7u9ya1jsG5a8M6WdRMmoJcwwiIbwrrzTrHU9K03VprmW6h+0MxJOe9ZaeJVtUxDaIsc3ylATiqsVhpGsyyNcxR2rL1IGaymiYx1Nu5uLrX7oTWFw00QbpGT1q1dXmo2VtcJcwyQMy4DP3qp4LurTwpARDIJUEpbJ44zXd6nr+j+ObCVIZVaeJcsuOlYcup3ct4nltu9y6OTKWBPSr0HhttUjEjnCKcsPUVsReEJ0jd0JK54qGez1SzjzCrGNeWGeoq7HM4WK1vpmgwySoYGH/AqzdQjsJUeGBCMHjmrtzdLMIZBZopc9qt2FhBHdI0kKjcM0WMHOxneHby6iguIQcQlCADWPr8Ivra2t2TJiGGxXX3qWlkWdGEYx0FV4LKC6jWVQGM4+XNEdynO6PGvFNtcaBpMiR7sSSBgKj8E6Jf3OsQXZfYoIPIr1LUfDj6/r0Fn9lWSMISQemRXWad4Jmt4vKisFUgdRXZ0OXn1MHxL4subKGKNLzlRjgmtrwp8Sr+Xw9K5cl0kA3eoqK/+GdxcMZZ7YEe9ZuleFLu1E1kqEBiWwPSuWZ106ljP+JTjxFaWupSNxM5QZ7ECrfhyyvTNo1lpsZmEiESsozg1t3HgiS78O2kD5AjlZh9a0Ph7oepWXiFFtGbbE2GIOMUkzKcrs4yOwutNnnGxvtXnHPHOM1Z1HUbhZ1TB81OV+tdTrnh+XR9Snvbu6fLsRg46mk03wSNUQ3L3T+ZLxGMDrWqYlLQwLW8m1NM3MqqI/lYEYzWlbWkq+JLCzQeZCWSTcOnUVX1Lw/BpN4LGa6YTS8kEdxW94TYQarbwP8AvZ1YEMeu3NVaxK1NP4o+G7s+Inu7WBzLHht2MjpVe7hn1ePTo9SV0Ai9dtcx8Z/iJq9v48n023nkt4CQu5D7UzX7i/8A7Fs7hNRmmlEfOcU7mqidB/wimj3LM7Qu5XjcXrYtdL0G10Z0AEMm3jc1eb+GZ9V1hTZQ3Mn2gEu2D2qhrWoz2GvR6bcXDb2faQalq47NM9GhfTbW3YfaIXJYYB5rr9GtrSS1Xfabs98CvOdB8ORXF1Gj/PuG4ZFdvp+pXWlQhJY+AcDntS5S02dFc6Xbx2wZYNq46Yphsba9jWIKqHrhhSw38t3aK5XCY9aQyLNqMDRgBAmGI9aaiW6nKrk0Gjs9wwjG4YxwK0w1zbpHbrZSSInBwK0NMtrNIryRr5oWjh3cCsPR3XVNO1G6HiG4hWMA7go4/Sk4AqtzXvkhSSFpAIH2j5W61IbRp3LiMlMfeFTXUKSWduVQagSo/fv1rO1K3mt7Z3TUZYuP9UuMVk4G61KmnabI2qXLyHy41b5S1aSRxfaQhv4QT0Bqnq3iZvD+i6axs0u2nTJLnGeaZq+sxvd2JOiQW/mBDvUnPJFaOGhip2Zs3GmRxM6vKkhI428UVU1a5jt9aZY23fKuU7LRWPszf2h2f/COW3hnxakaubuCYL81y287j1HNdzfeG9IvbgRzadaSNnBLxKf6VyHxL+z2V/od9BcJ9mlvFjIHrxmuwvnga+lljuUKqc8V6laNmj5ynPQraRoWm6ak0SWluoZjwqCr0Gh2McQWO0hjGcjYgFZ9qYnvctcptwTzWmbqFjuiukK+1VCNxSqFO98KWt79+SVf9xsVyni/4VadqWh3Ub32oIuxmxHKw5wfeu3OqiHowf6VV1DXVlsblGjO3y2/ka6pU/cbMIz95Hj3wG0SHwzbT26sjo2V3TEFuvvXrGqa3BpQiPlxOoGCCoINeSfDEw6v4o1S3Nq7CJNy4PfNdj44hAFpb7DaqV5Z/rXPBG05HcR2VlqCCX7HAN6Z/wBWPSvKvHOj21vpviA/ZIjtgyp2Dg57V6ZYX0aadb+W4bCqpI78Vz/jeK3m0PXAcb2g/rRNBCR8ZWfi66tJ3sYzmNzk57Yr1b4LxX3im7mvNTRPsiKyKYhzkV4F4iiurS/uxbN5T7+HI4Ar3H4IeONO0vwpJYz6zb6ZdhmdpJs/N7VyOdnY7Y6o1/inrU3hDTL2W2KpbOh25+8K+WfAfxNu9G8fvcMhZJy53bc9a9M+N/j/AP4SCC40y0f7btBAuYz8rV43oE0emXkP2uEmQKcE8Uuc2SOg1rX5m8em7Ers21XwSeO9devxOvl1Hzon3yqcqZOg+lcLZQDVtcuroLtXydq59RU1jo10FWSc5jPbFONQJQuj1OD4la9fkG5Sxmi7hgGNdLp/xL0S4KQ6rpduCv8AHHbjJP1xXj8M0MI2xW77vUGpP37YeTIQc4puoONI63xF4n0y/v8AVhp1swXPyDy8AfSsFjPLZnzpZI1+9tViBWMmrSW003kcPJ3qHUdT1CZAJpgFx0xWXOdUaZdg1yaeWRUjUgDG4jmqk8CX6v58z7vTdxVTRrmWWWQJ0xzVi4MSxyF/v0WLaKuuabJY2KvDIojBGctzXKa9P59kk8RLuhycc12l7pKatpTl7lUIHCHqeK8xzqNlPPaRhnjxgECixyyZ1Wi6sdS0csrBJohgA8UaZrUhlaGeRG5PGa4vRr2Ww1Jre5yiSHknpVe61C3t9ZXEwIJ9femZqdketmKBbNneQ9MjBptrLHcRqN2Fxwc9a5vUNVh/sxVVwcj1qhpmsPclYVOAvFK1xxqanbEPF8sbEqfenR2TDEkczxN3CNjP1qja3rQxgEFs96nhuDExd+jdBScTvjU9039P8WX2lgIMyIP72TWqPF4vUKyny2YY9BXKpqikY20yaGOdGZhkYyRU2MXO50kUyR/KXRyem05ArWguVcK8jJsUY+U8153azJFJH9nPkqp5Vjmuw8PtbSAiaykdmOQ+eKLGDjcv6ppUWrWbPby7Gj+ZVdsEmudv7PWWtdMlZoozHyRGcCvRbTw9o2qS/PeRW87LhUYnINY3jDRn0i2Nqt2krqMBlFZrcpw0OV8Nautnr6BpSVwWdy3Rh2zXtdv8Q7O50ppFRPO27cqoxxXzbpMMe+4DqWJlwTnvXsWlNoOi+C1WeLdfgszfNzjjFdXQ5OTUWfxkJVkCSHb/AMtNx6fSsyLxJcWlwqBVYOwO4jJxXFat4s0p7aYWkBB/5afNV2y8QWlxLbqzhRsHU9K5KjLaaPUNb1Z4rCxeHbnfkgfSuVt/Fskuszq++LD4JhBH8qs3kkUOkwXQlDpuPSua0+9ja/nliYHzWycVmmdEIXR1lzc20RZmNxOzKWxJlq2/CmpiS0tbgQzFrZi+0Ieag8MadN4jvNsaEhYznj0Fe5/CTwhaxxOLuNW46Ee9bReqFKFj54k06fxT4ovbmdTbI8hYeaNmBjtmuh+G9s9x4mlSCMOkSMC8gz09DXvXiv4aaVeTSSS2wZM/LtONorn9L+Gsvg3UZ57S4S7t3gYiKJeVJHrXa0YQdzwT4jaZHqHjliEVjvHJHPetPbBPo8ti0Y3rgDjkVr6jpOfEouruBo335IaseaVU1W5eJCV3muWTO+EbmboGippVzNcoWVihWud1fwXe65qY1CNQTE2/J6118ctxNL5bRsqZzk1tabJNb3LQp/q346VHPY6FSvqQeFVl0GxaW5RS+3AyM9qy7GeeSZkd87pC2CegJrr7+IXDxxyECPbzWX/Y1rDeSSiZduzj60e0IdKxpxagFgEW9R5A5561NZXoknDh0A6da5O5sSCzLMP3nWoLJ1s5DBLmRmOQQe1VGpqYyp3Vj2rSVEeg3Tl4WZ0YckVhWMc401LYpCsMow2wDJrGtbqP+zY41JGT0zWrp+ow2/lIw4j4PNU5kqlY6NLj7JAkaYIC4waz5rgfYh53qarLdPfOWgPGcVS1qdoSYZOwzWbmdC0LF/YJq9xprSSD7PGCAN3arWoQWyavDHFIZNsWcE5xiubsplCkySjaPujPSqtvczya2s8GSmNma6HLQ5EveOsbUI72aaI4WSNcljwaK5y/kk07WJBdHYswCgniiseY25Tm/GHjHVdOtdOhkuZLtDONokP3G/vCum0rxfq5jKPdSN5n8RbpXBeMXFzDaMRxHLurpNNvozYQTDHIzXqytLc+MjUkup06eIdTa42fbJVypGc1nte6zbuQmsXO3OcZFUZdRCOHHpUaan5i7qE7bDdRs2ovEOsxddTnb6kVLN4v1ZYWBvJWBGCCa5839Ma+DKwPpVOcmrCU7O5d8MeKb/SdSup7Z2ilkXBZTz1rcuPHepaipa7YzmPgbzXE6Vdr9pm+laCXa+TP9awTkivaNnc23xcvdItBGtnHNg5+ZjXP678ZdR1QXSNYxxrOu04Y8VzkN4J2Iaq+pRoqFgKLyZop2Oau7WC7mdpxtLnPSqL+FNJeTzDcEH+7trQe62uVKZJ9qc0Luu4IcfSsnSvqarESWlzPutN01raO3hQKV/jA5NZ9z4PjvZI3SBWKDHI61qtem0kDGLJH+zU39tXNzxHGE+q4pexRosVLuYreEbyMAQ26xY7qetTyeENQuoRljGuOgNafmXjcuw/A1TuLyZnaPe+R6Gj2VjVYqXVleDw5dacpxGszf7RrN1Cw1J2AeHy42OPlOa1VtZ2O4yP/AN9GrUV7Lp/zJtdv+mvI/Wl7M6I4rzONl002zsGLBk9utMnPmOEMZcbCckGt678Q6hPqJVY7Y7j/AHBWjb+IdSt5ATbWjYXHMQ/wpeyRusX5nnWkyPDO+0OAeMYNaV0EMTZXJPciuyi8TXrsd9nZgf7MK/4VHeXcd4p82BQf9hAKOVj+tJ9Tzq5lmIJjzgDGK898Sy6jb3JkjdoxnoDXtd0ulxuYpLe4LsM5QHFcprvg211NsxiVAf7xIo5WQ68XueZWeuE4Mtuk8w7vUrLpl9crLdgWjD+4M12a/CxJIGEMgWXsWeqNx8M75V2CSFm9d1NQbMZVY30MjU/IvIVXT5jMR2PFWtAsbhCDcJ5JB6qc5qWD4Ta1G+9bmBB7viu38AfD+e11RDrtzFJaZ6Qv82KXK0XCpEu2mmsbRWhUTkjq3FVZw9tK6yxjA6d69NuIfAtspiSDVGcDkoWxTLHSvBLQjfZavK0vHAYkVDUup2RnGWiPLZYpjEZolBAPrWjYX0SyeVIAW25Ir04+GPAiWjobbVkZj/EWFYsHhnwtba06xQ35Vo+N5JpWLscw9tbTRF0jCs3p2psOsz6ZcxIvzL0wTXo1h4V8POwjzPn/AH6rap4C0aS4Ux+ecf7RosPXuctqE4Nys6sY5GUYI7Grlo0up20kNxMZJFGPNY8mumu/BFi9lbYLhN+DlvmqxP8ADrTUJa3e4Dv6ucUuU03WpzOqeHbcaYFgiSM8M0q9SRWfptjLq0Eoc7nC4OfSvQdJ+H8moaPcR3k4S2EgAIfDe3NVJ/hdNpzl4LyJon+VQsuT+PNJtkOKPKLjwG8skojQqc/dUff+tcjqkl9pcrK1kVVMjcAe1fTemeD9XtY1D3mm/Z06h2XfWxD4faH/AI+o9OmjYdQisawkmzKcW7HhHw78SxeI/Dc1lOrB4lLAspqHwZK0vjKPT2hHll9o969vuPB8TzeTZWsMay/KTHGB/KuZufAUXw9+NfgUJ+8bUdzyBjuUEHHP5UKKOinGVjtrvxxpvwme3ghs47m6uAoKuCMK3BP617L8Otes9QsPMgwzMueRjFeU/GFtJuvENncXVq7XKokaiJPl7c4rV8HajdadqL7oj9kVQUEa810RiriqQlZnvlyhu7H91GJCB8wNYMmlpqkga0uXimTholGAcdaseHvGlpdR7GR4QOGMgxWpJc6dfP5mmzxRyj729gM+tei3BnjrnRw+vW+lyyvDqdjFbSdFlAJJNcFP8K2v7e9urUDYHyhU9RXtmq6ba+KLGWzvCisy4EqYH61xegeCb/wt9s/sWZriUSf8vLmRP1rB04s6I1px6nh3iG0HhiNnulfP3cbc496xdC1H+2ZHS3d8p904xmvpy+nWXTvsfiXToZblm4ktoBtwenOKwH8DWenGG60pbbg5MZA3flWMqKvojqhiZ23PE9RuRZKsEskhd+rFehpw0qOS3ERuZBKv7zp1Feg66urQGZhp0BOcgtADx+VcFHr2r3fiz7B9kRMquWMWB+dZ+xNPrDfUqsLYCONXZ5z1Ur0p1pqOiJKz3bsk0eVxsrpPEtxN4curZVit2lydxKAiqEmrR6vavcrDbKY22sPLAyaFSGq2upnjVNKnt4pYruRSXxtCcVPayQ3NxcrBO0rsflUjGaS312Jme3FkrFRkbIh/hXWeFvCs2qGO4FjPtbkhIzmn7JjddGDpOtXdruhtbcTS78EMcVe1uO6uL+2EkY+0zsE8vsK7OP4P6/dPus4ktVZs5uF2n9a6/S/gTrsFxaXeoX+nsiOGyJBkfrS9iZOujwjUxe6LdzxmxSYwnDKT0qqNYnSIRi1NvIWD/uwTX1GPhZ4YtJdSvNQeW5knbd+5fcPwqzc6X4W0yP7bp+mSyPFGRiaIMMgfSulUG0c7xMU9D5ftLfUPFuoSEQPKygYDggD3or1Hw58ebrxN47u/Dh0GGG2hC4lhsgh5J6kD2orRYZEfWn3PENf05TpNxIeiKWqloMom8L2cocEbM5qx4gmP9iXq7zjyjWJ4SYyeEbSJT0jxVNnzigzrXEMlquJFLYotIIxCAWGc9KrWUSGILu+bFRMWimK5/WlcfIzTa2j/ALwqGSKMKcMCcUz5mTrUMYeN3bAf5TwaaeonB2INNRI7mYswAxVyF4XinCyAnNZOjpd3t1cZiXaB61PZyyQTTx+SpIatLolRZbhSOGUKXAY84p995YXDsBVm18PahrCiaOKJDnGXfbXV6d8I5dVhUTXaLcPwqCRTzRdGqizzG6gS1ZXyAG5FKdReJACMA16vefsv+PktiYdPguYJOY5HmHT8qju/2S/iII45DY2+OOPtA/wrVRTRzyT5jxu6uV37ifm/u0yKaSY/LlK9kk/ZG8fXQMhsbdQnPE4/wqhc/snfESMborOEj/ruP8KrlQ0mebKvljMp3Cq8ttA8hlWZVzzt9K79/wBmz4jxHa+nwNj/AKbj/Cs7V/gr4w0aH/SNMTeOoV8/0qXFFtSOSDcY84YqG4gglQjzFmfso61tQ+BtWCt9os5YyOwQn+lZV5p91p0hQ2bJu4EjKRio5UL3kcTcPJZ6/bRmFkLN3rrIbaWVSWbb9a5vVGe21q1gc+ZKzYDt1FdHFNPaQFXUPnkEmjlQuaRHJb7c4Q1ATID6Ui3Mm47s1ZjuI/4sn8Kysi+aRRZJpJAVNZ2szPaQmSRS6DrXQN5Mr5Vypx0ArG8RQk6S+PmGD1osh80jlovHmmxP5bWZZj33U9vFemyNuVRG3XBNcfcRrEwYQqXFVVDSzHMKjjtWsUmgvI9I0/W7fVcoi+YB1wavQ6VJuaSMEc/KK5vwDaxhptxK/L2Fd/bTbCFU5A70nFFqckFtHe26qUfHrxV2TVdYspYzZ3nl4PzfL1pftHyVEsm96xlFGsa8ou5PBr2rX0zfaWaXB64rW8OvJq3iR4HXAEQyD6VQ0/G81qeBjjxtcH0grLlNvrkjoB4bgtNQdltiyqeoq5bwwLcYNmx9Oa3LUC4kuM+lRzQCG4U/7Jo5Q+uSMm71qwiUwHRXlkXkSBhUNnqZvHixbNCF+8D2pwkjeVy3UVJYTxCS5/2qOUz+vSuW4m3RyQNbNLC53HB4qtcXNha2jrFpLrIuSDu61uabeQeX82MVWunt5JTjFZuJpHGyZxF9JbXdhJIdMkiuWGclu9R6LqM7Q7J7V41VgAWPaun1IW6r2qtDc20ceGUN+FZuBp9bZ1Wi+LNJ0hYTcuijPJJ6Vx3jfW7DV/jl4EuLe7jktlD5A+tQ63JaXtuqiFQc9cVwt1dnS/if4PNvapcFQ2Vbp1pctj0KWKbR7H401az1D4iW8IAW2W2ycngkV2ml39kLKB4pEtgDyx53V8wfGbWryH4iw2NhIy3jWfnlF4AXGTXpPwV0m71rwpDfXN9LM8uVaJzwmO4qb2Or27loemXl3e65feRbymOAHBkHQ1q2+jJYFTHJuf8Aix3qnZ6YNNjwsxNMe7nSTjLCpVRlumjdvr+5ms2igufsrY+TPO01H4M8T6z4QgvEvrk6ykzhlRBjHtzWK887tuC7mP8ACaBf6oowtnFj13V0Rqo55Umz0a38aWmqwj7fYNbIxx+8IrP1LSdGZzNpepQ287/U4rhZLnUZxiSEEegOaktmmVv9QAfpVe1RPsmd0NJ1SaBDLeDVEA+4i4rOm0a2k1Fi3huW2kCjNwxGKz7WfVwB5EjRj/ZbFaF3PqsFujyzu+ThgW7VcakWZOEkY3ivwd4f1SGJ5ryGF48mR2z8v14rNtfhfoIhVLO5iuY5MMzJnGa6OS1tdetJrIwKHmG0uBzUdzpUvw08PTTOizQlgd8h5X2rZNGdpFrRPh94c00lt0XnkdO9dVp+sS6HGsFgwt3HCPjpXkWifH3RvtKxS28LyhsFiKveL/jxFprRyWdhbzK2cZJp3RLjI9fXUdY1Mg3uvR3EX/PILipPsRm3JMDLEBnZnrXzTcftIX6PtTS7dc85DGs3VPjx4k1KHzYI1hDcfLIRRdGTjI+qY3trZ4ozbmC3HGWPAFRaxrem2FtcY1y3ihELMQc9cdOlfn3rX7TF+LvUbK91a6glibaQhyBXnGofFy6uPPdtevZYnBG1unNT7WwKl3Pu74cfEDwtpuuX2ozalbebMNofP3sH6UV8I+APG0HMTzvKAcgsKKn27NlSR7bq9xc3emXMQhcF0I5Wsrwjb3VjpkFu4OQuK73T45pZpI5Z/MXHTFalr4cR1LCL5h0PpUc6ZmsO0cMtvew3HmYO3BpsdxcXMu8A+ldfrdldWyKASFJAI9qz7Lw9K+qyBJvLh2AhMd+9LnQ/q7K9vFcMg4NOkhnUMSrHjsK7JNAeC3jIkySOeKoaTaTy3MqyMWAz+VLnTE8O7Hn8GpT6fdSxrFJ8wx0rc0qaDTrae8vUcA/NzXVwaBHrN6IrNBJcMcfL1rK+Mfwu8VDTrGCyhmEZjIlRV+8cmtDFYdnl3ifxhe6zO0PmutuvI+zEqcD6VxmueO9U8NxWt5peoXGYm3ESys39a9m8D/s0eLvE6YMc2k5GCzJncK9U8PfsGQXcaw6pcpdH+LdH/wDWrOU+U1WHZ3Hwz+MOteKPhBptzdSHzEgUbwMetXovFuqX8IK37HB6eYf8a9K8F/s12WheGF0karFb2cahRAVOCB+Fa1v8BvD1tCIoL+BLndnIU5P6VaxUYof1Ny1PHk8R6wrSBr5lGO7n/Gpm8U6vDb5S+Vv+BE16vefs8xTEma6SGFu5XrWbo/wBtbTUyLi9SW1zwhXgiksbB6WLWCaPNdH8XaldXe2W5U8+tbF74m1DTLlpI5LWUZ4WVQ3869oX4EeGpE/dQxWcuOHx1rC1v9nO3ugBb36LL/E4U81r9Yiy1hGedW3xG1u6G02mleX6/ZEz/KqXiGXT/Gdg9jqdpbIcEq9vEqEH6gV6pZ/s8JHbeX/bCLJ67D/hT4v2aAVJfW41J7lD/hS9uuxMsIfnr8Tfhc2i+KIRYwTTxM5w4y2Pxqgmj3kFuYjaTMc9dpNforP+zFHKoB8QRcdPkP8AhWc37KqAkL4hiwTz+7P+FL6wuxi8Iz8820/UF62cgH+5ULQ3KfetZB/wCv0Qn/ZMhK/8h6Jv+2Z/wrIuv2RoGJ/4mUcn/AP/AK1Z84/qrPgRIv3m6SJ1OOmMVU1kLcaS6JwcHrX3Lqn7JMCzhdyz5HUJWRdfscCWMrFYeYD6LRzj+qn51XXg+/dPtCFSoqvB4fvUkJZM8dhX33q/7Hetx2Mkdppci+mErjbv9kjxXagn7BMv/AK1jUsjOWGZ8r+ErWe2abMLH5ey11trCzYJBHsa9fk/Zw8WaazeXbzR54Py1iT/AAd1Ozmf7TfGKQH5lZeQaHUIeGZxfkfJUGzy3zXYXHw/1GMbbaRrtvRRWPeeC/EViVku9LmhizwzDhqnnIeHcVdlTT3+c1p+CH/4rS5/696oGxuLVhJIht4++aPCWoIvjS4eFt6C3wSKammYOCXQ9Ktb/wCzy3Gajn1TzrhQD/Cax5tbtXkZMhGbgnNZ8ty6XCmN9w9RWqVzN2XQ3LNUkWVmPPNR2ojV15+971QN6trGVZ8MRk1EbtPswkRsEDg1Da2I9ld3OggkUQyYbo2OtOgTzHzu/WuehvfLhJzuJOcVtaLMJbmXd93ZwPep3N400iPWoAqdf1pkdn5KK2C2RmoL28K3UizjdGp6GrC6kbdFZkyp4H0qWrG3s0yuZBPI6GMjA9K4j+2V0z4q6Cm1SNzfM4yFruri8jFw3ziMEdTXkPir/iX+NrW4knEiMxKn+7WbVzupcsdzd+IdvqOp/GxL2y0+WW3/ALLdDOI8pnb0zXo3witJtM8JRbkkilBYuhyOM9hXZ/DbUlufA00s3yy7iqk9xip9Ds5J7ZtoLSZOV9KxcXudsZxbSsVo9diWQBopyPxrVPjHT7CHc9pOT9KzvFjHR9Ge4VvKlQda8u8MeP73xN43bTJEaW0EJJ54zXE5He1y7npMnxV0x7komn3Zb+8F4/lWrY+KItQAKwSqp7EVWNrYaRFGZ7cBD0J/iqLU/H+l+GdPe6j0wXTr0iVsE1Db6G9KKmdXpupQ20hkS3lLkY+dcirD65NJJgWuB6+XXF+EPiwPFdj56aY1pKJCpty2SFB61u678RY9KspH+zbCgznPWoSnKVkdDopPlOx02RZk3SYQ9cHioksbvXLxi48mADALcV5CnxP1G+tJb2KykaONgAAetcD8b/jP4/h8G6e2g3VxY3L3WxtnXbxXqQwtS17nDWgobn2Bo1npOjvFbyTpJcycDDgnNcj8ckOseCbywjfy23hhzg4Ga+J/HfxQ8a+F/AemaxJrM1trqRl/OP3mavbfDnjvWPH/AIG0/UL25cyC1HnSt/E2OtNRknymVGkqktDyCyjTQ57iOSOaR2yocZIzmqOseJLuOFbaIlpAMANziszSvHzn4rPodzL9qsgVIyeMknNemeOND0rT9bt5ra1VQ7EsRTalEznKEJctjyvU/FWq2ESyPFkdOEqxbeMrmfS8OChGT0xV3xGkiyHzZMW3UKelcTquomC3nkU74VU8CkuZjlCKVx+h6baeJb3UnuIizF/vAdeKjs9AsLnSr0rEVMTsAW9s10Xhdbez8LrqUYERmQPXTfDXwP8A2z4bvprr51lnbGR2Oa7E422PJ96Tdjxz4f6fcSX925CeSF/d4HfNFesa14V0/wAC3VmnmJaQSSYwe9FTaPY5pTlF2PfvDPh7z7+Qs5yort7HTo4SwYVz2msLDXXizx3/ADrpbu5X7RhD949q472PXKXi3SYjaIygdRWXa6BCSZ2kKswxiui12MvZxqXHODXP6pIkBhQEuXONyHgVW4GnNpirDbhXJyK5hrVrS8cMSqnOSvWtibU0tZLaIEyFRglTmtrQ/DUmpXRvLplhtlUkq/B+tVyiZF8ONGQ6w80O/agDb2GK6Xx98aPDHgC0mk1O7WedP+WZAbH614n8eP2pdK+Gdh/YmglJb8kpI8eGwK+MPFut6z4zt77VL6eVmmbeibiOPpWquSkj671D9tPWNbv2Hhq2shAhx+8l8vgV6R8I/wBqXU9S1uKHX5La1QsAzRTbhX5teEfD9rJfiHUJp13fNmKUr+Fev2HhXw2lr5EFzdpJjljcnJrlq3NkkfsTo3xG8I6pYIsWtxPJIu45kXIP51i6h4yfxNqX9m6Q1gAnzNM06q+B1r8x/hz8LY9S8TWUOlanqETMCXaa7cr/ADr2nxT4S0rwtAviGz1C+tpyos90l223zAMZxnpmuWzaL2PuqO1t57MWsus3UkqD5ihDAfQ5qG/iuLWKOLT5zcz4+XzWxn618h/C67+K9/DpyaN488Ni3Lfv7a4XfMy+g+brXumlaxrGm3Is9Y0+7lun5+3RKRDWXK0FzvpvE8+mTRweIXktbkkeWLX94h9MntW7H4uurbA2pIv94HOa85i8U3WmbrW9tGvLKXjzVTJGf9o1YSSTwx5F1CxutDl5VB8z26/7Zrqou7sxNnp1v4njkG9jtb0ovvFxjjUhlxnua5TVLdP7Oj1C1bzYXUH5DnGa8y8Va7eW20uW8knAC9Qa74wTOadSx7SfGuOrJ/31TG8bpj76f99V8+/b7i5ClJiN3fJ4qN7a/eYRi6AyM53GuiNC5xutY9//AOE0AP8Ar0/76FSL45iXrcR/99ivnGXSbx8hrs/g5/xrOn8NTSZ3XkmfaQ/41p7An259MXHjyBWB86M+4YVD/wALVtYODclf9018ynSpbBSi3MjZ5yZCapyNdwNkTE/Umj2Ae3PqhfjBYqc/a5WPoRxRJ8YNLlGJJGP/AAGvl2DXLpSEZs1cTWJxVKgHtrn0ZJ8TPDcpzJuJ/wCudQjxf4KuWJl02CUt1ZoeTXgC63cY/h/Krlt4l2kLIVyOtHsA9qex6lp/gbXEIjQWJP8AFDDg/wA65LVPhZoMik2Wp3F+z8eXcKAq/TmsCDXoZAMNg/WrdtrjW8m5ZNw9jR7AParqS6h8BG1qwFvHZW2GX7xYA15T4n/ZNvfD73F5anEroVARhXvOj+K3e4RpXbYBjCnFdPp+sQTJsmO/J6sc4rJ0uUpSgz81/FXgTW/DN6Y70SIwPUEmsyF9QgdRuZh7mv038UfCnwj4+0ySK4jWO/ZeJ9wCZ9a+Z/HX7Nl34RlllhgbULYklXtgWAH1rBto2Sps+dXt7qaKR2Ykhc9av6XYTy6D5hJ+7nrWp4i06Xw9G6eWzGQlCoHKe5qnomtWjWn9ji7h+1EbPvd6jV6l+yi9ihqbNYrF5khRSASRWVqHxL0rR8RLdv5/piofiDqHlOlsLqJXC4yT1rw7X9G+265JKt2u5VB+9xSu0Q6SR9SeHVi16xivJ5pBFMNwIFJLFNDpNxds5MMc3lrk/lXN+CPiXo2k+EtI06+BMsUe1ypAzWlfeNNGv9Ams7Zy2+UOMN0pJ3EqZLZ3g1F3gLYeEbyfaub8feArnWreG8t5NrqpKgtgGsl9ans794bZws8gAZz0x2rX1u41TUdNtLQ3kOxU2vt4NM3UEdf8F7bU9P0mW0e5NyoYkhnzj6UeJvizc+Gdbms4VCrDg5zgt9axfhnqB8I3xklcyFgRycjJrP8AEXha98X+ONW1QTwsnlqVhQcn8KTV1Y2jBJ3NXWvinN4os0gYhGkXkA1z/wAK/HdtoM15c3MS/aN7xqxHucVoW/wY1e+8iWK8gtZZFyqS8EVzGofDjVtCMsdxExVWLmVVIU1h7A6Jzueo/wDC0YpkaOR/Nkl+WNH6Ka5PWL+5tIrie8myJDujRG3ACuAmjnBgmWKTyGbBk7D8aqyXl7dR3AtIpnt0O1y+Wz9KPYGlKpys9P8A2edVubvxLqMV3OiQ+S5T94M55xXaa74stbm9TR3kV5Vba5618w+CtI1LTdevdQjujHbCJjs3HOefeuo8Ivca5qT3sTuJickuSatULK51+2vM9uv9XeOeC0sQgtwn7znHIryj4s3x1Uxol3cRMjArHGPl3V1FhZ3FwJSpZ3U/NtNRNoM+sybIEUyA8Oy5Gan2k1oceJnc8S8baT4i8W6Zo9i/zQw5Dsz8kV9B/DxrrSvA76Ux4EB+YHoQprzrxBa6jpviODT9QiKuX2+cq7UrsPhl42tYrHU9J1AF7ouwhI4yoBrohq7mdGpyanjHgXwzd2niqTWLslilwxLMc/KGNe0+KPE0WtbJLU7y3IzxiuZayubV5i0JjtWdicrjIzWNaXGy/nFs3lwqfl8w54pVEyZQ55cxB4n1Yz/uZX2kDsa4nUdTjTS7mBDvYoetWdbF1q2psqK3UruA4qjqGitoMGbn5jN8o9qiKZnUnpYltvF4HguOxyVdEC4FfW/gXRxZfD6y2ZDSmNz+NfIC6RZraQggtJLzhTX3rpNvZ6b4H0pWjY5toyMeu0V2JaHDT1bPCP2jbBUsLCZDuMUhZh6cUVz37QXipbWS4syfmlG1AexoosjlqR94+j4phN4ldc9cCutubRbRGfdkrXn379PEj4jcdMEqR3rqp7uSOMrK/Xrk15cmeqV5dVbUUlQtjbnFZUN3ILZIyC7uxUGleLNyFicHf6Guu0nw2lragyIXK/MCBmtIMB/hHwtBG4utTcLD1YuOBXjPx0+M9/qNjd6f4YvWsXhJjMsJzlRwRXuOt6DqHibwlqFlZMYriVcRnO018P8AjS/j8HPeWupebHMsxViVOTzjPvXXFJkS0R5Aoa61trjVv9Ju522mZ+o5611yzxzvHHbzC7W1Gx4hUcKaRqhmu7SRncLlVcY5rm49RbRNUcMGU3DbjxxXXGmmcymzR/sG81JWbSoWuZvM5Cfw88iuy0T4eakqW93e3L27A5aJhV/wXrFlp0HmoVLv1C88mu3g1Ge+WKLy1KSHAPeuarTNVUPWfhBYxeH9Kkvp7YPICPLz/EPWuY+PXiT+1ZYNAgbyIFZbpox0Pc1u2d6unw2CrIdsUJDqTxmvmHxd4km8T+MLu7kmmikjLRADIUgHArnjTRupXR3ljrJ8IyNqOnXn9lzNzHdJ1jI719Hfs6ft53Oo+LNP8GeML061pMylW1Gd/lRhgBce+a+PrDxJFq9i+jXAUTKNqMehPua4PVbG60DUcWzeVIJBIJFOOQexpTpKxVz96dS0S1XTY7iGMG3lQSLajptIyG/EVwd1cRabIFWIf2NcHF9b/wAJT0NfOP7FP7Zi+MbCLwh4omRNchTajOflaMcKNx74HSvqnxFo/wBlhuZJFDQ3Q5C8gD2rhV4SGlcyPD+pf8IfrseiXn+k6ZqiNc2wbhYk6AD86xfiDowtY5YQPNjOXWT69qpyJPrGmzaSxP8Aaayia2lPVYV5Iz27cV1jXsHjrwpFeQjmEmFxjBygwTXpUZXOarE8C0vWDHeT2chw6nAzWmdRfyH5O8Hj6VzvxCs28O6x9vQEIWLHFQyayBZR3KsCGAzj3r26aujyaiaNuTV5B/EaqyaxJ/eNYj6iDznrVaS/NMwudEuo+apLGq89wG71zsmospwDTP7RY96ANkjzGwH8sn+L0qVLST/n9P5ViLfkHrUy6gc9apCcrG2lpJj/AI/DSrp6byWk3HuayU1A+oqdL5cAljmmTzs6C1tIl/jrQi2xfcbNcqmpqP4jUg1ny+jZpxV2F29Dt7S/aMjBrWg1x+F3YB4rzy31vcetaMeq4AOelVKmmFmj1PTda8lAksu6L0NdppfjUNZmzAzat95c8GvC7LV92JlbJ67WPFalp4lSaUAuY3H8K9K5pUExe0kjpPH/AMDvD/jO2a50ySKxu5DhkRcmT/Zr468f/s5XHgfxqNSvbY6PbwyFlLLxNX2noPiFVk8yd9rAfKFORmtrUdR07xVB5F/axXZAw5lXO36VzypWO2niXZJn5heMvhpea9rsbrIyoykqcdRVew+CEd1cPGkoedVycLzX2t8Sv2dglrcX+gzNMjguwkYAofRR6V4T4D8Hahpetag98xjbYVUSNjJyfWuWcDuhVTPA7/4OajDrsUMsjJCWwuV4xVDwt4TurHS9TeR28yK4ZUOOwzXsnji8uIdaVWdEMTEfe5rhptVWz0u7tZNommkLLt5zmue1jZyS6mH8PTLeeIphqmZYwBgP9a9XudL09iWjgSIDpjvXzjbeJb3wb4qlkmQyRNjHU13cfxd1G/Q+Vaw+Wfun2oKjI9OOkWzBsziIhCw49q8IPj7XdG+NlpY2OpyNbyzqjIvQjmvWdK8RveOftflxgwE/KfavAp7u307446dqUgka0guVeRgueBmqirtGnPY+7NYiSbw02qecPt8AHHfNHhHX7bxhpU1lqah3wyDec+1eS6h8XNN8QtqFvpsziNm6SDb2rK+H/wAY9K0SxvmuHY3MbSYG3I4zXpckTLmuOTXrPRvixd+Cr20U6UHVIix+XnOePwr2bTPD/hax1mDRI7GGOK7RnMg6cV8o6F40tfHPxWk1W/b7NHLINjjg9/WvTtb+LGj+FvFlpdrdvcLbRtH/AHutPkiJzaPRW+FXhjT764Nrdw3kTlg0IXoSealtvDXhnQxFZ2+nQ28sh2+aK83+HXx+stRe80po4hcFnmEsgx8pJI5NU/E3iOOW4S8W+/eA5Cq4xW8KUZKxUKj5j1jQ/AMunX081vdG4jlJ+QDpmq48G3Ph95FXUStsxLrLjgOe1fJur/FzxFBqsqx30scKscbJDzXaeHPj9cjw0tvqsmZVclTnJPpmnUwUbXCtO57h4g0k3uiMlxa/2zqDriCY9d3tVD4V+E/DfiDxMoFrFJqNujI8PcP6V5pP8etKuRoqSXMsN3Efuxj5Sfc1xOkfFeXwv4lvNSs5it67s0ag4VgfU15tOFqnKZylandH2Xrmn6B4a0y3HjDTItMtZ5jFFLP0JrzHxp4N8CLDqE2n6zbRxHmJlXoK8L8U/tD+IPizZW+i6/FFBBaSedHLExLE9P6VPo+l3N5bOGug9sw+XdIM4+lbzpI9qjZ0rs9cvfD/AIU0fQopoLiG5kIBMgFeD/ErV7C71aC3iuFlBcAIK2r+zl0nSXu5LqSSKOUL5e7PH0rB8beI9P1TSNOmtLRFuPNILbMHgCojTR4dWXv2K2lWX2jxxoNgr/LISDH6V9heLvEd5oek2FjDaNMwgQgA+wr5A+Ft4dQ+J+jtOFHkuQWPSvo7W/ESa94ihUzbUjj8vg8cVxylZ2KpI8Q+KHhrxT448QiaLQ5im4bCOeaK+mvD0Vu92VXMjWwEnI4NFTzkzjqeU6j8VviDeXzSLqtgijk/6P8A/XrA1j4g/EC8S5ZNVtWDf3YT/jT30qXUpGCExDHOKig0C4t3ESTs5PFYzhYaldnZfCDXfEN54jgg1S4WXdGWOFx/WvqXwd4pgs72O2vUzZsQCx/XmvAPhXo1xBr0V3LBvRIihJr1C7lPmukkPlQEfKfeoOuL0PoCODTNQLvpLqdn3FBzmvJv2gP2SdO+L9mdVsoPsuqwxYLt91sDJ4HfiqvhnX7rw88VxaMWjj+9jjNe9eAPitYa6YoJQixkgO2e/pQ09yJan5D+NPhVrHwu12RLvTrkR7tqT7SEJrntVuYrtFiu4GiuZR+7kbgV+5/xA+AnhL4n6eDeW0EqkZiiK5AbHUV8h/G/9h3Tzpk1vFYrZz4/0W5VOYx7V1UsT7LRmbhc/My1fUfCt150LGSInJ4zXt3wu8Xx+JpYyzDfaYdhWb8TPgj4j+GF19n1C3lubTGfMcYGPWq3w/srDSLO/vLJlE08e3ao7g1vOuq2iI9mz1Dxp4oW30K9khDRuWHzk8V5gLuw1K3McoVp2O4SJwM1e8YapI+l21jMNi3Cbmb8a5aXRWsreNrd943Akj0qFTVhXcdDG13w9e2l2HjbckpxvT+H61qaZPaa3pctjrasXiIWKRTt4/rW5a6ql0r2gAlQDDP/AHax9V0IoGkIygOVNL2aK9szPsNLvvC3iGx1eKZkFpMsqeUSpIU5APrX60/sz/tGaB8bfA1vZXM6w69bxDzYZXG6Vj2UV+Uem+Iobp3trogkLtUH17U7wd4z1z4R+OLbxHpMskT2kolMKHHm+2a560LqyNadRt6n6/eLNMu9LvF1CxZbWdD5RjlGSUP3iKqeHdRPh3xtNaxHb4euoFAduVaZvvgH1zXlfwv/AGv/AAt8d/DkVteXUOm+JY0CGPdl2GPmP8q7K71Ox1nwstjaXwEeiyNqJlX/AJaY6r+lZ0vdeptJ3RL8YPBwngv4ET/RZgRGe4H1r570a9jikn0qQkFGOMn0r6ss/EMfxE+G9nq0cY33MO9FHO2vlX4p6LJ4Z1xL6BCqnhyPUmvoKM1Y8itG5aYhSeaiN4I+9Zv9p+ZGpzyQKqTXBfpWp5ska0t0JWzUTTe9ZscxVTmhrgnvQTFmgs+G61KJ+OtZH2jBpwueetUkXI2RccdasJcjaOawRc+9TLd4Uc07GZtfaR6mnxXIz1rD+1+9Kt5g9apLUTOnhuRnrVyO6HHNctDen1q2l7x1rUk6qK8A4DYq7DeAc55rjo9QIPWrkWoH1oEd3p+t+QoUsevrXT6X4lC45ryiK/yRk81q2WqbMfNScbk3PZrXxL5oEecg9QelUPFvw10LxvDJgfZ9QRd0Fwr7U39sgda4nR/EMUFwGlwV2kc10ekeJEWLaXDjJKL6GuWdMd2fL/xR+CV9o+sD+1kknncndfxZWFT6n2rzPWPhy0Nyt4kUhRF8sMeh96/QndYeMNPm07WlVreQbWWTkV4p8QPhBqmixS3Wkl9Z0oHBjAwsQ9fwFckqdh8zvufG+s+Arxd7tAboOMEIuSBWNY+AtZSZBDaSLF/CpTJAr7L8KfA9PEuiS6lpPiB7u4jBP2RVHzEfw9K4e+ju9L1WWzk3RXcLbZYf7h9K4Zwdz26EtDxbQvh9qctz/pMUgXHPBFdXafCjRJWc3Nm7Skdd3P8AKu8tpL0zndKwXBqSKRXldPNxMeFPfNXFWN5O7OC/4UvosOXFvNFu5zvqqfgdocRJ8wR7/V/WvT5LG8mjVZJ2fbwc0+XSoZwvmQiQjGc1V2UeSD9nTQWk8z7Ui56FZCKk/wCGZNIuzmO+Q/78hNexx+G7SaMSGNVU9Fx0pf8AhFHf/j1yo/2RSuB5DD+yppYfKXieb3KSEHFa9r+y7p4UBron6ymvR18M3yNhbh4X/vAVYj8M6r1/tGX8qtTaGo3PMJf2RtKuWz5y/wDfZqef9jrRJowBOg4/56GvS/7P1G24bUpPyqVby4ixuuGPvVe0fcfIeSR/sXaMjhjcKSOn7w1b/wCGPtATBdvMYd1kNetQ3k03AnNadorqv7y4IPpTjK7JlGyPFF/ZQ0C3OVgkY+0lW7T9nbSrCZHS2uRt6ZkOK9yt7kx4/eFqvrqe1PnTcvfNWyOZng958D9OmjKvC5B7Fqw7r9nzRn4MDY9N1fSourW4/wCWK0v9l2s/PlqKxaYrnyj/AMKP0zQrlp7a1lEmchg1Rt8Pr8TCWFHUDnnNfUVxpKTyGJLUYHG6lXwqyIcxYWs/Z3K9pY8J8OX+p6RvjMLOQMHC80V7rYeFLRpJj5Ss23mij2Qe0PCm8IGVvOC7MenANMi8OwPdKVDfaQeMj5c/WvU28LXIhFu0ipEGO0Ecmqeq6RDo8KrMAnHU1co8yuYx0H+DdFk061KzqMscgpzXQpp5upPLlX5V5JA7VL4YQtbosTBkb8a6v7GLT5ETcMZl/wB2uCSszti9DnNQWawitrKW1IsrkYSeNCcD1J7VW8FfDa48IR3MdnqgvdSuJGuUT7QHVUPOODwfavQrzxVaacNJsLuET6TMhDwKBvx6ZrhNHh0bwXq91qWm2lyhkdiFkl3YBrqhT5kS3qeofDn456p4XvV0/WoiI1OA7KT+tfQtjq2l/ESzQxyRy5XuRxXyfYeK9G8alrbVFXd/CVIUg1vaJ/aXgO587Rb0XFqTkQJlmA9K46+Hl0NIyR6P4/8A2d7XxPplyvkxXAkyhM+MgHjjNfDXxY/ZPv8A4b3/APxKoXlty53buRj2r9B/DHxKXxBpSx3T+RchujnHNdJqGi2/iXTVOoRJOoyQQornp3pvU6FZn4W/EiW40bXIobuCeNo8gboyFqrp2dSgN29winG0Rq4x+Vfqp8Xf2TfC/j6KW6urJSYwVWBTh3z3HFfPnhv/AIJ+6B4e1Wa/1a4U6cSSLHeRIOfWu2EpTloTUUErs+RLaZdPs96ojSSjHAzWBqF9OJ97biP7o5Ffo5Zfs8fBuOKSOXSJ8oPlU3HIP5VZh+AnwQVcT6FOT/18j/CvUjhpyR5bqQTPzKaNdQAXaIWBzuHBqQX6WrC1vAZM8ROo3Z/3jX6Pap+zP8F9Rz9k0eaMn/p5/wDrV8X/ALTXwfb4d+IZToLKujSORHCRuZV+tQsLKLvI19pG2h5BeSm2u1bTLmeznP8AHbkqfzFew6HqPiLQfAHh/Vlv9RuQuoE3qIzOTCMZyB2615Nb6Jc2sdtdR6jBI5dcxAZYAnkV9Q6NoOvanpEieEvEWnaI09sI5rG9i8x3GOcema82quSR0QldH3V8EfEmk6h4D0XVLUH7Bq0QaCErgxj3XtXK/GLwjFqNjdqEGw5lBI545xXln7L2qeIPh1o95o/jNHknVVTRwF2CQ99o796+kNT0U67oxaeVGkkTds6FRjoa68PUM5wufDem6t9smltm/d3EbEFW4GM8VpQTFbhUlI255K0nxi8KSeE/EY1JB5UE7iP06df51l2tzHdW5Nt88h7g5r2ktDx6isbLSrLuEWWYHAGKRbe6YcxMD7qRXU+C9CisYftN+m+QjIPTioPEGvy3GoeRayxxxg9CtFjivY5Xc8cwjkGKfJIyn5RmnazI0d1GrRM7n/loOlJb4I5qkjS9xYpWJ+biphKnrVe54Hy1nmR95607BobimM/xGn4TIw1YiSufWnt58hGzNNITNsOF6GpEncsBxgmsiCK4J5zWhDBMGBqjM2ktwO9WY4/es5fOqZPOoAviPHOTUyXHldzVGOdl+VutWo4hN3o5uhJbg1L5xk1tWHiAx/KAMHisOPTlX5j83sKetuUf5EIpXuFjv9O1kyxqpYj3711Np4g+zookIeM8GM8gj3FeXWLXigbTj8K39OvCZlllRlRBhs9zWU43GtzV8QeDLiDUT4o8NyNDKuGeyRtsWB/sj1zXg/jrxCfGHiZmjtzZanuP2rzEMaF/YnrX0TovjG2s7pmW4SOEjBVzmuM+KvhvQfGiST200UV8wJRlOMn8KwlS0O+lO2h89X63OnXgjZnZz128jFWZLS9S3N3bDcgGTu6isW58W3XgPW/7K8VQNPExzFqQG2JVzwh967u2uk1C3S70yeN9PfrjkEVwTXKz0ou5x41+8hgkdRI0uehBxV7TNY1XcS6KQVz71tR2ovbwxpLGkbHoRWjJpsOnyrIGV+g4rM0Mmz8czWSrBLbsWHqhxW3Y+OY5MmRSgHXatX/s9pdxRySKoz1rOfRrA+bsK7i2RzQBu/8ACV2M8OIBKZgM/MhxVi215pbONgo3n7wPasGSAWARwAUOBwK0NNjt7lLrM6RgL8uaLXGpWC/mmlUyADA5ODVe28R2l83liGQMODmMitD7PHHZnbcxucjpVyKyWJVJVeR6Uco+cbbXlpZgO8bkeyZrUi1vT7y1aRY5FZDtwyYplqqE44NWnWCMgPHkEduKqKsyJyuiIapajlUbb/u0n9s2hhmLB8L0wtXbb7GdPcmI5571nq1sY1CxEk9RW61MLkNpr9pKzDbIMf7NaNpqsMqscuMe1ULWKMl8QkVPawfK+BjitFG4rl8X6EpliA3cdas2940u5UclcfxGs2Ow2NE7HcDzgUiqwkcqdoAPBq7IwbdzUtLhIWZizbm4OKKyINQ2JtKFj60U7IWpU1HUZtNtLfA+3Xpk/wBU/asHxRBPrSCW8zbzr1t+oz6Vr6VqRhKG7RXdfmG0ZP41D4+u5ZtIlvwqIGXcCOK4r2R1tanievfGp/CetQWUFx5ZUgGMHg817p4e+Ji67okF8CFmcYljBzhQOtfmF478T3V54uv5XlbMczKuD717x+zT8UL9kns9kk0sUe5/NUlcZrhkrs64pJH2H4i8XW6PZXgRZ4IgS2f4apQeMrG/UncrFv4D6V5J4p8YytNbSkDY4JZEHH5VmSeNrLUHWGYSwYGcxLiuynJxRhLV2PZLnT7a5Jns7o2s/ULGOtWNI+Iut+F5Nl5CVgHSctyR615ro3ixY4ttrOhIHHnNz+tSj4gyWtwV1ONZoc/8s13VbqN7opKx7loXxdsNQu1dJAi95F6g1614I/aG0qPVhpD6kLyTgFHOMV8o+DvinaeGfETXEFlDNHNCY3WaIFQrDBIGPvc1H/wp6LxB4wvvHPh7WPs0YAle0uroRtgdghOe/pXHOjGe5sptH3Z8SPiJpmheGX1m3mWQwr8x/uZ7V8uaj+0Bo3jPUWaLWT5qnaY/pWBd/Ei317w/deGNWkmWC4+/LHnIYdOa+S/ilpXjXwbdyO1pFdWTNmJ9JUytsP3S2zPOMZqqX7l2Rz1L1HY+0G1i2lleaOZZd/Qk00zxzyBWZdxGRzX532XxG1uzn3XA1aIdt6SACtez+MurW9z5sF+5ZeNsshr3aWPlFWsjz3hE3e5+glqgCF4pcAehrhfjF4EPjjwbqcaf8fnlHyZR94H1FfItv+0DrtuFZ7sE7vuq9Xrj9q7xTZ5S3Fu6fwiQfzrSeK9qrWNVS5DzjT7uTSvEE+iXNkpnhZszMfmJXvXWaX45lvwZ4dTfTrlPkW4jxuGOBXH6h4j1PxFq8urXlh9kupN2JPJKRsD1OcYrkd39k30uJWZW5IByOfSvArwUnc9KkrI+qPhd8QPEupeLtKbWfFd5rcNlJ/o01wR+5+mBX6OfDvxLbXXhlri7cSSheGY8kY61+THwnf8AtTTrtobhbaVANpmfZ+Wa+5PhP4hj8ReDFuLe6fNmy28nz/KT3+tZU1yFTfQ6n4y+HrLxz4Wu57J/tC2++RDj+L0r5X8KeJU0CdrfUIxAVOMnrX334Y8MDUfDkjSxxmyZTjywCc9818O/tF/D5/CPjJruJH8i7cvFgfKB7+levTruWjPMq0zsTqV5NbJctdusDYCL2IPSqV2jrLuC4l67q8v0TxqdNjEF08kkWOgycVsTfFHSdOtiS0sjSfKRjJFdvMrHn+y1O3V5JVDTSEgdjTHJz8nNcDB8RbNSn2ZZnSXljIp4qdviJGn8J/KkpFOnY7uKJ3+8KU2gyTivP2+J6Jxg/wDfNQv8Qr18vGi7D0yKOcXIejrFGvWpI7mG37jmvK5PiRqadI4/xFQN8Q9QuuJFiUDpgYo5w5LnsK6ih+7ipVvnHIUY+teKt4sv5vuyRr/wLFR/25qkh5uUx6B6n2geyPcl1Yjrj86VvEMcI+dgPxrwa5ub8jzVW+mA5xCrN/Kq0Pim9mf7ONH1xm6Z+xykfyo9oP2R73J4t01RuluArelQH4gabEcJcg15DB4b8X6wgGlaNfeY3Q3Ns4X9RWzpf7OHxq1+RWWy0+KJv7x2msHUd9DVYeLR6PF8T4bd90RW4b+4TTLj4pXMp+S1RPo1R2H7EXxg1C0Ajl0mKU/89LkL/WtnTf8Agnz8RrsgaxqdjGvf7PejP86j20kH1eHcxo/iRqPZ9g/36bdeOb65Xb/ajxL1Kqwr0ax/4JqafcKDqfiK/jfv5F8cf+hV1mk/8E4fh1pLJIdf16aQfeDXTEZ/76pe3kXHDQfU8L/4TkrEISxf1k71ctvFtorRA3b+Z2O3pX1l4c/Zk8D+FFURC6utv/Pf5q9E0Lwl4Y0hGSHQ7SXPea2Un9RT+sSfQ2WHiup8P+IPB/8AwsvQ209dMGsF+VeQHKt2P4VnfCH9k/4seFfEVtENPudS0C5kCPDIwCW69Sw4r9FLSLS7fHkaXaQ/7kKj+la0GosuBEET0C8VyVG5anTFKJ81a3+x/fELcWO9Z1GfJUDrXlXinwH4i8FQPDq3h8JGrcTMTnHrX3xBqMgcF2+Ye9LrUOj+JbQ2l/arIx4yYwa4ozk90Vc/OG1v7N7VhtBOOEIrQtGs5ZoNtnHjb8x96+nviH+y1p9xDPqGjkRzEFtjsFX8K+bNW0i+8Oak9ldWsiFSR5gjO3867IRT3C5IVtvs8gkt0kwCdh7VUsYNK1C2HlhY5P41A6Ul1NFbIvmPuLHHyHNO+0ywL5UUMflNxuVfmrblSOeb1H/ZLOBdkYWTmr5nSLCqgmbH3TWGkOy4/clt55Ik4FSh8TbiHz04FOyIuzahvvMk2fZFiPqDU9w7fZWKKJGB79qxY5AJi2JOfY0sgupQRAcKW53cU1FMLsvLeSgBFgBB460treCCeRJYghU8VUuI7uzuMnaRtBH1qMX86b5yisy8kYzVqKQXNm2mMyuyDAzjNQyRyW4cPIU4qvZ6vJc6XISio2/sMU2K9zMjTBmDHHTNWnYVyWK8uoniIBkj7EmpluC0x80+WSOlPmtoZJg6MwXsM1L8iyK2A2B3p2ENgZCPLRQ7jrmippJBMxYBVx3HFFFgMi5tBaaviGIqJVCknvTPiPAP+EMnto4GLQxkHFX7eWTUrVIIsOYmMn2kn5vp+FVtWa3t9J1H7dfOZJhwpGa89nYlc/MdNHh1Tx1qEU9szRrO7Nz6Gvon4Lax4e0ifUoltfsUdxbiJLmRhtLZ5rx+zs5NV8Uaxb2YxL/aBPmj72zdyK941LwzBF4Ylhh02OGLyf3U6g5D45NZ8ly+awzxDKsGyCGUXQPAdOlW47C1ntECx5nIGW9q47wyZP7PSCSQySWw2yOeua6m3uxsDRN04JqrWFa+pBfeFgx82B9rjnANV31K+tIvIwWI46Vpi7cdHIqNmV23HBPrQUUv7bktzCWRowrhiT35rt/GnjbQ9a8MaV/YFrLpPiNXP2u7eTKSjHA2iuNnhWcYdQw96pyWig5CgGgDpdL1q8EAW9b7bu/1ioMFz6iu38MeMYfDknkafLG0cgzJG43nB6jmvJoJ57dsq7A9iKlt7j7PJ5g4fruFJo0STR9m/D7RPg78RtNFl4i0mJL0jDxtIFLE/QVuP/wTw+Cmsu97Z6HhH5GJif6V8VWWvzW92J4p2hnJ/wBavWvor4NftWXfhy5g07VpPNt/u+a7ZzWEpND5UN+Ln/BNPwZY+ENV1nw6YrWW0geUIWLH5Rn0r8uLuzbTr+5tr073jOB23fSv33n1+z+KPgHVrPR7kJPd2boqxnqStfjX8cP2XfH/AMOPEs9xqWlu9lvJimJyXHvgU6dVp6kTirHpHwbvfC/xS+Gt1Y+KZ4I7qzdYbe2c7XZADyMD6Ulz8DvAmoaUVtI0S8V2KyF8/TtXmvw/8H3EQWRkMF0T0A7d6958O+CJb2CDyWZW3fNitpPmJi7Hmx/Z2ubu3VLC9QynoqA5r2H4I6Frnw4sn0G/ikurK4mEzBRjkf8A667Lw/4D1Kx1BREXyTww7V9H23wMF7olvdtdyLOUBOAM5rF6GvxFXw/49e208aTpVrJbfLmTcc7ge1Yvizw5onxL0y50zU7cW93CNkckp6/SvTvBXw6i0K0me6HnXG0gO459q4DxHpwj1+Y5KHfwaITcWEoKR8IfGT9mb4keA2u9U0u7/tPT13Mot4T8ideSfQVd+AH7K2ufGfwAvif/AISW1tLmRnT7NLGxYFT7V9tT6Fr+qeHNXjgmkvLZ7WZBG7cAlCBXiv7JFre6Fod94YuJHtNQ0+SS4dB1IZuP5V3wqNnJKmkccP2CPiCbSQw+MbG3jPRWt2NUj+wD8RJP+Z4sP/Adq+09L8aXSxi3uIQyLwXJrat9ZiuehCfSulNmDij4Q/4d6/ER/wDmeLD/AMB2rqNK/YS8XwQRR3PjOwcqMH9y1fayaikYzu3U9trr5mwfNzT1J5UfKWl/sL3JA+2+JbKX1xGwrpbH9iPw/Z5N9fW94D0CZGP0r6FVoycbQKlZI0APBzRqFkeIWX7IfgC2INxYeeB/dcj+lbtp+zB8KYSu/wANyu+fvCb/AOtXqG5PQU4OvtSsx2Ry+mfCXwV4aYLp+jeWB/eIb+ldTbaDpMCBobKAMOg8sf4UplU9cUqzhehxRZhoW4b2e3j8tVgSEf8ALPyhmpo764P+qeOD6rWcZgxyTk+tHnD1p8ormk7TyffmDN/eHFKsY/ik3fjWYbggYDGk89v7xrNxC5sqlr/ErH/gVXFiiCja2PxrmvPb+8aniviMDcajlKTsbpLr9xx+VRyXMkRxJKo9OKqwXy9zT7ho7nBwCRT5SuYspfL3YP8ASpk1AKcpCxcdDmsZ12fd4pqXEscqnecA0uQOY6M6odu5zib071JBqzkZeNs9jWCbxXfcQC3rUo1DI68VPskg5jpP+EiaWJYbiNjGvQ1Q1vwroHjGya3voY2BGAehrN+3hxhuRU0V5GvQAVPI1sHMeMeMf2VmiZ7jR7uMw53CBQSc15PrnhnXPBNyRfWE0cIP+tZcCvsuLVXTGxiP6UzUF03Vovs+qWUWoxtwfOGcVS2Ibuz4juZYZUF0kizHuqdRT0nPkB94FfRXjr9nLTdaha40CT7Ix58iFQBmvD9d8D6v4IZotTsjszhXPOaokyxORbh/MXpTLqedFSRHG3vxVeZlmTj93/fUfw1EqTjBALwe9NbgWZbqa6ZEaQZByeO1QXUphW4VJAWb7op0jpGfNCjPep7Z7eYfaWjXEfJGOtaALYWcsUyRyn5XTfjFEl8rboooWkePn5aJ9UXzlkz22j2FMaBipuICYyeu3vQBbtXuJoCzQOp96sQQtJESx249aLO++22qw7/LdRgsO9IL4Q5hYBs9zVAWrayV7Z2Mqtx2oqpHFPh2g+ZcZK5opgYPh028Gq3dtI06zvHnOSE59Pep20K4kE8bMGQdN5yTUniCVfID2lqzNGN5lXpUFlqF5epp8zuYkkGWlbpXmy3O+Oi1PiL4V2dvN8eNRs7jeitdSA84X71fcPxP8Cw6P4NtI4DE9svz71IJ5A718V/CTy7z9ofUbe6Xzomu5fm6D71fb3xj025sNCMNndg6a8IENuB/HgZ5reKVjnk9T410R5bbxRrluT+4mm/d59MCtmxaS1meMnKEk81n+MtFvfDHiLwyrgo+ohmKEc8E1cTzmlY7CMcFO596wludMWrGn9p96PtPvWQL5vN2GIr7mrLyBFBJpAaIuweM04SBqyyiqAwlBz2pEu2U4CFqANfCHrxTWiQ9KzXneQg4KfWpYZmB5NSx3LRt2HKkAjpk0tjJKJWjxtzzvb+hqOW4Lwsg4JHWlF60ixpJ8youMVLimO56L8LvjZrfwr1uKW0naW0LAOsxL8Z5xmvtHRPiH4T+PmgyW5eyjvrhMTJebFIJ/uA/0r85X3yx7C3yg5HtUtjeXelXsF3p0j215CdwlB6n6VlKNth3Ppn4jfs3yeD9aF7aQebZHJJiG4Z7dKl8IeF8SgyJsY8AdKwfBf7YusWVhHpHiCGXVI+FDZAAA+pr3r4feMPBfjV4yLJLCdsHLvnJ/CtIOy1MWnc7b4efD+2FhHNOFZ2AIzzXX2E72VyYpVbyFOBgUiRHS/sxsxvt17r0xW1H5GpQFA6+aecVMtTog0tytcXkSXLf3CBXkvxAhiu9TP2cHcSeleqXli1q+GgaQHjIrn7rwtAl4LhgH3HOzuKluIRZxXg/RdUjkzG48lvlZHPXNcXrXhq38A/FyfUUUJ/aqpBhfu5GT0r6Nh02z01FYIN5XI9q8N/aLtJltNK1a2UvNaXBlKr1IArppSRFRNrQ6WXTDGtw8irtJyuB2rNexl6xkj8a1fBurN4o8IWV5cqUmliDbW6irFxatCPlPFerHlaPNakmc+Lqez+9k1oWPi3cwicEBeOlTJHHK2JEzVO90SLBeIgE88U/dC0joVvIriPKsAfrUKzNGxy2QenNceDeWb8ElRVxdeZABLGfrWijchyZ032o+tH2s+tY1vqMc4+9tqyXG0kHIrT2ZHMzQ+1+9H2v3rGF3uPyqW+lPWb+8Cg96PZhzM2Bd570fayO9ZYuF/hO4eopftFS4j5jVS63GpPOrIjuwrZNS/blrNwY7ml53vURlYHOapfbh/k1N56sBxU8jFctLeMverdrqWA2TWSWDe1RuShGDR7Nhc6Nb5W707z1Yda5xLkp3zU41DjGKORhc2w49aeHHrWGLw+tPF43rS5JC5jaDjPX9anjcev61gCdzzuqRbtl71Xsw5jdnvfsyqV53HFWxMsdvk85HX0rBtL9PM/eruFaqTpMmBwp7VlKm76FqSC1uWsZjNBMzE9VLZ/StOV7TX7Vra+ghlhkG0koC4PrmsCW3SBy0Q2k1NaDySWzknrWfJIq6PMPiN+z79j86/8ADb7wuWZJnzu+grxRhd6fetYXtvJDITklkIH4V9kJdTDaqSYRfur6Vh+MfBGjeLbUy3SRx36rtSU0Wa3GfK13Zra4KneD2zmq63Ly/wCiiPaknBO2tvxf4T1LwZqL/bYnS0J+SVhgGstLhmQSs4ihPKk/xU7gZht2+0bD0FWpbt7ZREOlSuBPIBEQzHuKZeBoYyrwkv60x2I7dZLlsRnaR1PSrEk2CIyMt61JEytYxCAhJiPmHfNW7bTjImXXD/3jVXEJbu3l48wIR1ycZopg0L7RNmW4VUXnB70UXA566upZ7FRDKVEnyFc4rLt5bt5BYxOWa3+XZn5aqX2p21ypUb0eNi20HBqK2v7hrWd7bChxyWHzCvNb1O+10eX+NvhRb+EPHFjrcNy1jNcSKreVjBZmA617zqngqa38V6Np+qa5cSxXZiUxZDCMEfeHvXhfxOlu9T8KgyOxkivom3ZOQA2a9M8O6HrA13QvGU1z9o0a7eO2h3MWKug5/mK2T0OdrU4H9uPwTJ8OPFnhqf7VK1hbh/IuWHzFcnnFcXa6697LZzSQJEGhUDafvjH3jXoX/BSbxwdah8K2Tx/u4YXUOFxnk968e8EaimrWFrI54jiCA9ulYyepvFHpQ0G2vrLzo8eYRnArkr3TLiKdlkUhAa2bHUJNLZZHfELHAJPBrokktPEcW1XRWx1yBSuaWPPUgKdWOKkMwiHAzWprmgz2QcqjEDpiuRGotHcGNhkg9KLhY1muzIRkYqRJ6z5LxJSoBAI6ilSX3pCNQTcdaeslUEkJI7ip1cZ60hF5X4qQzmFc449aqI3FSi9DDyip44zikwI2AuJA68NXUeGvFmqaHcB7eVvlH97GK5hgIzlamjlGAGJ544pWA+l/hx+0JqUcyRzX0lyVI/dSNxX0n8MPiUPFl8EuES0wDgxnOa/OjSkltZ99u+CT3NetfCn4i6l4c1iJ5JBsDd6LAforFqweYwzIOnBNRm1SW4Y9RngVzvgjxTbeNtLS6Rl80LyBwa3rWTZcYY8g9K5mjaOgwWb3jupJDKDge1cN4s0f+04bq3nQNGVwufWvRb+dbW4WZMY2YIrm9VvY7iFBt+bcc8V10oEzkcL4MjSztHtB8otsIBW+Skp28VlTacdOvpJoz8sx3ECs5NXIvQobPOK9Fe6rHL8TubOoWnkoWUVlxTFG+fpXUeV9ptFLDlunvWLd2QBZT8uPWrjqxS0RFvt5xjAzVS50eKUZ6elRz2rQEshLfSoort53ZGOzZ68V6MI6HmSlqUrnSpYDmMnFQJqk1qQjg7ehrbW+RflJDU14ILsNwM4rSwrlEXyv/qqeJJG++ePrVeaxEXMXGPWqE15Nbn5lLD2FFgubImVOFPFL9orHhvhMuTlD6HrUnne9LkDmNVZt5wKdk+tYsl8IRu3VH/bXvRyBzG9k+tPF7t4z0rnv7Z96d9szzu60cjDmOjXUB60Nebq54Xn+0KmhugQfmH50cgcxtfavpR9rxWT9pH96g3HHWjkFzGyL4U8XwxXPi59xUgufcUuQjmOgF/gdaX+0Peuf+1+4o+1Z7inyBzG+dS285q/Za1jGWrlY5t5IJpDctG3B/KpcA5j0GO/SUcmpVuMHrXFWWpkYBNdFFcq4GGB4rJwNFI3I7irAtRPEblzlEOMe9YqTgd+KvW2peXE0YIZD1ArCcNDRSE1ew07xXYtY6nCkoYERuwyVNfOXxL+Gt34F+0Kha6spc7Gb/lmPbFfQYieCRpYWBQ9Q3JFT3ekWniHSJ7GUZFyuC8vOPoT0rDlNVK58lRXMWnTW7gZ+QZzV+YNql0XUYTApNW0+OHWbyzCHEMjKv0FMi3osSBhGGbbluKDValIw3sF04WBRGDw+etWFsr6UhhMQPTcK1LiHzB5EkqbV4DKetUW0a1YEJNKSfRzigkdJK9vGAxDH1zRUSeHHs38xZtwfjDtmigR5zNdWktw4t7Pz7/GXdTzilP2i3WJvs7Qo/wDrc/x1r3ZtDZubSPbfEHfsXoPrWQ+vLplnbWqhruWYYm80f6v6V5s3qj0oq6OJ8dXitZz2sEBmkZC4iXrnHWuy/Z+8TzeK/hPpvh/Ur8WUujXct48EnUKSAP5Vy0UI1S7nN4ptkG4LIg+b2FeXeN9G1fwtb3Or6NdzxiUFJYwduVH86tPQxa1Iv20PH0PirW9OtoHE1pYBk4PDjJrybwJ40XTbEWrv+7Mgbr29K5rxRrk+vKj3ZZJlHyqR9761hQkxcRnI7+1Yyep0RWh9zfDDVvBvxGtf7GuWgS9RcxIxyQxrV8b/AAhv/hzCuo20bXVkRucoMBPrXwvoPii68O61Be2FxJG8LBi4OC3sa+7/AIDftS6X4q0pNF8VCOTzAFXcN24e9Fy7GDofieDWYTb3LB5+gQ9QKz/EHw/ttpuYCsV0eduOTXrPxU+AEUtqPEXhCUy5Ak8pSFGOp6Zryiy8STRN5Orxm3u4+NuDzRcLHB6nphsZkR4SspHLHuaSKLyhmQ7q9QurSz16FXZVVwPlIFcVrfh2WycuvzJVIye5jAyFgY+I+9WEk5qiZ5FJXG0U5JaCTVjkGKmEmQKzo5KlSYk00Bd+9UtsViky65FRwfNVohYlBYZp2A1LGVHI2jFdDYq+5CHwMiuMS+WP7vFSjXXj6SYH1osM+tfgh8R38P65FatLiBtoPPFfXa3dpexx3tuobd8xINfkdF4s1KylW5tLkllPZ69v+F37V+racIdN1DGw4XczE1zW1NloffV/dw3RHlEcDBx61zOqXAtcmuQ8KeN4tRto5Y5hL5oDnBzjNafiC+MsGQa9TDxOStKxQ1PXn8phFy/YCsvVrNEeNo5hYuyht57t6VUt2ZZ/MI3AHpXSizjeNUlUTEjcCw6V6Mqd0cMatnY8W8UftXH4UeJ4tG8UWDrYu4SLU5XAQH1617F4d8a6H8SdPt77w/qcOroy5cQHPJrxn9o/4O6b8SvD8sE+ftkSloiFzz9a+DPC/iPxt8Jtf1AaTfXEB0ibylsxJtSYYByeOa5bcrOq/Mj9atTjSG2PlMEkA5HpXn9/q0v2ryw3mODy47186/B/9vPTfE9uNO8YxLpWokmIeSpbPYEk4r3fT5bS+gh1CxulureflSGBP5CuylUu7HHVp2Vzb0v7RLIWwafBqU1teupyBirekXaxggqKwr693ag+B2rusclzcOog96Y12GrDjlYmrkSs1FguW5LMXA87v0qlJK0R284qV7w2zeWenWop7uJ1963UdDFy1K92FeAn+KqISpCzPL/s1IE5p8ouYiCGrQPygU1VpCcUcocwrGlSfy/xqJmqKQE4xRyhzF4XfNPW7BNZqg08Ajn0p8ocxqCYetSCYYrKE/vTxce9HKRzGh5gJqVHFZyzZ71OkvvS5Q5i+slPDjFU0kyalD0nEXMWw1aVjfAMBmsUP6U9C0ZzWTgaKR2sUomXrVmB/JBVD++PI9cVzWnahjAJrUadonW8XkKNmPrWE4aGnNobZmBtV28uTh/pWN4i1ubTLVLeMkTTDFsB1P0qeK9S1JkkPyt94egrzjVfFH9vfEKyaE5s9JlIJ7EGuKUbG0JXOb1/TZ4NUaYviRkJbjvXILHLqMLRTN+8iJYZrtdf0jVNVN1dQqSPNyuD/DmuT/s+Qag/zENgZGa5ZHoQFS1V7VA8o3qOlXba3SzG1PnBG7j1qi9xapOYzIfMXhhjvVGXUZojhOfm4z6UyHuaqX7zyP5sJCjpmioot17C3mfuwBkFe9FAjhYfE7afZtc6eixSPmMi4UNkDvWPY3s99dTzs8MchOZHdRt/D0pls7XSt9vtfKiUfKzVn30NntaOK7WSCf7+OkVcNkzuvY1b5brVbhVhMJkQfwKMEDvVW+0RdaIS8RWhi+ZXUYQn0pqz3N1EkmgQndEvlPNF3HehJr3T7dLWeVnhLZ+zH1PWnYDxP4i/CLSdY1G4uETZIpPyIcb/AKAV5pN8IBbGRwjqBnCMTmvqLXdFlgngu7q0Noh5gZvT2qvqHhm21SEXD3a2+Fx5pH6VLih3Z8fnwDOk8yKjKuOCwqtbadf+F9QjuI7gK6HOAa+j9a8PWtqyIL1ZSWwTiuF17wLDM0soUTZORxUNIfMz2D9nv9qWeyuYbXVJN1uB5ZSUZz2717/43+GPh/4yacda0GaG0vAN+xnAyfoPrX57XGhHT2Evl+VKvKivS/hB8fr3wjqsFpe3TRx7gArHrWbRqmzvb3TdV8HajJpmq28sRJxHclSseB71ftbm2vFMbfM/qTxXvia1oXxr8PxW2pRRySFNsRc5yPWvCPiL8KvEHwvuTcokt7pTHK3QGFXP8P4VS2CxzPiHw2GLNEQGHT3rkri3lsv9YDXb6ZrEN/Esk0o4+6DVbWbGPUlJQCmFkcdBcmU4WrSMyvg9ajuNNbTnJxSxyeZh/WqRLRs2RBxmtFpUSPpljwPrWLbzbankv44U3yEYXkUNiRneKtZTw/p8kt0yiRhlAOK8V1r4oarLM4tHURcg/LzUnxd8Wza9qZhRyYYSR1rg7csWWOL5ieTis22aJI37D4ha1pp/dzZbOcMCa9M8C/FSHWXW11b5Ljorp8ory6y8JanqknmW1u8n0ovPCeq6fcCR7d4JAc5IrNPUa1Pu74RfFS/8B38UWoXK3OkSjcu05YE9Oa+s9J8Tr4o0G3vrWVJopSQAnJH1r8rfh/8AEN4IV0jXVLbj+7nkPTsBX3J+y/4pNtaDQ54vJwMxSE/eJNepQmkctWGh9E6Jbn5g6ZkPRiOB9a0DexW8LxIctkknrVe48SaN4VtZ7rXNQj062g/1jSdGr53+IX7ZHgXwwbkaVeW+sSjdiON8GvSlWitDzXSbd0ex6vdfacpENxHrzXyV+018PLO1b/hKdMu7e11K0B8xJGG1yTzle9ea+Mv23Na1+2uF0iOTw++DtmR815je/EHW/iLpM0Oq6m927/fd/wCP3rlnNSOmEZRLMuhaJ483zWQa31ZUw0wbbGSOuAPet/4X/Enx18Ibr7GmoR3dgpw6SAyMy/7OT1rH8Barp/hjTp430dbmYbjuzgmsTXPi/bxOQdA8lwfkl3dDXPzum+ZHSkpaM/QP4XftA6L4zsY4ZVfT9QIAZrkhVJ9hXftYTSFrhZUlQjO5OmK/JiX4marcy+fbXbxOp+Ug/dr2D4V/treJfBqpbau02uWq8bHfAArop4zuc86MeiP0Q0u2+19R5a/326U3UtUi0tvLU+e3rHyK8A8Oftu+DvEdqkV/NBoUTDBV3zivVPDut6F4qgju9C1SK8ifBLR16UMbT6o82dCXQ021Sa4nzKuAfbFTsqOMo3P1rQu9MjEQAIbj71U7bTETObgIfpXoxnGaujjcZJ2ZJbuqnEvA9alea3Xo4/Os+e3LS7TceYnpSf2bG/cVokmRzWLL30a9HFReczcjpUf9ixt6VYEGwBR24qvZt7MSqJbkfmMafEd2d1L5dMlUqRij2bQe0uT/ACikdgVIHWqvzUqlgwJo5bC5mOWJ6esT08T08T1N32HzoEwoAPWpkZaqPl3Jp6Iwov5Bzo0IV3khetDtJG3OKht5jbPu9eKtB/tHasWm2Q56ktvIjD5utWYommUnerD0Wqi2uCO49KuqixALFH9lJ/WrcVYtTFt5Ak4TBB966JWaKz2kbgxByO1czeD7BCZ7ibCjnca4Dxp8eLbQ9Pk03TZxe30pwuxsFe39a8+p7utzppvmdrGt8V/ibForjSdOcSX8+EJXkLms/wADWTRJBaTHdd3PF3L2B/pXmWkaPNbySa5rRMmpXGRDHJ94HquPzr2DwZY3OmaBJe6lGRPqChtz9VNcM5XO6EUev+FtKiS1KTqrJnYBjkg96474kfBz+xbubV9PV/soXc6kkkDvXe/DS5TWrII677iNhtPfaKr/ALQHxTh8JaC+lxRb57xTA+DjgiuGSbZ2RR82+TodzeCRIpy8hy53cE+1UL1raR1SCGQSbwMnptzzVTTwRd2rJL5aL99PStWK0ea3kaK4/f78jHXFF2ZPc0J7CJY3WzVl2rlt5zmis6DVLi0cK8hlaT5cUU7sRg+EYdP1eKSa5I+0YKCEDK8dKi1dtE0hpJJYEUp/r0CcD6etc1HDLot15tixWcHMiMc8euK1dRtoPE0li0zCHzP9a7HAauY7itJLYRgSRubUS/djhHBU9z70T6dYbXitZpLlVXcJJB82TTb+w0/T9Vit4ldk2ff3ZFJZQM1xqAs2ETeT8iyckH1oAx1M88v2GUm4WXhTKf8AV/SrGo2r2+kmySFGfeHyeuKWEt/o1q4/05xiS5H3FNXtclBWOW2gkN0oETHqCO5xQB55fLb3d/8AY2t1Eh4BC8Z+tM8UaDb6DYRGTDMy5ITmujls47K8UtiUMfm29RUWqWdrcyosRKA9TKcis2CPItc8PFh++jCll3L9K4t/DEMzvIEHmJyGIr3Xxro51iwSaFliaPCAnocVwdxok9raH7YOX4YKMYFZs2RzHhD4maj4J1ERSXMmwN8mGJwK+yPhn8btL8f6IumassM0brtxIM44xnnvXxRqegRyCVoYXwDwTzmsHRvF994Q1ZCsc4UMOhOOtNbFH2J8TPgFLpMd1rXhtjdWIG+RGP3F/wBkDNeRWWoG2JSdXjcHG1wQa9g+DX7RtvPZ29teAurABkfBz+ddT8RPhLo/xGtm1Pw+yWuqMNwYnKD1BApgfO+qKl1AXGCuKwI2XA25x2yK6DVtC1HwdftZavA8BzjzHXCt9Kz5rQT3EggwIR92qRMiJIm2bgRj61heJ79YNLny2GCnFdBaQokjJI361558RpTawy7GypGKTEjx3Urx7i5kJ5LHkmtzwboMl7J5+AFVsHcccViyW4ufJVPvt1rrbyd7axgsNPUm5dQSF5PvWbNEekWPi/T/AA+/l2UaSlFBfeMCuq0vWtG+IVuYNkcV4RgDaAM/WvKPD/wp1zX7VZZLyLT2PSG4BDn9ahn0fWvA2pOtzDLDDG3NxtIST3BqZQaCM0zW8ReFjY3rZAEkUm5Md8HNbtz+0Df+GdJshYErqsT4fGQAAOOaxB4ij8QIPOO+QDAKntXO69ZRMCogcn+9VQk0E7Mua98WvF/jRri4vNXuX805+zmYlDXFJJczSlvImklJwcISK2/D2n251GO3kRvnPrXucHiPw94C8Oia6sReynA2RAbgD36VtKTbM4qNjw208H69fBTDYhlfpvBA/lWvpnhHXdBkZriBURjkgN0rvYf2hrGcrFZ6W6wxnKrsBY/pXe6D4i0X4jWW3+zbjT7pRgmcgBj6gYq4tkSseSaJ4c1awv5L9wr2LRlSGfnP0rF8WaHBdxRGFJHnnJXYEztr0vx1bXXhKMssTXrE4BgHygen1rA8L+M4tBuodR1SACJjnyHUbq2a5lYwvZnmV14PvvDNuJbq1l2yjcuEJ4rm1R1llLIyZBxlcV9j/wDC2vDHxHsvJjgisGgHlgXAX5vpxXF+I/htpt7ZHCq0ruSrJwDnoKy9gac6Pmwwo1rEAzeae2OK29G+IHiHw28S6dq11AE/5ZpIQtet6L+y/rviYzG2uIbGBBlVnU5/nXI+LP2fPFfhu/VLbTp9QXo0sEZK5p+wl0Dni9z03wN+254o8OwQWmp28NxbKeZXYs/8q958NftteCtWSGG9mmhuX4wsPGfrXyVc/s+axB4Xk1S+haCVFLFHUggAV48HaF0Ayrr3FdEa06a5SPYwnqfq94b+LugeJSZtPufMUHHzgD+tdfF4lg8sPvj2/UV+T/h74i+IPCgH9n3gVjzhgT/WvQdB/aa13TV26rI1wp4PlDFbLGyRi8JF7H6UweKLNhzPAPYuBT4dTs7pWdLqDAPOZB/jX54RftG+H7mTzbyx1Ju52T4/pWn/AMNJ+DEVVi03V1z1Juf/AK1dNPMGtzJ4FM++ItYsp3KLdREj/bFPW/tZCw+0RZXrlxXw5pX7QfgsYf7NqCk9jc//AFq3F+OPg/U8GB7m1I+95tx1rX6+5E/Ukj7Cl1axg+9cRfg4qs3ifS163Mf/AH0K+T0+Ifhi/GF1byif79waa91o2oAiHxNbQluAzznAqXjJLUPq0T6t/wCEu0Zet0g/4EP8akj8W6K54vIvxcf418fXXhOK64j8faShPczH/GqafC29uTmP4naFH/vTN/8AFVh/a3kR9UifbsGs6VLGHF/aqD/emUH+dQ3fi7Q9PUmXUrTA/uzKf618K6n8E7y5lYN8R9Mnc9TDcuAf/Hqxn/Z0vpTk+OLUj1Nw+P50f2t5B9Uifct78ZPCVrxJqKcf3WU/1qt/w0L4JtUJOoEgegH+NfETfs5iBR5/jrT2B4x57Zz+dSJ+z7GCI18baaUXr++b/GpePc/eLWDiz6q1P9tL4fWc0sQurwyIccW5wT9c1x2q/tf674hVovD2n20qNwr3BKNj8q+T/Hmmv4CuI7K6KXquu6OaEcEDvmun+Gkk13pL+I79ftOnHMMNpbjbIHXufasHj5bGqwUT0rUPHnizXdREer3t1au5x5ds5aP86teEviN4a0zXktL2ee51kN8iNHuUjvk+taFxrd34i8JaDZaDbDSNSulKzT38YYRn1PTFcNpXguzi+MukfZ5Uu5UhYXckZyrSZGSPQUliJVdBywyprmPsPwDoNz8QPEcWoyIEsVRPJRuAWHsa978d2kOleGbW3dIhcbCAqkEA141p/iuDQrO3trQeWyKDx9Kn1PxfJrAj+0TFgvvVO5MUd18NviND4bv5LIqHLozbsZIOOlVPiVeweLtFtLpo1e4gmZxkdfQGvMJ/Edh4P1NNQvp1ityu3LNjrVs/FPw7fxTwQalb7nX5F8wHk1HMjpiihcQQSw3Eu3bO5yyIOFPtUdncRW9qWQsJs7cMMDFMjvpLBY5kddsnJZhkGrgvdL1EhLkF5COsbYFSc73K8NkXdbk4MaHd1oqxFbQwmeO3kzGFztzkiigk8sh1T+y7v7dfxZef91tb+MdhWxrmq215aWqW+mpEAMFFP3ar6fY41GS2vUEkzL+7HVQexzVmbQDZG4Fu5l1Jf4HP7rP1rCx23EtrSxXSnW7uB9sZsxq3VVqvpWkwPLcOdT2TMmN+OajfXFysOrweTdDhTCuVI+tSpc2gu445pFjGRnaRnFAXKV2JrZHtYrfz7k8R+s/vVjSLy61TTnEMZMkb7JJx1Qd1p/irS4Zri2ksLh/MGdhzin6h4fu7fSYtjrCrOrP5bYJPvSC5ianLHFeC2tbUTsxw8o7VRu/DpgmWSactE3JUjgV0M9g9xIwVQvlgEMOpqa2kt5rOW2uQ29u+OlZsZyeqW8V+q20LBWABEY7f7VZUuhieJoryTzWj58xh/rvauoSyX7fuXHmEeWv0qzLoo0uYNIQ8sfzFWORU2LUrHj+v6IUYME+xxqOEHQivP9es7e43KEDP/er3bxXDHqNzGVC/MPmUdq4jX/DkYGyFQXHzmhKxXMeKww3+i6hFdQXTxrE27YO9e9fCL9oGewvI4JHJAOGiLfePrXDahoDX9uS0ewjsork59Ak0yGWWPfG4bg9DQO5986va6H8b9ERJoY7m92jbKeSnHH5V87+P/hbrPw3uHVjJLaKeJSMAiuC+GHxi1DwdLGonJw/O5vevs3wD4x8O/G3RBZX8sUd/tx85Crk+5p3sJu58krbQXFg05cCQV5B8UZzb2CtnIZyBX1/8Xvg9deABO6QiSwlywlT5gPTBFfIHxYtwukxrKwE4lJ2g9u1Q5FJHnOmDyLyxlblWNenfB3wu+r+I31OYFoUYxrkcAnpXmenIJdOnYn54R8ua+ovgx8OZ9U8PQyWsgW5LLLt3YBA5NXGPMRKfKjorzwbKmpKL6do5owHVmHLegqt4nvLPWrI6JrUayqw2QySfwD2r6c8D+H9P8R6dMl/Eo1JovK2EcrjgGvLvF3w1j+06haRJ5k1s20seoPtXfUo2Vzz4Vtdj4n8UeHbjwRrv2TzmTzf3kQxj5e1Sm6nuLcK0hL1638X/AAh/avhKS4iTdfW0yx5/iCg8/wAq8Ntp5IpSEYMid2PevP5bM7FPmRLc2k9nA10twyXC8qe9dtpGpWevWiW93Ev2rZgsepGOtc39umvI0hkji2MPvd6oFH+cRs6SDOGHFaqyJaaNm9ubHwjcTCPSY5lUZSfOMmvUvDPjmw13w5EIbZLTUFQBHU5Oa8P0rXn013j1FVmi9W+Y16Vpnw/1eewh1ewuLCO0mXzEVrhVYD3Har2CzZBqF94tjlkluPOktwTtiPT2NR2Ngnje3uVuLYPdW67ueSDU82naohZ7u7gKKMEJMDXC6rrf9l6uktpcOpDfOEbhh71CqWlYHDQ70/Du3ltkNvCIpkX5nUc5r2P9nfw1c6roqT6zGdQRLlo0Mv8ADg4FedeCfG6+II41kjSNUXaSBgmvoX4TXENn4OFjbbTKty0xPfBOa6oyucsk0e4aZpeh6cqx3Mce48ZNLJPHb3P2S3gC28p3Bx2FcR471yfXfBqWFrE8d4qECVFIJP1rrvA+lzQ6Xp13cyo/kW3lyB3BJbHpXVFnHJyRd1TRtAvrG/ivbeLUIWtzlX6ZxXyl4m/Zn8F+NHdNOnh0Kc9BGmea+jbfTrrWftotCxll3JtPC9a81134cX2lanY2lzM0VxM2390/OavkUug1Ukup85eI/wBivXrKB5NCnl1uZT8qImMj1ry3Wvgz4s8LzMms6NLCB/fr9F9ME9n4dmtlMqzIwUSEEH868t+LIkutDhtZUVpRISXbrj61nLC32N1imtz4UvfCV+SSkLRx+gqtPZ2yqIUIaYcEe9fS0eiQaXCWkiEpfkAjNc14z+GFvqluLi2VYLnG4AfKCK5HhH3OiGMT0seN+GDpul6lGuq2yPESM7/Svpjwf8OPhx4506OSGO1gkA52jOa8Ue0txZvpk9uP7QUEByny+3NY3h3xLqvw31kO0itFuyyK+RWP8N2Zq5Oa0Pq3/hiTRPEce/T9QWLPTZHWXc/8E9r0PtTXZAh7eV/9aui+GHx1h8S2MLWs5imQAFSducda+kvAvxNt9Vjjt7xlWU8A+pr06MY1NGjgm5w1TPj25/4J638OSusyP/2y/wDrVTX9gfVkPy3kr/8AbP8A+tX6GCVJz8m1h6jmmS2qsPlO1q9B4KguhksVNn57n9hzxJaOfIvJ48dwn/1qlb9jrxyE2pqt0w9Nn/1q+8nhaGQl3/DNV7zVEijwDzXPKhQX2S1Wkz4GvP2MPGWwvNc3AH94p1/SsmT9kjxnpgaZvtDQv0crX3RqWsSSYAdiM9Ky7zU5onQOQ0efuseK4asIL4VodcJysfBXiLw/dzabLoniAtb6vCcWfmD5miHUj26VSi8Wx+D/AAZaR6ewk8u5Pyrxlu9fWXxm8AWXjLTmuIkSG7WMhZI8Bvzr400pNR8Fa9dabd6f9pjyxTzYywySeelea4K5sqjPZtO1DxN498GwHTIJY729j+8hyUNdB8EvCER+I1tFZXn9oTQW0n24gcpKAMg+9ef+H/EHirV7ZtI0+w+yKw2LLGjLt+hxX0H8PdFs/hd4VnnvbiJNUuPnZw4LHIOc12UoqGopSc1Y201pZZmJOGDlPyNT3fiS20y3knnkG1Rk5rxTXvitp2hieRJvOlBLBE+bJz7V5nrXivxD8UpEVXGn6e33zv8ALfHsDVzmmQo2NX49fGOfx9Mmg6VKS3mKPkOehrnrX4fa34aWxv7jVpUw4ZlI7YrufD2gaB4F0w3lw0dxcAfflwTms466fG+pWUYJSyabaT0OK4pXZsnY+qvBUY1rwLpVwbj7XmEHB+tDQWlvNvaYW5Bxtq34W02DQ/C9rbW7sYlQBM9cV0NxFbsqp5CMxTOWXvXStjla1MSHVYLZPNRBh+DJ60VtaTpMdxEsVyiomeMdaKYrHC3VjexXaLBMk6uBukQcCpPtVxp9tf27qZgOElUdKuzWd3puo3EVqC1k6YRxTdP0e9eRYcmZZOGU1hc6SwbPT76OBbyL7Xuj+/EcbD71gX/gDTxf+c14khbAAVjxWxq9s2hSraxttkcbio9O9PjSy8jzDGrOwwB70Ac9daTIkgFoSRbcA9c10H9m+Vp6vd3CMCAdvQ1Lc2rw2STQrsbGWQfxVBFbyvaCW4j82IsF+btQ9hoqQPHLCfK/5Z8k+tZsNwn9oeXJCxEpyCO1dpHpdi1tJGrC38td25R9/wBqw57qxhvbaNVWRyDlv7tZlGIumQBXlLAXCsSvPaqV4ftqPI7f6Q4xWrql4tonForTM+Ac9jUN/IGsJFgsEN1GueDyaAOasvDhlvBMzZiTiQ+9Y2u6WTcGW2Xd/Ccc13Vpcpd6UbKYCwmlGXZeTmsqB4LLzrXiaTaWDGlYdzzLUBJaPIoXa38LEcCuW13Try+j2NNGQwzwtetW1hba9DfxABriBcv6ivP9R0+VrwxqxjaPIAHeiwXPH7/w49lcsWid8c/LWl4b8YXnha4WZDN9lzmSNGIYD611t7Ysszbpi0hGNprktY0W63yPbRGSGPm49x70WGmfW3g/9pGLxh8Pbjw/4ixqcTKDbPFgGFQDhWPc818VfGTRruC4e8eYSRPMwQKOgzxWkl7No5STTJDH3e3TgN61ifEzxgniTToI4wIWRvmjX1xyayaNlscRb7PsMpDYkYfMK/Rz9kfwDY+KtO0yKG9igvPLUkOeo78V+b1rGVtJy6/Mw+Umvv8A+B2ka9H4e0rWdAR7aa2hQt5J+8AMnP5V000ctQ+svFfwof4eeMpPESjfYXEKQsqdBjqf1rxTV/E9nD4u1e4UZillzFk9RivevAf7UPg34qacfB/iW5h0/XoV2m3Y5LnoO/fBr5Z+M2j3XhbX/ExggDWlvLi3cH7gx2rslPmRwxhZnnV3NG8+q3U6/wChTGSIZ6b2yBXyT4r0qXw5r13pksoG07wenBNfZniPwjf+KPhJHJo1uZLg38LPs653c185ftE+CL/QtbWa9tvLuyqiQHrjFcUkdkDkvDUdvqMaRvOoMfHXrWjqTFMW9vGef48ZFct4fvYYp7dDAqMe/wDersdViKxwyRSFNxUECpRctzm73RACFlcMzdhVDzL22hmgS5kRVOFXeeBXT66BbsoVdzj+PvWFqoLpER8rMOSK0ewIwk1O/jDR+c+056k1FCvyys0oDgZ5PWlm3WlyAx8wH1pL61QFZN2N/Ra4pu2pulc3vDXiy60q4jjE6rG3JOK9h8MfGi78JKlxFOJkPBReSa8G0WO2nult7kCNG/5a+ldlfQ6VZx21taTLcSF1IbGOaulVMp0z63+H/wC13o90GtNZsJLJpQFSScgAGvZfAd3pvjWSS/07xLZCzU7Xi3kncelfIPwT+GC/EfxUNJ1CwW8gLBZrhxn7OD3r7T8Y/CDwz8IPhqLfQ9OgtnlaPdeRrhi3IzXtUpJnnTgTalPrfg66b7DcRNbgbvNCZVvauaTxJda/4ig1C40u5lmgfcLkD5PrXXeAvhtrC6fHcavrE+oQuNy20wG0A9O1d3a6dZWg+zRwJFF0MY6GvSpxTOGV07FG4gt7zR1ZYftMrgMVi6ivAfiT4N1vxLrclvYWMsSKAQWTNfQUl7Z6BMWM628Z/umsm7+J2haJcNNJfrI8o2Lnua71TTRg2z5nuvgr4jsbaKW4kRQgyQ0Zrm9Z+Gni69mVYNPnuoAP9ZFHwK+wk1yLxZZsEjEyyDnP8NS+CtVuNY0+7W2U2cFvKYm2dCRUewUiVV9mfC2s/BHxLfZjj02a3J6yPHXHT/sieLtXlkZYXUg8SNGcN9Oa/TW2tDKmyceYhPBNLbzwrM9v5mzyztVaxeX82pvHG8p8D/C/9mTW/D9wEvY5PPydrqpCivXrj4aeI/DQSaSQ3JTmPylI2n3r6nFqjHLxgns1QXdrkjKeYn9096tYT2SuT9a53Y8G8JfE3U9DlWHU4pCO5IxXp8Hja11O3EsLgOR0zVfxt4f0MWL3OoxRWEeM+ZXgN54y0vSNTZNJ1MXcanp0xzXmSxJ3RpI9yvPEUksrAnmsu41BmyWNeZW3xbtBKwuQigD72aytZ+POlxMY4jGx9c1xzr3OqNJHqF1qcUSZJyRXJaxrc95LtSQKB615Drf7QtraeYRGkhweN1eVa7+0vPPNIkEQi91Y1g53NeTl0Po7Wtd+yRgS3Scds1zWveOPAluFvNZgW5u1wAY3C9OnavlrUvihrmvTnZLIVPbdXNajc3l/cbrkGRf7rGosFj6K8T/tPWeijb4dtljQ9AVVj+deUax8R/EHje6aee7Nsh4w+QCPzrkksbWWHmJYzjqKlQiNFBkMkYYDntVcw7GxBJZ6TOkjF57xm/1m7K/lU+qeLLu4nzNIrpCflEI24qPVo9Mkt0kglHmkAbQOhrFskWHzlnON/QnvSvcZZfW77X7lLa7nMkPVQpIxjpXufwe0BdRu9NjnIeCKUMWXjH1r570WRn13KLtUAjA7j1r60/Z/8Prd6PLd/aCibThQOM1FgPoeeOCxntUiuozaqOOe1OuNbSW2DQ3CB1cL+FYCSaYYLe1+0CSdhgqR92o7hUtxshtVYf3vet1sYPc6wXFzHcRzPOskY5VVHeisfRBNd2kqysYxCu7d/dopiLOvZsrx/srb7NkCoWPIbvXL6o8EdtunlvUZB87QBuf93FdTaSWstwbWZwVA9evtVu9iMckCiLNnB0ixyw+tcyOg5XwrBcaWWXcbuCYF1e5O5xnoOa2rHw/cu/2olFYHJVjhce1CTRXN0VijNuRz5jdAPSpDrcd47WgmURYxt7g+tUA+XQhd3PniYg5zt3fJRLo3lQmJpt0xO4Kr5XFNt5Dbv9lncfZDwG9vrVea8tobvdaOGwpG3OaTBFV5HE8cJJ+9g49Kw9SvYdH1N3kVmy3y8ZrSn1JbWcXMg+TPJ9Kq30ttqZN5cxFLNeRMx+XFZ2KM/Wb+XcrSIquVDKMdu1YL3l4k8dzniQ4IzWnfSt4i1M3SToIIYtij1wOKzZbw22ns8yHzGyIk7sfQUWAr6pLOs6pCdxm5Jz92sw6dNpsu2eRjO/OQcjBrb0lFkeMyuIXkGWV+qn0q5feTLILY27XEvUTIeKtIlsy7GymtoZHsQDKBmct3H9ao2Ng2qXrybY9yZBHHWtC6vrjTSbaEFCn+tUjlx6Cqds509ZLiKFmMhywHY07CucfrFkLDVXklEYDDaBxWHPpkxa+kCqRIPkVeQfrXc32iWWvwvPcyrBIuSFc8k1kQQSRWsyQf6xB93qaLFxep5Rf6GFSSEgi4kO4Feg9s1yer6JBA4inQ/bOvyDK47V7LqmmRyQMyjyZerxN95z6iuQ1y2tVsluWTdcFtg59KyaOhNWPL9btYodOdXUIYx/CK/Q39iTUbuTTbW2JgNm8OHM7DgY56+1fBWteHp57Sa6nO5GGdgGDX0X+y0niTx34dubLQdVTSpYn8n96pYlcHPSt4WSOaep9AfHr4BfDDT/EN54n0rxFdw+IZIwDHbXIEYI5HRvUmvCNHubqz1SOLXbue50q6OZndy7sP9nPWpfjZ8CfE/wAOodHv21Fr5rq72XJTdwnBzyfetzwD4eHxR1a20FSPtlofKtH9Pw79aULsz0NS4+O0yae2jeFLCFdEQ/vJb2HZJvHpkdK+ef2g2n1TS7fWbqXzLmVyrhWyuAK++of2Z9E8S/CjVF0uJZPEVvIyEIcsSAcnFfB3jvwfq+haTqOg69bSNLp++UEjGcnj+VE1YteR87WkzCeOQjGPu47V6AHNzZxZ7YNeewPiVlDCOPP3G616JpjxNZYDgkJ/SsIlPcbfAXW1jzWHqcf72MdgK0Ypi0CntnrVO+IM8ZJ4IrVvQEctrabLhfoKr3RM0KkH7nNX/EafvlI9BWQHZVYHuK4qh0090PTdNH8uFYcZ6VZlsZUgEolJcc8N0qjCTnbnANWrB2MjRs3ykcVlDRm0kj7y/wCCXEdve3/ja91W4jENtDG5edwD94dM1798XfjZ4QnW5ia6MlraPggEEFhyK/Ov4YfEO48A+HNds7KOWKW8hCPIpwG5FYGkX+s+L7i4snuHaCaTc6nNejTqNHDOFz6f8Y/t9a9IzWGh2du8UQ2IRF8xA4HQVyejfGr4vfFa5+wafZLatIcCR42jH54qn4A8B+HvD8sNxPZNJdjBMhbj8q+h9I+Jen6LZKtnBHFKo4YAV6NKs+pwTp67GX8PP2bfHdnfR6zrusPPcMpzb/bC0eD14zXs3h34M6XY3iaveSy3DkhWiZtyDHoK8/svjherLukuAygdParF3+0J9jtJGjykaglIied3rXrQrq25zOk+x6zr/jCx8OTxW2n26O0vCoiZK/7wHSs/4VJqmgWGpW+pJEv2y5a4THUKc/414zpfxCi8qfWkmA1G+/eAMc+UfcVnr8ZNduL37TNqUdwsfyeXGuDioni/ZtWI+q+03PqiOdC8YVh8jbiM1NdpHdy5jQAnqwFeBaT8XRJF5hfErDBBNdLovxj8xvIkfCnua7aePVjmlgWmew2Vu0SlQdxx1Y8V578TvjHo3w1067e+uYzcIhKIjA815t8WP2p7fwrpklnppP2x1xvVgcZr4i8a+INT+IWqS3etah5isciPkVw4jHXTSOingras6v4xftVal41u3hileOxbI/d5HFeM3PiMzAyWlzemRuTgmuih8KaQYyGZce7U+ytNK0ib5Z4o1/2jmvn3Js9SK8jkLDWtdN3+7kuWVj/y03VtzWGu3C+bJKiof9vBrb1Lxhp9mcRPHOo7JXK6/wCOBexbLeJoz7moOmJHcW1pHk31xOW6fISRmmW/kqjfZI0kGOso5qC13ajaEXLggcgUaeqwuyqhI9alXuD3NHSLGK7uG+0nyjz/AKvikvrExOcEEZ45qg981vP8vy0+6mncBt2RXR0JLBkSKL5qitLiKQscfKOxFQJNvjOQW+lO0ywuNSlMdrA8j5+6tc7buA27unYK6LgA+lGozCaC2MaStOR91VJzWiNHnXWFtJ3EQXDOrDkCurfVdG0S6t47W2+0XCHAnUgqp+lWiTltC0y5ttQjunhdU8sghlI5Nfcv7PmkyXHwjgeGONZmeTluPSvlnwxJqPjjVUtYgJFLgYVfevvXwt4esfh58IbCC8UQX7s37pjhjkDFdCiK6MOx0Zrqe0jlWIXEYxlMcn3pY7vVLG4eC+gtzACdpQAt7VhS3+qQXMdxZo9uDyWYZzW3JcNessrXaJ+7w0rdN2OlBix9vfzTXk4YJHAqgxBeCx9G9qKj0nQ5L2K5Bu0M+35XxwKKBGzpF/pcmoT3UVvHO/lhTG/AQj+IVPKg1S0uJvtJt9gygHeuL1HT7q6RN00UYOMLA2Gz747ViajPqeoXtnpcDOsdsdk0ikgH8ahGp21vr6yK9otlGzDJMmTk4rMvntVgNwsYgmbIYKOg9aktbGa2mhkWSLZGAHywyau+Idal1zdbafax+XGoMh8vnFMCjYw3GrRQIjGXj5Af46dpU9rZXUsV7CsAGQZRyQfSqlndPpmmXDs2LlMfZ1U/zqnqlxewSxGzh/0h1Dubhflx360AX72702GRBbSDUEkbDRSDAAqjMINYaSzWXZEp2/Yh9z6U6e1bX47eFwkMTNhnj+U+/NYsmlyWGpy2Fk5NuGw8rn5vzoATULCaxn3vCLCxC7A0Zzlqm0NtOtftc99J9tkRd0MUg4jb1FaX9nXNjp5XV3Se2zuTyTubPbNV49P00wHUoN5kX5njbuPYUAUbSKG6uXmMQLSncF9KHs4dJlN3dXrwD+GIDINILm6SOeW0RA0p3KHH3fb2qvaeJ4L2zji1KEvKs2CY0yMZqQLMyWuty215E+JS2SgH3/Y1Sl0b7fBdIl09vMJB+7UVp3OrwLqcxtkURpgxgDpUs01no91DeXIfdKhYhemaAOevtPihtGgNuskyrkOeuapx2E9lokV41ogdF3SNnlvrVqa9n1K88yMqkZb+LjirF5ok1ncQTpOGguz+8R3yoHsKBo4G58PXMjPe3pMKSHMbA5IU9q57xD4ZjtmCLmZB8+SOlemeINCexvoWtZ1mDJv2u+5QfSs+71iae3D3ttGl3N+4VVjAAHY1DKPM7/w5c3ehSi1tluFdeGY4IroP2I/GNt4W+Jr6VPclXkdy0R6DtV7U9FfRDBJfS74V5ZLVs/mBXjP9oL8PfipZ6nZ7kSY5+brhmFR1A/Rr9su/0k+CdEh03U2lvHuCXUDHBUV43+y9qEGk+Ofts+IZLKUbn7npWb4mu9Y+IklvFaQSzWkcaSC4ZCUBxz83SqfhDwlrHhaPXJWmhdp2BVo3zjpXoR2PPkz6c+JfxQvfgZ4is/FGnxbtIudqTw5wh3kAsffBNeW/t0eLfB/jD4SaL4u8NLD9r1SV4Z5IxgkBQcHn1Nei+J44PjH8C53kCTy2KiLZDgtvVTjIHuK+FviJNfeHvhPpdpelmuPtcoaFslVXjBA7VjUjc3pSsfM8+1Ll8j5ieDXW6JIPIb/cP8q5K5uf3txwD5jZzjpXRaJJ+4b/AHD/ACrhtY79zRt5P+Jf+dUr9/8AU/SnW8n+gfnVW/k4g/3aBGbrjfMv0FY0pya09bfLr9BWUxyaieqsXHuKO1P3FOR1FMHSn9qxjGxpc9S8G6T/AG7oC7G3T7fm9a67w1p9r4SV1lA+1Ocrkc1x3wgW7spJJMExSAba9Mm0hNQ1GK8mO1Y1IIzjmuuIXN/TZnltwz9TzWlE1ZVpKGiG3oOBV6J8VqYt6l17v7IhfaHPTBrxv4meINc0zUFmVXS23DoeK9ZuP3kWMgY9ao3lhDr8BtrqNCvrgUxXK3w38UW/ijQY4hLtutoBx1zTdb8SN4a1BYI7cPu5J55qLRvDtp4Iu/PhLFc5wDmt661S2vLqOR7XfkdfLzQA/RfFIvpFVYwjegqfxL47Tw5pV1NIwSZB8nNFzc6bpFrJesojYLkDAFfOPxB8ar4s1qSOQyiGNiFEeQCKAM7xF4x1PxPqUtwHbaGIHze9UTcX0kRMkhBx1zVOSKyiG2NbnPU8GnE2siqoW63Dtg0mMcty6cTahKnsKguJI5eFuGnP+0KdJNJF/qoeP+mq1EZZZTiRY1H+yAKzuaD4fMRQBZow/vE1VuldpOUEX0NTZtkbDGct/s5xVadUeT5C4/3qLjNfTIyiElzJkfdNWYNQhsSyycMai0q0vpNq2sYnZuCqjcQPWu80j4RanqUIuZLuwtYDy63Mqo+PYE1SZjJXZwpIWXzmj8xD7Vp6L4Wv/EsmbMOY+4PGK7pbzwJ4EO0Ld3mqL1JHmQ7v5YrmvFXxQ1TVpDE9vbWsePkNjGEOO2cd6fMRymvH4O8PeGVEusay8N0vP2baCCfTNR3nxJs7YfZdL0a2tH2kLdxk7mHr1rzqWA3Z8y6nllY9NzEmrNjbrbrlwznPy45wKpe87CfuK5ZM0mo3pla8ke5JzIxHJX0rqPD+gPrl7HaWkO7zDgyKORWn4A+Fet/EPV4rO2sneLgieGM7fxYV9q+CPhb4O/Z/0CHWfFcsd7q8S74rezdZcEdQ68/rWqjYxcuYofA/4M6b8LdE/wCEh1yFFvNhaK2kHDAjhvrVu/8AHL+ML2a8lHn2ycRRMeFI9KwfGHxKm+J6m8VxZvAwSGD/AFYMQ9V9cVnw36XUUcenLs3fK+8YA9TWqnYxcLnolj4ktk07EkazTEfJG3QVR1Hw2+n26zTzMlnK4l29gSc4qnZaZG1pHErbnAw7Z7+xroNXu1t4YIr1t7hRtVTkbf8AGsnqWammXenQWKTSMLfzBtXaPvGiuXuJIbp4UQO1vE24Beo+tFICjHpTSRJdQXinVHOx4RncVHSlvJLrT7d4Vulsrl/9ejjnNUINZsYfEkl4srocABQvGR3rQ1jUJZo7m9NlHcif5vMc/MKRqPvbS1sWt4G1mFmlQSswz+VT6Vqc8N9eGxlEcbRBSmMlqz7qW0ubaFJLOMIQC1xj5lPoK0bjTom01ZtPkO1OWkAwTTA56TUftGpNFKptpQ2PMfpmumsvFH2C0+ya4n9pTscxXK/KAnZaxtHtoJLpvtgDm4OUZ+tPivLfTrWaO9QTSmXEe4ZwO1AEsniTTW1ZLVIv7NgQgr5hzkmteCXS7+edYoQke7EtwT8rH1rl7nTZrFl1E2MV9G54Ex6VsvbINPjlTEDXQ3mBPuj2oAXU7eLSdY2zXaLYSQ7UU/3iODWLpdq9ld3Ub/6WkY3KU6Vu3WradMgjuIVuWjXILr0IrNtNesL1m8smCb+JFXigCpqmoW4vbZbYfZgynzUPOTVCI2Md21rCgkXHmMwPBPcVNb6Q9k97qV8Ayh/3K5zlTVWRk/1UEAjkJ3+YBg49KQAyw2d2LhLdlgmOBDnmp9Zu0ktlW4iMxI/dRjqg9KZDJJk+agZl+4D2NaEVikkkd3nzWUYMZ6DNIDBGnm6jVYm2yg5K9wKX5nuUsp5g6A4RfSurjFnpUrXJUMZF2lcdKwNThH2r7fDGpCHcBQNGbLbW2ns8U7gZOVJP5Vl3cLXUSyXV6k1wG7DG1e1dZqMA1a6tA9qgzFuNczrBtXnkYKISF2gKPvEdqhlGBeaZd6g0wtWJT+J8ZD/SvMfiv4VMltHfRwNPcwADzl6LjkivdLGN7PTYXVdssw+SMdKbqOiW/kOk6BlmQ70I4BI61mwO7/YP+Lulaz4ZuPDviGWOe3MbItuxwwJOOv4V3/i3S9A0/wAax6RpVl5FpO5UjdnIr4B0zVh8D/idJLZzyTaVKV/esMbSSScD2r7T+FHxs8KzanY+IbuWLUY4jvkW47frWkKxM6J2/wAAtDuPhLrGsafq92sumXgmuQrAgAEHA/Wvib9rHxrZaz4+vbDSMf2bE24KpyOc5r2H9pX9qjT9fuJj4eKQOVMIEXGM8V8j6hGYdAn1PUJDJeXO4AtyfWrlUuiI07Hnjor3kij7m7pWra3IgJCHClcYrF2OjRuf+WnNWE3GMeu6uW9zrtY2Yp8QhM8d6jvJNyg/3RxVZS3mP6Y4ps8vyYoEZ13I0z/NzUPlVMRvep1gz2otcaZS8ulCGr3ke1IYCOg57U+Udz1P4SXryWwilkEaxAbQRXoF1HJLGyKpMbMCWHSvKvhtrdrpu9bzCtgV6jDq9vdQboJQy5HGaodzXt4fIjVd27jrV2Hms+KUSKpFXIW6VojFvUZrUcklgRCcPuHSo9Lt7koBIcmtOEBjhhxVhdqHCigVzC1WyupFIQnH0rW0MusBkmT93GpBz7VpQhH+8BXD/EzxbbeGdHmhhuCsknYe9CKR578W/G819ftaWjERA4IFeZwJP5nmKCrDualhP215Lqa4csxPWnN5IAP2l1z6CmUPWa6Rt3nqh9xTkuZlfd9vjQ+pFQjb/Cxk/wB4UpV3GFtI2J9TSewBdXsrnBuFu/8AcFUiWZubZk9zUkkTQHLxrCf9jmmC4VuBM7exFc9zYaZmQ7VcZ/u96hkEkpy0Rx61M4Y8mMBf7/emYj/5+HJ/ukUXA2fCvii78LXck9lcCKZ0KcjNQ674h1TXZd+oyvK5PysOBVCMmN1LQKVz97vVqQfaJ91qTOF5KtxitoRurmE5WY+O2ukszhjMp/hA5FFqDbgyI4lB4MI6itvwv4I1zxrqCWulQTmduNgUhfzxX0r4C/YnlttNi1jx1f8A/CP2iHexhZXZgOehrTkM/aI+ZvD/AIc1HxVerDpljLdXLnAt4xlga+o/hr+x/wDYLKLxB451e38N6WmN9nfIQZM88EA+mK6m7+OPwv8Ag5B/Z3gnSrXX79BtOoXEJjkBHQ8GvF/F/wAXvEnxDvJV1O9mls5CStmzZRR2/Kmlyu5MnzqyPf8AW/j74Y+F9hPoHwu0k2SGPZ/aUbB0dj1x3615DNqGpeIFN5qWoebq9180jtn52+lcLBI+n29siwARvJg4/h9666wsJ003UrhD50IAKzOfmi/3RWqlcy5WjrhYrJc214rCaWOLymhXqf8AaqfQ5ryz1i5ilu1a22Ajj7x9BWDpGuCytQbkiN2+USDkkGtzSGjjW53HzLaNPMWdvvZo5Gxc9juNFnu5L2Ei5FtZj7yOK0dQ1PfPuuImOPlVj39DXH+FfEVnAJGvZmaOU5hBGQRUt5qUWqassMVzI1oF378cgjtV2sG53FrqI07TWMMZE8gIkm7EUVVsrBrrSZprdzNvTaYz/D70UWA377w9MpGoeXC1mvACKNxxWZetdQlLyKLFrN8wV14Ue/pWnp02qx6bPpsztuhUyZI6e9Z1tca1qdolqC9xZqMTsBwwrE1JwkF5MiXJSKx2b2bp8/YZqpp2qmC8vjtPleXtQY+U/StS80OG40tkvk+zWijgP0L9q5rRLOZ51trq+VUjbKlh90djQATWk2uvFNe/6JBD9zHyEio7OzlOnvZSSxNN53mJIxyNgPTPrW1qHm6zfCwu0P8AZ0R2/wBoH7gHrWlZ+HrS5sZWtdNbUbZAV+0RnjdikBRv9NuNbsUt4JUEcPzO4PGPrXMw2l3azvJDcpOlqdoQNuJ+grqbfUI7Xw3Lp6WxsrkBvNDHll7CoLfSdP8AD+hrcwoEurhd4f0oAq2dyl3C0dyYo5sFsnAH0qvYmzRrgOFbjkx4zVfRtNPiNpovsjTSrufjuBV2ysW0j99JosiRScMxPQUAQJpFzv8AtUE6C167J2z/ADqG6/tDVHWNmthGhB3RqAcD3qTV7+z1HTLrZcpZrEwXym/iqnFp81tHHJa3IeJsAqo60gLmrotnaWjwbSXOJCeah02JLYs8DN5j/MwkOQfpV2+kSKCBfsDOiHLrn7wqrf6Zcam0NxYKYYkXDY52exoAYdZtd7IysWXk5HFU55orvFwoeOBOW3cBh7VPdWaNL5H2YmYLuab+97VnTmTUp4dILeWrHYqn+CkM1zrASIalGoFrAvlMGHJJrmpkttRAuHVjHvJwnWuptrOMWTW8lubuyhcRyRD+Juxpmp2cGmXhtodMaGAoGznjmkFzJgtPtMBjjdfs7jgE/Mo/pTdbuRZaI6OQ8wYKoHJ20+yigaac2zALH/rAP4aw72eG81JpDMoWNGXHqaloaZ534+8GTeINMeQJF5XJViBuz9a+eb22vvD9xPbi6uEjU4ISVgD+tfZQ0dbnwRBdy6ikIeZ18phy4GOK818U/CTS/EFjJNDqMNlORnawJKn8qxUEjdzbPA5L95NhlZncDIOc/nVHW9VudUhijkcCEHhRxWz4g8K6n4cuHiKPLEAcSAcEetcnKkkzBNpDA9KpolMlhQyMseRhOAathEjbJIIx29aorFPECmCA3epY7OWTqaSVht3LAu4o1APUdcVDcBn+YA7T0qxHobyVpJp0s0awhSNoxmqSIbMe20ySUblIxU/2dozhhg1uw6LLaLnn6YpqwJKzCcYx0Jq+VInmZjrblulO+xtjOOK1zYp/yywfpTDZ3fRVOPWkVzMyljkAkEZ2Bu5otby/0rLRTlmznBYkVqrZkf6395UFzaIR+7TYfWlYOZnoPgf4jJdww2l8CLtm25AwMdq9PjULKE3Lz3zxXzXoGm3E3iGD5jhWBzX0PZCMqiSMM+pqkFjWtyJlYowbacHBq7GRGMuprD090tfNjgcGVm3ZHpW3a3X2yIB3+YHpTFYde30VjZPcyHZGoycnFfMHxA1yfxFq8u1x5KsQM/WvXvjHrktpojWaRsN6kZzXhIhRhueUZPUVLdikuxAyShQiPGF96mtIbgbgJbfH+1iniG0H3iGqvcG0ini2QeaO6g9aalcdmTTeejhN8LE/3cVFdCSBR5rja3Xaeacr2jthYfIYDdvJ/Sq7u+ozhUhaY5+4KrRoNR0cSoPMjYkf9NDmn3c0kLqjCJ8gHMYFaWmeBvEOrSBIdMneEnAAFeufDv8AY68feJbpTdaHd2Nm4yJ5EBXFZqmnuDk0eEOwVxwTnv2rSsdE1DVJEjsrOS7Zu0MZY/pX2lo37Gngbwan2nxr4z0+GGIbmtp0YEeo6VcvfjB8F/ghbOfCOiW2vXoPyz2svf8AHFdEaVPqZOpI+dPhr+zD4z8d3OIrQ6amOXv0KLj8a920D9lXwB8NYG1Lx/rEd1PAN5g027AJPpgGuI8efth+NfGOINLvZfD1icYjbB49OK8k1zVbvV7z7Tqt6dSmkOS3Iq9IaRJ+LVn1Dqf7V2i+HNJm074YaHa23kfu/P1SzRmPuGK187+LviB4h8e68bnVdVm8xiP3VrOyw/8AfIOKxtMjlu3Nvb5t4jyR61es9M01oM2wVZlc7kHX60uYOVGjEEgjkCwrJcqPvbQRmrEFqLWdJyuZ2U8AcD8KTTHXTne4lkEytz5Hce1X7W3YyNLJIEDnKqew9KT97QNI6ot6E7W++a7RZY24VUXODWtd27TQxyWshhWUZZZDhfxFUXYwW6oIzZc581ujVbjefU7RLRLZrkkY3L/HQo2Jcr7mPuF3ei1KTRyr82XyFOPT2rt9Lura50yC3eTF4WKyKGwNvbism3sp9VvI4nbbLCmN2Pugfw1cHhyTVr23ksrdtNkicGW7PIlHpWqk0ZOKZ2lnPp0Qgt5ExFCNpGPmP0psOt6Vb3DR2NrcLdsSN8q/JjvR4Z0qz1ifU/tsixT2ThYpG/j46io7tiLgJEfMQNhmHp3phsdP4U1W40W7uFidHWRQHL8rj2orMtdWs/tT6bZ2ZujgYZD0JooC56/oukXkcN3LKfMQRZeRjzj0rkrjXzaRutuzx247oOWHvXQS6rqCaTDplo6iMyFpHYZwD1yfSoNL0wxPe27T226Q4jdsFW+lYG5FF4ns7KwSbUWeaIkYjKbh7Vp6rFY+JNPtbqGOOzjR9xZBhmHoRXNWOpyWl/MlyIXiTcojKAlm7EVXW11G/VriYmCPJ3QY2kr7CgDVXXIRe/Z4FE0anDRP91qzbCZzqEiPqNxptgCZDFb9Cw5xinaZoyzXXm2+6KQH5BKf51cudGaO6+0PPEx2lWI+7/8AroALrVP7XR2toEeJhtSZuGc+9ang/TlvvMj1TakMZwcnO36VlWENrbCMoTs3fK2flzSxKl5ezpO7xsW/dyq21Me9SBcv/J0DVT9kk8sP8gKehqW70S7S0mke7eWF1+RSwP6VmTaHHpkL3V/cBuTtXfyR2xVCxv7y4k82wEiR/wDTfJFAFtbGymSO3ht45Z9vziQYBNUmt794wxto4FR8BVPBwa2/7Hluts0zBbojK7OAa0W0aebSFtbsiACTcA3ys1AGA2ps0EjXUKxsgyoXkNTtPsxcyKrXD2wlG4InQ/WuhXQbe9MFoFIWM/dY/Makn0S2tblbeMMEx8zE9D9aAMCeyTS5XnZvN3r5YB7e9Zdxoccf2ae3Je6kPzs/BX6V0l54dEtyDBMCifMNzZ5p9xYQy2Us94ji4iGV8vgZpMDkNJtpNOupUeV3mkbcIz90++a03dk81piZZJF2Yfoo9RVlBFLFukG5xygXrVP7TfXV6rXqqtmuAEVcPSAx7bw3Np8zXCAFH5C54k/3qg1DwnpscT2sUzm5uD5zNt+7/sg+ldlerBdW0semh0ZxjMhyB9Kh/s0QRLE6Ga4xuynNAHIiWGy8Ow6ZPaxsokY72HIz3rDn8KSCGS5tYlmiXnEhxuruV0JL+4kuNSUxQ4xEg+U7h61XaKKOOSK8jkkiHEQg4496mxVzynxTpNpqUSpJahWxg4WvJNf8E2ljeTFIWzjIwlfV+uWENxBBGkaEZUjAGR9aq65oUCy22yCMtKwVsoDxiiw7nx/e+BpZbEXCxFVxnBGDWXD4WkjIypH1r6a8caDd+b5sf2eKG0+XG0AGuJ1Lw5JNOkkhjaPaD+7GOaLBc8sg0Fl47+lT2OgTzTsFXGD1zXW3/h0x3jTw5BHXJ4quLWZ4ZdtxDGufmycEGqSIbOd1Pw3fQjJHy/Wss6OR/rsriu2vZruKKNJl81cjayDrVV7P7XcPFMhj875WBGCK0a0M09Tlo7JYhlealy/lkBPlxgkV1eneElv5XtYbqGFUzxK3JxWbCjwWstjCFabey7yMjrUWLuc5FCqfcIk/3qiuoS4O9Ag9Vrp7fwnHaRFr1t0/X5DgZrOmWIT+WqEHsW6UWC5z1kGtLvdFklecnrXb2XjmGK2VZmIkA61mfYltjM8xVnKcbelZEWnRXkEgOQcetIu56NpvjXTYjlnxIR1xWlZa3E8cdxFMNu85BIFeWx6DHKqw7mHGc5qC905rWPZHO4A7bzSHzHU/GXxzbX8VrawRxtLggtXlYvNOABeV9/cbamvrA3L/ADuzt65zVNdIlH93H0rGpc0gyyNQsB0+b6rTxqVkvzRxqZx9xSODUKWIX7yE/QVHc6W0u2SEbCnr3rNXNLo9e+A/wntfiDqxGtObHTsM3nADO4dBz2r6Hg8NfBv4XzyPe3ourmNQWQwqw/Q18u/8J3rl7pEdrHi2gjjCloU2E4HqK5OSyuLmF7lZ55nP3vMkLfzrVXC6Prfxr+1z4H0zw7cWnhfQLGadcBZXiKNXluv/ALZXjjxHA1tYN/ZkAi2j7PKR2+leNnSftEULtGQgX58DvRawxjbE0bB9/bj5a1uJ2J7rxdr3igH+2dYu7oznBWVs0WNkDMI4oEKpwWPBNXho8dzqLGEEJHggVfm0cpIm3jdycVF2ZOw1NCmvEQRoHZGDFe2K3IriCZJLaWzijeMfeA5rQ8PWkkSPdKygqhHzdDiksrRteuLjKiMt95sYArenrHUyb1K2k2cGnxTXTuxwcAY9as2llBdgxRKsZkP+sX73NbGj6RE9z9mmlSQKCAFPWiDwsDfpNAWgMT71eQ/ISD0rSwrk/hvwvZXeswaDPM/nu3l+YV5z71cttFlj1C6t5FUpbSmJWJ6j1q3o9pe3/ii4meaGG7uH5kIwoPt6VpatoaWweCaU3dy7bs2zfzppEyehXNlBbXOGYXXA+SToK1PD/wBlnv5YkJgfOBtHC/SmQ+E4rvTRcxzE3CclS3Ye1FhDcQSRI7IBL1wOV+tVYzudBqmhWWm6lGtpMztJCXckY571zMIuNR+02kVy8QRSwKHkmtcSzanei65dIUMO1ep96taJ4fhE5mt9y3a/Md5+U+2KLBcpaaG0jTkhjLz3rjnzBjJ9zT76wW4aIvcSW0mQWWIcY71uEanKLuOVItsh/hTB/Cn3Udvpqxi4ieZnAUbOozTER3usW2mWlommwoZi2BORhnPoaKxvFOmTW0enSQnKpLuXHrjvRQB7fDbxaRoy3M14LiS4Yqbbu2e1cteQ3Fxq1pH9na1jVv3UB/5Ze1dNqcF3c3Epihhbyox8pbhcdx71H4bkk1eQGZF8+2+6wOd31NYHQVQmk65q0EduiGaFcPMOzDtWheRpe3zmfVVimVQCSPujtVIi0tJpr2NfKlR9pRB8pPvWkbKHxJa/aCBC6csU/iHpQBFYxjzjBGft0rn91cj+dbcnh+xTTHjuIFhctuZD/F71i2ul3NzshBW2Rv8AVSI2Dita4nu7W0S1UJctvA3s2WpAclqtpPbmBLCxa5tC+FhTpmtSw8KajPbu99bvGjcx2bDt6VuX7X8OImtoYigyjIe9WfDFrd+IWnUXYAhOJS8gBQ46L60gOH8QaHNrV7EJ2KJEABER6Vt2emXUsK2ywtawoOH7GpobxrmW4t1RXeN2G89eDWhZXM66dcDYx2LkEg80Ac5qd3cWFu6bTJcxsBC/cCrurald6g9qt0GupgqETn+DgfyqZ7hYkRpo1ZnG7ntRp88WpCS5uA0WAY1VBxx0piui1CWsne4af7RNjif0rmrm91D7e8bXLSrOS2fSpbPWJ7bV7myaLej4WMkVZ1LWoIrGWO3ty98hx8yEAfjQF0V7S/bS5PKlgMxX58+tdbZeHo/GOjy30urLo0SruMTDOfauJ0hW1aSP7YGiud3RR8pHbJrbvbea2e/h8xwijGyPlaVgujLaC3thK1tKsrwvs88dxWrqslveaVbzwxCScttdx3FZqIJJIo4lCwEfvCePmqxqt02j2+y2RZQR0PalYLopXhkhltRbRmJT94itG4e409FvrFTcSKMPt7etM0JxJAJ9RHlbxmEetUri4numltYCYoGbLOflosF0Z+rXl5rMttczo0Vg8m1ZT03DrVe+vLiyuJoYYmmTOEuB0+tajeG9RW2jns/9J0tG3AStjDd+Kq6pptspjuoLmVruX5ntz9xT6CgVyu1pLMwlgBEYTL4/vU+6uRH4ds7q44meRlGeoxWZea4+pWwJxaJG4jPlnGTmrHiG2dNKsxKw8jflSpzzigLnL6zpk/iC4W1eYpaz8ux6Vxutr/Z1wsNsfOjGIvl9ema9bluVsrG2WGFZHdflLjrWNqujIL5HWCMzSKNyfwgHqfrQO5562i4s7hJeJYk3MT3rnG0KwgtmiurAD7T84lPevWrjwza2bEfaGmL9s5LexFc7rSWzXEcCRsZEGCsiYA+lUmZs5I6fNq9ukWnWhEcBDFl9qqTeH21OK/vpJ/LuYk3JERyTmu9gIhs9tkoV2O1+wx3rIvPCf2w3PmTyQptzmPvV3VibM86XQriK7t5zaN5jrkn1qV/D8ttI0kiGzAG4E9zXdW3hiDT9PaaO7mnu1IEccvQjvWd4i0KZYoZYpHmDMAysenrUlXOLmE16hJzJN+tc7cb1uPKuISj9mNem6bYxfaLlLmNoo4R99V5rJ1HRftbsYI/MBbCsw5xVcoXONlsWhCCVvMDHG6q9zbx2lwqIvU9q7bUtEawKWrplVAcOw5ye1VhpCm4hkniOXPybBkGs3F3HzHNiRI4Cyr+8HFR6b4dn113OStdINL+z3+HiGxgccUs9rc6PJuhwFP3uegpcrHzHE33h0aVfbJPn59KG0OIjcGHPOK6GeymvLsTkbkY5Bata00qCcMJPlAQnK+tS4NjUuxwTaUU+6u6lh04O2JF2HsD3rq59GY2UEqf615Crr2C+tT2+kCwuY52UzAdmGRTULD5mcybS7ltT9lDeQDhgOlVtNsrl2nhgVkQLywrtjpzwNIkYxauC7HPIPpiq0Phq6hslvoSPskhIUhvnb6iq5dA5mcvBpd3skzMTEhw/FMOl+VMQ8uZsbge+2ulsrqaxWaGe2xJKcxhlPzD3rUbR7eSeN0w0jABgew71koSG5nH6TmKUyE5V+M1rxxNcLJgZIPy10viPwpZ2el28lo7NKc71xwKp6bYyiNJlTKRjDZrpjDuZuRJpsaRW/kSLnPP0q/aWMNgAFugwuvl8vHSprDQb7V2+2WkS/ZR8rFztOR1raufDtu2n+Yjn7UozGo6ZrWyRNznodAWK4a6icWxQ4LY611ujafBq7pBd36pYryoYcB/Ws+GzYWBz80oIDKema19G00XMixXe2CYc7EPGO1AXKep6bHpY11PNE4x/ot52T3Fb0en6bH4Zh1GyvUgvUVY5JFHLE9axpI7hfEF3p4jEtvI21C/pWvomiafFa3DtcSErJ5ZgI+XJ700JvQzRbXWm3MM8ExaOVgGQdvet7W7mws7HL2y28sw5uSfve9UZPDV1pmtyJDMZ40QSMJG4APpWjPJaXBty6mZj9xGXK/jVWM9TL0mC6tphc2N0ZoyMNGvoeprf8OGO41q5iN0Io44w4c9z3FZGkifw680lxGP3jnai8gKa6PSr6wkd4kiYSyDAbZ1P1osGpoX/AIltdA0m+mu4hPJwYpycbayYLq+1eP7ZFpzmHbkMOh4qS6WS4vY7E2yTWw+WcyjG36etSXNs3hyWFp7oxQOygRI3GCfSpsVcbpOowaisdvf2X2Ys2FDn7h9aKteLbDTL+9sTa3Tq8bhiI/4uOhoosFzsg7f8TI7jnyj3qT4bc2xz3AoornZ0kDKP7H1M4GftB/rSeG3ZdG4Yj5m6GiikBZ1p2XSkKsQQvBBqXwc7PfHcxb90ep9qKKYHW3XOhWzHk725ryy6nkg1m48uR48vztYjNFFSB1/hTlcnkluTXp0qKNCTCgZB7UUUwPINdYi6lwT96uh0pR/wiyHAz5p5oooM3uN0yNGvWJVSfUita4gj+xTHy0znrtFFFMRi2qKNFmbaNwLc45q34O/eaexf5yQM7uaKKYHP6x8trd7eP3w6UWgDmPcN31ooqQLXjgeWfDoX5RzwOKs/EWNY9BtCqhSQmSBiiin0A0NHYjwkBk4wePyrgbon7Q/PeiipYzkfEI26S2OP369PrWszF9FsgxLDcevNFFIC9qIHl2HA+5WTcOxv+p+560UUwMXwmxf4jIrEsu9eDyO9anxHjRPE7bVA5PQUUUhGGVA0tiAAcnnFFj81hZZ5yxznvRRTDoM8QqEvbYKAo2HgVDagNGmRn5+9FFWtyDT1CGP+ytTOxc7OuK5nSEXzYflH5UUVqgI/iOo8w8D/AFY7e1O8Kxq/hy1LKGITqRRRUPcDnrhQUujgZEtYOscufpRRSAnuVA8OIQBnZ1xWfpxPlHmiigpE+f3SfWt3T1DWvIB470UU+ozKuv8Aj5cdtp4pvhwk6rpkZOU877vb8qKKQHX/ABOhjTVdP2oq/Ieg964W3/4+2oooRB09sA9k24buO9W7FFFswCgDI7UUVsgOpZRF4ZwgCDcfu8VgaQd2/PP1ooqgLlqoNwwwMU1uNcXHtRRQB1NnGr6whZQTu7isW6ATVJQo2jzOg+tFFCBl7U3YyMcnJQDOfatDRUU+H7xio3BRg45FFFUSPlAeBNwDfL3roNARfslg20Z87riiigCbxn8lw5X5STyRXmfxCkd9VtQzEjyl4J+lFFSwLvw5/e65Nv8Anwoxu5xzRRRQB//Z",
+            "damageAreas": [
+              {
+                "x": 50,
+                "y": 150,
+                "id": "hasar-1",
+                "area": "ön",
+                "type": "ezilme",
+                "width": 120,
+                "height": 100,
+                "severity": "high",
+                "confidence": 90,
+                "repairCost": 20000,
+                "description": "Ön sağ çamurlukta ciddi bir ezilme tespit edildi. Metal yapıda deformasyon meydana gelmiş, çamurluk komple değiştirilmeli ve boya yapılmalıdır.",
+                "repairMethod": "Çamurluk komple değişimi + profesyonel boya uygulaması",
+                "safetyImpact": "high",
+                "partsAffected": [
+                  "Ön Sağ Çamurluk",
+                  "Ön Sağ Kapı",
+                  "Ön Tampon"
+                ],
+                "repairPriority": "urgent",
+                "warrantyImpact": true,
+                "insuranceCoverage": "full",
+                "estimatedRepairTime": 7
+              },
+              {
+                "x": 80,
+                "y": 200,
+                "id": "hasar-2",
+                "area": "ön",
+                "type": "kırık",
+                "width": 100,
+                "height": 80,
+                "severity": "high",
+                "confidence": 85,
+                "repairCost": 12000,
+                "description": "Ön sağ far grubunda kırık tespit edildi. Far camı parçalanmış durumda, far grubu komple değiştirilmeli.",
+                "repairMethod": "Far grubu komple değişimi + elektrik bağlantı kontrolü",
+                "safetyImpact": "high",
+                "partsAffected": [
+                  "Ön Sağ Far Grubu",
+                  "Far Camı"
+                ],
+                "repairPriority": "urgent",
+                "warrantyImpact": true,
+                "insuranceCoverage": "full",
+                "estimatedRepairTime": 4
+              }
+            ],
+            "totalDamageScore": 60
+          }
+        ],
+        "criticalDamages": 2,
+        "technicalDetails": {
+          "aiModel": "GPT-4 Vision",
+          "confidence": 95,
+          "imageQuality": "Yüksek (1024x1024)",
+          "analysisMethod": "OpenAI Vision API Analizi",
+          "imagesAnalyzed": 1,
+          "processingTime": "3-5 saniye"
+        },
+        "estimatedRepairCost": 6500
+      },
+      "expertNotes": null,
+      "totalCost": "499",
+      "createdAt": "2025-10-19T09:14:29.346Z",
+      "updatedAt": "2025-10-19T09:14:51.530Z"
+    },
+    {
+      "id": 3,
+      "userId": 2,
+      "vehicleGarageId": null,
+      "vehiclePlate": "06 FC 520",
+      "vehicleBrand": "BMW",
+      "vehicleModel": "520ia",
+      "vehicleYear": 1997,
+      "vehicleColor": null,
+      "mileage": null,
+      "reportType": "PAINT_ANALYSIS",
+      "status": "COMPLETED",
+      "aiAnalysisData": {
+        "model": "OpenAI",
+        "aiProvider": "OpenAI",
+        "confidence": 95,
+        "costEstimate": {
+          "timeline": [
+            {
+              "phase": "Hazırlık ve Temizlik",
+              "duration": 2,
+              "description": "Detaylı yıkama ve yüzey hazırlığı."
+            },
+            {
+              "phase": "Yüzey Düzeltme",
+              "duration": 3,
+              "description": "Portakal kabuğu efekti giderme ve düzeltme."
+            },
+            {
+              "phase": "Parlatma",
+              "duration": 4,
+              "description": "Profesyonel parlatma ve düzeltme."
+            },
+            {
+              "phase": "Koruyucu Uygulama",
+              "duration": 6,
+              "description": "Seramik kaplama uygulaması ve kurutma."
+            },
+            {
+              "phase": "Kalite Kontrol",
+              "duration": 1,
+              "description": "Detaylı kontrol ve teslim."
+            }
+          ],
+          "warranty": {
+            "covered": true,
+            "duration": "2 yıl veya 40.000 km",
+            "conditions": [
+              "Yetkili serviste yapılmalı.",
+              "Orijinal malzeme kullanılmalı.",
+              "Düzenli bakım takibi yapılmalı.",
+              "Garanti belgesi saklanmalı."
+            ]
+          },
+          "breakdown": [
+            {
+              "cost": 800,
+              "category": "Yüzey Düzeltme",
+              "description": "Portakal kabuğu efekti giderme ve parlatma."
+            },
+            {
+              "cost": 650,
+              "category": "Gloss İyileştirme",
+              "description": "Profesyonel parlatma ve gloss artırma."
+            },
+            {
+              "cost": 1200,
+              "category": "Koruyucu Uygulama",
+              "description": "Seramik kaplama uygulaması."
+            }
+          ],
+          "laborCost": 1200,
+          "paintCost": 150,
+          "totalCost": 2450,
+          "materialCost": 800,
+          "clearCoatCost": 50,
+          "additionalCosts": 0,
+          "preparationCost": 250
+        },
+        "paintDefects": {
+          "colorIssues": [],
+          "glossProblems": [],
+          "surfaceDefects": [
+            {
+              "id": "yuzey-001",
+              "size": 1,
+              "type": "orange_peel",
+              "location": "Arka kapı üst bölgesi",
+              "severity": "düşük",
+              "repairCost": 800,
+              "repairable": true,
+              "description": "Hafif portakal kabuğu efekti tespit edildi. Görsel etki minimal."
+            }
+          ],
+          "totalDefectScore": 5,
+          "thicknessVariations": []
+        },
+        "paintQuality": {
+          "adhesion": 90,
+          "durability": 75,
+          "glossLevel": 75,
+          "smoothness": 70,
+          "uniformity": 85,
+          "overallScore": 80,
+          "uvProtection": 70,
+          "weatherResistance": 80
+        },
+        "colorAnalysis": {
+          "pearl": false,
+          "metallic": true,
+          "colorCode": "1G3",
+          "colorName": "Gümüş Metalik",
+          "colorDepth": 80,
+          "colorMatch": 90,
+          "colorFading": 20,
+          "colorFamily": "Gümüş",
+          "colorHistory": [
+            "Orijinal fabrika boyası"
+          ],
+          "colorShifting": 10,
+          "colorVibrance": 75,
+          "originalColor": true,
+          "repaintDetected": false,
+          "colorConsistency": 85
+        },
+        "paintCondition": "iyi",
+        "recommendations": {
+          "longTerm": [
+            "Yılda 2 kez detaylı temizlik ve parlatma.",
+            "UV koruma yenilenmeli.",
+            "Boya kalınlığı takibi yapılmalı."
+          ],
+          "immediate": [
+            "Portakal kabuğu efekti hafif parlatma ile giderilebilir."
+          ],
+          "shortTerm": [
+            "Seramik kaplama uygulanmalı.",
+            "Düzenli yıkama programı başlatılmalı.",
+            "Boya koruyucu film değerlendirilmeli."
+          ],
+          "prevention": [
+            "Düzenli bakım programı oluştur.",
+            "Kapalı park kullan.",
+            "Ağaç reçinesi ve kuş pisliğinden koru.",
+            "Kimyasal maddelerden uzak tut."
+          ],
+          "protection": [
+            "Seramik kaplama önerilir.",
+            "Boya koruma filmi değerlendirilebilir.",
+            "UV koruyucu uygulama şart.",
+            "Çevresel faktörlere karşı önlem."
+          ],
+          "maintenance": [
+            "Haftada 1 kez yıkama.",
+            "Ayda 1 kez balmumu uygulaması.",
+            "3 ayda 1 detaylı temizlik.",
+            "Yılda 1 profesyonel parlatma."
+          ],
+          "qualityImprovement": [
+            "Yüzey pürüzlülüğü azaltılmalı.",
+            "Gloss seviyesi artırılabilir.",
+            "Renk derinliği geliştirilebilir."
+          ]
+        },
+        "surfaceAnalysis": {
+          "dirt": 5,
+          "runs": 2,
+          "sags": 1,
+          "orangePeel": 10,
+          "contamination": 5,
+          "paintThickness": 120,
+          "surfaceDefects": [
+            {
+              "size": 1,
+              "type": "orange_peel",
+              "location": "Arka kapı üst bölgesi",
+              "severity": "düşük",
+              "repairCost": 800,
+              "repairable": true,
+              "description": "Hafif portakal kabuğu efekti tespit edildi. Görsel etki minimal."
+            }
+          ],
+          "totalThickness": 120,
+          "primerThickness": 30,
+          "surfaceRoughness": 25,
+          "baseCoatThickness": 45,
+          "clearCoatThickness": 45,
+          "thicknessUniformity": 80
+        },
+        "technicalDetails": {
+          "baseCoat": "Metalik Baz Kat",
+          "paintAge": 3,
+          "clearCoat": "UV Korumalı Vernik",
+          "paintType": "Akrilik Poliüretan",
+          "paintBrand": "OEM Fabrika Boyası",
+          "primerType": "Epoksi Astar",
+          "lastRepaint": 0,
+          "paintLayers": 3,
+          "paintSystem": "3 Katlı Sistem (Astar + Baz + Vernik)",
+          "curingMethod": "Fırın Kurutma 80°C",
+          "qualityGrade": "OEM",
+          "applicationMethod": "Elektrostatik Püskürtme"
+        },
+        "analysisTimestamp": "2025-10-20T02:18:39.879Z"
+      },
+      "expertNotes": null,
+      "totalCost": "25",
+      "createdAt": "2025-10-20T02:18:32.704Z",
+      "updatedAt": "2025-10-20T02:19:00.498Z"
+    },
+    {
+      "id": 4,
+      "userId": 2,
+      "vehicleGarageId": null,
+      "vehiclePlate": "06 FC 520",
+      "vehicleBrand": "BMW",
+      "vehicleModel": "520ia",
+      "vehicleYear": 1997,
+      "vehicleColor": null,
+      "mileage": null,
+      "reportType": "FULL_REPORT",
+      "status": "COMPLETED",
+      "aiAnalysisData": {
+        "audioAnalysis": {
+          "model": "gpt-4o",
+          "aiProvider": "OpenAI GPT-4",
+          "rpmAnalysis": {
+            "maxRpm": 6200,
+            "idleRpm": 850,
+            "rpmStability": 75
+          },
+          "engineHealth": "Orta",
+          "overallScore": 78,
+          "detectedIssues": [
+            {
+              "issue": "Supap ayarında bozulma",
+              "severity": "medium",
+              "confidence": 80,
+              "description": "Motor sesinde düzensizlik ve hafif metalik tını, supap ayarında bozulma olabileceğini gösteriyor.",
+              "recommendation": "Supap ayarını kontrol ettirin ve gerekirse ayarlama yapın"
+            }
+          ],
+          "analysisSummary": "Motor sesinde düzensizlik ve metalik tını, supap ayarında bozulma olabileceğini gösteriyor. Yakıt sistemi ve supap ayarı kontrol edilmeli.",
+          "recommendations": [
+            "Supap ayarını kontrol ettirin",
+            "Yakıt filtresini değiştirin",
+            "Motor yağı ve filtre değişimini zamanında yapın"
+          ],
+          "acousticFeatures": {
+            "rms": 0.03,
+            "durationSec": 5,
+            "zeroCrossingRate": 0.19,
+            "dominantFrequencyHz": 1400
+          },
+          "analysisTimestamp": "2025-10-20T02:22:06.317Z",
+          "frequencyAnalysis": {
+            "noiseLevel": 55,
+            "harmonicDistortion": 7.2,
+            "dominantFrequencies": [
+              110,
+              220,
+              330
+            ]
+          },
+          "performanceMetrics": {
+            "vibrationLevel": 28,
+            "acousticQuality": 75,
+            "engineEfficiency": 78
+          }
+        },
+        "expertOpinion": {
+          "reasoning": [
+            "1. Araç yaşına göre iyi korunmuş ve orijinal boya büyük ölçüde korunmuş.",
+            "2. Motor ve şanzıman genel olarak iyi durumda, ancak bazı küçük bakımlar gerektiriyor.",
+            "3. Piyasa değeri yaşına göre makul seviyede ve yatırım potansiyeli var.",
+            "4. Elektrik sistemi çalışıyor, ancak bazı küçük sorunlar mevcut.",
+            "5. İç mekan temiz ve bakımlı, bu da kullanım konforunu artırıyor.",
+            "6. Araç, klasik BMW tasarımıyla dikkat çekiyor ve koleksiyon değeri taşıyor.",
+            "7. Yatırım açısından, doğru bakımlarla değerini koruyabilir ve artırabilir."
+          ],
+          "recommendation": "buy",
+          "riskAssessment": {
+            "level": "medium",
+            "factors": [
+              "Motor takozları ve fren diskleri değişim gerektiriyor.",
+              "Elektrik sisteminde bazı küçük temas sorunları var.",
+              "Lastikler aşınmış ve yakında değişim gerekecek."
+            ]
+          }
+        },
+        "paintAnalysis": {
+          "model": "OpenAI",
+          "aiProvider": "OpenAI",
+          "confidence": 95,
+          "costEstimate": {
+            "timeline": [
+              {
+                "phase": "Hazırlık ve Temizlik",
+                "duration": 2,
+                "description": "Detaylı yıkama ve yüzey hazırlığı"
+              },
+              {
+                "phase": "Yüzey Düzeltme",
+                "duration": 3,
+                "description": "Yüzey pürüzlülüğünün giderilmesi"
+              },
+              {
+                "phase": "Koruyucu Uygulama",
+                "duration": 6,
+                "description": "Seramik kaplama uygulaması ve kurutma"
+              },
+              {
+                "phase": "Kalite Kontrol",
+                "duration": 1,
+                "description": "Detaylı kontrol ve teslim"
+              }
+            ],
+            "warranty": {
+              "covered": true,
+              "duration": "2 yıl veya 40.000 km",
+              "conditions": [
+                "Yetkili serviste yapılmalı",
+                "Orijinal malzeme kullanılmalı"
+              ]
+            },
+            "breakdown": [
+              {
+                "cost": 800,
+                "category": "Yüzey Düzeltme",
+                "description": "Yüzey pürüzlülüğünün giderilmesi"
+              },
+              {
+                "cost": 1200,
+                "category": "Koruyucu Uygulama",
+                "description": "Seramik kaplama uygulaması"
+              }
+            ],
+            "laborCost": 1500,
+            "paintCost": 150,
+            "totalCost": 3000,
+            "materialCost": 1000,
+            "clearCoatCost": 50,
+            "additionalCosts": 0,
+            "preparationCost": 300
+          },
+          "paintDefects": {
+            "colorIssues": [],
+            "glossProblems": [],
+            "surfaceDefects": [],
+            "totalDefectScore": 0,
+            "thicknessVariations": []
+          },
+          "paintQuality": {
+            "adhesion": 90,
+            "durability": 75,
+            "glossLevel": 78,
+            "smoothness": 70,
+            "uniformity": 88,
+            "overallScore": 82,
+            "uvProtection": 70,
+            "weatherResistance": 80
+          },
+          "colorAnalysis": {
+            "pearl": false,
+            "metallic": true,
+            "colorCode": "1G3",
+            "colorName": "Gümüş Metalik",
+            "colorDepth": 80,
+            "colorMatch": 92,
+            "colorFading": 20,
+            "colorFamily": "Gümüş",
+            "colorHistory": [
+              "Orijinal fabrika boyası"
+            ],
+            "colorShifting": 10,
+            "colorVibrance": 75,
+            "originalColor": true,
+            "repaintDetected": false,
+            "colorConsistency": 85
+          },
+          "paintCondition": "iyi",
+          "recommendations": {
+            "longTerm": [
+              "Yılda 2 kez detaylı temizlik ve parlatma",
+              "UV koruma yenilenmeli"
+            ],
+            "immediate": [
+              "Yüzey pürüzlülüğü azaltılmalı"
+            ],
+            "shortTerm": [
+              "Seramik kaplama uygulanmalı",
+              "Düzenli yıkama programı başlatılmalı"
+            ],
+            "prevention": [
+              "Düzenli bakım programı oluştur",
+              "Kapalı park kullan"
+            ],
+            "protection": [
+              "Seramik kaplama önerilir",
+              "UV koruyucu uygulama şart"
+            ],
+            "maintenance": [
+              "Haftada 1 kez yıkama",
+              "Ayda 1 kez balmumu uygulaması"
+            ],
+            "qualityImprovement": [
+              "Gloss seviyesi artırılabilir",
+              "Renk derinliği geliştirilebilir"
+            ]
+          },
+          "surfaceAnalysis": {
+            "dirt": 5,
+            "runs": 2,
+            "sags": 1,
+            "orangePeel": 10,
+            "contamination": 7,
+            "paintThickness": 120,
+            "surfaceDefects": [],
+            "totalThickness": 120,
+            "primerThickness": 30,
+            "surfaceRoughness": 25,
+            "baseCoatThickness": 45,
+            "clearCoatThickness": 45,
+            "thicknessUniformity": 80
+          },
+          "technicalDetails": {
+            "baseCoat": "Metalik Baz Kat",
+            "paintAge": 3,
+            "clearCoat": "UV Korumalı Vernik",
+            "paintType": "Akrilik Poliüretan",
+            "paintBrand": "OEM Fabrika Boyası",
+            "primerType": "Epoksi Astar",
+            "lastRepaint": 0,
+            "paintLayers": 3,
+            "paintSystem": "3 Katlı Sistem (Astar + Baz + Vernik)",
+            "curingMethod": "Fırın Kurutma 80°C",
+            "qualityGrade": "OEM",
+            "applicationMethod": "Elektrostatik Püskürtme"
+          },
+          "analysisTimestamp": "2025-10-20T02:21:47.681Z"
+        },
+        "damageAnalysis": {
+          "model": "gpt-4o-mini",
+          "aiProvider": "OpenAI",
+          "confidence": 85,
+          "damageAreas": [
+            {
+              "x": 300,
+              "y": 150,
+              "id": "hasar-1",
+              "area": "yan",
+              "type": "ezilme",
+              "width": 100,
+              "height": 50,
+              "severity": "medium",
+              "confidence": 85,
+              "repairCost": 8000,
+              "description": "Aracın sağ kapı bölgesinde belirgin bir ezilme tespit edilmiştir. Bu hasar, kapının dış yüzeyinde görünür bir deformasyona neden olmuştur. Kapının düzeltilmesi ve lokal boya yapılması gerekmektedir.",
+              "repairMethod": "Kapı düzeltme + lokal boya uygulaması",
+              "safetyImpact": "low",
+              "partsAffected": [
+                "Sağ Kapı"
+              ],
+              "repairPriority": "medium",
+              "warrantyImpact": false,
+              "insuranceCoverage": "partial",
+              "estimatedRepairTime": 3
+            }
+          ],
+          "repairEstimate": {
+            "timeline": [
+              {
+                "phase": "Parça Tedariki",
+                "duration": 1,
+                "description": "Gerekli malzemelerin temin süreci"
+              },
+              {
+                "phase": "Onarım",
+                "duration": 2,
+                "description": "Kapının düzeltilmesi ve boya işlemi"
+              },
+              {
+                "phase": "Kalite Kontrol",
+                "duration": 1,
+                "description": "Onarım sonrası kontrol"
+              }
+            ],
+            "warranty": {
+              "covered": false,
+              "duration": "N/A",
+              "conditions": [
+                "Yetkili servis bakımı",
+                "Orijinal parça kullanımı"
+              ]
+            },
+            "breakdown": [
+              {
+                "cost": 8000,
+                "part": "Sağ Kapı",
+                "description": "Düzeltme + lokal boya uygulaması"
+              }
+            ],
+            "laborCost": 3000,
+            "paintCost": 1000,
+            "partsCost": 4000,
+            "totalCost": 8000,
+            "additionalCosts": 1000
+          },
+          "safetyAssessment": {
+            "criticalIssues": [
+              "Kapı hasarı mevcut"
+            ],
+            "roadworthiness": "good",
+            "immediateActions": [
+              "Kapı onarımı öncelikli"
+            ],
+            "longTermConcerns": [
+              "Kapı hasarı değer kaybına yol açabilir"
+            ],
+            "inspectionRequired": false,
+            "safetyRecommendations": [
+              "Kapı onarımı yapılmalı",
+              "Araç kontrol edilmeli"
+            ]
+          },
+          "analysisTimestamp": "2025-10-20T02:21:47.679Z",
+          "overallAssessment": {
+            "damageLevel": "acceptable",
+            "resaleValue": 90,
+            "depreciation": 10,
+            "insuranceStatus": "repairable",
+            "totalRepairCost": 8000,
+            "detailedAnalysis": "Araçta sağ kapı bölgesinde orta seviyede bir hasar tespit edilmiştir. Bu hasar, aracın genel görünümünü etkilemekte ve potansiyel olarak değer kaybına yol açmaktadır. Onarım işlemleri yapılmalıdır.",
+            "vehicleCondition": "damaged",
+            "marketValueImpact": 10
+          },
+          "technicalAnalysis": {
+            "frameDamage": false,
+            "bodyAlignment": "normal",
+            "safetySystems": "functional",
+            "airbagDeployment": false,
+            "seatbeltFunction": "functional",
+            "electricalSystems": "functional",
+            "mechanicalSystems": "functional",
+            "structuralIntegrity": "minor_damage"
+          }
+        },
+        "valueEstimation": {
+          "model": "OpenAI",
+          "aiProvider": "OpenAI",
+          "confidence": 94,
+          "estimatedValue": 685000,
+          "marketAnalysis": {
+            "priceRange": {
+              "max": 720000,
+              "min": 650000,
+              "average": 685000
+            },
+            "demandLevel": "Orta talep - Bu model için ilgi var ama sınırlı",
+            "marketTrend": "Yükseliş trendinde - Son 6 ayda %8 değer artışı görüldü",
+            "supplyLevel": "Düşük arz - Piyasada az sayıda mevcut",
+            "marketInsights": [
+              "Bu model klasikleşmiş bir araç - Koleksiyoncular için cazip",
+              "Benzer araçlar ortalama 20-25 günde satılıyor",
+              "Yedek parça bulunabilirliği sınırlı ama mevcut",
+              "Bahar aylarında fiyatlar %10-15 daha iyi olacak"
+            ],
+            "seasonalImpact": "Bahar aylarında (Mart-Mayıs) talep %15 artar, fiyatlar yükselir",
+            "regionalVariation": "İstanbul ve Ankara'da fiyatlar %5-8 daha yüksek. İzmir'de ortalama seviyede.",
+            "currentMarketValue": 685000
+          },
+          "marketPosition": {
+            "percentile": 68,
+            "targetBuyers": [
+              "👨‍👩‍👧‍👦 Aile kullanıcıları - Güvenli ve ekonomik araç arayanlar",
+              "🎓 İlk araç alacaklar - Güvenilir marka tercih edenler",
+              "💼 Şehir içi kullanım - Yakıt ekonomisi önemli olanlar",
+              "🔧 Düşük bakım maliyeti arayanlar"
+            ],
+            "pricingStrategy": "Piyasa ortalamasının %5-8 üzerinde fiyatlandırma yapılabilir. Pazarlık payı bırakın.",
+            "marketAdvantages": [
+              "✅ Düzenli bakım geçmişi - Alıcılar için güven verici",
+              "✅ Düşük kilometre - Yaşına göre az kullanılmış",
+              "✅ Hasar kaydı yok - Temiz geçmiş",
+              "✅ Popüler renk - Kolay satılır",
+              "✅ Yakıt ekonomisi mükemmel - Düşük işletme maliyeti"
+            ],
+            "competitivePosition": "Piyasa ortalamasının üzerinde - İyi konumda",
+            "marketDisadvantages": [
+              "⚠️ 2. el piyasada bol bulunuyor - Rekabet var",
+              "⚠️ Yeni model çıktı - Eski model talebi azalabilir",
+              "⚠️ Kış ayları - Satış süresi uzayabilir"
+            ]
+          },
+          "priceBreakdown": {
+            "baseValue": 750000,
+            "breakdown": [
+              {
+                "factor": "Temel Değer (Sıfır Araç Fiyatı Bazlı)",
+                "impact": 750000,
+                "description": "2025 yılı sıfır araç fiyatı ve model yılı bazında hesaplama"
+              },
+              {
+                "factor": "Kilometre Etkisi",
+                "impact": -35000,
+                "description": "Tahmini 420000 km için değer kaybı (-%4.7)"
+              },
+              {
+                "factor": "Genel Durum ve Bakım",
+                "impact": 15000,
+                "description": "İyi bakım, temiz araç, düzenli servis (+%2.2)"
+              },
+              {
+                "factor": "Ekstra Özellikler",
+                "impact": 8000,
+                "description": "Sunroof, deri döşeme, navigasyon gibi ekstralar"
+              },
+              {
+                "factor": "Piyasa Durumu",
+                "impact": -25000,
+                "description": "Mevcut arz-talep dengesi ve ekonomik durum"
+              },
+              {
+                "factor": "Bölgesel Fark",
+                "impact": -15000,
+                "description": "Şehir ve bölge bazlı fiyat farkı"
+              },
+              {
+                "factor": "Mevsimsel Etki",
+                "impact": -13000,
+                "description": "Kış ayları - Bahar aylarında bu fark kapanır"
+              }
+            ],
+            "finalValue": 685000,
+            "marketAdjustment": -25000,
+            "mileageAdjustment": -35000,
+            "featuresAdjustment": 8000,
+            "regionalAdjustment": -15000,
+            "seasonalAdjustment": -13000,
+            "conditionAdjustment": 15000
+          },
+          "recommendations": {
+            "buyingPrice": {
+              "max": 690000,
+              "min": 640000,
+              "optimal": 670000
+            },
+            "sellingPrice": {
+              "max": 720000,
+              "min": 665000,
+              "optimal": 695000
+            },
+            "timingAdvice": [
+              "🌸 Mart-Mayıs arası satış için IDEAL - En yüksek talep dönemi",
+              "☀️ Yaz tatili öncesi (Haziran) talep artar - İyi fiyat alırsın",
+              "❄️ Kış aylarından kaçın - Satış süresi 2-3 kat uzar",
+              "🎄 Yıl sonu kampanyalarından ÖNCE sat - Sıfır araç kampanyaları talebi düşürür",
+              "📊 Piyasayı takip et - Döviz artışında fiyatlar yükselir"
+            ],
+            "negotiationTips": [
+              "📋 Bakım kayıtlarını mutlaka göster - Değeri %5-8 artırır",
+              "🚫 Hasar kaydı olmadığını belgele - Güven verir",
+              "🔧 Orijinal parça kullanımını vurgula - Artı değer",
+              "📅 Bahar aylarını bekle - Fiyatlar %10-15 daha iyi",
+              "📸 Profesyonel fotoğraf çektir - Satış süresini %30 kısaltır",
+              "💬 Sabırlı ol - Acele satışta %10-15 kaybedersin"
+            ],
+            "improvementSuggestions": [
+              {
+                "cost": 2500,
+                "action": "🧼 Detaylı iç-dış temizlik, pasta-cila, motor temizliği",
+                "description": "Araç çok daha iyi görünür, alıcı güveni artar",
+                "valueIncrease": 10000
+              },
+              {
+                "cost": 1800,
+                "action": "🎨 Küçük boya rötuşları ve çizik giderme",
+                "description": "Görsel kusurlar giderilir, profesyonel görünüm",
+                "valueIncrease": 6000
+              },
+              {
+                "cost": 8000,
+                "action": "🚗 Lastik değişimi (gerekirse - 4 adet)",
+                "description": "Yeni lastikler güven verir ve pazarlık gücü sağlar",
+                "valueIncrease": 12000
+              },
+              {
+                "cost": 3000,
+                "action": "🔧 Küçük mekanik bakımlar (fren, yağ, filtre)",
+                "description": "Araç sorunsuz çalışır, test sürüşü mükemmel olur",
+                "valueIncrease": 8000
+              }
+            ]
+          },
+          "vehicleCondition": {
+            "ageImpact": "28 yıllık araç - Yaşına göre iyi durumda",
+            "mileageImpact": "Ortalama kilometre - Değer kaybı normal seviyede",
+            "modifications": [],
+            "conditionNotes": [
+              "Genel durum yaşına göre çok iyi",
+              "Orijinal parçalar kullanılmış",
+              "Düzenli servis bakımları yapılmış"
+            ],
+            "conditionScore": 82,
+            "serviceRecords": true,
+            "accidentHistory": false,
+            "overallCondition": "İyi durumda - Bakımlı araç",
+            "ownershipHistory": "2 el - İdeal el sayısı",
+            "maintenanceImpact": "Düzenli bakım yapılmış - Artı değer sağlıyor"
+          },
+          "analysisTimestamp": "2025-10-20T02:22:06.318Z",
+          "comparableVehicles": [
+            {
+              "make": "BMW",
+              "year": 1997,
+              "model": "520ia",
+              "price": 695000,
+              "mileage": 392000,
+              "location": "İstanbul",
+              "condition": "Çok İyi",
+              "similarity": 95,
+              "daysOnMarket": 14
+            },
+            {
+              "make": "BMW",
+              "year": 1997,
+              "model": "520ia",
+              "price": 675000,
+              "mileage": 448000,
+              "location": "Ankara",
+              "condition": "İyi",
+              "similarity": 90,
+              "daysOnMarket": 21
+            },
+            {
+              "make": "BMW",
+              "year": 1997,
+              "model": "520ia",
+              "price": 655000,
+              "mileage": 504000,
+              "location": "İzmir",
+              "condition": "Orta",
+              "similarity": 85,
+              "daysOnMarket": 28
+            }
+          ],
+          "investmentAnalysis": {
+            "riskLevel": "Düşük risk - Güvenli yatırım",
+            "liquidityScore": 88,
+            "investmentGrade": "İyi Yatırım (B+)",
+            "investmentNotes": [
+              "💰 Değer kaybı yavaşlıyor - İyi tutma süresi",
+              "🚀 Likidite çok yüksek - 15-20 günde satılır",
+              "🔧 Bakım maliyetleri düşük - Ekonomik araç",
+              "📈 Piyasa talebi stabil - Güvenli yatırım",
+              "⏰ 2 yıl sonra değer kaybı hızlanacak"
+            ],
+            "depreciationRate": "Yıllık %10-12 değer kaybı (sektör ortalaması %15)",
+            "investmentHorizon": "1-2 yıl içinde satış önerilir - Değer kaybı yavaşlıyor",
+            "holdingCostPerMonth": 4500,
+            "appreciationPotential": "Yıllık %2-3 değer artışı (enflasyon altında)"
+          }
+        },
+        "marketValueTable": {
+          "asIs": {
+            "max": 700000,
+            "min": 650000,
+            "note": "Mevcut durumda, küçük bakımlar yapılmadan satış fiyatı."
+          },
+          "restored": {
+            "max": 820000,
+            "min": 780000,
+            "note": "Tam detaylı bakım, pasta-cila, tüm küçük kusurlar giderildikten sonra."
+          },
+          "afterRepair": {
+            "max": 750000,
+            "min": 720000,
+            "note": "Motor takozları ve fren diskleri değiştirildikten sonra."
+          }
+        },
+        "vehicleSpecsTable": {
+          "year": 1997,
+          "color": "Siyah",
+          "plate": "06 FC 520",
+          "driveType": "Arka Tekerlekten Çekiş (RWD)",
+          "makeModel": "BMW 520ia",
+          "engineType": "2.0L 6 Silindir Benzinli (150 HP)",
+          "transmission": "Otomatik"
+        },
+        "investmentDecision": {
+          "decision": "good_investment",
+          "riskLevel": "medium",
+          "marketTiming": "🟢 Şu an alım için uygun, klasik araçlara olan ilgi artıyor.",
+          "paybackPeriod": "18-24 ay",
+          "expectedReturn": 7.5,
+          "liquidityScore": 80,
+          "priceNegotiation": "Satıcı 700.000 TL istiyor. Hedef fiyat 680.000-690.000 TL olmalı."
+        },
+        "detailedDescription": "Bu aracın fotoğraflarına baktığımda karşımda 1997 model bir BMW 520ia görüyorum. Plaka 06 FC 520. Araç, klasik bir BMW tasarımına sahip ve yaşına göre oldukça iyi korunmuş görünüyor. Renk siyah ve orijinal boya korunmuş. Kaporta genel olarak düzgün, ancak bazı yerlerde küçük çizikler ve yaşa bağlı hafif aşınmalar mevcut. Boya kalınlık ölçümleri, aracın büyük ölçüde orijinal boyaya sahip olduğunu gösteriyor. Donanım açısından, aracın iç mekanında deri koltuklar ve ahşap kaplamalar dikkat çekiyor. Motor ses analizine göre, rölanti sırasında motor sesi biraz yüksek ve titreşim hissediliyor, bu da motor takozlarının kontrol edilmesi gerektiğini gösteriyor. Motorun genel performansı orta seviyede, ancak yaşına göre kabul edilebilir. Araç, arka tekerlekten çekişli (RWD) ve otomatik şanzımana sahip. Genel olarak, bu BMW 520ia, yaşına rağmen iyi bir durumda ve doğru bakımlarla daha uzun süre hizmet verebilir.",
+        "expertiseScoreTable": {
+          "tires": {
+            "note": "Lastikler aşınmış, yakında değişim gerekecek.",
+            "score": 70,
+            "status": "Orta"
+          },
+          "wheels": {
+            "note": "Jantlar orijinal ve iyi durumda, ancak bazı çizikler var.",
+            "score": 85,
+            "status": "İyi"
+          },
+          "chassis": {
+            "note": "Şasi genel olarak sağlam, yapısal hasar yok.",
+            "score": 85,
+            "status": "Sağlam"
+          },
+          "overall": {
+            "note": "Araç genel olarak iyi durumda, yaşına göre iyi korunmuş.",
+            "score": 80,
+            "status": "İyi"
+          },
+          "interior": {
+            "note": "İç mekan temiz ve bakımlı, ancak bazı aşınma izleri var.",
+            "score": 80,
+            "status": "İyi"
+          },
+          "bodyPaint": {
+            "note": "Orijinal boya korunmuş, ancak bazı bölgelerde solma var.",
+            "score": 80,
+            "status": "İyi"
+          },
+          "electrical": {
+            "note": "Elektrik sistemi çalışıyor, ancak bazı küçük sorunlar mevcut.",
+            "score": 80,
+            "status": "İyi"
+          },
+          "mechanical": {
+            "note": "Motor ve şanzıman yaşına göre iyi, ancak bazı bakım gereksinimleri var.",
+            "score": 75,
+            "status": "Orta"
+          }
+        },
+        "finalRecommendations": {
+          "longTerm": [
+            {
+              "cost": 5000,
+              "action": "Süspansiyon kontrolü ve gerekirse değişimi",
+              "benefit": "Sürüş konforu ve yol tutuşu korunacak.",
+              "priority": "📅 PLANLAMA",
+              "timeframe": "1 yıl içinde"
+            }
+          ],
+          "immediate": [
+            {
+              "cost": 2000,
+              "action": "Motor takozları değişimi",
+              "benefit": "Titreşim azalacak, motor performansı artacak.",
+              "priority": "🔴 KRİTİK",
+              "timeframe": "1 ay içinde"
+            },
+            {
+              "cost": 1500,
+              "action": "Fren diskleri değişimi",
+              "benefit": "Fren performansı artacak, güvenlik sağlanacak.",
+              "priority": "🟡 YÜKSEK",
+              "timeframe": "İlk bakımda"
+            }
+          ],
+          "shortTerm": [
+            {
+              "cost": 4000,
+              "action": "Lastik değişimi",
+              "benefit": "Yol tutuşu ve güvenlik artacak.",
+              "priority": "⭐ ÖNERİLEN",
+              "timeframe": "3 ay içinde"
+            }
+          ]
+        },
+        "exteriorConditionTable": {
+          "paint": {
+            "note": "Boya büyük ölçüde orijinal, bazı bölgelerde hafif solmalar var.",
+            "status": "85%"
+          },
+          "lights": {
+            "note": "Farlar ve stoplar çalışıyor, ancak hafif sararma mevcut.",
+            "status": "80%"
+          },
+          "mirrors": {
+            "note": "Aynalar orijinal ve elektrikli, ancak küçük çizikler var.",
+            "status": "85%"
+          },
+          "windows": {
+            "note": "Camlar orijinal ve çatlak yok, ancak bazı çizikler mevcut.",
+            "status": "90%"
+          },
+          "bodywork": {
+            "note": "Kaporta genel olarak düzgün, ancak bazı küçük çizikler ve yaşa bağlı aşınmalar mevcut.",
+            "status": "80%"
+          }
+        },
+        "mechanicalAnalysisTable": {
+          "brakes": {
+            "note": "Frenler işlevsel, ancak ön disklerde hafif aşınma mevcut.",
+            "status": "75%"
+          },
+          "engine": {
+            "note": "Motorun rölanti devri 850 RPM, titreşim hissediliyor, motor takozları kontrol edilmeli.",
+            "status": "75%"
+          },
+          "electrical": {
+            "note": "Elektrik sistemi genel olarak çalışıyor, ancak bazı düğmelerde temas sorunları var.",
+            "status": "80%"
+          },
+          "suspension": {
+            "note": "Süspansiyon sistemi yaşına göre iyi, ancak amortisörlerde yıpranma belirtileri var.",
+            "status": "70%"
+          },
+          "transmission": {
+            "note": "Otomatik şanzıman, vites geçişleri genel olarak düzgün, ancak bazen sert geçişler hissediliyor.",
+            "status": "80%"
+          }
+        }
+      },
+      "expertNotes": null,
+      "totalCost": "85",
+      "createdAt": "2025-10-20T02:21:26.899Z",
+      "updatedAt": "2025-10-20T02:23:49.422Z"
+    }
+  ],
+  "servicePricing": [],
+  "systemSettings": [],
+  "vinLookups": [
+    {
+      "id": 1,
+      "vin": "RLHJK05AXPY216465",
+      "make": "HONDA",
+      "model": "Bilinmiyor",
+      "modelYear": "2023",
+      "manufacturer": "HONDA VIETNAM CO., LTD.",
+      "plantCountry": "VIETNAM",
+      "vehicleType": "Motosiklet",
+      "bodyClass": "Bilinmiyor",
+      "engineCylinders": "Bilinmiyor",
+      "engineDisplacement": "Bilinmiyor",
+      "fuelType": "Benzin",
+      "transmissionStyle": "Bilinmiyor",
+      "driveType": "Bilinmiyor",
+      "trim": "Bilinmiyor",
+      "series": "Bilinmiyor",
+      "doors": "Bilinmiyor",
+      "windows": "Bilinmiyor",
+      "wheelBase": "Bilinmiyor",
+      "gvwr": "Class 1A: 3,000 lb or less (1,360 kg or less)",
+      "plantCity": "PHUC YEN",
+      "plantState": "VINH PHÚC",
+      "plantCompanyName": "Honda Vietman Co., Ltd.",
+      "errorCode": "0,14",
+      "errorText": "0 - VIN decoded clean. Check Digit (9th position) is correct; 14 - Unable to provide information for some of the characters in the VIN, based on the manufacturer submission.",
+      "createdAt": "2025-10-18T17:44:08.479Z",
+      "updatedAt": "2025-10-18T17:44:08.479Z"
+    },
+    {
+      "id": 2,
+      "vin": "WBADM21040GL10754",
+      "make": "BMW",
+      "model": "Bilinmiyor",
+      "modelYear": "Bilinmiyor",
+      "manufacturer": "BMW AG",
+      "plantCountry": "GERMANY",
+      "vehicleType": "Binek Araç",
+      "bodyClass": "Bilinmiyor",
+      "engineCylinders": "Bilinmiyor",
+      "engineDisplacement": "Bilinmiyor",
+      "fuelType": "Benzin",
+      "transmissionStyle": "Bilinmiyor",
+      "driveType": "Bilinmiyor",
+      "trim": "Bilinmiyor",
+      "series": "Bilinmiyor",
+      "doors": "Bilinmiyor",
+      "windows": "Bilinmiyor",
+      "wheelBase": "Bilinmiyor",
+      "gvwr": "Bilinmiyor",
+      "plantCity": "DINGOLFING",
+      "plantState": "Bilinmiyor",
+      "plantCompanyName": "Bilinmiyor",
+      "errorCode": "1,11,14,400",
+      "errorText": "1 - Check Digit (9th position) does not calculate properly; 11 - Incorrect Model Year - Position 10 does not match valid model year codes (I, O, Q, U, Z, 0). Decoded data may not be accurate.; 14 - Unable to provide information for some of the characters in the VIN, based on the manufacturer submission.; 400 - Invalid Characters Present",
+      "createdAt": "2025-10-18T21:04:01.760Z",
+      "updatedAt": "2025-10-18T21:04:01.760Z"
+    }
+  ],
+  "exportedAt": "2025-10-23T22:19:17.066Z",
+  "totalUsers": 3,
+  "totalReports": 4
+}
