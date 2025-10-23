@@ -3,17 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * NextAuth OAuth API Route
  * 
- * OAuth login isteklerini backend'e yönlendirir
+ * OAuth login isteklerini Vercel serverless function'a yönlendirir
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { provider, providerId, email, name, image, accessToken } = body;
 
-    // Backend'e OAuth isteği gönder
-    const backendUrl = process.env.BACKEND_URL || 'https://mivvo-backend-production.up.railway.app';
+    // Vercel serverless function'a OAuth isteği gönder
+    const apiUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
     
-    const response = await fetch(`${backendUrl}/api/auth/oauth`, {
+    const response = await fetch(`${apiUrl}/api/auth/oauth`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

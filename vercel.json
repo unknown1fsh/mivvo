@@ -6,86 +6,86 @@
       "use": "@vercel/next"
     },
     {
-      "src": "backend/dist/index.js",
+      "src": "api/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/auth/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/user/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/vehicle/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/payment/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/admin/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/vin/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/paint-analysis/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/engine-sound-analysis/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/vehicle-garage/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/ai-analysis/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/ai-test/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/damage-analysis/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/value-estimation/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/comprehensive-expertise/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/pricing/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/contact/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/career/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/reports/(.*)",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/api/health",
-      "dest": "backend/dist/index.js"
+      "dest": "/api/index.ts"
     },
     {
       "src": "/(.*)",
@@ -93,8 +93,19 @@
     }
   ],
   "installCommand": "npm run install:all",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build:frontend",
   "outputDirectory": "frontend/.next",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "functions": {
+    "api/index.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "JWT_SECRET": "@jwt_secret",
+    "CORS_ORIGIN": "@cors_origin"
+  }
 }
 
