@@ -95,11 +95,6 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build:frontend",
   "outputDirectory": "frontend/.next",
-  "framework": "nextjs",
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret",
-    "CORS_ORIGIN": "@cors_origin"
-  }
+  "framework": "nextjs"
 }
 
