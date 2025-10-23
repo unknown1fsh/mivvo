@@ -81,9 +81,8 @@ const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Backend API'ye login isteği gönder
-          const backendUrl = process.env.BACKEND_URL || 'https://mivvo-backend-production.up.railway.app'
-          const response = await fetch(`${backendUrl}/api/auth/login`, {
+          // Frontend'in kendi login endpoint'ini kullan
+          const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -97,7 +96,7 @@ const authOptions: NextAuthOptions = {
           const data = await response.json()
 
           if (response.ok && data.success && data.data) {
-            // Backend'den gelen user ve token bilgilerini döndür
+            // Frontend'den gelen user ve token bilgilerini döndür
             return {
               id: data.data.user.id.toString(),
               email: data.data.user.email,
