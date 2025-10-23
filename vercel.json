@@ -92,7 +92,7 @@
       "dest": "frontend/$1"
     }
   ],
-  "installCommand": "npm run install:all",
+  "installCommand": "npm install",
   "buildCommand": "npm run build:frontend",
   "outputDirectory": "frontend/.next",
   "framework": "nextjs",
