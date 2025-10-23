@@ -96,12 +96,6 @@
   "buildCommand": "npm run build:frontend",
   "outputDirectory": "frontend/.next",
   "framework": "nextjs",
-  "functions": {
-    "api/index.ts": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 30
-    }
-  },
   "env": {
     "DATABASE_URL": "@database_url",
     "JWT_SECRET": "@jwt_secret",
