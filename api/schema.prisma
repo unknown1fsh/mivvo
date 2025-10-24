@@ -1,0 +1,398 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int                 @id @default(autoincrement())
+  email              String              @unique
+  passwordHash       String              @map("password_hash")
+  firstName          String              @map("first_name")
+  lastName           String              @map("last_name")
+  phone              String?
+  role               Role                @default(USER)
+  isActive           Boolean             @default(true) @map("is_active")
+  emailVerified      Boolean             @default(false) @map("email_verified")
+  hasSeenGuide       Boolean             @default(false) @map("has_seen_guide")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  creditTransactions CreditTransaction[]
+  notifications      Notification[]
+  payments           Payment[]
+  userCredits        UserCredits?
+  vehicleGarage      VehicleGarage[]
+  vehicleReports     VehicleReport[]
+
+  @@map("users")
+}
+
+model UserCredits {
+  id             Int      @id @default(autoincrement())
+  userId         Int      @unique @map("user_id")
+  balance        Decimal  @default(0)
+  totalPurchased Decimal  @default(0) @map("total_purchased")
+  totalUsed      Decimal  @default(0) @map("total_used")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_credits")
+}
+
+model CreditTransaction {
+  id              Int             @id @default(autoincrement())
+  userId          Int             @map("user_id")
+  transactionType TransactionType @map("transaction_type")
+  amount          Decimal
+  description     String?
+  referenceId     String?         @map("reference_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("credit_transactions")
+}
+
+model VehicleReport {
+  id                Int                @id @default(autoincrement())
+  userId            Int                @map("user_id")
+  vehicleGarageId   Int?               @map("vehicle_garage_id")
+  vehiclePlate      String?            @map("vehicle_plate")
+  vehicleBrand      String?            @map("vehicle_brand")
+  vehicleModel      String?            @map("vehicle_model")
+  vehicleYear       Int?               @map("vehicle_year")
+  vehicleColor      String?            @map("vehicle_color")
+  mileage           Int?
+  reportType        ReportType         @map("report_type")
+  status            ReportStatus       @default(PENDING)
+  aiAnalysisData    Json?              @map("ai_analysis_data")
+  expertNotes       String?            @map("expert_notes")
+  totalCost         Decimal            @map("total_cost")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  aiAnalysisResults AiAnalysisResult[]
+  vehicleAudios     VehicleAudio[]
+  vehicleImages     VehicleImage[]
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleGarage     VehicleGarage?     @relation(fields: [vehicleGarageId], references: [id])
+
+  @@map("vehicle_reports")
+}
+
+model VehicleImage {
+  id          Int           @id @default(autoincrement())
+  reportId    Int           @map("report_id")
+  imageUrl    String        @map("image_url")
+  imageType   ImageType     @map("image_type")
+  fileSize    Int?          @map("file_size")
+  uploadDate  DateTime      @default(now()) @map("upload_date")
+  aiProcessed Boolean       @default(false) @map("ai_processed")
+  report      VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_images")
+}
+
+model VehicleAudio {
+  id          Int           @id @default(autoincrement())
+  reportId    Int           @map("report_id")
+  audioPath   String        @map("audio_path")
+  audioName   String        @map("audio_name")
+  audioType   AudioType     @map("audio_type")
+  fileSize    Int?          @map("file_size")
+  duration    Int?
+  uploadDate  DateTime      @default(now()) @map("upload_date")
+  aiProcessed Boolean       @default(false) @map("ai_processed")
+  report      VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_audios")
+}
+
+model AiAnalysisResult {
+  id               Int           @id @default(autoincrement())
+  reportId         Int           @map("report_id")
+  analysisType     String        @map("analysis_type")
+  confidenceScore  Decimal?      @map("confidence_score")
+  resultData       Json          @map("result_data")
+  processingTimeMs Int?          @map("processing_time_ms")
+  modelVersion     String?       @map("model_version")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  report           VehicleReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("ai_analysis_results")
+}
+
+model ServicePricing {
+  id          Int         @id @default(autoincrement())
+  serviceName String      @map("service_name")
+  serviceType ServiceType @map("service_type")
+  basePrice   Decimal     @map("base_price")
+  currency    String      @default("TRY")
+  isActive    Boolean     @default(true) @map("is_active")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  @@map("service_pricing")
+}
+
+model SystemSetting {
+  id           Int         @id @default(autoincrement())
+  settingKey   String      @unique @map("setting_key")
+  settingValue String?     @map("setting_value")
+  settingType  SettingType @default(STRING) @map("setting_type")
+  description  String?
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+model Payment {
+  id              Int           @id @default(autoincrement())
+  userId          Int           @map("user_id")
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("TRY")
+  paymentMethod   PaymentMethod @map("payment_method")
+  paymentStatus   PaymentStatus @default(PENDING) @map("payment_status")
+  paymentProvider String?       @map("payment_provider")
+  transactionId   String?       @map("transaction_id")
+  referenceNumber String?       @map("reference_number")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model VINLookup {
+  id                 Int      @id @default(autoincrement())
+  vin                String   @unique
+  make               String?
+  model              String?
+  modelYear          String?  @map("model_year")
+  manufacturer       String?
+  plantCountry       String?  @map("plant_country")
+  vehicleType        String?  @map("vehicle_type")
+  bodyClass          String?  @map("body_class")
+  engineCylinders    String?  @map("engine_cylinders")
+  engineDisplacement String?  @map("engine_displacement")
+  fuelType           String?  @map("fuel_type")
+  transmissionStyle  String?  @map("transmission_style")
+  driveType          String?  @map("drive_type")
+  trim               String?
+  series             String?
+  doors              String?
+  windows            String?
+  wheelBase          String?  @map("wheel_base")
+  gvwr               String?
+  plantCity          String?  @map("plant_city")
+  plantState         String?  @map("plant_state")
+  plantCompanyName   String?  @map("plant_company_name")
+  errorCode          String?  @map("error_code")
+  errorText          String?  @map("error_text")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("vin_lookups")
+}
+
+model VehicleGarage {
+  id            Int                  @id @default(autoincrement())
+  userId        Int                  @map("user_id")
+  plate         String               @unique
+  brand         String
+  model         String
+  year          Int
+  color         String?
+  mileage       Int?
+  vin           String?              @unique
+  fuelType      String?              @map("fuel_type")
+  transmission  String?
+  engineSize    String?              @map("engine_size")
+  bodyType      String?              @map("body_type")
+  doors         Int?
+  seats         Int?
+  notes         String?
+  isDefault     Boolean              @default(false) @map("is_default")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleImages VehicleGarageImage[]
+  reports       VehicleReport[]
+
+  @@map("vehicle_garage")
+}
+
+model VehicleGarageImage {
+  id              Int           @id @default(autoincrement())
+  vehicleGarageId Int           @map("vehicle_garage_id")
+  imagePath       String        @map("image_path")
+  imageName       String        @map("image_name")
+  imageType       ImageType     @map("image_type")
+  fileSize        Int?          @map("file_size")
+  uploadDate      DateTime      @default(now()) @map("upload_date")
+  vehicleGarage   VehicleGarage @relation(fields: [vehicleGarageId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_garage_images")
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  userId    Int              @map("user_id")
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean          @default(false) @map("is_read")
+  actionUrl String?          @map("action_url")
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum Role {
+  USER
+  ADMIN
+  EXPERT
+}
+
+enum TransactionType {
+  PURCHASE
+  USAGE
+  REFUND
+}
+
+enum ReportType {
+  FULL_REPORT
+  PAINT_ANALYSIS
+  DAMAGE_ANALYSIS
+  DAMAGE_ASSESSMENT
+  VALUE_ESTIMATION
+  ENGINE_SOUND_ANALYSIS
+  COMPREHENSIVE_EXPERTISE
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ImageType {
+  EXTERIOR
+  INTERIOR
+  ENGINE
+  DAMAGE
+  PAINT
+}
+
+enum AudioType {
+  ENGINE_SOUND
+  EXHAUST_SOUND
+  MECHANICAL_SOUND
+}
+
+enum ServiceType {
+  PAINT_ANALYSIS
+  DAMAGE_ASSESSMENT
+  DAMAGE_ANALYSIS
+  VALUE_ESTIMATION
+  FULL_REPORT
+  ENGINE_SOUND_ANALYSIS
+  COMPREHENSIVE_EXPERTISE
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  BANK_TRANSFER
+  DIGITAL_WALLET
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  SUCCESS
+  INFO
+  WARNING
+  ERROR
+}
+
+model ContactInquiry {
+  id          Int              @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  subject     String
+  message     String           @db.Text
+  inquiryType InquiryType
+  status      InquiryStatus    @default(PENDING)
+  notes       String?          @db.Text
+  assignedTo  Int?             @map("assigned_to")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  
+  @@map("contact_inquiries")
+}
+
+model CareerApplication {
+  id          Int                    @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String
+  position    String
+  department  String?
+  experience  Int?
+  education   String?
+  coverLetter String?                @db.Text
+  resumeUrl   String?                @map("resume_url")
+  linkedIn    String?                @map("linkedin_url")
+  portfolio   String?                @map("portfolio_url")
+  status      ApplicationStatus      @default(PENDING)
+  notes       String?                @db.Text
+  assignedTo  Int?                   @map("assigned_to")
+  createdAt   DateTime               @default(now()) @map("created_at")
+  updatedAt   DateTime               @updatedAt @map("updated_at")
+  
+  @@map("career_applications")
+}
+
+enum InquiryType {
+  GENERAL
+  TECHNICAL
+  SALES
+  PARTNERSHIP
+  MEDIA
+  CAREER
+}
+
+enum InquiryStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  INTERVIEW
+  REJECTED
+  ACCEPTED
+}

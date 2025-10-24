@@ -96,7 +96,7 @@
       "dest": "frontend/$1"
     }
   ],
-  "installCommand": "npm run install:all",
+  "installCommand": "npm run install:all && cd backend && npx prisma generate && cd ../api && npm install && npx prisma generate",
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "frontend/.next",
   "framework": "nextjs"

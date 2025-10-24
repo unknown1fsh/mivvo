@@ -27,17 +27,30 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Prisma Client
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
+// Prisma Client - Vercel için optimize edildi
+let prisma: PrismaClient;
+
+if (process.env.NODE_ENV === 'production') {
+  // Production'da singleton pattern kullan
+  prisma = new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
     },
-  },
-  log: process.env.NODE_ENV === 'development' 
-    ? ['query', 'info', 'warn', 'error'] 
-    : ['error'],
-});
+    log: ['error'],
+  });
+} else {
+  // Development'da her seferinde yeni instance
+  prisma = new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
+    log: ['query', 'info', 'warn', 'error'],
+  });
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
