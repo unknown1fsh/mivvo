@@ -23,40 +23,61 @@ export const adminApiClient = {
       }
     })
     
-    const data = await response.json()
-    return data
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return response.json()
   },
   async post(url: string, data?: any) {
     const token = getAdminToken()
-    return fetch(`http://localhost:3001${url}`, {
+    const response = await fetch(`http://localhost:3001${url}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: data ? JSON.stringify(data) : undefined
-    }).then(res => res.json())
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return response.json()
   },
   async put(url: string, data?: any) {
     const token = getAdminToken()
-    return fetch(`http://localhost:3001${url}`, {
+    const response = await fetch(`http://localhost:3001${url}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: data ? JSON.stringify(data) : undefined
-    }).then(res => res.json())
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return response.json()
   },
   async delete(url: string) {
     const token = getAdminToken()
-    return fetch(`http://localhost:3001${url}`, {
+    const response = await fetch(`http://localhost:3001${url}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
-    }).then(res => res.json())
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return response.json()
   }
 }
 import {

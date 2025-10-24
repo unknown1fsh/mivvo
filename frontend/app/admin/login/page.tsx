@@ -44,7 +44,12 @@ export default function AdminLoginPage() {
         console.log('👤 User kaydedildi:', data.user)
         
         toast.success('Giriş başarılı! Yönlendiriliyorsunuz...')
-        router.push('/admin')
+        
+        // Cookie'nin set edilmesi için kısa bir gecikme
+        setTimeout(() => {
+          // Next.js router yerine window.location kullan
+          window.location.href = '/admin'
+        }, 100)
       } else {
         console.error('❌ Giriş başarısız:', data.error)
         toast.error(data.error || 'Giriş başarısız')

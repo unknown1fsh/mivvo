@@ -39,6 +39,7 @@
  */
 
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { getPrismaClient } from '../utils/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
@@ -111,6 +112,31 @@ export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void
     skip: (Number(page) - 1) * Number(limit),
     take: Number(limit),
   });
+
+  // Eksik UserCredits kayıtlarını oluştur
+  for (const user of users) {
+    if (!user.userCredits) {
+      console.log(`⚠️ Admin - UserCredits not found for user ${user.id}, creating...`);
+      
+      await prisma.userCredits.create({
+        data: {
+          userId: user.id,
+          balance: 0,
+          totalPurchased: 0,
+          totalUsed: 0,
+        },
+      });
+      
+      // Kullanıcı objesini güncelle
+      user.userCredits = {
+        balance: new Prisma.Decimal(0),
+        totalPurchased: new Prisma.Decimal(0),
+        totalUsed: new Prisma.Decimal(0),
+      };
+      
+      console.log(`✅ Admin - UserCredits created for user ${user.id}`);
+    }
+  }
 
   const total = await prisma.user.count({ where });
 
