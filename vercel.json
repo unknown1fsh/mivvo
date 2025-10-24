@@ -7,7 +7,11 @@
     },
     {
       "src": "api/index.ts",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "runtime": "nodejs18.x",
+        "maxDuration": 30
+      }
     }
   ],
   "routes": [
@@ -95,31 +99,6 @@
   "installCommand": "npm run install:all",
   "buildCommand": "npm run build:vercel",
   "outputDirectory": "frontend/.next",
-  "framework": "nextjs",
-  "functions": {
-    "api/index.ts": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 30
-    }
-  },
-  "env": {
-    "NODE_ENV": "production",
-    "NEXT_PUBLIC_API_URL": "@next_public_api_url",
-    "DATABASE_URL": "@database_url",
-    "CORS_ORIGIN": "@cors_origin",
-    "JWT_SECRET": "@jwt_secret",
-    "OPENAI_API_KEY": "@openai_api_key",
-    "GOOGLE_GEMINI_API_KEY": "@google_gemini_api_key",
-    "NEXTAUTH_SECRET": "@nextauth_secret",
-    "NEXTAUTH_URL": "@nextauth_url",
-    "GOOGLE_CLIENT_ID": "@google_client_id",
-    "GOOGLE_CLIENT_SECRET": "@google_client_secret",
-    "EMAIL_HOST": "@email_host",
-    "EMAIL_PORT": "@email_port",
-    "EMAIL_USER": "@email_user",
-    "EMAIL_PASS": "@email_pass",
-    "RECAPTCHA_SITE_KEY": "@recaptcha_site_key",
-    "RECAPTCHA_SECRET_KEY": "@recaptcha_secret_key"
-  }
+  "framework": "nextjs"
 }
 
