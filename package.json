@@ -13,6 +13,7 @@
     "build": "npm run build:backend && npm run build:frontend",
     "build:backend": "cd backend && npm run build",
     "build:frontend": "cd frontend && npm run build",
+    "build:vercel": "npm run build:frontend",
     "build:clean": "npm run clean && npm run build",
     "start": "npm run dev:full",
     "start:full": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
@@ -37,7 +38,11 @@
     "lint:frontend": "cd frontend && npm run lint",
     "test": "npm run test:backend && npm run test:frontend",
     "test:backend": "cd backend && npm run test",
-    "test:frontend": "cd frontend && npm run test"
+    "test:frontend": "cd frontend && npm run test",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "deploy:setup": "npm run install:all && npm run db:generate && npm run build:vercel",
+    "deploy:script": "powershell -ExecutionPolicy Bypass -File scripts/deploy-vercel.ps1"
   },
   "dependencies": {
     "concurrently": "^8.2.2",
@@ -47,7 +52,8 @@
     "helmet": "^7.1.0",
     "compression": "^1.7.4",
     "express-rate-limit": "^7.1.5",
-    "@prisma/client": "^5.7.0"
+    "@prisma/client": "^5.7.0",
+    "vercel": "^32.0.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
