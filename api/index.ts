@@ -9,6 +9,9 @@ import { PrismaClient } from '@prisma/client';
 // Express app oluştur
 const app = express();
 
+// Trust proxy for Vercel
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(compression());
@@ -19,11 +22,22 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Rate limiting
+// Rate limiting - Vercel için optimize edildi
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 dakika
   max: 100, // 15 dakikada 100 istek
-  message: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.'
+  message: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Vercel için skip successful requests
+  skipSuccessfulRequests: false,
+  // Vercel için skip failed requests
+  skipFailedRequests: false,
+  // Vercel için key generator
+  keyGenerator: (req) => {
+    // Vercel'de X-Forwarded-For header'ını kullan
+    return req.ip || req.connection.remoteAddress || 'unknown';
+  },
 });
 app.use(limiter);
 
@@ -43,13 +57,13 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   // Development'da her seferinde yeni instance
   prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
     },
+  },
     log: ['query', 'info', 'warn', 'error'],
-  });
+});
 }
 
 // Health check endpoint
@@ -76,6 +90,14 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
+    // Database bağlantısını kontrol et
+    if (!prisma) {
+      return res.status(500).json({
+        success: false,
+        message: 'Veritabanı bağlantısı kurulamadı.'
+      });
+    }
+
     // Kullanıcıyı bul
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() }
@@ -89,7 +111,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // Şifre kontrolü (bcrypt kullanılmalı)
-    if (user.password !== password) {
+    if (user.passwordHash !== password) {
       return res.status(401).json({
         success: false,
         message: 'Geçersiz email veya şifre.'
@@ -115,6 +137,22 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    
+    // Prisma error handling
+    if (error.code === 'P1001') {
+      return res.status(500).json({
+        success: false,
+        message: 'Veritabanı bağlantısı kurulamadı.'
+      });
+    }
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı.'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Sunucu hatası oluştu.'
@@ -150,7 +188,7 @@ app.post('/api/auth/register', async (req, res) => {
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
-        password: password, // Production'da bcrypt ile hash'lenmeli
+        passwordHash: password, // Production'da bcrypt ile hash'lenmeli
         firstName,
         lastName,
         phone: phone || null,
@@ -207,7 +245,7 @@ app.post('/api/auth/oauth', async (req, res) => {
           lastName: name?.split(' ').slice(1).join(' ') || 'User',
           role: 'USER',
           emailVerified: true,
-          password: 'oauth-user', // OAuth kullanıcıları için geçici şifre
+          passwordHash: 'oauth-user', // OAuth kullanıcıları için geçici şifre
         }
       });
     }
