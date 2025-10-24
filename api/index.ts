@@ -6,6 +6,11 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { PrismaClient } from '@prisma/client';
 
+// Global type declaration for Prisma
+declare global {
+  var prisma: PrismaClient | undefined;
+}
+
 // Express app oluştur
 const app = express();
 
@@ -16,7 +21,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(compression());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://www.mivvo.org',
+  origin: process.env.CORS_ORIGIN || 'https://mivvo.org',
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -41,29 +46,30 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Prisma Client - Vercel için optimize edildi
+// Prisma Client - Vercel serverless için optimize edildi
 let prisma: PrismaClient;
 
-if (process.env.NODE_ENV === 'production') {
-  // Production'da singleton pattern kullan
-  prisma = new PrismaClient({
+const createPrismaClient = () => {
+  return new PrismaClient({
     datasources: {
       db: {
         url: process.env.DATABASE_URL,
       },
     },
-    log: ['error'],
+    log: process.env.NODE_ENV === 'production' ? ['error'] : ['query', 'info', 'warn', 'error'],
   });
+};
+
+// Global prisma instance - serverless için optimize
+if (process.env.NODE_ENV === 'production') {
+  // Production'da global instance kullan
+  if (!global.prisma) {
+    global.prisma = createPrismaClient();
+  }
+  prisma = global.prisma;
 } else {
   // Development'da her seferinde yeni instance
-  prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
-    },
-  },
-    log: ['query', 'info', 'warn', 'error'],
-});
+  prisma = createPrismaClient();
 }
 
 // Health check endpoint
@@ -135,7 +141,7 @@ app.post('/api/auth/login', async (req, res) => {
         token
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
     
     // Prisma error handling
@@ -291,7 +297,8 @@ app.get('/api/user/profile', async (req, res) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = Buffer.from(token, 'base64').toString('utf-8');
-    const [userId] = decoded.split(':');
+    const [userIdStr] = decoded.split(':');
+    const userId = parseInt(userIdStr);
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -342,9 +349,10 @@ app.get('/api/vehicle', async (req, res) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = Buffer.from(token, 'base64').toString('utf-8');
-    const [userId] = decoded.split(':');
+    const [userIdStr] = decoded.split(':');
+    const userId = parseInt(userIdStr);
 
-    const vehicles = await prisma.vehicle.findMany({
+    const vehicles = await prisma.vehicleGarage.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' }
     });
@@ -375,17 +383,18 @@ app.post('/api/vehicle', async (req, res) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = Buffer.from(token, 'base64').toString('utf-8');
-    const [userId] = decoded.split(':');
+    const [userIdStr] = decoded.split(':');
+    const userId = parseInt(userIdStr);
 
     const { brand, model, year, plateNumber, vin } = req.body;
 
-    const vehicle = await prisma.vehicle.create({
+    const vehicle = await prisma.vehicleGarage.create({
       data: {
         userId,
         brand,
         model,
         year: parseInt(year),
-        plateNumber,
+        plate: plateNumber,
         vin
       }
     });
@@ -595,12 +604,13 @@ app.get('/api/reports', async (req, res) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = Buffer.from(token, 'base64').toString('utf-8');
-    const [userId] = decoded.split(':');
+    const [userIdStr] = decoded.split(':');
+    const userId = parseInt(userIdStr);
 
-    const reports = await prisma.report.findMany({
+    const reports = await prisma.vehicleReport.findMany({
       where: { userId },
       include: {
-        vehicle: true
+        vehicleGarage: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -633,7 +643,8 @@ app.get('/api/admin/users', async (req, res) => {
 
     const token = authHeader.split(' ')[1];
     const decoded = Buffer.from(token, 'base64').toString('utf-8');
-    const [userId] = decoded.split(':');
+    const [userIdStr] = decoded.split(':');
+    const userId = parseInt(userIdStr);
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -688,12 +699,13 @@ app.post('/api/contact', async (req, res) => {
     }
 
     // Contact message kaydet
-    const contactMessage = await prisma.contactMessage.create({
+    const contactMessage = await prisma.contactInquiry.create({
       data: {
         name,
         email,
         subject,
-        message
+        message,
+        inquiryType: 'GENERAL'
       }
     });
 
@@ -757,7 +769,7 @@ app.get('/api/pricing', async (req, res) => {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'https://www.mivvo.org');
+  res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'https://mivvo.org');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
@@ -768,7 +780,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Express app'i çalıştır
   return new Promise((resolve, reject) => {
-    app(req, res, (err) => {
+    app(req as any, res as any, (err: any) => {
       if (err) {
         reject(err);
       } else {

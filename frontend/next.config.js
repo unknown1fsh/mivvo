@@ -17,7 +17,7 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
   env: {
-      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000'),
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001'),
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || (process.env.NODE_ENV === 'production' ? 'https://www.mivvo.org' : 'http://localhost:3000'),
       NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'your-secret-key-here',
       DATABASE_URL: process.env.DATABASE_URL,

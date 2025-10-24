@@ -1,104 +1,13 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/next"
-    },
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node",
-      "config": {
-        "runtime": "nodejs18.x",
-        "maxDuration": 30
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/auth/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/user/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/vehicle/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/payment/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/admin/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/vin/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/paint-analysis/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/engine-sound-analysis/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/vehicle-garage/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/ai-analysis/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/ai-test/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/damage-analysis/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/value-estimation/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/comprehensive-expertise/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/pricing/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/contact/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/career/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/reports/(.*)",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/api/health",
-      "dest": "/api/index.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "frontend/$1"
-    }
-  ],
-  "installCommand": "npm run install:all && cd backend && npx prisma generate && cd ../api && npm install && npx prisma generate",
-  "buildCommand": "npm run build:vercel",
+  "buildCommand": "cd frontend && npm install && cd ../api && npm install && npx prisma generate && cd ../frontend && npm run build",
   "outputDirectory": "frontend/.next",
-  "framework": "nextjs"
+  "installCommand": "npm install --prefix frontend && npm install --prefix api",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    }
+  ]
 }
 
