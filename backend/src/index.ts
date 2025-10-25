@@ -93,7 +93,10 @@ const corsOptions = {
         'mivvo-production.up.railway.app',
         'mivvo.railway.internal',
         'www.mivvo.org',
-        'mivvo.org'
+        'mivvo.org',
+        'mivvo.up.railway.app',
+        'fulfilling-adventure.up.railway.app',
+        'enchanting-flow-production.up.railway.app'
       ];
       const isAllowedDomain = origin && allowedDomains.some(domain => origin.includes(domain));
       
