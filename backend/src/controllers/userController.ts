@@ -223,15 +223,42 @@ export const purchaseCredits = async (req: AuthRequest, res: Response): Promise<
  * }
  */
 export const getCreditHistory = async (req: AuthRequest, res: Response): Promise<void> => {
-  const transactions = await prisma.creditTransaction.findMany({
-    where: { userId: req.user!.id },
-    orderBy: { createdAt: 'desc' },
-    take: 50, // Son 50 transaction
-  });
+  const page = req.query.page ? parseInt(req.query.page as string) : 1;
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+  const skip = (page - 1) * limit;
+  
+  // Filtreleme parametreleri
+  const where: any = { userId: req.user!.id };
+  
+  if (req.query.type) {
+    where.transactionType = req.query.type;
+  }
+  
+  if (req.query.status) {
+    where.status = req.query.status;
+  }
+
+  const [transactions, total] = await Promise.all([
+    prisma.creditTransaction.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
+    }),
+    prisma.creditTransaction.count({ where }),
+  ]);
 
   res.json({
     success: true,
-    data: { transactions },
+    data: { 
+      transactions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    },
   });
 };
 

@@ -22,7 +22,6 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import morgan from 'morgan';
 import { httpLogger, createRequestContext } from '../utils/logger';
 
 // Extend Request interface to include user property
@@ -38,118 +37,6 @@ declare global {
   }
 }
 
-// ===== MORGAN CUSTOM TOKEN =====
-
-/**
- * Morgan için özel token'lar
- */
-
-// Request body token (POST/PUT/PATCH için)
-morgan.token('req-body', (req: Request) => {
-  if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
-    // Hassas bilgileri gizle
-    const body = { ...req.body };
-    
-    // Password, token gibi hassas alanları gizle
-    if (body.password) body.password = '[HIDDEN]';
-    if (body.token) body.token = '[HIDDEN]';
-    if (body.refreshToken) body.refreshToken = '[HIDDEN]';
-    if (body.authorization) body.authorization = '[HIDDEN]';
-    
-    return JSON.stringify(body);
-  }
-  return '';
-});
-
-// User info token
-morgan.token('user-info', (req: Request) => {
-  if (req.user) {
-    return JSON.stringify({
-      id: req.user.id,
-      email: req.user.email,
-      role: req.user.role,
-    });
-  }
-  return '';
-});
-
-// Request ID token (unique request identifier)
-morgan.token('req-id', () => {
-  return Math.random().toString(36).substr(2, 9);
-});
-
-// Response time in milliseconds
-morgan.token('response-time-ms', (req: Request, res: Response) => {
-  const responseTime = res.get('X-Response-Time');
-  return responseTime ? `${responseTime}ms` : '';
-});
-
-// ===== MORGAN FORMATS =====
-
-/**
- * Konsol Format (Development)
- * 
- * Renkli, okunabilir format
- */
-const consoleFormat = ':req-id [:date[clf]] :method :url :status :response-time-ms :res[content-length] - :user-info';
-
-/**
- * JSON Format (File)
- * 
- * Structured JSON format for file logging
- */
-const jsonFormat = JSON.stringify({
-  reqId: ':req-id',
-  timestamp: ':date[iso]',
-  method: ':method',
-  url: ':url',
-  status: ':status',
-  responseTime: ':response-time-ms',
-  contentLength: ':res[content-length]',
-  userAgent: ':req[user-agent]',
-  ip: ':remote-addr',
-  userInfo: ':user-info',
-  reqBody: ':req-body',
-});
-
-// ===== MORGAN STREAMS =====
-
-/**
- * Morgan Winston Stream
- * 
- * Morgan'ın çıktısını Winston'a yönlendirir
- */
-const morganWinstonStream = {
-  write: (message: string) => {
-    // Morgan mesajını parse et
-    const logData = parseMorganMessage(message);
-    
-    // Winston ile logla
-    httpLogger.http('HTTP Request', logData);
-  }
-};
-
-/**
- * Morgan mesajını parse eder
- */
-function parseMorganMessage(message: string) {
-  // Morgan mesajından bilgileri çıkar
-  const parts = message.trim().split(' ');
-  
-  if (parts.length >= 6) {
-    return {
-      reqId: parts[0],
-      timestamp: parts[1] + ' ' + parts[2],
-      method: parts[3],
-      url: parts[4],
-      status: parseInt(parts[5]),
-      responseTime: parts[6] || '0ms',
-      contentLength: parts[8] || '0',
-    };
-  }
-  
-  return { rawMessage: message };
-}
 
 // ===== REQUEST LOGGER MIDDLEWARE =====
 
@@ -206,40 +93,40 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       logLevel = 'error';
     }
     
-    // Winston ile logla
-    httpLogger.log(logLevel, `HTTP ${req.method} ${req.path}`, {
-      request: requestContext,
-      response: responseContext,
-      timestamp: new Date().toISOString(),
-    });
+    // Türkçe ve detaylı format
+    const statusText = res.statusCode >= 200 && res.statusCode < 300 ? '✓' : 
+                       res.statusCode >= 300 && res.statusCode < 400 ? '↗' : '✗';
     
-    // Özel durumlar için ek loglar
-    if (res.statusCode >= 400) {
-      httpLogger.warn(`HTTP Error Response`, {
-        statusCode: res.statusCode,
-        method: req.method,
-        url: req.url,
-        userAgent: req.get('User-Agent'),
-        ip: req.ip,
-        userId: req.user?.id,
-        timestamp: new Date().toISOString(),
-      });
+    // Mesaj oluştur
+    let message = `${statusText} ${req.method.padEnd(6)} ${req.path.padEnd(40)} ${res.statusCode}`;
+    
+    // Süre ve kullanıcı bilgisi ekle
+    const extraInfo = [];
+    if (responseTime) extraInfo.push(`${responseTime}ms`);
+    if (req.user?.id) extraInfo.push(`Kullanıcı:${req.user.id}`);
+    
+    if (extraInfo.length > 0) {
+      message += ` (${extraInfo.join(', ')})`;
     }
     
-    // Yavaş istekler için uyarı
-    if (responseTime > 5000) { // 5 saniye
-      httpLogger.warn(`Slow Request Detected`, {
-        method: req.method,
-        url: req.url,
+    httpLogger.log(logLevel, message, {
+      method: req.method,
+      url: req.url,
+      statusCode: res.statusCode,
+      responseTime,
+      userId: req.user?.id,
+    });
+    
+    // Yavaş istekler için uyarı (3 saniye üzeri)
+    if (responseTime > 3000) {
+      httpLogger.warn(`⏱️  Yavaş İstek: ${req.method} ${req.path} ${responseTime}ms sürdü`, {
         responseTime,
         userId: req.user?.id,
-        timestamp: new Date().toISOString(),
       });
     }
   });
   
-  // Morgan middleware'i çalıştır
-  morgan(consoleFormat, { stream: morganWinstonStream })(req, res, next);
+  next();
 };
 
 // ===== DETAILED REQUEST LOGGER =====

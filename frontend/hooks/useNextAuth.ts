@@ -18,20 +18,14 @@
  * ```
  */
 
-import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react'
+import { useSession, signOut as nextAuthSignOut } from 'next-auth/react'
 import { useCallback } from 'react'
 import { toast } from 'react-hot-toast'
-
-/**
- * OAuth Provider Types
- */
-type OAuthProvider = 'google' | 'facebook'
 
 /**
  * Sign In Options
  */
 interface SignInOptions {
-  provider?: OAuthProvider
   redirect?: boolean
   callbackUrl?: string
 }
@@ -48,8 +42,6 @@ interface UseNextAuthReturn {
   isAuthenticated: boolean
   isEmailVerified: boolean
   userRole: string | undefined
-  signInWithGoogle: (callbackUrl?: string) => Promise<void>
-  signInWithFacebook: (callbackUrl?: string) => Promise<void>
 }
 
 /**
@@ -71,18 +63,8 @@ export function useNextAuth(): UseNextAuthReturn {
    */
   const signIn = useCallback(async (options?: SignInOptions) => {
     try {
-      const { provider, redirect = true, callbackUrl } = options || {}
-
-      if (provider) {
-        // OAuth ile giriş
-        await nextAuthSignIn(provider, {
-          redirect,
-          callbackUrl: callbackUrl || '/dashboard'
-        })
-      } else {
-        // Credentials ile giriş (login sayfasına yönlendir)
-        window.location.href = '/login'
-      }
+      // Login sayfasına yönlendir
+      window.location.href = '/login'
     } catch (error) {
       console.error('Sign in error:', error)
       toast.error('Giriş yapılırken bir hata oluştu')
@@ -116,51 +98,7 @@ export function useNextAuth(): UseNextAuthReturn {
     isAuthenticated: !!session?.user,
     isEmailVerified: session?.user?.emailVerified ?? false,
     userRole: session?.user?.role,
-    signInWithGoogle: (callbackUrl?: string) => signInWithProvider('google', callbackUrl),
-    signInWithFacebook: (callbackUrl?: string) => signInWithProvider('facebook', callbackUrl),
   }
-}
-
-/**
- * OAuth Sign In Helper
- * 
- * Belirli bir OAuth provider ile giriş yapar.
- * 
- * @param provider - OAuth provider
- * @param callbackUrl - Başarılı giriş sonrası yönlendirilecek URL
- */
-export async function signInWithProvider(provider: OAuthProvider, callbackUrl?: string) {
-  try {
-    await nextAuthSignIn(provider, {
-      redirect: true,
-      callbackUrl: callbackUrl || '/dashboard'
-    })
-  } catch (error) {
-    console.error(`${provider} sign in error:`, error)
-    toast.error(`${provider} ile giriş yapılırken bir hata oluştu`)
-  }
-}
-
-/**
- * Google Sign In
- * 
- * Google ile giriş yapar.
- * 
- * @param callbackUrl - Başarılı giriş sonrası yönlendirilecek URL
- */
-export async function signInWithGoogle(callbackUrl?: string) {
-  return signInWithProvider('google', callbackUrl)
-}
-
-/**
- * Facebook Sign In
- * 
- * Facebook ile giriş yapar.
- * 
- * @param callbackUrl - Başarılı giriş sonrası yönlendirilecek URL
- */
-export async function signInWithFacebook(callbackUrl?: string) {
-  return signInWithProvider('facebook', callbackUrl)
 }
 
 /**

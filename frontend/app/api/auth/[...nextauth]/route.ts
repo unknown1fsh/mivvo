@@ -25,8 +25,6 @@
  */
 
 import NextAuth from 'next-auth'
-import GoogleProvider from 'next-auth/providers/google'
-import FacebookProvider from 'next-auth/providers/facebook'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { NextAuthOptions } from 'next-auth'
 
@@ -35,35 +33,6 @@ import { NextAuthOptions } from 'next-auth'
  */
 const authOptions: NextAuthOptions = {
   providers: [
-    /**
-     * Google OAuth Provider
-     */
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          prompt: 'consent',
-          access_type: 'offline',
-          response_type: 'code',
-          scope: 'openid email profile'
-        }
-      }
-    }),
-
-    /**
-     * Facebook OAuth Provider
-     */
-    FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID!,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
-      authorization: {
-        params: {
-          scope: 'email'
-        }
-      }
-    }),
-
     /**
      * Credentials Provider (Email/Password)
      * 
@@ -154,39 +123,6 @@ const authOptions: NextAuthOptions = {
         token.emailVerified = Boolean(user.emailVerified)
       }
 
-      // OAuth sign in
-      if (account && (account.provider === 'google' || account.provider === 'facebook')) {
-        try {
-          // Backend'e OAuth kullanıcısı gönder
-          const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/auth/oauth`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              provider: account.provider,
-              providerId: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              accessToken: account.access_token,
-            }),
-          })
-
-          const data = await response.json()
-
-          if (response.ok && data.success && data.data) {
-            token.accessToken = data.data.token
-            token.firstName = data.data.user.firstName
-            token.lastName = data.data.user.lastName
-            token.role = data.data.user.role
-            token.emailVerified = Boolean(data.data.user.emailVerified)
-            token.id = data.data.user.id.toString()
-          }
-        } catch (error) {
-          console.error('OAuth backend integration error:', error)
-        }
-      }
 
       return token
     },
@@ -216,13 +152,7 @@ const authOptions: NextAuthOptions = {
      * Kullanıcı giriş yaparken çalışır.
      */
     async signIn({ user, account, profile }) {
-      // OAuth provider'lar için profil bilgilerini kontrol et
-      if (account?.provider === 'google' || account?.provider === 'facebook') {
-        if (!user.email || !user.name) {
-          return false
-        }
-      }
-
+      // Credentials ile giriş kontrolü
       return true
     },
 

@@ -27,6 +27,7 @@ model User {
   userCredits        UserCredits?
   vehicleGarage      VehicleGarage[]
   vehicleReports     VehicleReport[]
+  supportTickets      SupportTicket[]
 
   @@map("users")
 }
@@ -45,14 +46,16 @@ model UserCredits {
 }
 
 model CreditTransaction {
-  id              Int             @id @default(autoincrement())
-  userId          Int             @map("user_id")
-  transactionType TransactionType @map("transaction_type")
+  id              Int                  @id @default(autoincrement())
+  userId          Int                   @map("user_id")
+  transactionType TransactionType      @map("transaction_type")
   amount          Decimal
   description     String?
-  referenceId     String?         @map("reference_id")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referenceId     String?              @map("reference_id")
+  status          CreditTransactionStatus @default(COMPLETED)
+  metadata        Json?
+  createdAt       DateTime             @default(now()) @map("created_at")
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("credit_transactions")
 }
@@ -373,6 +376,41 @@ model CareerApplication {
   @@map("career_applications")
 }
 
+model SupportTicket {
+  id          Int                   @id @default(autoincrement())
+  userId      Int                   @map("user_id")
+  subject     String
+  description String                @db.Text
+  category    TicketCategory        @default(GENERAL)
+  priority    TicketPriority        @default(NORMAL)
+  status      TicketStatus          @default(OPEN)
+  assignedTo  Int?                  @map("assigned_to")
+  reportId    Int?                  @map("report_id")
+  attachments String?               @db.Text
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    TicketMessage[]
+
+  @@map("support_tickets")
+  @@index([userId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id          Int           @id @default(autoincrement())
+  ticketId    Int           @map("ticket_id")
+  senderId    Int           @map("sender_id")
+  isAdmin     Boolean       @default(false) @map("is_admin")
+  message     String        @db.Text
+  attachments String?       @db.Text
+  createdAt   DateTime      @default(now()) @map("created_at")
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_messages")
+  @@index([ticketId])
+}
+
 enum InquiryType {
   GENERAL
   TECHNICAL
@@ -395,4 +433,33 @@ enum ApplicationStatus {
   INTERVIEW
   REJECTED
   ACCEPTED
+}
+
+enum CreditTransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum TicketCategory {
+  GENERAL
+  TECHNICAL
+  BILLING
+  REPORT_ISSUE
+  FEATURE_REQUEST
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }

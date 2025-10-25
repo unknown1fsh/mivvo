@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
@@ -27,6 +26,7 @@ import pricingRoutes from './routes/pricing';
 import contactRoutes from './routes/contact';
 import careerRoutes from './routes/career';
 import reportRoutes from './routes/report';
+import supportRoutes from './routes/supportRoutes';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -40,8 +40,8 @@ dotenv.config();
 
 // Force set OpenAI API key if not set
 if (!process.env.OPENAI_API_KEY) {
-  console.log('⚠️ OpenAI API Key bulunamadı! Lütfen .env dosyasında OPENAI_API_KEY değişkenini ayarlayın.');
-  console.log('🔗 API Key almak için: https://platform.openai.com/account/api-keys');
+  console.log('[WARN] OpenAI API Key not found in .env');
+  console.log('[WARN] Get API Key: https://platform.openai.com/account/api-keys');
 }
 
 const app = express();
@@ -77,8 +77,6 @@ app.use(limiter);
 // CORS configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
-    console.log('🔍 CORS Origin kontrolü:', { origin, nodeEnv: process.env.NODE_ENV });
-    
     // Production ortamında origin kontrolü
     if (process.env.NODE_ENV === 'production') {
       // Railway ve Vercel production'da tüm origin'lere izin ver
@@ -86,7 +84,6 @@ const corsOptions = {
       // Vercel domain pattern: *.vercel.app
       const isRailway = origin && origin.includes('.railway.app');
       const isVercel = origin && origin.includes('.vercel.app');
-      const isLocalhost = origin && origin.includes('localhost');
       
       // Spesifik Railway domain kontrolü
       const allowedDomains = [
@@ -102,27 +99,19 @@ const corsOptions = {
       
       // Railway internal requests için origin undefined olabilir
       if (isRailway || isVercel || isAllowedDomain || !origin) {
-        console.log('✅ CORS izni verildi:', origin || 'undefined (internal request)');
         callback(null, true);
       } else {
-        console.log('❌ CORS reddedildi:', origin);
         callback(new Error('CORS policy violation'));
       }
     } else {
-      // Development'ta localhost'a izin ver
-      const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
-      if (!origin || allowedOrigins.includes(origin)) {
-        console.log('✅ Development CORS izni verildi:', origin || 'undefined');
-        callback(null, true);
-      } else {
-        console.log('❌ Development CORS reddedildi:', origin);
-        callback(new Error('CORS policy violation'));
-      }
+      // Development'ta tüm localhost'lara izin ver
+      callback(null, true);
     }
   },
-  credentials: process.env.CORS_CREDENTIALS === 'true',
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Authorization'],
 };
 
 app.use(cors(corsOptions));
@@ -179,6 +168,9 @@ app.use('/api/career', careerRoutes);
 // Reports endpoint - yeni report controller
 app.use('/api/reports', reportRoutes);
 
+// Support endpoint
+app.use('/api/support', supportRoutes);
+
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -191,35 +183,66 @@ const prisma = getPrismaClient();
 // Production'da sadece error logları kullan
 if (process.env.NODE_ENV === 'production') {
   // Production'da database logger'ı devre dışı bırak (kota tasarrufu için)
-  console.log('🔧 Production modu: Database logger devre dışı');
 } else {
   prisma.$use(databaseLoggerMiddleware);
 }
 
 // Start server
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Mivvo Expertiz Backend Server running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`📝 Logging: Winston + Morgan entegrasyonu aktif`);
-  console.log(`🗄️ Database: Prisma middleware logger aktif`);
+  console.log('\n┌─────────────────────────────────────────────────────────────┐');
+  console.log('│     🚀 MIVVO EXPERTIZ - BACKEND SERVER BAŞLATILIYOR        │');
+  console.log('└─────────────────────────────────────────────────────────────┘');
+  console.log(`\n📡 Sunucu Durumu:`);
+  console.log(`   ✓ Backend sunucusu başarıyla başlatıldı`);
+  console.log(`   ✓ Port: ${PORT}`);
+  console.log(`   ✓ Ortam: ${process.env.NODE_ENV === 'production' ? 'Üretim' : 'Geliştirme'}`);
+  console.log(`   ✓ Sağlık kontrolü: http://localhost:${PORT}/api/health`);
+  
+  console.log(`\n🔌 Aktif API Route'ları:`);
+  console.log(`   • /api/auth - Kullanıcı kimlik doğrulama`);
+  console.log(`   • /api/user - Kullanıcı işlemleri`);
+  console.log(`   • /api/vehicle - Araç raporları`);
+  console.log(`   • /api/payment - Ödeme işlemleri`);
+  console.log(`   • /api/admin - Yönetici paneli`);
+  console.log(`   • /api/damage-analysis - Hasar analizi`);
+  console.log(`   • /api/paint-analysis - Boya analizi`);
+  console.log(`   • /api/engine-sound - Motor sesi analizi`);
+  console.log(`   • /api/comprehensive-expertise - Kapsamlı ekspertiz`);
+  
+  console.log(`\n🗄️  Veritabanı:`);
+  console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Database logger kapatıldı' : '✓ Database logger aktif'}`);
+  
+  console.log(`\n📊 Loglama Sistemi:`);
+  console.log(`   ✓ HTTP istekleri loglanıyor`);
+  console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Sadece hata logları' : '✓ Tüm loglar aktif'}`);
+  
+  console.log(`\n✨ Sunucu hazır ve istek almaya başladı!\n`);
 });
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully...');
+const gracefulShutdown = async (signal: string) => {
+  console.log('\n');
+  console.log('┌─────────────────────────────────────────────────────────────┐');
+  console.log('│                  ⏸️  SUNUCU KAPATILIYOR                    │');
+  console.log('└─────────────────────────────────────────────────────────────┘');
+  console.log('⏳ İşlemler tamamlanıyor...\n');
+  
+  console.log('   1️⃣  HTTP sunucusu kapatılıyor...');
   server.close(async () => {
+    console.log('   ✓ HTTP sunucusu kapatıldı');
+    
+    console.log('   2️⃣  Veritabanı bağlantısı kesiliyor...');
     await disconnectPrisma();
+    console.log('   ✓ Veritabanı bağlantısı kesildi');
+    
+    console.log('\n   ✅ Sunucu başarıyla kapatıldı!');
+    console.log('   👋 Görüşmek üzere...\n');
+    
     process.exit(0);
   });
-});
+};
 
-process.on('SIGINT', async () => {
-  console.log('🛑 SIGINT received, shutting down gracefully...');
-  server.close(async () => {
-    await disconnectPrisma();
-    process.exit(0);
-  });
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 export default app;

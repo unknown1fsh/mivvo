@@ -500,23 +500,28 @@ export class DamageAnalysisService {
     amount: number,
     reportId: number
   ): Promise<void> {
-    // Kredi düş
-    await prisma.userCredits.update({
-      where: { userId },
-      data: {
-        balance: { decrement: amount }
-      }
-    });
+    // Atomik işlem: Kredi düş + Transaction oluştur
+    await prisma.$transaction(async (tx) => {
+      // 1. Kredi düş
+      await tx.userCredits.update({
+        where: { userId },
+        data: {
+          balance: { decrement: amount },
+          totalUsed: { increment: amount }
+        }
+      });
 
-    // Transaction kaydet (audit trail)
-    await prisma.creditTransaction.create({
-      data: {
-        userId,
-        amount: -amount,
-        transactionType: 'USAGE',
-        description: 'Hasar Analizi - AI servisi kullanımı',
-        referenceId: reportId.toString()
-      }
+      // 2. Transaction kaydet (audit trail)
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: amount, // DÜZELTME: Negatif değil, pozitif tutar
+          transactionType: 'USAGE',
+          description: 'Hasar Analizi - AI servisi kullanımı',
+          referenceId: reportId.toString(),
+          status: 'COMPLETED'
+        }
+      });
     });
 
     console.log('💳 Kredi işlemi tamamlandı:', { userId, amount, reportId });

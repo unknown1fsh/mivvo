@@ -32,32 +32,41 @@ export async function refundCreditForFailedAnalysis(
   reason: string = 'AI analizi başarısız'
 ): Promise<CreditRefundResult> {
   try {
-    // 1. Kullanıcı kredisini güncelle (iade et)
-    const updatedCredits = await prisma.userCredits.update({
-      where: { userId },
-      data: {
-        balance: { increment: serviceCost },
-        totalUsed: { decrement: serviceCost }
-      }
-    })
+    // Atomik işlem: Kredi iade + Transaction oluştur + Rapor güncelle
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Kullanıcı kredisini güncelle (iade et)
+      const updatedCredits = await tx.userCredits.update({
+        where: { userId },
+        data: {
+          balance: { increment: serviceCost },
+          totalUsed: { decrement: serviceCost }
+        }
+      })
 
-    // 2. İade transaction kaydı oluştur
-    const transaction = await prisma.creditTransaction.create({
-      data: {
-        userId,
-        transactionType: 'REFUND',
-        amount: serviceCost,
-        description: `Rapor #${reportId} - ${reason}`,
-        referenceId: `REFUND_REPORT_${reportId}_${Date.now()}`
-      }
-    })
+      // 2. İade transaction kaydı oluştur
+      const transaction = await tx.creditTransaction.create({
+        data: {
+          userId,
+          transactionType: 'REFUND',
+          amount: serviceCost,
+          description: `Rapor #${reportId} - ${reason}`,
+          referenceId: `REFUND_REPORT_${reportId}_${Date.now()}`,
+          status: 'COMPLETED'
+        }
+      })
 
-    // 3. Rapor durumunu FAILED olarak işaretle
-    await prisma.vehicleReport.update({
-      where: { id: reportId },
-      data: {
-        status: 'FAILED',
-        expertNotes: reason
+      // 3. Rapor durumunu FAILED olarak işaretle
+      await tx.vehicleReport.update({
+        where: { id: reportId },
+        data: {
+          status: 'FAILED',
+          expertNotes: reason
+        }
+      })
+
+      return {
+        newBalance: parseFloat(updatedCredits.balance.toString()),
+        transactionId: transaction.id
       }
     })
 
@@ -66,8 +75,8 @@ export async function refundCreditForFailedAnalysis(
     return {
       success: true,
       refundedAmount: serviceCost,
-      newBalance: parseFloat(updatedCredits.balance.toString()),
-      transactionId: transaction.id
+      newBalance: result.newBalance,
+      transactionId: result.transactionId
     }
   } catch (error) {
     console.error('❌ Kredi iade hatası:', error)

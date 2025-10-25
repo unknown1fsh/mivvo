@@ -69,17 +69,10 @@ winston.addColors(logColors);
  * Development için renkli, okunabilir format
  */
 const consoleFormat = winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-  winston.format.colorize({ all: true }),
+  winston.format.timestamp({ format: 'HH:mm:ss' }),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    let logMessage = `${timestamp} [${level}]: ${message}`;
-    
-    // Meta data varsa ekle
-    if (Object.keys(meta).length > 0) {
-      logMessage += `\n${JSON.stringify(meta, null, 2)}`;
-    }
-    
-    return logMessage;
+    // Ana log mesajı (sadeleştirilmiş, detayları mesajda zaten var)
+    return `[${timestamp}] ${message}`;
   })
 );
 
@@ -372,10 +365,3 @@ export const logAiAnalysis = (step: string, reportId: string, context?: any) => 
 
 export default logger;
 export { logger };
-
-// Logger başlatma mesajı
-logger.info('🚀 Winston Logger başlatıldı', {
-  environment: process.env.NODE_ENV,
-  logLevel: logger.level,
-  transports: logger.transports.map(t => t.constructor.name),
-});

@@ -157,13 +157,13 @@ export default function DashboardPage() {
         // Backend formatını frontend formatına çevir
         const formattedReports = userReports.slice(0, 5).map((report: any) => ({
           id: report.id.toString(),
-          vehiclePlate: report.vehiclePlate || 'Bilinmiyor',
-          vehicleBrand: report.vehicleBrand || 'Bilinmiyor',
-          vehicleModel: report.vehicleModel || 'Bilinmiyor',
+          vehiclePlate: report.vehiclePlate || report.vehicle_plate || 'Bilinmiyor',
+          vehicleBrand: report.vehicleBrand || report.vehicle_brand || 'Bilinmiyor',
+          vehicleModel: report.vehicleModel || report.vehicle_model || 'Bilinmiyor',
           reportType: getReportTypeName(report.reportType),
-          status: report.status?.toLowerCase() || 'pending',
-          createdAt: new Date(report.createdAt).toLocaleDateString('tr-TR'),
-          totalCost: Number(report.totalCost || report.creditCost || reportCosts[report.reportType] || 0)
+          status: (report.status || 'PENDING')?.toLowerCase(),
+          createdAt: new Date(report.createdAt || report.created_at).toLocaleDateString('tr-TR'),
+          totalCost: Number(report.totalCost || report.total_cost || reportCosts[report.reportType] || 0)
         }))
         
         setReports(formattedReports)
@@ -401,59 +401,67 @@ export default function DashboardPage() {
         {/* Stats Cards */}
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StaggerItem>
-            <div className="card p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <DocumentTextIcon className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Toplam Rapor</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalReports}</p>
+            <Link href="/dashboard/reports" className="block">
+              <div className="card p-6 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 transform">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <DocumentTextIcon className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Toplam Rapor</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalReports}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </StaggerItem>
 
           <StaggerItem>
-            <div className="card p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <CheckCircleIcon className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Tamamlanan</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.completedReports}</p>
+            <Link href="/dashboard/reports?status=completed" className="block">
+              <div className="card p-6 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 transform">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <CheckCircleIcon className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Tamamlanan</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.completedReports}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </StaggerItem>
 
           <StaggerItem>
-            <div className="card p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <CreditCardIcon className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Toplam Harcama</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalSpent}₺</p>
+            <Link href="/dashboard/credit-history" className="block">
+              <div className="card p-6 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 transform">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <CreditCardIcon className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Toplam Harcama</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.totalSpent}₺</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </StaggerItem>
 
           <StaggerItem>
-            <div className="card p-6">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <ChartBarIcon className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Kredi Bakiyesi</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.creditBalance}₺</p>
+            <Link href="/dashboard/credit-history" className="block">
+              <div className="card p-6 hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-105 transform">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <ChartBarIcon className="w-6 h-6 text-yellow-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Kredi Bakiyesi</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats.creditBalance}₺</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </StaggerItem>
         </StaggerContainer>
 
@@ -541,6 +549,20 @@ export default function DashboardPage() {
                 <Link href="/payment/add-credits" className="btn btn-secondary btn-lg flex items-center justify-center">
                   <CreditCardIcon className="w-5 h-5 mr-2" />
                   Kredi Yükle
+                </Link>
+              </div>
+              
+              <div>
+                <Link href="/dashboard/credit-history" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white">
+                  <ChartBarIcon className="w-5 h-5 mr-2" />
+                  Kredi Geçmişi
+                </Link>
+              </div>
+              
+              <div>
+                <Link href="/dashboard/support" className="btn btn-secondary btn-lg flex items-center justify-center bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white">
+                  <span className="text-2xl mr-2">💬</span>
+                  Destek
                 </Link>
               </div>
             </div>

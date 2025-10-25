@@ -44,57 +44,51 @@ export const databaseLoggerMiddleware: Prisma.Middleware = async (params, next) 
   };
   
   try {
-    // Database operasyonu başlangıcı logla
-    databaseLogger.debug(`Database Operation Started`, {
-      ...requestContext,
-      step: 'start',
-    });
-    
     // Operasyonu çalıştır
     const result = await next(params);
     
     // Süre hesapla
     const duration = timer.end();
     
-    // Başarılı operasyon logla
-    databaseLogger.info(`Database Operation Completed`, {
-      ...requestContext,
-      step: 'completed',
-      duration,
-      resultCount: getResultCount(result, params.action),
-      success: true,
-    });
+    // Sadece yavaş veya önemli operasyonları logla
+    const resultCount = getResultCount(result, params.action);
     
-    // Yavaş operasyonlar için uyarı
-    if (duration > 1000) { // 1 saniye
-      databaseLogger.warn(`Slow Database Operation`, {
-        ...requestContext,
+    if (duration > 500) {
+      // Yavaş operasyonlar için uyarı
+      databaseLogger.warn(`⏱️  Yavaş Sorgu: ${params.model}.${params.action} ${duration}ms sürdü, ${resultCount} kayıt`, {
         duration,
-        resultCount: getResultCount(result, params.action),
-        warning: 'Operation took longer than 1 second',
+        resultCount,
       });
+    } else {
+      // Sadece önemli işlemlerini logla (create, update, delete)
+      const importantActions = ['create', 'update', 'delete', 'updateMany', 'deleteMany'];
+      if (importantActions.includes(params.action)) {
+        const actionNames: { [key: string]: string } = {
+          'create': 'Oluşturuldu',
+          'update': 'Güncellendi',
+          'delete': 'Silindi',
+          'updateMany': 'Toplu Güncellendi',
+          'deleteMany': 'Toplu Silindi',
+        };
+        
+        databaseLogger.debug(`💾 Veritabanı: ${params.model} tablosunda ${actionNames[params.action] || params.action} (${resultCount} kayıt, ${duration}ms)`, {
+          duration,
+          resultCount,
+        });
+      }
     }
     
     return result;
     
   } catch (error) {
-    // Süre hesapla (hata durumunda da)
     const duration = timer.end();
     
     // Hata logla
-    databaseLogger.error(`Database Operation Failed`, {
-      ...requestContext,
-      step: 'failed',
+    databaseLogger.error(`❌ Veritabanı Hatası: ${params.model} tablosunda ${params.action} işlemi başarısız (${duration}ms) - ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`, {
       duration,
-      error: {
-        message: error instanceof Error ? error.message : 'Unknown error',
-        name: error instanceof Error ? error.name : 'UnknownError',
-        stack: error instanceof Error ? error.stack : undefined,
-      },
-      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
     
-    // Hata fırlat (Prisma'nın normal akışını bozma)
     throw error;
   }
 };

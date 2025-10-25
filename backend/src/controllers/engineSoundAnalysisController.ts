@@ -294,27 +294,29 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
     audioRecords.push(audioRecord);
   }
 
-  // Kredileri düş (bypass değilse)
+  // Kredileri düş (bypass değilse) - Atomik işlem
   if (!BYPASS_CREDITS && userCredits) {
-    await prisma.userCredits.update({
-      where: { userId: req.user!.id },
-      data: {
-        balance: userCredits.balance.sub(servicePricing.basePrice),
-        totalUsed: userCredits.totalUsed.add(servicePricing.basePrice),
-      },
-    });
-  }
+    await prisma.$transaction(async (tx) => {
+      // 1. Kredi düş
+      await tx.userCredits.update({
+        where: { userId: req.user!.id },
+        data: {
+          balance: { decrement: servicePricing.basePrice },
+          totalUsed: { increment: servicePricing.basePrice },
+        },
+      });
 
-  // Kredi işlemi kaydet
-  if (!BYPASS_CREDITS) {
-    await prisma.creditTransaction.create({
-      data: {
-        userId: req.user!.id,
-        transactionType: 'USAGE',
-        amount: servicePricing.basePrice,
-        description: 'Motor sesi analizi',
-        referenceId: report.id.toString(),
-      },
+      // 2. Transaction kaydet
+      await tx.creditTransaction.create({
+        data: {
+          userId: req.user!.id,
+          transactionType: 'USAGE',
+          amount: servicePricing.basePrice,
+          description: 'Motor sesi analizi',
+          referenceId: report.id.toString(),
+          status: 'COMPLETED',
+        },
+      });
     });
   }
 

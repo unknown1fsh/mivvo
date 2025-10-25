@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "npm run dev:local",
-    "dev:local": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:local": "concurrently --names \"🔵 BACKEND,🟢 FRONTEND\" --prefix-colors \"bgBlue.bold,bgGreen.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:vercel": "cd frontend && npm run dev",
     "dev:full": "npm run dev:local",
     "dev:backend": "cd backend && npm run dev",
