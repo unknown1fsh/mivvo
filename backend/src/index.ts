@@ -46,7 +46,7 @@ if (!process.env.OPENAI_API_KEY) {
 
 const app = express();
 // Railway'de otomatik port kullan (ayrı servis için)
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3001;
 
 // Trust proxy for Vercel
 app.set('trust proxy', 1);
