@@ -11,12 +11,27 @@ const getAdminToken = () => {
   return localStorage.getItem('admin_token')
 }
 
+// Admin API client - Dynamic base URL
+const getApiBaseUrl = () => {
+  // Production'da Railway backend URL'ini kullan
+  if (typeof window !== 'undefined') {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+    if (apiUrl) {
+      return apiUrl.startsWith('http') ? apiUrl : `https://${apiUrl}`
+    }
+  }
+  
+  // Development'ta localhost
+  return 'http://localhost:3001'
+}
+
 // Admin API client
 export const adminApiClient = {
   async get(url: string) {
     const token = getAdminToken()
+    const baseUrl = getApiBaseUrl()
     
-    const response = await fetch(`http://localhost:3001${url}`, {
+    const response = await fetch(`${baseUrl}${url}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -31,7 +46,8 @@ export const adminApiClient = {
   },
   async post(url: string, data?: any) {
     const token = getAdminToken()
-    const response = await fetch(`http://localhost:3001${url}`, {
+    const baseUrl = getApiBaseUrl()
+    const response = await fetch(`${baseUrl}${url}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -48,7 +64,8 @@ export const adminApiClient = {
   },
   async put(url: string, data?: any) {
     const token = getAdminToken()
-    const response = await fetch(`http://localhost:3001${url}`, {
+    const baseUrl = getApiBaseUrl()
+    const response = await fetch(`${baseUrl}${url}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -65,7 +82,8 @@ export const adminApiClient = {
   },
   async delete(url: string) {
     const token = getAdminToken()
-    const response = await fetch(`http://localhost:3001${url}`, {
+    const baseUrl = getApiBaseUrl()
+    const response = await fetch(`${baseUrl}${url}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,

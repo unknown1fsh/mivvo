@@ -19,8 +19,20 @@ export default function AdminLoginPage() {
     console.log('🔐 Giriş denemesi:', { username, password })
     setIsLoading(true)
     
+    // Dynamic API URL
+    const getApiUrl = () => {
+      if (typeof window !== 'undefined') {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+        if (apiUrl) {
+          return apiUrl.startsWith('http') ? apiUrl : `https://${apiUrl}`
+        }
+      }
+      return 'http://localhost:3001'
+    }
+    
     try {
-      const response = await fetch('http://localhost:3001/api/admin/auth/login', {
+      const apiUrl = getApiUrl()
+      const response = await fetch(`${apiUrl}/api/admin/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, captchaToken: 'test-token' })
