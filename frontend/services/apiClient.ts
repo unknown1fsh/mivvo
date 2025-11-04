@@ -37,7 +37,16 @@ function resolveApiBaseUrl(): string {
     return 'http://localhost:3001'
   }
 
-  // Client-side'da current origin kullan
+  // Production'da NEXT_PUBLIC_API_URL yoksa hata ver
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ HATA: NEXT_PUBLIC_API_URL environment variable tanımlı değil!')
+    console.error('❌ Railway\'de Frontend service\'inin NEXT_PUBLIC_API_URL environment variable\'ını backend service URL\'ine ayarlayın')
+    console.error('❌ Örnek: NEXT_PUBLIC_API_URL=${{Mivvo-Backend.RAILWAY_PUBLIC_DOMAIN}}')
+    // Fallback olarak hata döndür
+    throw new Error('NEXT_PUBLIC_API_URL environment variable is required in production')
+  }
+
+  // Client-side'da current origin kullan (sadece development için)
   if (typeof window !== 'undefined') {
     console.log('🌐 Client-side - current origin kullanılıyor:', window.location.origin)
     return window.location.origin
