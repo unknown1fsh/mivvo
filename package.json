@@ -14,7 +14,7 @@
     "build:frontend": "cd frontend && npm run build",
     "build:clean": "npm run clean && npm run build",
     "start": "npm run dev:full",
-    "start:full": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:full": "node scripts/start-full.js",
     "start:backend": "cd backend && npm run start",
     "start:frontend": "cd frontend && npm run start",
     "install:all": "npm run install:backend && npm run install:frontend",
