@@ -132,15 +132,74 @@ app.use((req, res, next) => {
 app.use(requestLogger);
 
 // Health check endpoint - API prefix ile (catch-all'dan önce!)
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV,
-    port: PORT,
-    service: 'mivvo-backend'
-  });
+app.get('/api/health', async (req, res) => {
+  const healthCheckStart = Date.now();
+  console.log(`[${new Date().toISOString()}] 🏥 Health Check - Başlatılıyor...`);
+  
+  try {
+    console.log(`[${new Date().toISOString()}] 🔍 Health Check - Database bağlantısı kontrol ediliyor...`);
+    // Database bağlantısını kontrol et
+    const prisma = getPrismaClient();
+    const dbCheckStart = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    const dbCheckDuration = Date.now() - dbCheckStart;
+    
+    console.log(`[${new Date().toISOString()}] ✅ Health Check - Database bağlantısı başarılı (${dbCheckDuration}ms)`);
+    
+    const healthCheckDuration = Date.now() - healthCheckStart;
+    const response = {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV,
+      port: PORT,
+      service: 'mivvo-backend',
+      database: 'connected',
+      databaseCheckDuration: dbCheckDuration,
+      healthCheckDuration: healthCheckDuration,
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+        rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
+      }
+    };
+    
+    console.log(`[${new Date().toISOString()}] ✅ Health Check - Başarılı (${healthCheckDuration}ms)`, JSON.stringify(response, null, 2));
+    
+    res.status(200).json(response);
+  } catch (error) {
+    const healthCheckDuration = Date.now() - healthCheckStart;
+    const errorMessage = error instanceof Error ? error.message : 'Database connection check failed';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    
+    console.error(`[${new Date().toISOString()}] ❌ Health Check - Database bağlantı hatası:`, errorMessage);
+    if (errorStack) {
+      console.error(`[${new Date().toISOString()}] ❌ Health Check - Stack trace:`, errorStack);
+    }
+    
+    // Database bağlantısı başarısız olsa bile service çalışıyor olarak işaretle
+    // (Railway healthcheck için kritik değil)
+    const response = {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV,
+      port: PORT,
+      service: 'mivvo-backend',
+      database: 'disconnected',
+      warning: errorMessage,
+      healthCheckDuration: healthCheckDuration,
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+        rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
+      }
+    };
+    
+    console.log(`[${new Date().toISOString()}] ⚠️ Health Check - Database hatası ile tamamlandı (${healthCheckDuration}ms)`, JSON.stringify(response, null, 2));
+    
+    res.status(200).json(response);
+  }
 });
 
 // API routes
@@ -185,17 +244,30 @@ if (process.env.NODE_ENV === 'production') {
 // Start server (only if not in test environment)
 let server: any = null;
 if (process.env.NODE_ENV !== 'test') {
+  const startupTime = Date.now();
+  console.log('\n┌─────────────────────────────────────────────────────────────┐');
+  console.log('│     🚀 MIVVO EXPERTIZ - BACKEND SERVER BAŞLATILIYOR        │');
+  console.log('└─────────────────────────────────────────────────────────────┘');
+  console.log(`[${new Date().toISOString()}] 📋 Startup Bilgileri:`);
+  console.log(`   • Node.js Version: ${process.version}`);
+  console.log(`   • Platform: ${process.platform}`);
+  console.log(`   • Arch: ${process.arch}`);
+  console.log(`   • PID: ${process.pid}`);
+  console.log(`   • CWD: ${process.cwd()}`);
+  console.log(`   • Railway Environment: ${process.env.RAILWAY_ENVIRONMENT || 'N/A'}`);
+  console.log(`   • Railway Service: ${process.env.RAILWAY_SERVICE_NAME || 'N/A'}`);
+  console.log(`   • Railway Deployment: ${process.env.RAILWAY_DEPLOYMENT_ID || 'N/A'}`);
+  
   server = app.listen(PORT, () => {
-    console.log('\n┌─────────────────────────────────────────────────────────────┐');
-    console.log('│     🚀 MIVVO EXPERTIZ - BACKEND SERVER BAŞLATILIYOR        │');
-    console.log('└─────────────────────────────────────────────────────────────┘');
-    console.log(`\n📡 Sunucu Durumu:`);
-    console.log(`   ✓ Backend sunucusu başarıyla başlatıldı`);
+    const startupDuration = Date.now() - startupTime;
+    console.log(`\n[${new Date().toISOString()}] 📡 Sunucu Durumu:`);
+    console.log(`   ✓ Backend sunucusu başarıyla başlatıldı (${startupDuration}ms)`);
     console.log(`   ✓ Port: ${PORT}`);
     console.log(`   ✓ Ortam: ${process.env.NODE_ENV === 'production' ? 'Üretim' : 'Geliştirme'}`);
-    console.log(`   ✓ Sağlık kontrolü: http://localhost:${PORT}/api/health`);
+    console.log(`   ✓ Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`   ✓ Memory: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB / ${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)}MB`);
     
-    console.log(`\n🔌 Aktif API Route'ları:`);
+    console.log(`\n[${new Date().toISOString()}] 🔌 Aktif API Route'ları:`);
     console.log(`   • /api/auth - Kullanıcı kimlik doğrulama`);
     console.log(`   • /api/user - Kullanıcı işlemleri`);
     console.log(`   • /api/vehicle - Araç raporları`);
@@ -206,35 +278,43 @@ if (process.env.NODE_ENV !== 'test') {
     console.log(`   • /api/engine-sound - Motor sesi analizi`);
     console.log(`   • /api/comprehensive-expertise - Kapsamlı ekspertiz`);
     
-    console.log(`\n🗄️  Veritabanı:`);
-    console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Database logger kapatıldı' : '✓ Database logger aktif'}`);
+    console.log(`\n[${new Date().toISOString()}] 🗄️  Veritabanı:`);
+    console.log(`   • DATABASE_URL: ${process.env.DATABASE_URL ? '✓ Tanımlı' : '✗ Tanımlı değil'}`);
+    console.log(`   • Database Logger: ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Kapatıldı (kota tasarrufu)' : '✓ Aktif'}`);
     
-    console.log(`\n📊 Loglama Sistemi:`);
-    console.log(`   ✓ HTTP istekleri loglanıyor`);
-    console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Sadece hata logları' : '✓ Tüm loglar aktif'}`);
+    console.log(`\n[${new Date().toISOString()}] 📊 Loglama Sistemi:`);
+    console.log(`   • HTTP Logger: ✓ Aktif`);
+    console.log(`   • Request Logger: ✓ Aktif`);
+    console.log(`   • Log Level: ${process.env.NODE_ENV === 'production' ? 'INFO (sadece hata logları)' : 'DEBUG (tüm loglar)'}`);
+    console.log(`   • Console Output: ✓ Aktif (Railway için)`);
     
-    console.log(`\n✨ Sunucu hazır ve istek almaya başladı!\n`);
+    console.log(`\n[${new Date().toISOString()}] ✨ Sunucu hazır ve istek almaya başladı!`);
+    console.log(`[${new Date().toISOString()}] 🎯 Railway Deployment için hazır\n`);
   });
 
   // Graceful shutdown
   const gracefulShutdown = async (signal: string) => {
+    const shutdownStart = Date.now();
     console.log('\n');
     console.log('┌─────────────────────────────────────────────────────────────┐');
     console.log('│                  ⏸️  SUNUCU KAPATILIYOR                    │');
     console.log('└─────────────────────────────────────────────────────────────┘');
-    console.log('⏳ İşlemler tamamlanıyor...\n');
+    console.log(`[${new Date().toISOString()}] ⏳ İşlemler tamamlanıyor...`);
+    console.log(`[${new Date().toISOString()}] 📋 Signal: ${signal}`);
+    console.log(`[${new Date().toISOString()}] 📋 Uptime: ${Math.round(process.uptime())} saniye\n`);
     
-    console.log('   1️⃣  HTTP sunucusu kapatılıyor...');
+    console.log(`[${new Date().toISOString()}] 1️⃣  HTTP sunucusu kapatılıyor...`);
     if (server) {
       server.close(async () => {
-        console.log('   ✓ HTTP sunucusu kapatıldı');
+        console.log(`[${new Date().toISOString()}] ✓ HTTP sunucusu kapatıldı`);
         
-        console.log('   2️⃣  Veritabanı bağlantısı kesiliyor...');
+        console.log(`[${new Date().toISOString()}] 2️⃣  Veritabanı bağlantısı kesiliyor...`);
         await disconnectPrisma();
-        console.log('   ✓ Veritabanı bağlantısı kesildi');
+        console.log(`[${new Date().toISOString()}] ✓ Veritabanı bağlantısı kesildi`);
         
-        console.log('\n   ✅ Sunucu başarıyla kapatıldı!');
-        console.log('   👋 Görüşmek üzere...\n');
+        const shutdownDuration = Date.now() - shutdownStart;
+        console.log(`\n[${new Date().toISOString()}] ✅ Sunucu başarıyla kapatıldı (${shutdownDuration}ms)`);
+        console.log(`[${new Date().toISOString()}] 👋 Görüşmek üzere...\n`);
         
         process.exit(0);
       });

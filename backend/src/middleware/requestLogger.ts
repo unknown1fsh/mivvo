@@ -109,6 +109,27 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
       message += ` (${extraInfo.join(', ')})`;
     }
     
+    // Railway için detaylı console log
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${message}`);
+    
+    // Hata durumunda detaylı log
+    if (res.statusCode >= 400) {
+      console.error(`[${timestamp}] ❌ HTTP Error:`, {
+        method: req.method,
+        url: req.url,
+        path: req.path,
+        statusCode: res.statusCode,
+        statusMessage: res.statusMessage,
+        responseTime: responseTime,
+        userId: req.user?.id,
+        ip: req.ip || req.connection?.remoteAddress,
+        userAgent: req.get('User-Agent'),
+        query: req.query,
+        body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? req.body : undefined
+      });
+    }
+    
     httpLogger.log(logLevel, message, {
       method: req.method,
       url: req.url,
@@ -119,7 +140,13 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
     
     // Yavaş istekler için uyarı (3 saniye üzeri)
     if (responseTime > 3000) {
-      httpLogger.warn(`⏱️  Yavaş İstek: ${req.method} ${req.path} ${responseTime}ms sürdü`, {
+      const slowRequestMessage = `⏱️  Yavaş İstek: ${req.method} ${req.path} ${responseTime}ms sürdü`;
+      console.warn(`[${timestamp}] ${slowRequestMessage}`, {
+        responseTime,
+        userId: req.user?.id,
+        url: req.url
+      });
+      httpLogger.warn(slowRequestMessage, {
         responseTime,
         userId: req.user?.id,
       });

@@ -101,9 +101,12 @@ const logDir = path.join(process.cwd(), 'logs');
  */
 
 // Konsol transport (her zaman aktif)
+// Railway için console output optimize edildi
 const consoleTransport = new winston.transports.Console({
   level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
   format: consoleFormat,
+  // Railway'de console output görünür olması için stderr yerine stdout kullan
+  stderrLevels: ['error'],
 });
 
 // Genel log dosyası
