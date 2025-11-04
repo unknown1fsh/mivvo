@@ -138,6 +138,15 @@ export const getUserCredits = async (req: AuthRequest, res: Response): Promise<v
 export const purchaseCredits = async (req: AuthRequest, res: Response): Promise<void> => {
   const { amount, paymentMethod } = req.body;
 
+  // Validation
+  if (!amount || typeof amount !== 'number' || amount <= 0) {
+    res.status(400).json({
+      success: false,
+      message: 'Geçerli bir kredi miktarı giriniz.',
+    });
+    return;
+  }
+
   // TODO: Ödeme servisi entegrasyonu
   // Şu anda direkt kredi ekleniyor
   

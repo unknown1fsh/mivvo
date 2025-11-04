@@ -36,6 +36,24 @@ export async function resetLoginAttempts(ip: string): Promise<void> {
  * @returns Express rate limit middleware
  */
 export function createRateLimit(maxRequests: number, windowMs: number) {
+  // Test ortamında rate limiting'i devre dışı bırak
+  if (process.env.NODE_ENV === 'test') {
+    return rateLimit({
+      windowMs,
+      max: 10000, // Test ortamında çok yüksek limit (pratikte limitsiz)
+      message: {
+        success: false,
+        error: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.'
+      },
+      standardHeaders: true,
+      legacyHeaders: false,
+      keyGenerator: (req) => {
+        // Test ortamında her test için farklı key (rate limit bypass)
+        return `${req.ip}-${Date.now()}-${Math.random()}`;
+      }
+    });
+  }
+  
   return rateLimit({
     windowMs,
     max: maxRequests,

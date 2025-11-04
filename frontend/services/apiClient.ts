@@ -8,8 +8,7 @@ import { logger } from '../lib/logger';
  * 1) NEXT_PUBLIC_API_URL (Railway için zorunlu)
  * 2) NEXT_PUBLIC_API_BASE_URL (manuel tanımlanırsa)
  * 3) window ortamı (client) → Railway için env variable gerekli
- * 4) VERCEL_URL (SSR) → https://{vercel_url}
- * 5) Development → http://localhost:3001
+ * 4) Development → http://localhost:3001
  */
 function resolveApiBaseUrl(): string {
   // Debug logging

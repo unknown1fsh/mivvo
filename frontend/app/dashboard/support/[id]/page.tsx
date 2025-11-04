@@ -58,8 +58,8 @@ export default function SupportTicketDetailPage() {
         setTicket(response.data.data.ticket)
       }
     } catch (error) {
-      console.error('Ticket yüklenemedi:', error)
-      toast.error('Ticket yüklenemedi')
+      console.error('Destek talebi yüklenemedi:', error)
+      toast.error('Destek talebi yüklenemedi')
     } finally {
       setLoading(false)
     }
@@ -83,7 +83,7 @@ export default function SupportTicketDetailPage() {
       if (response.data.success) {
         toast.success('Mesajınız gönderildi')
         setNewMessage('')
-        fetchTicket() // Refresh ticket
+        fetchTicket() // Destek talebini yenile
       }
     } catch (error) {
       console.error('Mesaj gönderme hatası:', error)
@@ -123,6 +123,36 @@ export default function SupportTicketDetailPage() {
     }
   }
 
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case 'URGENT':
+        return 'Acil'
+      case 'HIGH':
+        return 'Yüksek'
+      case 'NORMAL':
+        return 'Normal'
+      case 'LOW':
+        return 'Düşük'
+      default:
+        return priority
+    }
+  }
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'URGENT':
+        return 'bg-red-100 text-red-700'
+      case 'HIGH':
+        return 'bg-orange-100 text-orange-700'
+      case 'NORMAL':
+        return 'bg-blue-100 text-blue-700'
+      case 'LOW':
+        return 'bg-gray-100 text-gray-700'
+      default:
+        return 'bg-gray-100 text-gray-700'
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -135,7 +165,7 @@ export default function SupportTicketDetailPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Ticket bulunamadı</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Destek talebi bulunamadı</h2>
           <Link href="/dashboard/support" className="btn btn-primary">
             Geri Dön
           </Link>
@@ -184,8 +214,8 @@ export default function SupportTicketDetailPage() {
                 <div className="text-sm text-gray-500 mb-2">
                   {new Date(ticket.createdAt).toLocaleString('tr-TR')}
                 </div>
-                <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                  {ticket.priority}
+                <div className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
+                  {getPriorityText(ticket.priority)}
                 </div>
               </div>
             </div>

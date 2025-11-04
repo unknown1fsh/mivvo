@@ -35,14 +35,10 @@ const nextConfig = {
   experimental: {
     missingSuspenseWithCSRBailout: false,
   },
-  // Vercel için optimize edilmiş build ID
+  // Build ID generation
   generateBuildId: async () => {
-    if (process.env.VERCEL) {
-      return process.env.VERCEL_GIT_COMMIT_SHA || 'vercel-build';
-    }
     return `build-${Date.now()}`;
   },
-  // Vercel için output ayarları kaldırıldı
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

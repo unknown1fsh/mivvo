@@ -390,7 +390,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
 
   res.json({
     success: true,
-    data: { user },
+    user,
   });
 };
 
@@ -558,10 +558,13 @@ export const forgotPassword = async (req: Request, res: Response): Promise<void>
     where: { email },
   });
 
+  // Security: Email var mı yok mu belli etme (timing attack koruması için)
+  // Her zaman aynı response döndür
   if (!user) {
-    res.status(404).json({
-      success: false,
-      message: 'Bu email adresi ile kayıtlı kullanıcı bulunamadı.',
+    // User yoksa da başarılı response döndür (security best practice)
+    res.json({
+      success: true,
+      message: 'Eğer bu email adresi ile kayıtlı bir hesap varsa, şifre sıfırlama linki gönderildi.',
     });
     return;
   }
@@ -780,10 +783,13 @@ export const resendVerification = async (req: Request, res: Response): Promise<v
       select: { id: true, email: true, emailVerified: true, firstName: true, lastName: true }
     });
 
+    // Security: Email var mı yok mu belli etme (timing attack koruması için)
+    // Her zaman aynı response döndür
     if (!user) {
-      res.status(404).json({
-        success: false,
-        message: 'Bu email adresi ile kayıtlı kullanıcı bulunamadı.',
+      // User yoksa da başarılı response döndür (security best practice)
+      res.json({
+        success: true,
+        message: 'Eğer bu email adresi ile kayıtlı bir hesap varsa ve doğrulanmamışsa, doğrulama linki gönderildi.',
       });
       return;
     }

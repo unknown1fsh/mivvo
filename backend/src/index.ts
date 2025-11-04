@@ -48,42 +48,40 @@ const app = express();
 // Railway'de otomatik port kullan (ayrı servis için)
 const PORT = process.env.PORT || 3001;
 
-// Trust proxy for Vercel
+// Trust proxy for production deployments
 app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting - Vercel için optimize edildi
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
-  message: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Vercel için skip successful requests
-  skipSuccessfulRequests: false,
-  // Vercel için skip failed requests
-  skipFailedRequests: false,
-  // Vercel için key generator
-  keyGenerator: (req) => {
-    // Vercel'de X-Forwarded-For header'ını kullan
-    return req.ip || req.connection.remoteAddress || 'unknown';
-  },
-});
-app.use(limiter);
+// Rate limiting
+// Test ortamında rate limiting'i devre dışı bırak
+if (process.env.NODE_ENV !== 'test') {
+  const limiter = rateLimit({
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
+    message: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    skipFailedRequests: false,
+    keyGenerator: (req) => {
+      // X-Forwarded-For header'ını kullan (production deployments için)
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+  });
+  app.use(limiter);
+}
 
 // CORS configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
     // Production ortamında origin kontrolü
     if (process.env.NODE_ENV === 'production') {
-      // Railway ve Vercel production'da tüm origin'lere izin ver
+      // Railway production'da tüm origin'lere izin ver
       // Railway domain pattern: *.railway.app
-      // Vercel domain pattern: *.vercel.app
       const isRailway = origin && origin.includes('.railway.app');
-      const isVercel = origin && origin.includes('.vercel.app');
       
       // Spesifik Railway domain kontrolü
       const allowedDomains = [
@@ -98,7 +96,7 @@ const corsOptions = {
       const isAllowedDomain = origin && allowedDomains.some(domain => origin.includes(domain));
       
       // Railway internal requests için origin undefined olabilir
-      if (isRailway || isVercel || isAllowedDomain || !origin) {
+      if (isRailway || isAllowedDomain || !origin) {
         callback(null, true);
       } else {
         callback(new Error('CORS policy violation'));
@@ -174,9 +172,6 @@ app.use('/api/support', supportRoutes);
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Vercel serverless functions için frontend static serving kaldırıldı
-// Vercel routing ile frontend dosyaları otomatik serve ediliyor
-
 // Prisma Client ve Database Logger Setup
 const prisma = getPrismaClient();
 
@@ -187,62 +182,67 @@ if (process.env.NODE_ENV === 'production') {
   prisma.$use(databaseLoggerMiddleware);
 }
 
-// Start server
-const server = app.listen(PORT, () => {
-  console.log('\n┌─────────────────────────────────────────────────────────────┐');
-  console.log('│     🚀 MIVVO EXPERTIZ - BACKEND SERVER BAŞLATILIYOR        │');
-  console.log('└─────────────────────────────────────────────────────────────┘');
-  console.log(`\n📡 Sunucu Durumu:`);
-  console.log(`   ✓ Backend sunucusu başarıyla başlatıldı`);
-  console.log(`   ✓ Port: ${PORT}`);
-  console.log(`   ✓ Ortam: ${process.env.NODE_ENV === 'production' ? 'Üretim' : 'Geliştirme'}`);
-  console.log(`   ✓ Sağlık kontrolü: http://localhost:${PORT}/api/health`);
-  
-  console.log(`\n🔌 Aktif API Route'ları:`);
-  console.log(`   • /api/auth - Kullanıcı kimlik doğrulama`);
-  console.log(`   • /api/user - Kullanıcı işlemleri`);
-  console.log(`   • /api/vehicle - Araç raporları`);
-  console.log(`   • /api/payment - Ödeme işlemleri`);
-  console.log(`   • /api/admin - Yönetici paneli`);
-  console.log(`   • /api/damage-analysis - Hasar analizi`);
-  console.log(`   • /api/paint-analysis - Boya analizi`);
-  console.log(`   • /api/engine-sound - Motor sesi analizi`);
-  console.log(`   • /api/comprehensive-expertise - Kapsamlı ekspertiz`);
-  
-  console.log(`\n🗄️  Veritabanı:`);
-  console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Database logger kapatıldı' : '✓ Database logger aktif'}`);
-  
-  console.log(`\n📊 Loglama Sistemi:`);
-  console.log(`   ✓ HTTP istekleri loglanıyor`);
-  console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Sadece hata logları' : '✓ Tüm loglar aktif'}`);
-  
-  console.log(`\n✨ Sunucu hazır ve istek almaya başladı!\n`);
-});
-
-// Graceful shutdown
-const gracefulShutdown = async (signal: string) => {
-  console.log('\n');
-  console.log('┌─────────────────────────────────────────────────────────────┐');
-  console.log('│                  ⏸️  SUNUCU KAPATILIYOR                    │');
-  console.log('└─────────────────────────────────────────────────────────────┘');
-  console.log('⏳ İşlemler tamamlanıyor...\n');
-  
-  console.log('   1️⃣  HTTP sunucusu kapatılıyor...');
-  server.close(async () => {
-    console.log('   ✓ HTTP sunucusu kapatıldı');
+// Start server (only if not in test environment)
+let server: any = null;
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => {
+    console.log('\n┌─────────────────────────────────────────────────────────────┐');
+    console.log('│     🚀 MIVVO EXPERTIZ - BACKEND SERVER BAŞLATILIYOR        │');
+    console.log('└─────────────────────────────────────────────────────────────┘');
+    console.log(`\n📡 Sunucu Durumu:`);
+    console.log(`   ✓ Backend sunucusu başarıyla başlatıldı`);
+    console.log(`   ✓ Port: ${PORT}`);
+    console.log(`   ✓ Ortam: ${process.env.NODE_ENV === 'production' ? 'Üretim' : 'Geliştirme'}`);
+    console.log(`   ✓ Sağlık kontrolü: http://localhost:${PORT}/api/health`);
     
-    console.log('   2️⃣  Veritabanı bağlantısı kesiliyor...');
-    await disconnectPrisma();
-    console.log('   ✓ Veritabanı bağlantısı kesildi');
+    console.log(`\n🔌 Aktif API Route'ları:`);
+    console.log(`   • /api/auth - Kullanıcı kimlik doğrulama`);
+    console.log(`   • /api/user - Kullanıcı işlemleri`);
+    console.log(`   • /api/vehicle - Araç raporları`);
+    console.log(`   • /api/payment - Ödeme işlemleri`);
+    console.log(`   • /api/admin - Yönetici paneli`);
+    console.log(`   • /api/damage-analysis - Hasar analizi`);
+    console.log(`   • /api/paint-analysis - Boya analizi`);
+    console.log(`   • /api/engine-sound - Motor sesi analizi`);
+    console.log(`   • /api/comprehensive-expertise - Kapsamlı ekspertiz`);
     
-    console.log('\n   ✅ Sunucu başarıyla kapatıldı!');
-    console.log('   👋 Görüşmek üzere...\n');
+    console.log(`\n🗄️  Veritabanı:`);
+    console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Database logger kapatıldı' : '✓ Database logger aktif'}`);
     
-    process.exit(0);
+    console.log(`\n📊 Loglama Sistemi:`);
+    console.log(`   ✓ HTTP istekleri loglanıyor`);
+    console.log(`   ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Sadece hata logları' : '✓ Tüm loglar aktif'}`);
+    
+    console.log(`\n✨ Sunucu hazır ve istek almaya başladı!\n`);
   });
-};
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  // Graceful shutdown
+  const gracefulShutdown = async (signal: string) => {
+    console.log('\n');
+    console.log('┌─────────────────────────────────────────────────────────────┐');
+    console.log('│                  ⏸️  SUNUCU KAPATILIYOR                    │');
+    console.log('└─────────────────────────────────────────────────────────────┘');
+    console.log('⏳ İşlemler tamamlanıyor...\n');
+    
+    console.log('   1️⃣  HTTP sunucusu kapatılıyor...');
+    if (server) {
+      server.close(async () => {
+        console.log('   ✓ HTTP sunucusu kapatıldı');
+        
+        console.log('   2️⃣  Veritabanı bağlantısı kesiliyor...');
+        await disconnectPrisma();
+        console.log('   ✓ Veritabanı bağlantısı kesildi');
+        
+        console.log('\n   ✅ Sunucu başarıyla kapatıldı!');
+        console.log('   👋 Görüşmek üzere...\n');
+        
+        process.exit(0);
+      });
+    }
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+}
 
 export default app;

@@ -61,10 +61,8 @@ const prisma = getPrismaClient();
  */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Vercel'de /tmp kullan, local'de uploads klasörü
-    const uploadDir = process.env.VERCEL 
-      ? '/tmp/vehicle-garage'
-      : path.join(__dirname, '../../uploads/vehicle-garage');
+    // Upload dizini
+    const uploadDir = path.join(__dirname, '../../uploads/vehicle-garage');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -276,6 +274,14 @@ export const addVehicleToGarage = asyncHandler(async (req: Request, res: Respons
     notes,
     isDefault
   } = req.body;
+
+  // Validation
+  if (!plate) {
+    return res.status(400).json({
+      success: false,
+      error: 'Plaka numarası zorunludur'
+    });
+  }
 
   // Plaka benzersizliği kontrolü (kullanıcı bazında)
   const existingVehicle = await prisma.vehicleGarage.findFirst({

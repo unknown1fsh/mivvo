@@ -3,15 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * NextAuth OAuth API Route
  * 
- * OAuth login isteklerini Vercel serverless function'a yönlendirir
+ * OAuth login isteklerini backend API'ye yönlendirir
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { provider, providerId, email, name, image, accessToken } = body;
 
-    // Vercel serverless function'a OAuth isteği gönder
-    const apiUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    // Backend API'ye OAuth isteği gönder
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXTAUTH_URL || 'http://localhost:3001';
     
     const response = await fetch(`${apiUrl}/api/auth/oauth`, {
       method: 'POST',

@@ -80,6 +80,24 @@ export const adminApiClient = {
     
     return response.json()
   },
+  async patch(url: string, data?: any) {
+    const token = getAdminToken()
+    const baseUrl = getApiBaseUrl()
+    const response = await fetch(`${baseUrl}${url}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: data ? JSON.stringify(data) : undefined
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    return response.json()
+  },
   async delete(url: string) {
     const token = getAdminToken()
     const baseUrl = getApiBaseUrl()
@@ -521,6 +539,84 @@ export const exportReportsExcel = async (params?: any): Promise<Blob> => {
   return await response.blob()
 }
 
+// ===== DESTEK TALEPLERİ YÖNETİMİ =====
+
+/**
+ * Tüm Destek Taleplerini Listele
+ */
+export const getAllSupportTickets = async (params?: {
+  page?: number
+  limit?: number
+  status?: string
+  priority?: string
+  category?: string
+}): Promise<any> => {
+  const queryParams = new URLSearchParams()
+  if (params?.page) queryParams.append('page', params.page.toString())
+  if (params?.limit) queryParams.append('limit', params.limit.toString())
+  if (params?.status) queryParams.append('status', params.status)
+  if (params?.priority) queryParams.append('priority', params.priority)
+  if (params?.category) queryParams.append('category', params.category)
+
+  const response = await adminApiClient.get(
+    `/api/support/admin/tickets?${queryParams.toString()}`
+  )
+  return response
+}
+
+/**
+ * Destek Talebi Detayını Getir
+ */
+export const getSupportTicketById = async (ticketId: number): Promise<any> => {
+  const response = await adminApiClient.get(
+    `/api/support/tickets/${ticketId}`
+  )
+  return response
+}
+
+/**
+ * Destek Talebine Mesaj Ekle (Admin)
+ */
+export const addMessageToTicket = async (
+  ticketId: number,
+  message: string,
+  attachments?: string
+): Promise<any> => {
+  const response = await adminApiClient.post(
+    `/api/support/tickets/${ticketId}/messages`,
+    { message, attachments }
+  )
+  return response
+}
+
+/**
+ * Destek Talebi Durumunu Güncelle
+ */
+export const updateSupportTicketStatus = async (
+  ticketId: number,
+  status: string
+): Promise<any> => {
+  const response = await adminApiClient.patch(
+    `/api/support/admin/tickets/${ticketId}/status`,
+    { status }
+  )
+  return response
+}
+
+/**
+ * Destek Talebi Önceliğini Güncelle
+ */
+export const updateSupportTicketPriority = async (
+  ticketId: number,
+  priority: string
+): Promise<any> => {
+  const response = await adminApiClient.patch(
+    `/api/support/admin/tickets/${ticketId}/priority`,
+    { priority }
+  )
+  return response
+}
+
 export default {
   // User Management
   getAllUsers,
@@ -566,5 +662,12 @@ export default {
   // Settings
   getSystemSettings,
   updateSystemSettings,
+  
+  // Support Tickets
+  getAllSupportTickets,
+  getSupportTicketById,
+  addMessageToTicket,
+  updateSupportTicketStatus,
+  updateSupportTicketPriority,
 }
 

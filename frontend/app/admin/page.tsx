@@ -27,6 +27,7 @@ import {
   Bars3Icon,
   XMarkIcon,
   EyeIcon,
+  ChatBubbleLeftIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -36,6 +37,7 @@ import { LineChart } from '@/components/admin/LineChart'
 import { DoughnutChart } from '@/components/admin/DoughnutChart'
 import { BarChart } from '@/components/admin/BarChart'
 import { UserDetailModal } from '@/components/admin/UserDetailModal'
+import { SupportTicketDetailModal } from '@/components/admin/SupportTicketDetailModal'
 import ReportStatistics from '@/components/admin/ReportStatistics'
 import ReportMonitoring from '@/components/admin/ReportMonitoring'
 import ReportDetailModal from '@/components/admin/ReportDetailModal'
@@ -50,7 +52,7 @@ import toast from 'react-hot-toast'
 
 export default function AdminPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports' | 'statistics' | 'monitoring' | 'filters' | 'export' | 'realtime'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports' | 'statistics' | 'monitoring' | 'filters' | 'export' | 'realtime' | 'support'>('dashboard')
   const [isLoading, setIsLoading] = useState(true)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -75,6 +77,18 @@ export default function AdminPage() {
   const [reportPage, setReportPage] = useState(1)
   const [reportTotalPages, setReportTotalPages] = useState(1)
   const [reportFilter, setReportFilter] = useState<string>('')
+
+  // Support Tickets State
+  const [supportTickets, setSupportTickets] = useState<any[]>([])
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null)
+  const [isTicketModalOpen, setIsTicketModalOpen] = useState(false)
+  const [supportTicketPage, setSupportTicketPage] = useState(1)
+  const [supportTicketTotalPages, setSupportTicketTotalPages] = useState(1)
+  const [supportTicketFilters, setSupportTicketFilters] = useState<{
+    status?: string
+    priority?: string
+    category?: string
+  }>({})
 
   // Auth Check
   useEffect(() => {
@@ -185,6 +199,40 @@ export default function AdminPage() {
     }
   }
 
+  const fetchSupportTickets = async (page = 1, filters: { status?: string; priority?: string; category?: string } = {}) => {
+    try {
+      const response = await adminService.getAllSupportTickets({
+        page,
+        limit: 10,
+        status: filters.status,
+        priority: filters.priority,
+        category: filters.category,
+      })
+
+      if (response && response.success && response.data) {
+        setSupportTickets(response.data.tickets || [])
+        setSupportTicketPage(response.data.page || 1)
+        setSupportTicketTotalPages(response.data.totalPages || 1)
+      }
+    } catch (error) {
+      console.error('Error fetching support tickets:', error)
+      toast.error('Destek talepleri yüklenirken hata oluştu')
+    }
+  }
+
+  const handleTicketClick = async (ticketId: number) => {
+    try {
+      const response = await adminService.getSupportTicketById(ticketId)
+      if (response && response.success) {
+        setSelectedTicket(response.data.ticket)
+        setIsTicketModalOpen(true)
+      }
+    } catch (error) {
+      console.error('Error fetching ticket details:', error)
+      toast.error('Destek talebi detayları yüklenirken hata oluştu')
+    }
+  }
+
   const handleUserDoubleClick = async (user: AdminUser) => {
     try {
       const response = await adminService.getUserById(user.id)
@@ -207,6 +255,8 @@ export default function AdminPage() {
         await fetchUsers(userPage, userSearch)
       } else if (activeTab === 'reports') {
         await fetchReports(reportPage, reportFilter)
+      } else if (activeTab === 'support') {
+        await fetchSupportTickets(supportTicketPage, supportTicketFilters)
       }
       toast.success('Veriler güncellendi')
     } catch (error) {
@@ -382,6 +432,7 @@ export default function AdminPage() {
                   { key: 'dashboard', label: 'Dashboard', icon: ChartBarIcon },
                   { key: 'users', label: 'Kullanıcılar', icon: UsersIcon },
                   { key: 'reports', label: 'Raporlar', icon: DocumentTextIcon },
+                  { key: 'support', label: 'Destek Talepleri', icon: ChatBubbleLeftIcon },
                   { key: 'statistics', label: 'İstatistikler', icon: SparklesIcon },
                   { key: 'monitoring', label: 'İzleme', icon: EyeIcon },
                   { key: 'filters', label: 'Filtreler', icon: FunnelIcon },
@@ -457,6 +508,20 @@ export default function AdminPage() {
             >
               <DocumentTextIcon className="w-5 h-5 inline-block mr-2" />
               Raporlar
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('support')
+                if (supportTickets.length === 0) fetchSupportTickets()
+              }}
+              className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                activeTab === 'support'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <ChatBubbleLeftIcon className="w-5 h-5 inline-block mr-2" />
+              Destek Talepleri
             </button>
             <button
               onClick={() => setActiveTab('statistics')}
@@ -922,6 +987,231 @@ export default function AdminPage() {
             </motion.div>
           )}
 
+          {/* Support Tickets Tab */}
+          {activeTab === 'support' && (
+            <motion.div
+              key="support"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className="card">
+                {/* Filter Bar */}
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <select
+                      value={supportTicketFilters.status || ''}
+                      onChange={(e) => {
+                        const newFilters = { ...supportTicketFilters, status: e.target.value || undefined }
+                        setSupportTicketFilters(newFilters)
+                        fetchSupportTickets(1, newFilters)
+                      }}
+                      className="input"
+                    >
+                      <option value="">Tüm Durumlar</option>
+                      <option value="OPEN">Açık</option>
+                      <option value="IN_PROGRESS">İşlemde</option>
+                      <option value="RESOLVED">Çözüldü</option>
+                      <option value="CLOSED">Kapalı</option>
+                    </select>
+                    <select
+                      value={supportTicketFilters.priority || ''}
+                      onChange={(e) => {
+                        const newFilters = { ...supportTicketFilters, priority: e.target.value || undefined }
+                        setSupportTicketFilters(newFilters)
+                        fetchSupportTickets(1, newFilters)
+                      }}
+                      className="input"
+                    >
+                      <option value="">Tüm Öncelikler</option>
+                      <option value="URGENT">Acil</option>
+                      <option value="HIGH">Yüksek</option>
+                      <option value="NORMAL">Normal</option>
+                      <option value="LOW">Düşük</option>
+                    </select>
+                    <select
+                      value={supportTicketFilters.category || ''}
+                      onChange={(e) => {
+                        const newFilters = { ...supportTicketFilters, category: e.target.value || undefined }
+                        setSupportTicketFilters(newFilters)
+                        fetchSupportTickets(1, newFilters)
+                      }}
+                      className="input"
+                    >
+                      <option value="">Tüm Kategoriler</option>
+                      <option value="GENERAL">Genel</option>
+                      <option value="TECHNICAL">Teknik</option>
+                      <option value="BILLING">Faturalama</option>
+                      <option value="REPORT_ISSUE">Rapor Sorunu</option>
+                      <option value="FEATURE_REQUEST">Özellik İsteği</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Support Tickets Table */}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          ID
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Konu
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Kullanıcı
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Kategori
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Öncelik
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Durum
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tarih
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          İşlemler
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {supportTickets.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
+                            Henüz destek talebi bulunmuyor
+                          </td>
+                        </tr>
+                      ) : (
+                        supportTickets.map((ticket: any) => {
+                          const getPriorityText = (priority: string) => {
+                            switch (priority) {
+                              case 'URGENT': return 'Acil'
+                              case 'HIGH': return 'Yüksek'
+                              case 'NORMAL': return 'Normal'
+                              case 'LOW': return 'Düşük'
+                              default: return priority
+                            }
+                          }
+
+                          const getPriorityColor = (priority: string) => {
+                            switch (priority) {
+                              case 'URGENT': return 'bg-red-100 text-red-700'
+                              case 'HIGH': return 'bg-orange-100 text-orange-700'
+                              case 'NORMAL': return 'bg-blue-100 text-blue-700'
+                              case 'LOW': return 'bg-gray-100 text-gray-700'
+                              default: return 'bg-gray-100 text-gray-700'
+                            }
+                          }
+
+                          const getStatusText = (status: string) => {
+                            switch (status) {
+                              case 'OPEN': return 'Açık'
+                              case 'IN_PROGRESS': return 'İşlemde'
+                              case 'RESOLVED': return 'Çözüldü'
+                              case 'CLOSED': return 'Kapalı'
+                              default: return status
+                            }
+                          }
+
+                          const getStatusColor = (status: string) => {
+                            switch (status) {
+                              case 'OPEN': return 'bg-yellow-100 text-yellow-700'
+                              case 'IN_PROGRESS': return 'bg-blue-100 text-blue-700'
+                              case 'RESOLVED': return 'bg-green-100 text-green-700'
+                              case 'CLOSED': return 'bg-gray-100 text-gray-700'
+                              default: return 'bg-gray-100 text-gray-700'
+                            }
+                          }
+
+                          const getCategoryText = (category: string) => {
+                            switch (category) {
+                              case 'GENERAL': return 'Genel'
+                              case 'TECHNICAL': return 'Teknik'
+                              case 'BILLING': return 'Faturalama'
+                              case 'REPORT_ISSUE': return 'Rapor Sorunu'
+                              case 'FEATURE_REQUEST': return 'Özellik İsteği'
+                              default: return category
+                            }
+                          }
+
+                          return (
+                            <tr key={ticket.id} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                #{ticket.id}
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-sm font-medium text-gray-900">{ticket.subject}</div>
+                                <div className="text-xs text-gray-500 line-clamp-1">{ticket.description}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="text-sm text-gray-900">
+                                  {ticket.user?.firstName} {ticket.user?.lastName}
+                                </div>
+                                <div className="text-xs text-gray-500">{ticket.user?.email}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {getCategoryText(ticket.category)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
+                                  {getPriorityText(ticket.priority)}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                                  {getStatusText(ticket.status)}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {formatDate(ticket.createdAt)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button
+                                  onClick={() => handleTicketClick(ticket.id)}
+                                  className="text-blue-600 hover:text-blue-900"
+                                >
+                                  Detay
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                  <p className="text-sm text-gray-600">
+                    Sayfa {supportTicketPage} / {supportTicketTotalPages}
+                  </p>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => fetchSupportTickets(supportTicketPage - 1, supportTicketFilters)}
+                      disabled={supportTicketPage === 1}
+                      className="btn btn-secondary disabled:opacity-50"
+                    >
+                      <ChevronLeftIcon className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => fetchSupportTickets(supportTicketPage + 1, supportTicketFilters)}
+                      disabled={supportTicketPage >= supportTicketTotalPages}
+                      className="btn btn-secondary disabled:opacity-50"
+                    >
+                      <ChevronRightIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* Statistics Tab */}
           {activeTab === 'statistics' && (
             <motion.div
@@ -1062,6 +1352,20 @@ export default function AdminPage() {
         reportId={selectedReportId}
         isOpen={!!selectedReportId}
         onClose={() => setSelectedReportId(null)}
+      />
+
+      {/* Support Ticket Detail Modal */}
+      <SupportTicketDetailModal
+        ticket={selectedTicket}
+        isOpen={isTicketModalOpen}
+        onClose={() => {
+          setIsTicketModalOpen(false)
+          setSelectedTicket(null)
+          fetchSupportTickets(supportTicketPage, supportTicketFilters)
+        }}
+        onRefresh={() => {
+          fetchSupportTickets(supportTicketPage, supportTicketFilters)
+        }}
       />
     </div>
   )

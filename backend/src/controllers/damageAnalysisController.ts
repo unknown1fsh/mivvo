@@ -11,7 +11,7 @@ import { damageAnalysisService } from '../services/damageAnalysisService';
 import { ResponseHelper } from '../utils/ResponseHelper';
 import multer from 'multer';
 
-// Multer konfigürasyonu - Vercel için memory storage
+// Multer konfigürasyonu - memory storage
 const storage = multer.memoryStorage();
 
 const upload = multer({ 

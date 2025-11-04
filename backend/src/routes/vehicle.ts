@@ -33,6 +33,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { authenticate } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { validate } from '../middleware/validationHandler';
 import {
   createReport,
   getReport,
@@ -68,7 +69,7 @@ router.use(authenticate);
  * - vehicleYear: Opsiyonel, geçerli yıl aralığı
  */
 const createReportValidation = [
-  body('reportType').isIn(['FULL', 'PAINT_ANALYSIS', 'DAMAGE_ASSESSMENT', 'VALUE_ESTIMATION'])
+  body('reportType').isIn(['FULL_REPORT', 'PAINT_ANALYSIS', 'DAMAGE_ASSESSMENT', 'DAMAGE_ANALYSIS', 'VALUE_ESTIMATION', 'ENGINE_SOUND_ANALYSIS', 'COMPREHENSIVE_EXPERTISE'])
     .withMessage('Geçerli bir rapor türü seçiniz'),
   body('vehiclePlate').optional().isLength({ min: 7, max: 8 })
     .withMessage('Plaka 7-8 karakter olmalıdır'),
@@ -108,7 +109,7 @@ const createReportValidation = [
  * Response:
  * - report: Oluşturulan rapor
  */
-router.post('/reports', createReportValidation, asyncHandler(createReport));
+router.post('/reports', createReportValidation, validate, asyncHandler(createReport));
 
 /**
  * GET /vehicle/reports

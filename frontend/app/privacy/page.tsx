@@ -423,7 +423,6 @@ export default function PrivacyPage() {
               </p>
               <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600">
                 <li>Google Analytics (anonimleştirilmiş)</li>
-                <li>Vercel Analytics</li>
               </ul>
             </div>
 
@@ -433,8 +432,8 @@ export default function PrivacyPage() {
                 Veri barındırma ve altyapı hizmetleri için:
               </p>
               <ul className="list-disc pl-6 space-y-1 text-sm text-gray-600">
-                <li>Vercel (Hosting)</li>
-                <li>Neon/Vercel Postgres (Database)</li>
+                <li>Railway (Hosting)</li>
+                <li>Neon Postgres (Database)</li>
                 <li>AWS S3 (File Storage)</li>
               </ul>
             </div>

@@ -36,6 +36,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import { asyncHandler } from '../middleware/errorHandler';
 import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validationHandler';
 import { createRateLimit } from '../utils/rateLimit';
 import {
   register,
@@ -144,7 +145,7 @@ const updateProfileValidation = [
  * - lastName: string
  * - phone?: string
  */
-router.post('/register', registerRateLimit, registerValidation, asyncHandler(register));
+router.post('/register', registerRateLimit, registerValidation, validate, asyncHandler(register));
 
 /**
  * POST /auth/login
@@ -164,7 +165,7 @@ router.post('/register', registerRateLimit, registerValidation, asyncHandler(reg
  * - token: JWT token
  * - user: Kullanıcı bilgileri
  */
-router.post('/login', loginRateLimit, loginValidation, asyncHandler(login));
+router.post('/login', loginRateLimit, loginValidation, validate, asyncHandler(login));
 
 /**
  * POST /auth/forgot-password
@@ -319,7 +320,7 @@ router.get('/profile', generalRateLimit, asyncHandler(getProfile));
  * - lastName?: string
  * - phone?: string
  */
-router.put('/profile', generalRateLimit, updateProfileValidation, asyncHandler(updateProfile));
+router.put('/profile', generalRateLimit, updateProfileValidation, validate, asyncHandler(updateProfile));
 
 /**
  * PUT /auth/change-password
@@ -338,6 +339,6 @@ router.put('/profile', generalRateLimit, updateProfileValidation, asyncHandler(u
  * - currentPassword: string (mevcut şifre)
  * - newPassword: string (yeni şifre)
  */
-router.put('/change-password', generalRateLimit, changePasswordValidation, asyncHandler(changePassword));
+router.put('/change-password', generalRateLimit, changePasswordValidation, validate, asyncHandler(changePassword));
 
 export default router;

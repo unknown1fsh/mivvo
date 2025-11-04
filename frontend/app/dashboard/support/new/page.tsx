@@ -47,8 +47,8 @@ export default function NewSupportTicketPage() {
         router.push(`/dashboard/support/${response.data.data.ticket.id}`)
       }
     } catch (error) {
-      console.error('Ticket oluşturma hatası:', error)
-      toast.error('Ticket oluşturulurken hata oluştu')
+      console.error('Destek talebi oluşturma hatası:', error)
+      toast.error('Destek talebi oluşturulurken hata oluştu')
     } finally {
       setLoading(false)
     }

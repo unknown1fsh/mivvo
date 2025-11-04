@@ -73,8 +73,8 @@ const prisma = new PrismaClient();
  */
 const audioStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Vercel'de /tmp kullan, local'de uploads/audio
-    const uploadDir = process.env.VERCEL ? '/tmp/audio' : 'uploads/audio';
+    // Upload dizini
+    const uploadDir = path.join(process.cwd(), 'uploads/audio');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }

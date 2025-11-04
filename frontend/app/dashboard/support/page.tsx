@@ -49,8 +49,8 @@ export default function SupportTicketsPage() {
         setTickets(response.data.data.tickets)
       }
     } catch (error) {
-      console.error('Ticket\'lar yüklenemedi:', error)
-      toast.error('Ticket\'lar yüklenirken hata oluştu')
+      console.error('Destek talepleri yüklenemedi:', error)
+      toast.error('Destek talepleri yüklenirken hata oluştu')
     } finally {
       setLoading(false)
     }
@@ -83,6 +83,21 @@ export default function SupportTicketsPage() {
         return 'Kapalı'
       default:
         return status
+    }
+  }
+
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case 'URGENT':
+        return 'Acil'
+      case 'HIGH':
+        return 'Yüksek'
+      case 'NORMAL':
+        return 'Normal'
+      case 'LOW':
+        return 'Düşük'
+      default:
+        return priority
     }
   }
 
@@ -182,7 +197,7 @@ export default function SupportTicketsPage() {
 
                         <div className="flex items-center space-x-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-                            {ticket.priority}
+                            {getPriorityText(ticket.priority)}
                           </span>
                           <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                             {getStatusText(ticket.status)}

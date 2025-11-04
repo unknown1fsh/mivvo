@@ -3,15 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * NextAuth Login API Route
  * 
- * Frontend'den gelen login isteklerini Vercel serverless function'a yönlendirir
+ * Frontend'den gelen login isteklerini backend API'ye yönlendirir
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
 
-    // Vercel serverless function'a login isteği gönder
-    const apiUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    // Backend API'ye login isteği gönder
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXTAUTH_URL || 'http://localhost:3001';
     
     const response = await fetch(`${apiUrl}/api/auth/login`, {
       method: 'POST',
