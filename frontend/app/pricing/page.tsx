@@ -189,7 +189,21 @@ export default function PricingPage() {
   const fetchPricingPackages = async () => {
     try {
       const packages = await pricingService.getPricingPackages()
-      setPricingPackages(packages)
+      
+      if (!Array.isArray(packages) || packages.length === 0) {
+        console.warn('⚠️ PricingPage - Geçersiz paket verisi, fallback kullanılacak:', packages)
+        setPricingPackages(pricingPlans)
+        return
+      }
+
+      const normalizedPackages = packages.map((pkg: any) => ({
+        ...pkg,
+        features: Array.isArray(pkg.features) ? pkg.features : [],
+        limitations: Array.isArray(pkg.limitations) ? pkg.limitations : [],
+        color: pkg.color || 'from-blue-500 to-purple-600',
+      }))
+
+      setPricingPackages(normalizedPackages)
     } catch (error) {
       console.error('Pricing packages fetch error:', error)
       // Fallback olarak mevcut pricingPlans'ı kullan
@@ -265,80 +279,85 @@ export default function PricingPage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {(pricingPackages.length > 0 ? pricingPackages : pricingPlans).map((plan) => (
-              <StaggerItem key={plan.id}>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  className={`card card-hover p-8 text-center relative ${
-                    plan.popular ? 'ring-2 ring-blue-500' : ''
-                  }`}
-                >
-                  {plan.badge && (
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                      <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
-                        {plan.badge}
-                      </span>
-                    </div>
-                  )}
+            {(pricingPackages.length > 0 ? pricingPackages : pricingPlans).map((plan) => {
+              const featureList = Array.isArray(plan.features) ? plan.features : []
+              const limitationList = Array.isArray(plan.limitations) ? plan.limitations : []
 
-                  <div className={`w-16 h-16 bg-gradient-to-r ${plan.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                    <CurrencyDollarIcon className="w-8 h-8 text-white" />
-                  </div>
-
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  <p className="text-gray-600 mb-6">{plan.description}</p>
-
-                  <div className="mb-6">
-                    {plan.originalPrice ? (
-                      <div>
-                        <div className="text-sm text-gray-500 line-through">{plan.originalPrice}₺</div>
-                        <div className="text-4xl font-bold gradient-text">{plan.price}₺</div>
-                        <div className="text-sm text-green-600 font-semibold">🎁 {plan.discount}₺ tasarruf!</div>
-                      </div>
-                    ) : (
-                      <div className="text-4xl font-bold text-gray-900">
-                        {plan.price}₺
-                      </div>
-                    )}
-                    <div className="text-gray-600 text-sm mt-2">
-                      {plan.period}
-                    </div>
-                    {plan.bonus && plan.bonus > 0 && (
-                      <div className="mt-2">
-                        <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
-                          🎁 +{plan.bonus}₺ Bonus Kredi
+              return (
+                <StaggerItem key={plan.id}>
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    className={`card card-hover p-8 text-center relative ${
+                      plan.popular ? 'ring-2 ring-blue-500' : ''
+                    }`}
+                  >
+                    {plan.badge && (
+                      <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                        <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
+                          {plan.badge}
                         </span>
                       </div>
                     )}
-                  </div>
 
-                  <ul className="text-left space-y-3 mb-8">
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                        <span className="text-gray-700">{feature}</span>
-                      </li>
-                    ))}
-                    {plan.limitations.map((limitation, index) => (
-                      <li key={index} className="flex items-center">
-                        <ClockIcon className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
-                        <span className="text-gray-500">{limitation}</span>
-                      </li>
-                    ))}
-                  </ul>
+                    <div className={`w-16 h-16 bg-gradient-to-r ${plan.color} rounded-2xl flex items-center justify-center mx-auto mb-6`}>
+                      <CurrencyDollarIcon className="w-8 h-8 text-white" />
+                    </div>
 
-                  <Link
-                    href={user ? `/dashboard/purchase?package=${plan.id}` : "/register"}
-                    className={`btn w-full btn-lg ${
-                      plan.popular ? 'btn-primary' : 'btn-secondary'
-                    }`}
-                  >
-                    {user ? 'Satın Al' : 'Paketi Satın Al'}
-                    <ArrowRightIcon className="w-5 h-5 ml-2" />
-                  </Link>
-                </motion.div>
-              </StaggerItem>
-            ))}
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                    <p className="text-gray-600 mb-6">{plan.description}</p>
+
+                    <div className="mb-6">
+                      {plan.originalPrice ? (
+                        <div>
+                          <div className="text-sm text-gray-500 line-through">{plan.originalPrice}₺</div>
+                          <div className="text-4xl font-bold gradient-text">{plan.price}₺</div>
+                          <div className="text-sm text-green-600 font-semibold">🎁 {plan.discount}₺ tasarruf!</div>
+                        </div>
+                      ) : (
+                        <div className="text-4xl font-bold text-gray-900">
+                          {plan.price}₺
+                        </div>
+                      )}
+                      <div className="text-gray-600 text-sm mt-2">
+                        {plan.period}
+                      </div>
+                      {plan.bonus && plan.bonus > 0 && (
+                        <div className="mt-2">
+                          <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                            🎁 +{plan.bonus}₺ Bonus Kredi
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <ul className="text-left space-y-3 mb-8">
+                      {featureList.map((feature, index) => (
+                        <li key={index} className="flex items-center">
+                          <CheckCircleIcon className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                          <span className="text-gray-700">{feature}</span>
+                        </li>
+                      ))}
+                      {limitationList.map((limitation, index) => (
+                        <li key={index} className="flex items-center">
+                          <ClockIcon className="w-5 h-5 text-yellow-500 mr-3 flex-shrink-0" />
+                          <span className="text-gray-500">{limitation}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Link
+                      href={user ? `/dashboard/purchase?package=${plan.id}` : "/register"}
+                      className={`btn w-full btn-lg ${
+                        plan.popular ? 'btn-primary' : 'btn-secondary'
+                      }`}
+                    >
+                      {user ? 'Satın Al' : 'Paketi Satın Al'}
+                      <ArrowRightIcon className="w-5 h-5 ml-2" />
+                    </Link>
+                  </motion.div>
+                </StaggerItem>
+              )
+            })}
           </StaggerContainer>
         </div>
       </section>

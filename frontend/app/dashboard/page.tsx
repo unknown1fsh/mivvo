@@ -247,6 +247,11 @@ export default function DashboardPage() {
       console.log('📦 Dashboard - Pricing packages fetching...')
       const packages = await pricingService.getPricingPackages()
       
+      if (!Array.isArray(packages)) {
+        console.warn('⚠️ Dashboard - Geçersiz paket verisi, fallback kullanılacak:', packages)
+        throw new Error('Geçersiz paket verisi')
+      }
+
       console.log('📦 Dashboard - Pricing packages received:', packages)
       
       // Dashboard için kısaltılmış versiyon
