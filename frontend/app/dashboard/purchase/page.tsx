@@ -24,6 +24,19 @@ export default function PurchasePage() {
   const [user, setUser] = useState<any>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [allPackages, setAllPackages] = useState<any[]>([])
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank'>('card')
+  const [cardInfo, setCardInfo] = useState({
+    number: '',
+    expiry: '',
+    cvv: '',
+    holder: ''
+  })
+  const [bankInfo, setBankInfo] = useState({
+    accountName: '',
+    bankName: '',
+    iban: '',
+    description: ''
+  })
   
   useEffect(() => {
     const currentUser = authService.getCurrentUser()
@@ -60,15 +73,32 @@ export default function PurchasePage() {
   const handlePurchase = async () => {
     if (!selectedPackage) return
     
+    if (paymentMethod === 'card') {
+      if (!cardInfo.number || !cardInfo.expiry || !cardInfo.cvv || !cardInfo.holder) {
+        toast.error('Lütfen kart bilgilerini eksiksiz doldurun')
+        return
+      }
+    } else {
+      if (!bankInfo.accountName || !bankInfo.bankName || !bankInfo.iban) {
+        toast.error('Lütfen banka havalesi için gerekli alanları doldurun')
+        return
+      }
+    }
+
     setIsProcessing(true)
     try {
       // Gerçek backend ödeme API'si
       const response = await paymentService.initiatePayment({
         packageId: selectedPackage.id,
-        paymentMethod: 'card'
+        paymentMethod
       })
       
-      toast.success('Ödeme işlemi başlatıldı!')
+      toast.success(paymentMethod === 'bank' ? 'Havale/EFT talimatınız alındı. Finans ekibimiz en kısa sürede sizinle iletişime geçecek.' : 'Ödeme işlemi başlatıldı!')
+
+      if (paymentMethod === 'bank') {
+        router.push('/dashboard')
+        return
+      }
       
       // Gerçek ödeme gateway'e yönlendir
       if (response.data.paymentUrl) {
@@ -205,15 +235,29 @@ export default function PurchasePage() {
               <div className="mb-6">
                 <h4 className="font-semibold text-gray-900 mb-3">Ödeme Yöntemi:</h4>
                 <div className="space-y-3">
-                  <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input type="radio" name="payment" value="card" className="mr-3" defaultChecked />
+                  <label className={`flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${paymentMethod === 'card' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="card"
+                      className="mr-3"
+                      checked={paymentMethod === 'card'}
+                      onChange={() => setPaymentMethod('card')}
+                    />
                     <div>
                       <div className="font-medium">Kredi/Banka Kartı</div>
                       <div className="text-sm text-gray-600">Visa, Mastercard, American Express</div>
                     </div>
                   </label>
-                  <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input type="radio" name="payment" value="bank" className="mr-3" />
+                  <label className={`flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${paymentMethod === 'bank' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="bank"
+                      className="mr-3"
+                      checked={paymentMethod === 'bank'}
+                      onChange={() => setPaymentMethod('bank')}
+                    />
                     <div>
                       <div className="font-medium">Banka Havalesi</div>
                       <div className="text-sm text-gray-600">EFT, Havale ile ödeme</div>
@@ -224,29 +268,79 @@ export default function PurchasePage() {
 
               {/* Ödeme Formu Placeholder */}
               <div className="mb-6">
-                <h4 className="font-semibold text-gray-900 mb-3">Kart Bilgileri:</h4>
-                <div className="space-y-4">
-                  <input 
-                    type="text" 
-                    placeholder="Kart Numarası" 
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled
-                  />
-                  <div className="grid grid-cols-2 gap-4">
-                    <input 
-                      type="text" 
-                      placeholder="Son Kullanma" 
-                      className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      disabled
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="CVV" 
-                      className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      disabled
-                    />
-                  </div>
-                </div>
+                {paymentMethod === 'card' ? (
+                  <>
+                    <h4 className="font-semibold text-gray-900 mb-3">Kart Bilgileri:</h4>
+                    <div className="space-y-4">
+                      <input 
+                        type="text" 
+                        placeholder="Kart Numarası" 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={cardInfo.number}
+                        onChange={(e) => setCardInfo({ ...cardInfo, number: e.target.value })}
+                      />
+                      <div className="grid grid-cols-2 gap-4">
+                        <input 
+                          type="text" 
+                          placeholder="Son Kullanma" 
+                          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={cardInfo.expiry}
+                          onChange={(e) => setCardInfo({ ...cardInfo, expiry: e.target.value })}
+                        />
+                        <input 
+                          type="text" 
+                          placeholder="CVV" 
+                          className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          value={cardInfo.cvv}
+                          onChange={(e) => setCardInfo({ ...cardInfo, cvv: e.target.value })}
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Kart Sahibi Adı"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={cardInfo.holder}
+                        onChange={(e) => setCardInfo({ ...cardInfo, holder: e.target.value })}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="font-semibold text-gray-900 mb-3">Havale/EFT Bilgileri:</h4>
+                    <div className="space-y-4">
+                      <input 
+                        type="text" 
+                        placeholder="Gönderen Adı Soyadı" 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={bankInfo.accountName}
+                        onChange={(e) => setBankInfo({ ...bankInfo, accountName: e.target.value })}
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="Banka Adı" 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={bankInfo.bankName}
+                        onChange={(e) => setBankInfo({ ...bankInfo, bankName: e.target.value })}
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="IBAN" 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={bankInfo.iban}
+                        onChange={(e) => setBankInfo({ ...bankInfo, iban: e.target.value })}
+                      />
+                      <textarea
+                        placeholder="Açıklama / Dekont Notu (Opsiyonel)"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[100px]"
+                        value={bankInfo.description}
+                        onChange={(e) => setBankInfo({ ...bankInfo, description: e.target.value })}
+                      />
+                      <div className="bg-blue-50 border border-blue-100 text-sm text-blue-700 rounded-lg p-4">
+                        Havale/EFT işlemlerinde dekontu ve açıklama kısmını paylaşmayı unutmayın. Finans ekibimiz ödemenizi en kısa sürede onaylayacaktır.
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Ödeme Butonu */}

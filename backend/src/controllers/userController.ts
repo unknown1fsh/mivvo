@@ -35,6 +35,7 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import { getPrismaClient } from '../utils/prisma';
+import { CREDIT_PRICING, getActiveCreditCampaigns } from '../constants/CreditPricing';
 
 const prisma = getPrismaClient();
 
@@ -162,8 +163,32 @@ export const purchaseCredits = async (req: AuthRequest, res: Response): Promise<
     return;
   }
 
+  const activeCampaigns = getActiveCreditCampaigns();
+  let bonusCredits = 0;
+  let appliedCampaign: { id: string; name: string; bonusRate: number } | null = null;
+
+  const matchedPackageEntry = Object.entries(CREDIT_PRICING.PACKAGES).find(([, pkg]) => pkg.price === amount);
+
+  if (matchedPackageEntry && activeCampaigns.length > 0) {
+    const [packageKey] = matchedPackageEntry;
+    const campaign = activeCampaigns.find(active => active.appliesToPackages.includes(packageKey as typeof active.appliesToPackages[number]));
+
+    if (campaign) {
+      bonusCredits = Math.round(amount * campaign.bonusRate);
+      if (bonusCredits > 0) {
+        appliedCampaign = {
+          id: campaign.id,
+          name: campaign.name,
+          bonusRate: campaign.bonusRate,
+        };
+      }
+    }
+  }
+
+  const totalCreditsToAdd = amount + bonusCredits;
+
   // Bakiye ve toplam satın alınan güncelleme
-  const newBalance = userCredits.balance.add(amount);
+  const newBalance = userCredits.balance.add(totalCreditsToAdd);
   const newTotalPurchased = userCredits.totalPurchased.add(amount);
 
   await prisma.userCredits.update({
@@ -185,10 +210,26 @@ export const purchaseCredits = async (req: AuthRequest, res: Response): Promise<
     },
   });
 
+  if (bonusCredits > 0 && appliedCampaign) {
+    await prisma.creditTransaction.create({
+      data: {
+        userId: req.user!.id,
+        transactionType: 'PURCHASE',
+        amount: bonusCredits,
+        description: `${appliedCampaign.name} bonus kredisi`,
+        referenceId: `${appliedCampaign.id}_${Date.now()}`,
+      },
+    });
+  }
+
   res.json({
     success: true,
     message: 'Kredi başarıyla yüklendi.',
-    data: { newBalance },
+    data: {
+      newBalance,
+      bonusCredits,
+      appliedCampaign,
+    },
   });
 };
 

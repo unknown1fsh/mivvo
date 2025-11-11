@@ -9,7 +9,7 @@ export const PRICING_PACKAGES = [
   {
     id: 'starter',
     name: 'Başlangıç Paketi',
-    price: 149,
+    price: 299,
     credits: 150,
     bonus: 1,
     period: 'tek seferlik',

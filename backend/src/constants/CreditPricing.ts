@@ -136,7 +136,7 @@ export const CREDIT_PRICING = {
      * Başlangıç Paketi
      * 
      * - 150 kredi alırsınız
-     * - Ödeme: 149 TL
+     * - Ödeme: 299 TL
      * - Bonus: 1 TL (%0.7 bonus)
      * 
      * Yaklaşık kullanım:
@@ -147,7 +147,7 @@ export const CREDIT_PRICING = {
      */
     STARTER: {
       credits: 150,        // Alınan kredi
-      price: 149,          // TL cinsinden fiyat
+      price: 299,          // TL cinsinden fiyat
       discount: 0.007,     // %0.7 bonus
       realValue: 150,      // Gerçek değer
     },
@@ -196,6 +196,32 @@ export const CREDIT_PRICING = {
       realValue: 1500,     // Gerçek değer
     },
   },
+};
+
+/**
+ * Kredi Kampanyaları
+ *
+ * Kış 2025 kampanyası kapsamında tüm paketlerde ekstra bonus uygulanır.
+ */
+export const CREDIT_CAMPAIGNS = {
+  WINTER_2025: {
+    id: 'winter-boost-2025',
+    name: 'Kışa Özel Kredi Boostu',
+    bonusRate: 0.2,                    // %20 bonus
+    appliesToPackages: ['STARTER', 'PROFESSIONAL', 'ENTERPRISE'] as const,
+    validFrom: '2025-11-01T00:00:00.000Z',
+    validUntil: '2026-01-01T00:00:00.000Z'
+  }
+} as const;
+
+export type CreditCampaign = (typeof CREDIT_CAMPAIGNS)[keyof typeof CREDIT_CAMPAIGNS];
+
+export const getActiveCreditCampaigns = (date: Date = new Date()): CreditCampaign[] => {
+  return Object.values(CREDIT_CAMPAIGNS).filter(campaign => {
+    const start = new Date(campaign.validFrom);
+    const end = new Date(campaign.validUntil);
+    return date >= start && date < end;
+  });
 };
 
 /**

@@ -153,20 +153,28 @@ export const getActiveCampaigns = async (req: Request, res: Response): Promise<v
     const now = new Date()
     const campaigns: Campaign[] = [
       {
-        id: 'new-year-2025',
-        name: 'Yılbaşı Kampanyası',
-        description: 'Profesyonel pakette %15.6, Kurumsal pakette %25.1 bonus kredi',
-        discount: 25.1,
-        validUntil: new Date('2025-02-28').toISOString(),
-        isActive: now < new Date('2025-02-28')
+        id: 'winter-boost-2025',
+        name: 'Kışa Özel Kredi Boostu',
+        description: 'Başlangıç paketinde +50₺ bonus, profesyonel pakette %20 ekstra kredi',
+        discount: 20,
+        validUntil: new Date('2025-03-31').toISOString(),
+        isActive: now < new Date('2025-03-31')
       },
       {
-        id: 'first-purchase',
-        name: 'İlk Alışveriş İndirimi',
-        description: 'Yeni kullanıcılara özel %10 ek indirim',
-        discount: 10,
-        validUntil: new Date('2025-12-31').toISOString(),
-        isActive: true
+        id: 'pro-upgrade-bundle',
+        name: 'Profesyonel Paket Yükseltmesi',
+        description: 'Profesyonel paket alımlarında %20 bonus + 3 taksit fırsatı',
+        discount: 20,
+        validUntil: new Date('2025-04-30').toISOString(),
+        isActive: now < new Date('2025-04-30')
+      },
+      {
+        id: 'loyalty-boost-2025',
+        name: 'Sadakat Müşterisi Boostu',
+        description: 'Son 90 günde 2+ rapor aldıysan %15 bonus kredi kazan',
+        discount: 15,
+        validUntil: new Date('2025-06-30').toISOString(),
+        isActive: now < new Date('2025-06-30')
       }
     ]
 

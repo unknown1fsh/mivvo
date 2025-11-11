@@ -22,21 +22,19 @@ const pricingPlans = [
   {
     id: 'starter',
     name: 'Başlangıç Paketi',
-    price: 149,
-    credits: 150,
-    bonus: 1,
+    price: 399,
+    credits: 400,
+    bonus: 40,
     period: 'tek seferlik',
-    description: 'İlk kez kullanıcılar için',
+    description: 'İlk kez kullanıcılar için güçlü başlangıç',
     originalPrice: null,
     discount: null,
     features: [
-      '150 kredi (150 TL değerinde)',
-      '1 TL bonus kredi',
-      '~3 Boya Analizi (399₺)',
-      '~2 Hasar Analizi (499₺)',
-      '~1 Motor Sesi Analizi (299₺)',
-      'Email destek',
-      'Tüm analizlere erişim'
+      '400 kredi (400 TL değerinde) anında hesabında',
+      '+40 TL hoş geldin bonusu ile %10 ekstra bakiye',
+      '1 Boya Analizi veya 1 Motor + 1 Değer Tahmini için ideal',
+      'Tüm yapay zekâ analiz modüllerine sınırsız erişim',
+      'E-posta ve uygulama içi destek ile her adımda yanında'
     ],
     limitations: [],
     popular: false,
@@ -46,21 +44,19 @@ const pricingPlans = [
   {
     id: 'professional',
     name: 'Profesyonel Paket',
-    price: 649,
-    credits: 750,
-    bonus: 101,
+    price: 949,
+    credits: 1200,
+    bonus: 180,
     period: 'tek seferlik',
-    description: 'En popüler seçenek ⭐',
-    originalPrice: 750,
-    discount: 101,
+    description: 'Büyüyen ekipler için en popüler seçim ⭐',
+    originalPrice: 1099,
+    discount: 150,
     features: [
-      '750 kredi (750 TL değerinde)',
-      '101 TL bonus kredi (%15.6)',
-      '~15 Boya Analizi (399₺)',
-      '~10 Hasar Analizi (499₺)',
-      '~4 Kapsamlı Ekspertiz (899₺)',
-      'Öncelikli destek',
-      '7/24 WhatsApp destek'
+      '1200 kredi (1200 TL değerinde) yoğun raporlar için hazır',
+      '+180 TL profesyonel bonus ile %15 ek bakiye',
+      '3 Boya + 1 Hasar Analizi kombinasyonunu tek pakette sun',
+      'Öncelikli uzman hattı ile dakikalar içinde çözüm al',
+      '7/24 WhatsApp desteği ve canlı takip bildirimleri'
     ],
     limitations: [],
     popular: true,
@@ -70,22 +66,19 @@ const pricingPlans = [
   {
     id: 'enterprise',
     name: 'Kurumsal Paket',
-    price: 1199,
-    credits: 1500,
-    bonus: 301,
+    price: 1799,
+    credits: 2500,
+    bonus: 450,
     period: 'tek seferlik',
     description: 'Galeri ve kurumsal müşteriler',
-    originalPrice: 1500,
-    discount: 301,
+    originalPrice: 2199,
+    discount: 400,
     features: [
-      '1500 kredi (1500 TL değerinde)',
-      '301 TL bonus kredi (%25.1)',
-      '~30 Boya Analizi (399₺)',
-      '~21 Hasar Analizi (499₺)',
-      '~8 Kapsamlı Ekspertiz (899₺)',
-      '7/24 öncelikli destek',
-      'Özel hesap yöneticisi',
-      'Toplu işlem indirimleri'
+      '2500 kredi (2500 TL değerinde) portföy yönetimine özel',
+      '+450 TL sadakat bonusu ile %18 ek değer',
+      'Aylık 6 Hasar + 4 Boya Analizi gibi hacimleri rahatça karşıla',
+      '7/24 öncelikli destek ve SLA garantili çözüm',
+      'Özel hesap yöneticisi, ekip onboarding ve toplu işlem indirimleri'
     ],
     limitations: [],
     popular: false,
@@ -146,7 +139,7 @@ const faqs = [
   },
   {
     question: 'Yılbaşı kampanyası ne kadar sürecek?',
-    answer: 'Yılbaşı kampanyası sınırlı süre için geçerlidir. Profesyonel pakette %15.6, Kurumsal pakette %25.1 bonus kredi kazanabilirsiniz. Kampanya bitmeden fırsatı kaçırmayın!'
+    answer: 'Yılbaşı kampanyası sınırlı süre için geçerlidir. Başlangıç paketinde +40₺ bonus kredi, profesyonel pakette %15 ekstra bakiye, kurumsal pakette %18 sadakat bonusu kazanabilirsiniz. Kampanya bitmeden fırsatı kaçırmayın!'
   },
   {
     question: 'Hangi ödeme yöntemlerini kabul ediyorsunuz?',
@@ -162,7 +155,7 @@ const faqs = [
   },
   {
     question: 'Kurumsal müşteriler için özel paket var mı?',
-    answer: 'Evet, galeri, ekspertiz büroları ve kurumsal müşteriler için 1500 kredilik özel paketimiz bulunmaktadır. %25.1 bonus kredi ile büyük tasarruf sağlarsınız. Daha büyük hacimler için özel fiyatlandırma da sunuyoruz.'
+    answer: 'Evet, galeri, ekspertiz büroları ve kurumsal müşteriler için 2500 kredilik özel paketimiz bulunmaktadır. %18 bonus kredi ve özel hesap yöneticisi ile büyük tasarruf sağlarsınız. Daha yüksek hacimler için ek indirimler de sunuyoruz.'
   },
   {
     question: 'Kullanılmayan krediyi iade alabilir miyim?',
@@ -239,8 +232,8 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FadeInUp>
             <div className="mb-6">
-              <span className="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
-                🎉 Yılbaşı Kampanyası - %25'e Varan Bonus!
+              <span className="bg-gradient-to-r from-emerald-500 to-blue-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
+                🎉 Yılbaşı Bonusları - %25&apos;e Varan Kredi Avantajı
               </span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
@@ -249,7 +242,7 @@ export default function PricingPage() {
               <span className="text-gray-800">Maksimum Tasarruf</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              Kredi paketleri ile büyük tasarruf edin! Profesyonel pakette %15.6, Kurumsal pakette %25.1 bonus kazanın.
+              Yeni yıl kampanyamızla başlangıç paketinde avantajlı giriş fiyatı, profesyonel ve kurumsal paketlerde yükseltilmiş bonus krediler ve anında kullanım hazır bakiyeler sizi bekliyor.
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 mb-8">
               <div className="flex items-center">
@@ -381,36 +374,36 @@ export default function PricingPage() {
             <StaggerItem>
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/20">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🎯</span>
+                  <span className="text-2xl">🚀</span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">İlk Alışveriş İndirimi</h3>
-                <p className="text-green-100 mb-4">Yeni kullanıcılara özel %10 ek indirim</p>
-                <div className="text-3xl font-bold text-white mb-2">%10</div>
-                <div className="text-sm text-green-100">İlk kredi paketi alışverişinde</div>
+                <h3 className="text-xl font-bold text-white mb-2">Başlangıç Turbo Bonusu</h3>
+                <p className="text-green-100 mb-4">Başlangıç paketi alan herkese anında +40₺ bonus kredi</p>
+                <div className="text-3xl font-bold text-white mb-2">+40₺</div>
+                <div className="text-sm text-green-100">Kupon gerektirmez, yeni üyelerde otomatik uygulanır</div>
               </div>
             </StaggerItem>
 
             <StaggerItem>
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/20">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">⚡</span>
+                  <span className="text-2xl">🏆</span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Hızlı Teslimat</h3>
-                <p className="text-green-100 mb-4">Kredileriniz anında hesabınıza yüklenir</p>
-                <div className="text-3xl font-bold text-white mb-2">0 Saniye</div>
-                <div className="text-sm text-green-100">Otomatik kredi aktarımı</div>
+                <h3 className="text-xl font-bold text-white mb-2">Profesyonel Seviye Boostu</h3>
+                <p className="text-green-100 mb-4">Profesyonel pakette %15 bonus ile her raporda daha fazla kredi</p>
+                <div className="text-3xl font-bold text-white mb-2">%15</div>
+                <div className="text-sm text-green-100">Satın alma sırasında bonusunuz otomatik yüklenir</div>
               </div>
             </StaggerItem>
 
             <StaggerItem>
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 text-center border border-white/20">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🛡️</span>
+                  <span className="text-2xl">🤝</span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">Güven Garantisi</h3>
-                <p className="text-green-100 mb-4">7 gün içinde memnun kalmazsanız para iadesi</p>
-                <div className="text-3xl font-bold text-white mb-2">7 Gün</div>
-                <div className="text-sm text-green-100">Koşulsuz para iadesi</div>
+                <h3 className="text-xl font-bold text-white mb-2">Kurumsal Sadakat Programı</h3>
+                <p className="text-green-100 mb-4">Kurumsal paketlerde %18 bonus ve özel hesap yöneticisi</p>
+                <div className="text-3xl font-bold text-white mb-2">%18</div>
+                <div className="text-sm text-green-100">Aylık 15+ rapor oluşturan galerilere ekstra kredi hediyesi</div>
               </div>
             </StaggerItem>
           </div>
@@ -508,14 +501,14 @@ export default function PricingPage() {
           <FadeInUp>
             <div className="mb-6">
               <span className="bg-white/20 text-white px-6 py-2 rounded-full text-sm font-semibold">
-                ⏰ Sınırlı Süre - %25 Bonus Krediler!
+                ⏰ Sınırlı Süre - Yılbaşı Bonus Programı
               </span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Hemen Başlayın ve Tasarruf Edin!
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Yılbaşı kampanyası ile büyük tasarruf fırsatı! Profesyonel pakette %15.6, Kurumsal pakette %25.1 bonus kazanın.
+              Başlangıç paketinde +40₺ bonus kredi, profesyonel pakette %15 ekstra bakiye ve kurumsal pakette %18 sadakat avantajıyla yeni yılın en yüksek kredi fırsatlarını yakalayın.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Link href={user ? "/dashboard/purchase?package=professional" : "/register"} className="btn bg-white text-blue-600 hover:bg-gray-100 btn-lg shadow-xl">
