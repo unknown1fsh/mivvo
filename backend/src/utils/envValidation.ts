@@ -22,7 +22,7 @@ const envSchema = z.object({
 
   // JWT Configuration
   JWT_SECRET: z.string()
-    .min(32, 'JWT_SECRET must be at least 32 characters long')
+    .min(32, 'JWT_SECRET must be at least 32 characters long. Please set a secure random string in Railway environment variables.')
     .refine(
       (secret) => {
         // Test modunda daha esnek
@@ -30,13 +30,14 @@ const envSchema = z.object({
           return secret.length >= 16;
         }
         // Production ve development'ta sıkı kontrol
-        return !secret.includes('your-secret') && 
-               !secret.includes('change-this') && 
-               !secret.includes('your-jwt-secret') &&
-               !secret.includes('test-jwt-secret-key-for-testing-only');
+        const isDefault = secret.includes('your-secret') || 
+                         secret.includes('change-this') || 
+                         secret.includes('your-jwt-secret') ||
+                         secret.includes('test-jwt-secret-key-for-testing-only');
+        return !isDefault;
       },
       {
-        message: 'JWT_SECRET must be changed from default value',
+        message: 'JWT_SECRET must be changed from default value. Please set a secure random string (at least 32 characters) in Railway environment variables. You can generate one using: openssl rand -base64 32',
       }
     ),
   JWT_EXPIRES_IN: z.string().default('7d'),
@@ -124,6 +125,25 @@ export function validateEnv(): Env {
       console.error('❌ Environment Variable Validation Failed:');
       console.error(errorMessages);
       console.error('\n💡 Please check your .env file and ensure all required variables are set correctly.');
+      
+      // Railway için özel mesaj
+      if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_NAME) {
+        console.error('\n🚂 Railway Deployment Detected:');
+        console.error('   Please set the required environment variables in Railway dashboard:');
+        console.error('   1. Go to your Railway project');
+        console.error('   2. Select your service');
+        console.error('   3. Go to Variables tab');
+        console.error('   4. Add the missing environment variables');
+        console.error('   \n   Required variables:');
+        error.errors.forEach((err) => {
+          const varName = err.path.join('.');
+          if (varName === 'JWT_SECRET') {
+            console.error(`   • ${varName}: Generate using: openssl rand -base64 32`);
+          } else {
+            console.error(`   • ${varName}`);
+          }
+        });
+      }
       
       throw new Error(`Environment validation failed:\n${errorMessages}`);
     }
