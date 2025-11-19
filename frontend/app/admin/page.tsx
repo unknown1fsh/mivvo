@@ -241,10 +241,38 @@ export default function AdminPage() {
           closed: tickets.filter((t: any) => t.status === 'CLOSED').length,
           urgent: tickets.filter((t: any) => t.priority === 'URGENT').length,
         })
+      } else {
+        // API başarısız döndü ama bu normal bir durum olabilir (henüz ticket yok)
+        setSupportTickets([])
+        setSupportTicketStats({
+          total: 0,
+          open: 0,
+          inProgress: 0,
+          resolved: 0,
+          closed: 0,
+          urgent: 0,
+        })
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching support tickets:', error)
-      toast.error('Destek talepleri yüklenirken hata oluştu')
+      
+      // 404 veya benzeri hatalar için hata mesajı gösterme (henüz ticket olmayabilir)
+      // Sadece gerçek hatalar için (500, network hatası vb.) mesaj göster
+      if (error.response?.status && error.response.status >= 500) {
+        toast.error('Destek talepleri yüklenirken hata oluştu')
+      } else if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') {
+        toast.error('Destek talepleri yüklenirken hata oluştu')
+      }
+      // Diğer durumlarda (404, 401 vb.) sessizce boş liste set et
+      setSupportTickets([])
+      setSupportTicketStats({
+        total: 0,
+        open: 0,
+        inProgress: 0,
+        resolved: 0,
+        closed: 0,
+        urgent: 0,
+      })
     }
   }
 
