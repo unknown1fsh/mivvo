@@ -479,7 +479,7 @@ export default function DashboardPage() {
             </div>
             
             <p className="text-sm text-gray-600 max-w-2xl mb-6">
-              Tek analiz 299₺'den başlayan fiyatlarla kredi paketlerinden büyük tasarruf edin! 
+              Tek analiz 299₺&apos;den başlayan fiyatlarla kredi paketlerinden büyük tasarruf edin! 
               En düşük analiz fiyatımız 299₺ - Başlangıç paketi ile 1 tam analiz yapabilirsiniz.
             </p>
             

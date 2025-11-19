@@ -206,7 +206,7 @@ export function ReportError({
                   className="w-full flex items-center justify-center"
                 >
                   <HomeIcon className="w-5 h-5 mr-2" />
-                  Dashboard'a Dön
+                  Dashboard&apos;a Dön
                 </Button>
               </Link>
             )}

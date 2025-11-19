@@ -120,7 +120,7 @@ export default function GuidePage() {
               <SparklesIcon className="w-10 h-10 text-white" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Mivvo Expertiz'e Hoş Geldiniz!
+              Mivvo Expertiz&apos;e Hoş Geldiniz!
             </h2>
             <p className="text-gray-600">
               Araç expertiz işlemlerinizi kolayca gerçekleştirebileceğiniz akıllı platform
@@ -416,7 +416,7 @@ export default function GuidePage() {
               Tebrikler! 🎉
             </h2>
             <p className="text-gray-600 mb-6">
-              Artık Mivvo Expertiz'i nasıl kullanacağınızı biliyorsunuz. 
+              Artık Mivvo Expertiz&apos;i nasıl kullanacağınızı biliyorsunuz. 
               İlk analizinizi başlatabilirsiniz!
             </p>
           </div>
@@ -436,7 +436,7 @@ export default function GuidePage() {
               <Card className="p-4 hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-gray-300">
                 <div className="text-center">
                   <ChartBarIcon className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                  <h3 className="font-semibold text-gray-900">Dashboard'a Git</h3>
+                  <h3 className="font-semibold text-gray-900">Dashboard&apos;a Git</h3>
                   <p className="text-sm text-gray-600">Genel bakış</p>
                 </div>
               </Card>

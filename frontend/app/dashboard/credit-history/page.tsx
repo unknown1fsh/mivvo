@@ -219,7 +219,7 @@ export default function CreditHistoryPage() {
                 Henüz kredi işleminiz bulunmuyor.
               </p>
               <Link href="/dashboard" className="btn btn-primary">
-                Dashboard'a Dön
+                Dashboard&apos;a Dön
               </Link>
             </div>
           </FadeInUp>

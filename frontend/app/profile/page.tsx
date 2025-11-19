@@ -256,7 +256,7 @@ export default function ProfilePage() {
                           />
                         </div>
                         <p className="mt-1 text-sm text-gray-500">
-                          Adres bilgisi sabit olarak "Çankaya / ANKARA" olarak ayarlanmıştır.
+                          Adres bilgisi sabit olarak &ldquo;Çankaya / ANKARA&rdquo; olarak ayarlanmıştır.
                         </p>
                         {errors.address && (
                           <p className="mt-1 text-sm text-red-600">{errors.address.message}</p>

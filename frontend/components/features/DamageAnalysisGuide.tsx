@@ -216,7 +216,7 @@ export default function DamageAnalysisGuide() {
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">Hasar Analizi Fotoğraf Rehberi</h2>
-                      <p className="text-blue-100">AI'nın en iyi sonuçları vermesi için fotoğraf çekme ipuçları</p>
+                      <p className="text-blue-100">AI&apos;nın en iyi sonuçları vermesi için fotoğraf çekme ipuçları</p>
                     </div>
                   </div>
                   <button

@@ -477,7 +477,7 @@ export default function AboutPage() {
                     </div>
                     <span className="ml-2 text-sm text-gray-500">{testimonial.date}</span>
                   </div>
-                  <p className="text-gray-700 mb-4 leading-relaxed">"{testimonial.comment}"</p>
+                  <p className="text-gray-700 mb-4 leading-relaxed">&ldquo;{testimonial.comment}&rdquo;</p>
                   <div className="border-t pt-4">
                     <div className="font-semibold text-gray-900">{testimonial.name}</div>
                     <div className="text-sm text-gray-500">{testimonial.vehicle}</div>

@@ -146,7 +146,7 @@ export default function PurchasePage() {
           <div className="flex justify-between items-center h-16">
             <Link href="/dashboard" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
               <ArrowLeftIcon className="w-5 h-5" />
-              <span>Dashboard'a Dön</span>
+              <span>Dashboard&apos;a Dön</span>
             </Link>
             <div className="flex items-center space-x-2">
               <SparklesIcon className="w-6 h-6 text-blue-600" />
@@ -361,7 +361,7 @@ export default function PurchasePage() {
 
               <p className="text-xs text-gray-500 text-center">
                 Ödeme yaparak <Link href="/terms" className="text-blue-600 hover:underline">Kullanım Şartları</Link> ve 
-                <Link href="/privacy" className="text-blue-600 hover:underline ml-1">Gizlilik Politikası</Link>'nı kabul etmiş olursunuz.
+                <Link href="/privacy" className="text-blue-600 hover:underline ml-1">Gizlilik Politikası</Link>&apos;nı kabul etmiş olursunuz.
               </p>
             </div>
           </FadeInUp>

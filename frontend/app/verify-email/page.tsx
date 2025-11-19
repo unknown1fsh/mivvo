@@ -175,7 +175,7 @@ function VerifyEmailContent() {
               {message}
             </p>
             <p className="text-sm text-gray-500">
-              Dashboard'a yönlendiriliyorsunuz...
+              Dashboard&apos;a yönlendiriliyorsunuz...
             </p>
           </div>
         )
@@ -188,7 +188,7 @@ function VerifyEmailContent() {
               {message}
             </p>
             <p className="text-sm text-gray-500 mb-4">
-              Yeni bir doğrulama email'i gönderebilirsiniz.
+              Yeni bir doğrulama email&apos;i gönderebilirsiniz.
             </p>
           </div>
         )
@@ -246,7 +246,7 @@ function VerifyEmailContent() {
                 href="/dashboard"
                 className="btn btn-primary btn-lg w-full inline-flex items-center justify-center"
               >
-                Dashboard'a Git
+                Dashboard&apos;a Git
                 <ArrowRightIcon className="w-5 h-5 ml-2" />
               </Link>
             </div>

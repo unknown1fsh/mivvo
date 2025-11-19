@@ -41,12 +41,12 @@ export default function HelpPage() {
     {
       number: 1,
       title: 'Hesap Oluşturun',
-      description: 'Mivvo Expertiz\'e kaydolarak başlayın',
+      description: 'Mivvo Expertiz&apos;e kaydolarak başlayın',
       details: (
         <div className="space-y-4">
           <p>Hesap oluşturmak için şu adımları izleyin:</p>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Ana sayfada <strong>"Kayıt Ol"</strong> butonuna tıklayın</li>
+            <li>Ana sayfada <strong>&ldquo;Kayıt Ol&rdquo;</strong> butonuna tıklayın</li>
             <li>E-posta adresinizi ve güvenli bir şifre girin</li>
             <li>Ad, soyad ve telefon bilgilerinizi ekleyin</li>
             <li>Kullanım şartlarını ve gizlilik politikasını onaylayın</li>
@@ -68,7 +68,7 @@ export default function HelpPage() {
         <div className="space-y-4">
           <p>Platform, kredi bazlı çalışır. Kredi yüklemek için:</p>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Dashboard\'dan <strong>"Kredi Yükle"</strong> seçeneğine tıklayın</li>
+            <li>Dashboard&apos;dan <strong>&ldquo;Kredi Yükle&rdquo;</strong> seçeneğine tıklayın</li>
             <li>Yüklemek istediğiniz kredi miktarını seçin</li>
             <li>Ödeme yöntemini belirleyin (Kredi kartı, banka kartı)</li>
             <li>Ödeme bilgilerinizi güvenli formda girin</li>
@@ -88,7 +88,7 @@ export default function HelpPage() {
     },
     {
       number: 3,
-      title: 'Dashboard\'u Keşfedin',
+      title: 'Dashboard&apos;u Keşfedin',
       description: 'Platfor m özelliklerini tanıyın',
       details: (
         <div className="space-y-4">
@@ -255,7 +255,7 @@ export default function HelpPage() {
         <div className="space-y-4">
           <p>Oluşturulan raporlarınızı görüntülemek için:</p>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Dashboard\'dan <strong>"Raporlarım"</strong> sekmesine gidin</li>
+            <li>Dashboard&apos;dan <strong>&ldquo;Raporlarım&rdquo;</strong> sekmesine gidin</li>
             <li>Görmek istediğiniz raporu listeden seçin</li>
             <li>Rapor detay sayfası açılacaktır</li>
           </ol>
@@ -293,7 +293,7 @@ export default function HelpPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-semibold text-blue-900 mb-2">PDF İndirme</h4>
             <ol className="list-decimal pl-6 space-y-1 text-sm text-blue-800">
-              <li>Rapor sayfasında <strong>"PDF İndir"</strong> butonuna tıklayın</li>
+              <li>Rapor sayfasında <strong>&ldquo;PDF İndir&rdquo;</strong> butonuna tıklayın</li>
               <li>Rapor otomatik olarak oluşturulur (birkaç saniye)</li>
               <li>PDF dosyası bilgisayarınıza indirilir</li>
             </ol>
@@ -366,9 +366,9 @@ export default function HelpPage() {
           <p>Profil bilgilerinizi güncellemek için:</p>
           <ol className="list-decimal pl-6 space-y-2">
             <li>Sağ üst köşeden profil menüsüne tıklayın</li>
-            <li><strong>"Profil"</strong> seçeneğini seçin</li>
+            <li><strong>&ldquo;Profil&rdquo;</strong> seçeneğini seçin</li>
             <li>Güncellemek istediğiniz bilgileri değiştirin</li>
-            <li><strong>"Kaydet"</strong> butonuna tıklayın</li>
+            <li><strong>&ldquo;Kaydet&rdquo;</strong> butonuna tıklayın</li>
           </ol>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
             <h4 className="font-semibold text-blue-900 mb-2">Güncellenebilir Bilgiler</h4>
@@ -390,8 +390,8 @@ export default function HelpPage() {
         <div className="space-y-4">
           <p>Güvenliğiniz için düzenli olarak şifrenizi değiştirmenizi öneririz:</p>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Profil sayfasından <strong>"Güvenlik"</strong> sekmesine gidin</li>
-            <li><strong>"Şifre Değiştir"</strong> butonuna tıklayın</li>
+            <li>Profil sayfasından <strong>&ldquo;Güvenlik&rdquo;</strong> sekmesine gidin</li>
+            <li><strong>&ldquo;Şifre Değiştir&rdquo;</strong> butonuna tıklayın</li>
             <li>Mevcut şifrenizi girin</li>
             <li>Yeni şifrenizi iki kez girin</li>
             <li>Değişiklikleri kaydedin</li>
@@ -410,7 +410,7 @@ export default function HelpPage() {
 
           <div className="bg-amber-50 border-l-4 border-amber-500 p-4">
             <p className="text-sm text-amber-800">
-              <strong>Şifremi Unuttum:</strong> Giriş sayfasında "Şifremi Unuttum" linkine tıklayarak e-postanıza sıfırlama linki alabilirsiniz.
+              <strong>Şifremi Unuttum:</strong> Giriş sayfasında &ldquo;Şifremi Unuttum&rdquo; linkine tıklayarak e-postanıza sıfırlama linki alabilirsiniz.
             </p>
           </div>
         </div>
@@ -428,7 +428,7 @@ export default function HelpPage() {
               <h4 className="font-semibold text-gray-900 mb-2">Kart Ekleme</h4>
               <ol className="text-sm text-gray-600 space-y-1">
                 <li>1. Ayarlar → Ödeme Yöntemleri</li>
-                <li>2. "Yeni Kart Ekle" butonuna tıklayın</li>
+                <li>2. &ldquo;Yeni Kart Ekle&rdquo; butonuna tıklayın</li>
                 <li>3. Kart bilgilerini girin</li>
                 <li>4. Güvenli olarak kaydedin</li>
               </ol>
@@ -494,7 +494,7 @@ export default function HelpPage() {
           <ul className="list-disc pl-6 space-y-2 text-sm">
             <li>Rapor oluşturulması 1-2 dakika sürebilir</li>
             <li>Tarayıcınızın pop-up engelleyicisini kontrol edin</li>
-            <li>JavaScript'in etkin olduğundan emin olun</li>
+            <li>JavaScript&apos;in etkin olduğundan emin olun</li>
             <li>PDF indirme için farklı tarayıcı deneyin</li>
             <li>Raporun süresinin dolmadığından emin olun</li>
           </ul>
@@ -525,7 +525,7 @@ export default function HelpPage() {
           <ul className="list-disc pl-6 space-y-2 text-sm">
             <li>E-posta ve şifrenizi doğru girdiğinizden emin olun</li>
             <li>Caps Lock kapalı olmalı</li>
-            <li>Şifrenizi unuttuysan "Şifremi Unuttum" kullanın</li>
+            <li>Şifrenizi unuttuysan &ldquo;Şifremi Unuttum&rdquo; kullanın</li>
             <li>E-posta doğrulamasını tamamladığınızdan emin olun</li>
             <li>Hesabınız askıya alınmış olabilir - destek ile iletişime geçin</li>
           </ul>
@@ -541,7 +541,7 @@ export default function HelpPage() {
       content: (
         <div className="space-y-8">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Mivvo Expertiz\'e Hoş Geldiniz!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Mivvo Expertiz&apos;e Hoş Geldiniz!</h2>
             <p className="text-gray-600 mb-6">
               Platformumuzu kullanmaya başlamak için aşağıdaki adımları izleyin. Her adım detaylı açıklamalarla birlikte sunulmuştur.
             </p>
@@ -880,7 +880,7 @@ export default function HelpPage() {
                   Bize Ulaşın
                 </Link>
                 <Link href="/faq" className="btn btn-secondary btn-lg">
-                  SSS'yi İncele
+                  SSS&apos;yi İncele
                 </Link>
               </div>
             </div>

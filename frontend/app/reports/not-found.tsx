@@ -13,7 +13,7 @@ export default function NotFound() {
         
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Rapor Bulunamadı</h1>
         <p className="text-gray-600 mb-6">
-          Aradığınız expertiz raporu bulunamadı. Lütfen rapor ID'sini kontrol edin veya dashboard'dan tekrar deneyin.
+          Aradığınız expertiz raporu bulunamadı. Lütfen rapor ID&apos;sini kontrol edin veya dashboard&apos;dan tekrar deneyin.
         </p>
         
         <div className="space-y-3">
@@ -22,7 +22,7 @@ export default function NotFound() {
             className="w-full btn btn-primary flex items-center justify-center space-x-2"
           >
             <ArrowLeftIcon className="w-4 h-4" />
-            <span>Dashboard'a Dön</span>
+            <span>Dashboard&apos;a Dön</span>
           </Link>
           
           <Link 

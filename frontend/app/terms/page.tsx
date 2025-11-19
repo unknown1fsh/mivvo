@@ -52,7 +52,7 @@ export default function TermsPage() {
         <>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">1.1. Platform Hakkında</h3>
           <p className="mb-4">
-            Mivvo Expertiz ("Platform", "Hizmet"), yapay zeka teknolojisi kullanarak araç görselleri üzerinden boya analizi, hasar tespiti, değer tahmini ve kapsamlı expertiz hizmeti sunan bir online platformdur. Platform, Mivvo Teknoloji A.Ş. ("Şirket") tarafından işletilmektedir.
+            Mivvo Expertiz (&ldquo;Platform&rdquo;, &ldquo;Hizmet&rdquo;), yapay zeka teknolojisi kullanarak araç görselleri üzerinden boya analizi, hasar tespiti, değer tahmini ve kapsamlı expertiz hizmeti sunan bir online platformdur. Platform, Mivvo Teknoloji A.Ş. (&ldquo;Şirket&rdquo;) tarafından işletilmektedir.
           </p>
 
           <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-6">1.2. Sunulan Hizmetler</h3>
@@ -446,12 +446,12 @@ export default function TermsPage() {
         <>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">6.1. Platform Fikri Mülkiyeti</h3>
           <p className="mb-4">
-            Platform ve tüm içeriği (tasarım, logo, yazılım kodu, AI modelleri, metin, grafik, resim vb.) Mivvo Teknoloji A.Ş.'nin münhasır mülkiyetindedir ve telif hakları, ticari marka hakları ve diğer fikri mülkiyet kanunları ile korunmaktadır.
+            Platform ve tüm içeriği (tasarım, logo, yazılım kodu, AI modelleri, metin, grafik, resim vb.) Mivvo Teknoloji A.Ş.&apos;nin münhasır mülkiyetindedir ve telif hakları, ticari marka hakları ve diğer fikri mülkiyet kanunları ile korunmaktadır.
           </p>
 
           <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-6">6.2. Kullanıcı İçeriği</h3>
           <p className="mb-4">
-            Yüklediğiniz araç görselleri ve sağladığınız veriler ("Kullanıcı İçeriği") sizin mülkiyetinizde kalır. Ancak, platformu kullanarak:
+            Yüklediğiniz araç görselleri ve sağladığınız veriler (&ldquo;Kullanıcı İçeriği&rdquo;) sizin mülkiyetinizde kalır. Ancak, platformu kullanarak:
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-blue-800 mb-3">
@@ -465,7 +465,7 @@ export default function TermsPage() {
 
           <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-6">6.3. Ticari Marka</h3>
           <p className="mb-4">
-            "Mivvo", "Mivvo Expertiz" ve ilgili logolar Şirketin tescilli ticari markalarıdır. Yazılı izin olmaksızın bu markaların kullanılması yasaktır.
+            &ldquo;Mivvo&rdquo;, &ldquo;Mivvo Expertiz&rdquo; ve ilgili logolar Şirketin tescilli ticari markalarıdır. Yazılı izin olmaksızın bu markaların kullanılması yasaktır.
           </p>
 
           <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-6">6.4. Telif Hakkı İhlali Bildirimi</h3>
@@ -492,7 +492,7 @@ export default function TermsPage() {
           <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6">
             <h4 className="font-semibold text-amber-900 mb-2">Genel Sorumluluk Reddi</h4>
             <p className="text-sm text-amber-800">
-              Platform ve hizmetler <strong>"OLDUĞU GİBİ"</strong> ve <strong>"MEVCUT OLDUĞU ŞEKLIYLE"</strong> sunulmaktadır. Şirket, açık veya zımni hiçbir garanti vermemektedir.
+              Platform ve hizmetler <strong>&ldquo;OLDUĞU GİBİ&rdquo;</strong> ve <strong>&ldquo;MEVCUT OLDUĞU ŞEKLIYLE&rdquo;</strong> sunulmaktadır. Şirket, açık veya zımni hiçbir garanti vermemektedir.
             </p>
           </div>
 
@@ -642,7 +642,7 @@ export default function TermsPage() {
             <ul className="text-sm text-green-800 space-y-2">
               <li>
                 <strong>Tüketici Hakem Heyetleri</strong><br />
-                <span className="text-xs">Tutarı 81.130 TL'ye kadar olan uyuşmazlıklar için</span>
+                <span className="text-xs">Tutarı 81.130 TL&apos;ye kadar olan uyuşmazlıklar için</span>
               </li>
               <li>
                 <strong>Tüketici Mahkemeleri</strong><br />
@@ -900,7 +900,7 @@ export default function TermsPage() {
                   İletişime Geç
                 </Link>
                 <Link href="/faq" className="btn btn-ghost btn-lg text-white hover:bg-white/20 border border-white/30">
-                  SSS'yi İncele
+                  SSS&apos;yi İncele
                 </Link>
               </div>
             </div>

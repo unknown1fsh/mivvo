@@ -216,7 +216,7 @@ export default function NewSupportTicketPage() {
                   placeholder="İlgili rapor ID'si (varsa)"
                 />
                 <p className="mt-2 text-sm text-gray-500">
-                  Sorun bir analiz raporuyla ilgiliyse rapor ID'sini girin
+                  Sorun bir analiz raporuyla ilgiliyse rapor ID&apos;sini girin
                 </p>
               </div>
 

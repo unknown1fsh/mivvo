@@ -298,7 +298,7 @@ export default function PaintAnalysisPage() {
             <div className="flex items-center space-x-4">
               <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
                 <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                Dashboard'a Dön
+                Dashboard&apos;a Dön
               </Link>
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -760,7 +760,7 @@ export default function PaintAnalysisPage() {
                   )}
                   
                   <Link href="/dashboard" className="btn btn-secondary w-full">
-                    🏠 Dashboard'a Dön
+                    🏠 Dashboard&apos;a Dön
                   </Link>
                 </div>
               </div>

@@ -171,7 +171,7 @@ export default function FAQPage() {
         <div className="space-y-3">
           <p>Kayıt olmak çok kolay:</p>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Ana sayfada <strong>"Kayıt Ol"</strong> butonuna tıklayın</li>
+            <li>Ana sayfada <strong>&ldquo;Kayıt Ol&rdquo;</strong> butonuna tıklayın</li>
             <li>E-posta, şifre, ad-soyad bilgilerinizi girin</li>
             <li>Kullanım şartlarını ve gizlilik politikasını onaylayın</li>
             <li>E-postanıza gelen doğrulama linkine tıklayın</li>
@@ -216,7 +216,7 @@ export default function FAQPage() {
         <div className="space-y-3">
           <p>Şifre sıfırlama işlemi:</p>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Giriş sayfasında <strong>"Şifremi Unuttum"</strong> linkine tıklayın</li>
+            <li>Giriş sayfasında <strong>&ldquo;Şifremi Unuttum&rdquo;</strong> linkine tıklayın</li>
             <li>Kayıtlı e-posta adresinizi girin</li>
             <li>E-postanıza gelen sıfırlama linkine tıklayın (5 dakika içinde)</li>
             <li>Yeni şifrenizi belirleyin</li>
@@ -239,8 +239,8 @@ export default function FAQPage() {
         <div className="space-y-3">
           <p>Hesabınızı kalıcı olarak silmek için:</p>
           <ol className="list-decimal pl-6 space-y-2">
-            <li>Ayarlar → Hesap Yönetimi'ne gidin</li>
-            <li>Sayfanın altında <strong>"Hesabı Kapat"</strong> butonuna tıklayın</li>
+            <li>Ayarlar → Hesap Yönetimi&apos;ne gidin</li>
+            <li>Sayfanın altında <strong>&ldquo;Hesabı Kapat&rdquo;</strong> butonuna tıklayın</li>
             <li>Silme nedenini belirtin (isteğe bağlı)</li>
             <li>Şifrenizi girin ve onaylayın</li>
           </ol>
@@ -251,7 +251,7 @@ export default function FAQPage() {
             <ul className="text-xs text-red-700 space-y-1">
               <li>• Tüm raporlarınız silinecek</li>
               <li>• Kullanılmamış kredileriniz iade edilecek (14 gün içinde)</li>
-              <li>• Kişisel verileriniz KVKK'ya uygun olarak silinecek</li>
+              <li>• Kişisel verileriniz KVKK&apos;ya uygun olarak silinecek</li>
             </ul>
           </div>
         </div>
@@ -431,7 +431,7 @@ export default function FAQPage() {
       answer: (
         <div className="space-y-3">
           <p>
-            Evet, "Araç Garajım" özelliği ile sınırsız sayıda araç ekleyebilir ve yönetebilirsiniz.
+            Evet, &ldquo;Araç Garajım&rdquo; özelliği ile sınırsız sayıda araç ekleyebilir ve yönetebilirsiniz.
           </p>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-semibold text-blue-900 mb-2">Araç Garajı Özellikleri:</h4>
@@ -556,7 +556,7 @@ export default function FAQPage() {
               <li>• RESTful JSON API</li>
               <li>• Webhook desteği</li>
               <li>• Detaylı dokümantasyon</li>
-              <li>• SDK'lar (JavaScript, Python, PHP)</li>
+              <li>• SDK&apos;lar (JavaScript, Python, PHP)</li>
               <li>• Rate limiting: 1000 istek/saat</li>
             </ul>
           </div>
@@ -682,12 +682,12 @@ export default function FAQPage() {
     {
       id: 'q22',
       category: 'guvenlik',
-      question: 'KVKK\'ya uyumlu musunuz?',
+      question: 'KVKK&apos;ya uyumlu musunuz?',
       keywords: ['kvkk', 'gdpr', 'uyumluluk', 'yasal'],
       answer: (
         <div className="space-y-3">
           <p>
-            Evet, platformumuz 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve GDPR\'a tam uyumludur.
+            Evet, platformumuz 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve GDPR&apos;a tam uyumludur.
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">

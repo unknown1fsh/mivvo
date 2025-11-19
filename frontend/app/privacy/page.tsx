@@ -32,7 +32,7 @@ export default function PrivacyPage() {
       content: (
         <>
           <p className="mb-4">
-            Mivvo Expertiz ("Biz", "Bizim", "Platform"), kullanıcılarımızın ("Siz", "Kullanıcı") gizliliğine önem verir ve kişisel verilerinizi 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") ve Avrupa Birliği Genel Veri Koruma Tüzüğü ("GDPR") kapsamında korumayı taahhüt eder.
+            Mivvo Expertiz (&ldquo;Biz&rdquo;, &ldquo;Bizim&rdquo;, &ldquo;Platform&rdquo;), kullanıcılarımızın (&ldquo;Siz&rdquo;, &ldquo;Kullanıcı&rdquo;) gizliliğine önem verir ve kişisel verilerinizi 6698 sayılı Kişisel Verilerin Korunması Kanunu (&ldquo;KVKK&rdquo;) ve Avrupa Birliği Genel Veri Koruma Tüzüğü (&ldquo;GDPR&rdquo;) kapsamında korumayı taahhüt eder.
           </p>
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
             <h4 className="font-semibold text-blue-900 mb-2">Veri Sorumlusu</h4>
@@ -305,7 +305,7 @@ export default function PrivacyPage() {
             <div className="card p-4">
               <h4 className="font-semibold text-gray-900 mb-2">⚖️ Şikayet Hakkı</h4>
               <p className="text-sm text-gray-600">
-                Kişisel Verileri Koruma Kurumu'na şikayette bulunma hakkınız vardır.
+                Kişisel Verileri Koruma Kurumu&apos;na şikayette bulunma hakkınız vardır.
               </p>
             </div>
           </div>
@@ -501,7 +501,7 @@ export default function PrivacyPage() {
           <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
             <h4 className="font-semibold text-green-900 mb-2">🛡️ Kişisel Verileri Koruma Kurumu</h4>
             <p className="text-sm text-green-800 mb-2">
-              Başvurularınız sonucunda yeterli cevap alamazsanız, Kişisel Verileri Koruma Kurumu'na başvurabilirsiniz:
+              Başvurularınız sonucunda yeterli cevap alamazsanız, Kişisel Verileri Koruma Kurumu&apos;na başvurabilirsiniz:
             </p>
             <p className="text-sm text-green-800">
               <strong>Web:</strong> <a href="https://www.kvkk.gov.tr" target="_blank" rel="noopener noreferrer" className="underline">www.kvkk.gov.tr</a><br />

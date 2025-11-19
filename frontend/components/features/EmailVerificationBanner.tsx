@@ -128,7 +128,7 @@ export function EmailVerificationBanner({
                     <p className="text-sm text-amber-700">
                       {isResent ? (
                         <>
-                          Doğrulama email'i <strong>{userEmail}</strong> adresine gönderildi. 
+                          Doğrulama email&apos;i <strong>{userEmail}</strong> adresine gönderildi. 
                           Email kutunuzu kontrol edin ve linke tıklayarak email adresinizi doğrulayın.
                         </>
                       ) : (
@@ -156,7 +156,7 @@ export function EmailVerificationBanner({
                         ) : (
                           <>
                             <EnvelopeIcon className="w-4 h-4 mr-2" />
-                            Doğrulama Email'i Gönder
+                            Doğrulama Email&apos;i Gönder
                           </>
                         )}
                       </button>

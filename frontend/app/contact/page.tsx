@@ -501,7 +501,7 @@ export default function ContactPage() {
                 Email Gönder
               </a>
               <a href="https://wa.me/905433929230" target="_blank" rel="noopener noreferrer" className="btn bg-green-500 text-white hover:bg-green-600 btn-lg shadow-xl">
-                WhatsApp'tan Yaz
+                WhatsApp&apos;tan Yaz
               </a>
             </div>
           </FadeInUp>

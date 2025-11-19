@@ -321,7 +321,7 @@ export default function VINLookupPage() {
             className="inline-flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200 group"
           >
             <ArrowLeftIcon className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
-            <span className="font-medium">Dashboard'a Dön</span>
+            <span className="font-medium">Dashboard&apos;a Dön</span>
           </Link>
         </div>
 
@@ -404,7 +404,7 @@ export default function VINLookupPage() {
                 {result.cached && (
                   <div className="flex items-center text-sm text-blue-600">
                     <CheckCircleIcon className="w-4 h-4 mr-1" />
-                    Cache'den alındı
+                    Cache&apos;den alındı
                   </div>
                 )}
                 <button
@@ -511,7 +511,7 @@ export default function VINLookupPage() {
                   <p className="text-sm text-blue-700">
                     Bu bilgiler NHTSA (ABD Ulusal Karayolu Trafik Güvenliği İdaresi) 
                     veritabanından alınmıştır. Bilgiler ABD pazarına odaklanmış olup, 
-                    Türkiye'deki araçlar için eksik veya sınırlı olabilir.
+                    Türkiye&apos;deki araçlar için eksik veya sınırlı olabilir.
                   </p>
                 </div>
               </div>
