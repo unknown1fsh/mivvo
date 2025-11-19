@@ -147,7 +147,26 @@ export const createCareerApplication = async (req: Request, res: Response): Prom
       }
     });
 
-    // TODO: Email bildirimi gönder
+    // Email bildirimi gönder
+    try {
+      const { addEmailJob } = require('../jobs/emailJob');
+      await addEmailJob({
+        type: 'custom',
+        to: process.env.ADMIN_EMAIL || 'admin@mivvo.com',
+        subject: `Yeni İş Başvurusu: ${application.position}`,
+        html: `
+          <h2>Yeni İş Başvurusu</h2>
+          <p><strong>Ad:</strong> ${application.name}</p>
+          <p><strong>Email:</strong> ${application.email}</p>
+          <p><strong>Telefon:</strong> ${application.phone}</p>
+          <p><strong>Pozisyon:</strong> ${application.position}</p>
+          <p><strong>Departman:</strong> ${application.department || 'Belirtilmemiş'}</p>
+          <p><strong>Deneyim:</strong> ${application.experience || 'Belirtilmemiş'} yıl</p>
+        `,
+      });
+    } catch (emailError) {
+      console.warn('Email gönderme hatası:', emailError);
+    }
     // await sendCareerApplicationEmail(application);
 
     res.status(201).json({

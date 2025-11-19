@@ -11,10 +11,10 @@ import * as supportController from '../controllers/supportController';
 const router = Router();
 
 // Kullanıcı endpoint'leri
-router.post('/tickets', authenticate, supportController.createTicket);
+router.post('/tickets', authenticate, supportController.upload.array('screenshots', 5), supportController.createTicket);
 router.get('/tickets', authenticate, supportController.getUserTickets);
 router.get('/tickets/:id', authenticate, supportController.getTicket);
-router.post('/tickets/:id/messages', authenticate, supportController.addMessage);
+router.post('/tickets/:id/messages', authenticate, supportController.upload.array('screenshots', 5), supportController.addMessage);
 router.patch('/tickets/:id/close', authenticate, supportController.closeTicket);
 
 // Admin endpoint'leri

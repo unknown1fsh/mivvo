@@ -25,6 +25,7 @@ import { Request, Response, NextFunction } from 'express';
 import { BaseException } from '../exceptions/BaseException';
 import { ErrorResponse } from '../dto/response/ApiResponseDTO';
 import { logError, createErrorContext, createRequestContext } from '../utils/logger';
+import { captureException } from '../utils/sentry';
 
 /**
  * Custom Error Interface
@@ -74,6 +75,14 @@ export const errorHandler = (
     severity: 'error',
     environment: process.env.NODE_ENV,
   });
+
+  // Sentry'ye gönder
+  if (err instanceof Error) {
+    captureException(err, {
+      request: requestContext,
+      error: errorContext,
+    });
+  }
 
   // ===== CUSTOM EXCEPTION HANDLING =====
   // BaseException veya türevlerini yakala

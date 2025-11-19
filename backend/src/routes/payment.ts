@@ -42,6 +42,7 @@ import {
   verifyPayment,
   refundPayment,
 } from '../controllers/paymentController';
+import { handleIyzicoWebhook } from '../controllers/paymentWebhookController';
 
 const router = Router();
 
@@ -205,5 +206,33 @@ const refundValidation = [
  * - payment: Güncellenmiş ödeme (REFUNDED)
  */
 router.post('/refund', refundValidation, asyncHandler(refundPayment));
+
+// ===== WEBHOOK ROUTES =====
+
+/**
+ * POST /payment/webhook/iyzico
+ * 
+ * İyzico webhook endpoint'i.
+ * 
+ * Authentication: Yok (İyzico'dan gelen istekler)
+ * Validation: Webhook signature doğrulama
+ */
+router.post('/webhook/iyzico', asyncHandler(handleIyzicoWebhook));
+
+// ===== PAYMENT INITIATE AND VERIFY ROUTES =====
+
+/**
+ * POST /payment/initiate
+ * 
+ * Ödeme başlatma endpoint'i.
+ */
+router.post('/initiate', asyncHandler(initiatePayment));
+
+/**
+ * POST /payment/verify
+ * 
+ * Ödeme doğrulama endpoint'i.
+ */
+router.post('/verify', asyncHandler(verifyPayment));
 
 export default router;

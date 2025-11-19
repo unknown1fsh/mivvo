@@ -79,7 +79,26 @@ export const createContactInquiry = async (req: Request, res: Response): Promise
       }
     });
 
-    // TODO: Email bildirimi gönder
+    // Email bildirimi gönder
+    try {
+      const { addEmailJob } = require('../jobs/emailJob');
+      await addEmailJob({
+        type: 'custom',
+        to: process.env.ADMIN_EMAIL || 'admin@mivvo.com',
+        subject: `Yeni İletişim Formu: ${inquiry.subject}`,
+        html: `
+          <h2>Yeni İletişim Formu</h2>
+          <p><strong>Ad:</strong> ${inquiry.name}</p>
+          <p><strong>Email:</strong> ${inquiry.email}</p>
+          <p><strong>Telefon:</strong> ${inquiry.phone || 'Belirtilmemiş'}</p>
+          <p><strong>Konu:</strong> ${inquiry.subject}</p>
+          <p><strong>Mesaj:</strong></p>
+          <p>${inquiry.message}</p>
+        `,
+      });
+    } catch (emailError) {
+      console.warn('Email gönderme hatası:', emailError);
+    }
     // await sendContactNotificationEmail(inquiry);
 
     res.status(201).json({

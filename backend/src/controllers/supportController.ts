@@ -8,6 +8,24 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
 import * as supportService from '../services/supportService';
+import multer from 'multer';
+import { uploadFile } from '../services/storageService';
+
+// Multer konfigürasyonu - memory storage (ekran görüntüleri için)
+const storage = multer.memoryStorage();
+
+export const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit (ekran görüntüleri için yeterli)
+  fileFilter: (req, file, cb) => {
+    // Sadece resim dosyaları kabul et
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Sadece resim dosyaları kabul edilir (JPG, PNG, WebP)'));
+    }
+  }
+});
 
 /**
  * Yeni Ticket Oluştur
@@ -16,31 +34,54 @@ import * as supportService from '../services/supportService';
  * @access  Private
  */
 export const createTicket = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-  const { subject, description, category, priority, reportId, attachments } = req.body;
-  
-  if (!subject || !description) {
-    res.status(400).json({
-      success: false,
-      message: 'Konu ve açıklama zorunludur',
+  try {
+    const { subject, description, category, priority, reportId } = req.body;
+    const files = req.files as Express.Multer.File[];
+    
+    if (!subject || !description) {
+      res.status(400).json({
+        success: false,
+        message: 'Konu ve açıklama zorunludur',
+      });
+      return;
+    }
+
+    // Ekran görüntülerini yükle (varsa)
+    let attachmentUrls: string[] = [];
+    if (files && files.length > 0) {
+      attachmentUrls = await Promise.all(
+        files.map(async (file) => {
+          const uploadResult = await uploadFile({
+            file: file.buffer,
+            fileName: file.originalname,
+            folder: 'support-attachments',
+            contentType: file.mimetype,
+            optimizeImage: true,
+          });
+          return uploadResult.url;
+        })
+      );
+    }
+
+    const ticket = await supportService.createTicket({
+      userId: req.user!.id,
+      subject,
+      description,
+      category: category || 'GENERAL',
+      priority: priority || 'NORMAL',
+      reportId: reportId ? parseInt(reportId) : undefined,
+      attachments: attachmentUrls.length > 0 ? JSON.stringify(attachmentUrls) : undefined,
     });
-    return;
+
+    res.status(201).json({
+      success: true,
+      message: 'Destek talebiniz oluşturuldu',
+      data: { ticket },
+    });
+  } catch (error: any) {
+    console.error('❌ Ticket oluşturma hatası:', error);
+    throw error; // asyncHandler zaten handle edecek
   }
-
-  const ticket = await supportService.createTicket({
-    userId: req.user!.id,
-    subject,
-    description,
-    category: category || 'GENERAL',
-    priority: priority || 'NORMAL',
-    reportId,
-    attachments,
-  });
-
-  res.status(201).json({
-    success: true,
-    message: 'Destek talebiniz oluşturuldu',
-    data: { ticket },
-  });
 });
 
 /**
@@ -84,7 +125,8 @@ export const getTicket = asyncHandler(async (req: AuthRequest, res: Response): P
  */
 export const addMessage = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   const ticketId = parseInt(req.params.id);
-  const { message, attachments } = req.body;
+  const { message } = req.body;
+  const files = req.files as Express.Multer.File[];
   
   if (!message) {
     res.status(400).json({
@@ -94,13 +136,30 @@ export const addMessage = asyncHandler(async (req: AuthRequest, res: Response): 
     return;
   }
 
+  // Ekran görüntülerini yükle (varsa)
+  let attachmentUrls: string[] = [];
+  if (files && files.length > 0) {
+    attachmentUrls = await Promise.all(
+      files.map(async (file) => {
+        const uploadResult = await uploadFile({
+          file: file.buffer,
+          fileName: file.originalname,
+          folder: 'support-attachments',
+          contentType: file.mimetype,
+          optimizeImage: true,
+        });
+        return uploadResult.url;
+      })
+    );
+  }
+
   const isAdmin = req.user!.role === 'ADMIN';
   const ticketMessage = await supportService.addMessageToTicket(
     ticketId,
     req.user!.id,
     message,
     isAdmin,
-    attachments
+    attachmentUrls.length > 0 ? JSON.stringify(attachmentUrls) : undefined
   );
 
   res.json({

@@ -53,6 +53,7 @@ import {
 } from '../exceptions';
 import { CREDIT_PRICING, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../constants';
 import { AnalysisMapper } from '../mappers/AnalysisMapper';
+import { addAIAnalysisJob } from '../jobs/aiAnalysisJob';
 
 // Prisma client ve repository instance'ları
 const prisma = new PrismaClient();

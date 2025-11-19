@@ -474,15 +474,26 @@ export const downloadReport = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  // TODO: PDF rapor oluşturma
-  // - pdfkit veya puppeteer kullanılabilir
-  // - Template-based PDF generation
-  // - Grafik ve tablo desteği
-  
-  // Şu anda JSON döndürüyor
-  res.json({
-    success: true,
-    data: { report },
-    message: 'PDF rapor oluşturma özelliği yakında eklenecek.',
-  });
+  // PDF rapor oluştur
+  try {
+    const { generatePDFReport } = require('../services/pdfReportService');
+    const pdfBuffer = await generatePDFReport({
+      reportId: parseInt(id),
+      userId: req.user!.id,
+      includeImages: true,
+      includeCharts: true,
+    });
+
+    // PDF response
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="mivvo-expertiz-raporu-${report.id}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length.toString());
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('PDF oluşturma hatası:', error);
+    res.status(500).json({
+      success: false,
+      message: 'PDF rapor oluşturulamadı',
+    });
+  }
 };

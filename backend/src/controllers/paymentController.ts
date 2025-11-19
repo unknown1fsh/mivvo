@@ -21,6 +21,9 @@ import { Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth'
 import { CREDIT_PRICING } from '../constants/CreditPricing'
 import { getPrismaClient } from '../utils/prisma'
+import { initiatePayment as iyzicoInitiatePayment, verifyPayment as iyzicoVerifyPayment, refundPayment as iyzicoRefundPayment } from '../services/paymentService'
+import { getEnv } from '../utils/envValidation'
+import { logError, logInfo } from '../utils/logger'
 
 const prisma = getPrismaClient()
 
@@ -101,6 +104,20 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
         return
     }
 
+    // Kullanıcı bilgilerini al
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, firstName: true, lastName: true }
+    })
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'Kullanıcı bulunamadı'
+      })
+      return
+    }
+
     // Ödeme kaydı oluştur (pending status)
     const paymentRecord = await prisma.payment.create({
       data: {
@@ -109,21 +126,47 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
         paymentMethod,
         paymentStatus: 'PENDING',
         currency: 'TRY',
-        paymentProvider: 'mock-gateway',
+        paymentProvider: 'iyzico',
         referenceNumber: `PKG-${packageId}-${Date.now()}`
       }
     })
 
-    // TODO: Gerçek ödeme gateway entegrasyonu
-    // Şimdilik mock response
-    const paymentUrl = `https://payment-gateway.com/pay/${paymentRecord.id}`
+    // İyzico ödeme başlatma
+    const env = getEnv()
+    const callbackUrl = `${env.CORS_ORIGIN || process.env.CORS_ORIGIN || 'http://localhost:3000'}/payment/callback?paymentId=${paymentRecord.id}`
+    
+    const iyzicoResult = await iyzicoInitiatePayment({
+      userId,
+      userEmail: user.email,
+      userName: `${user.firstName} ${user.lastName}`,
+      amount: packageData.price,
+      packageId,
+      paymentId: paymentRecord.id,
+      callbackUrl,
+    })
 
+    if (!iyzicoResult.success) {
+      // İyzico başarısız, ödeme kaydını FAILED olarak işaretle
+      await prisma.payment.update({
+        where: { id: paymentRecord.id },
+        data: { paymentStatus: 'FAILED' }
+      })
+
+      res.status(500).json({
+        success: false,
+        message: iyzicoResult.error || 'Ödeme işlemi başlatılamadı'
+      })
+      return
+    }
+
+    // İyzico'dan gelen payment URL veya form'u döndür
     res.json({
       success: true,
       message: 'Ödeme işlemi başlatıldı',
       data: {
         paymentId: paymentRecord.id,
-        paymentUrl,
+        paymentUrl: iyzicoResult.paymentUrl,
+        paymentForm: iyzicoResult.paymentForm, // 3D Secure için HTML form
         amount: packageData.price,
         package: {
           id: packageId,
@@ -156,7 +199,7 @@ export const initiatePayment = async (req: AuthRequest, res: Response): Promise<
  */
 export const verifyPayment = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { paymentId, status }: PaymentVerifyRequest = req.body
+    const { paymentId, token, conversationId, status }: PaymentVerifyRequest & { token?: string; conversationId?: string } = req.body
     const userId = req.user?.id
 
     if (!userId) {
@@ -191,7 +234,25 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<vo
       return
     }
 
-    if (status === 'success') {
+    // İyzico doğrulama (token ve conversationId varsa)
+    let iyzicoVerified = false
+    if (token && conversationId) {
+      const iyzicoResult = await iyzicoVerifyPayment({ token, conversationId })
+      iyzicoVerified = iyzicoResult.success
+      
+      if (iyzicoVerified && iyzicoResult.paymentId) {
+        // İyzico transaction ID'yi kaydet
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { transactionId: iyzicoResult.paymentId }
+        })
+      }
+    }
+
+    // Status kontrolü (frontend'den gelen status veya İyzico doğrulama sonucu)
+    const isSuccess = status === 'success' || iyzicoVerified
+
+    if (isSuccess) {
       // Paket bilgilerini al - referenceNumber'dan packageId çıkar
       const packageId = payment.referenceNumber?.split('-')[1] || 'professional'
       let packageData: any = null
@@ -227,8 +288,8 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<vo
           throw new Error('Kullanıcı kredisi bulunamadı')
         }
 
-        const newBalance = userCredits.balance.add(packageData.credits)
-        const newTotalPurchased = userCredits.totalPurchased.add(packageData.price)
+        const newBalance = Number(userCredits.balance) + packageData.credits
+        const newTotalPurchased = Number(userCredits.totalPurchased) + packageData.price
 
         await tx.userCredits.update({
           where: { userId },
@@ -252,7 +313,7 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<vo
         // Bonus kredi varsa ekle
         const bonusCredits = packageData.realValue - packageData.price
         if (bonusCredits > 0) {
-          const newBalanceWithBonus = newBalance.add(bonusCredits)
+          const newBalanceWithBonus = newBalance + bonusCredits
           
           await tx.userCredits.update({
             where: { userId },
@@ -359,8 +420,27 @@ export const refundPayment = async (req: AuthRequest, res: Response): Promise<vo
       return
     }
 
-    // TODO: Gerçek ödeme gateway'den iade işlemi
-    // Şimdilik mock
+    // İyzico iade işlemi
+    if (payment.transactionId) {
+      const iyzicoResult = await iyzicoRefundPayment({
+        paymentId: payment.transactionId,
+        amount: Number(payment.amount), // Kısmi iade için amount parametresi gönderilebilir
+        reason: req.body.reason,
+      })
+
+      if (!iyzicoResult.success) {
+        logError('İyzico iade hatası', new Error(iyzicoResult.error || 'Unknown error'))
+        res.status(500).json({
+          success: false,
+          message: iyzicoResult.error || 'İade işlemi başlatılamadı'
+        })
+        return
+      }
+
+      logInfo('İyzico iade başarılı', { paymentId: payment.id, refundId: iyzicoResult.refundId })
+    }
+
+    // Ödeme durumunu REFUNDED olarak güncelle
     await prisma.payment.update({
       where: { id: parseInt(paymentId) },
       data: {
@@ -368,9 +448,37 @@ export const refundPayment = async (req: AuthRequest, res: Response): Promise<vo
       }
     })
 
+    // Kullanıcıdan kredileri düş (iade edilen tutar kadar)
+    const userCredits = await prisma.userCredits.findUnique({
+      where: { userId }
+    })
+
+    if (userCredits) {
+      const refundAmount = Number(payment.amount)
+      const newBalance = Math.max(0, Number(userCredits.balance) - refundAmount)
+
+      await prisma.userCredits.update({
+        where: { userId },
+        data: {
+          balance: newBalance
+        }
+      })
+
+      // Refund transaction kaydı oluştur
+      await prisma.creditTransaction.create({
+        data: {
+          userId,
+          transactionType: 'REFUND',
+          amount: -refundAmount,
+          description: `İade: ${refundAmount} TL`,
+          referenceId: paymentId.toString()
+        }
+      })
+    }
+
     res.json({
       success: true,
-      message: 'İade işlemi başlatıldı'
+      message: 'İade işlemi başarıyla tamamlandı'
     })
 
   } catch (error) {

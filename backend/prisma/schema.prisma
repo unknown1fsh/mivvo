@@ -18,16 +18,16 @@ model User {
   role               Role                @default(USER)
   isActive           Boolean             @default(true) @map("is_active")
   emailVerified      Boolean             @default(false) @map("email_verified")
-  hasSeenGuide       Boolean             @default(false) @map("has_seen_guide")
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
+  hasSeenGuide       Boolean             @default(false) @map("has_seen_guide")
   creditTransactions CreditTransaction[]
   notifications      Notification[]
   payments           Payment[]
+  supportTickets     SupportTicket[]
   userCredits        UserCredits?
   vehicleGarage      VehicleGarage[]
   vehicleReports     VehicleReport[]
-  supportTickets      SupportTicket[]
 
   @@map("users")
 }
@@ -46,16 +46,16 @@ model UserCredits {
 }
 
 model CreditTransaction {
-  id              Int                  @id @default(autoincrement())
-  userId          Int                   @map("user_id")
-  transactionType TransactionType      @map("transaction_type")
+  id              Int                     @id @default(autoincrement())
+  userId          Int                     @map("user_id")
+  transactionType TransactionType         @map("transaction_type")
   amount          Decimal
   description     String?
-  referenceId     String?              @map("reference_id")
-  status          CreditTransactionStatus @default(COMPLETED)
+  referenceId     String?                 @map("reference_id")
+  createdAt       DateTime                @default(now()) @map("created_at")
   metadata        Json?
-  createdAt       DateTime             @default(now()) @map("created_at")
-  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          CreditTransactionStatus @default(COMPLETED)
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("credit_transactions")
 }
@@ -256,6 +256,81 @@ model Notification {
   @@map("notifications")
 }
 
+model ContactInquiry {
+  id          Int           @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String?
+  company     String?
+  subject     String
+  message     String
+  inquiryType InquiryType
+  status      InquiryStatus @default(PENDING)
+  notes       String?
+  assignedTo  Int?          @map("assigned_to")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("contact_inquiries")
+}
+
+model CareerApplication {
+  id          Int               @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String
+  position    String
+  department  String?
+  experience  Int?
+  education   String?
+  coverLetter String?
+  resumeUrl   String?           @map("resume_url")
+  linkedIn    String?           @map("linkedin_url")
+  portfolio   String?           @map("portfolio_url")
+  status      ApplicationStatus @default(PENDING)
+  notes       String?
+  assignedTo  Int?              @map("assigned_to")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  @@map("career_applications")
+}
+
+model SupportTicket {
+  id          Int             @id @default(autoincrement())
+  userId      Int             @map("user_id")
+  subject     String
+  description String
+  category    TicketCategory  @default(GENERAL)
+  priority    TicketPriority  @default(NORMAL)
+  status      TicketStatus    @default(OPEN)
+  assignedTo  Int?            @map("assigned_to")
+  reportId    Int?            @map("report_id")
+  attachments String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    TicketMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id          Int           @id @default(autoincrement())
+  ticketId    Int           @map("ticket_id")
+  senderId    Int           @map("sender_id")
+  isAdmin     Boolean       @default(false) @map("is_admin")
+  message     String
+  attachments String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@map("ticket_messages")
+}
+
 enum Role {
   USER
   ADMIN
@@ -334,81 +409,6 @@ enum NotificationType {
   INFO
   WARNING
   ERROR
-}
-
-model ContactInquiry {
-  id          Int              @id @default(autoincrement())
-  name        String
-  email       String
-  phone       String?
-  company     String?
-  subject     String
-  message     String           @db.Text
-  inquiryType InquiryType
-  status      InquiryStatus    @default(PENDING)
-  notes       String?          @db.Text
-  assignedTo  Int?             @map("assigned_to")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-  
-  @@map("contact_inquiries")
-}
-
-model CareerApplication {
-  id          Int                    @id @default(autoincrement())
-  name        String
-  email       String
-  phone       String
-  position    String
-  department  String?
-  experience  Int?
-  education   String?
-  coverLetter String?                @db.Text
-  resumeUrl   String?                @map("resume_url")
-  linkedIn    String?                @map("linkedin_url")
-  portfolio   String?                @map("portfolio_url")
-  status      ApplicationStatus      @default(PENDING)
-  notes       String?                @db.Text
-  assignedTo  Int?                   @map("assigned_to")
-  createdAt   DateTime               @default(now()) @map("created_at")
-  updatedAt   DateTime               @updatedAt @map("updated_at")
-  
-  @@map("career_applications")
-}
-
-model SupportTicket {
-  id          Int                   @id @default(autoincrement())
-  userId      Int                   @map("user_id")
-  subject     String
-  description String                @db.Text
-  category    TicketCategory        @default(GENERAL)
-  priority    TicketPriority        @default(NORMAL)
-  status      TicketStatus          @default(OPEN)
-  assignedTo  Int?                  @map("assigned_to")
-  reportId    Int?                  @map("report_id")
-  attachments String?               @db.Text
-  createdAt   DateTime              @default(now()) @map("created_at")
-  updatedAt   DateTime              @updatedAt @map("updated_at")
-  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages    TicketMessage[]
-
-  @@map("support_tickets")
-  @@index([userId])
-  @@index([status])
-}
-
-model TicketMessage {
-  id          Int           @id @default(autoincrement())
-  ticketId    Int           @map("ticket_id")
-  senderId    Int           @map("sender_id")
-  isAdmin     Boolean       @default(false) @map("is_admin")
-  message     String        @db.Text
-  attachments String?       @db.Text
-  createdAt   DateTime      @default(now()) @map("created_at")
-  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-
-  @@map("ticket_messages")
-  @@index([ticketId])
 }
 
 enum InquiryType {

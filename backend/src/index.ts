@@ -38,15 +38,25 @@ import { getPrismaClient, disconnectPrisma } from './utils/prisma';
 // Load environment variables
 dotenv.config();
 
-// Force set OpenAI API key if not set
-if (!process.env.OPENAI_API_KEY) {
-  console.log('[WARN] OpenAI API Key not found in .env');
-  console.log('[WARN] Get API Key: https://platform.openai.com/account/api-keys');
+// Validate environment variables FIRST (must be called before any other imports that use env vars)
+import { validateEnv, isProduction, isTest } from './utils/envValidation';
+
+let env;
+try {
+  env = validateEnv();
+  console.log('✅ Environment variables validated successfully');
+} catch (error) {
+  console.error('❌ Failed to validate environment variables:', error);
+  process.exit(1);
 }
+
+// Initialize Sentry (after env validation)
+import { initSentry } from './utils/sentry';
+initSentry();
 
 const app = express();
 // Railway'de otomatik port kullan (ayrı servis için)
-const PORT = process.env.PORT || 3001;
+const PORT = env.PORT;
 
 // Trust proxy for production deployments
 app.set('trust proxy', 1);
@@ -57,10 +67,17 @@ app.use(compression());
 
 // Rate limiting
 // Test ortamında rate limiting'i devre dışı bırak
-if (process.env.NODE_ENV !== 'test') {
+if (!isTest()) {
+  // Production'da daha sıkı rate limiting
+  const maxRequests = isProduction() 
+    ? Math.min(env.RATE_LIMIT_MAX_REQUESTS, 50) // Max 50 in production
+    : env.RATE_LIMIT_MAX_REQUESTS;
+  
+  const windowMs = env.RATE_LIMIT_WINDOW_MS;
+  
   const limiter = rateLimit({
-    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'), // limit each IP to 100 requests per windowMs
+    windowMs,
+    max: maxRequests,
     message: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -77,33 +94,40 @@ if (process.env.NODE_ENV !== 'test') {
 // CORS configuration
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
-    // Production ortamında origin kontrolü
-    if (process.env.NODE_ENV === 'production') {
-      // Railway production'da tüm origin'lere izin ver
-      // Railway domain pattern: *.railway.app
-      const isRailway = origin && origin.includes('.railway.app');
-      
-      // Spesifik Railway domain kontrolü
+    // Production ortamında sıkı origin kontrolü
+    if (isProduction()) {
+      // Whitelist: Sadece izin verilen domain'ler
       const allowedDomains = [
-        'mivvo-production.up.railway.app',
-        'mivvo.railway.internal',
-        'www.mivvo.org',
-        'mivvo.org',
-        'mivvo.up.railway.app',
-        'fulfilling-adventure.up.railway.app',
-        'enchanting-flow-production.up.railway.app'
+        'https://www.mivvo.org',
+        'https://mivvo.org',
+        'https://mivvo-production.up.railway.app',
+        'https://mivvo.up.railway.app',
       ];
-      const isAllowedDomain = origin && allowedDomains.some(domain => origin.includes(domain));
       
-      // Railway internal requests için origin undefined olabilir
-      if (isRailway || isAllowedDomain || !origin) {
+      // Railway internal requests için origin undefined olabilir (sadece internal)
+      if (!origin) {
+        // Internal Railway requests - sadece Railway internal network'ten geliyorsa izin ver
+        callback(null, true);
+        return;
+      }
+      
+      // Origin'in tam olarak eşleşmesi gerekiyor (substring değil)
+      const isAllowed = allowedDomains.includes(origin);
+      
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(new Error('CORS policy violation'));
+        console.warn(`⚠️ CORS blocked origin: ${origin}`);
+        callback(new Error('CORS policy violation: Origin not allowed'));
       }
     } else {
-      // Development'ta tüm localhost'lara izin ver
-      callback(null, true);
+      // Development'ta localhost ve 127.0.0.1'e izin ver
+      if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('0.0.0.0')) {
+        callback(null, true);
+      } else {
+        console.warn(`⚠️ CORS blocked origin in development: ${origin}`);
+        callback(new Error('CORS policy violation: Only localhost allowed in development'));
+      }
     }
   },
   credentials: true,
@@ -146,6 +170,10 @@ app.get('/api/health', async (req, res) => {
     
     console.log(`[${new Date().toISOString()}] ✅ Health Check - Database bağlantısı başarılı (${dbCheckDuration}ms)`);
     
+    // Monitoring metrics
+    const { getHealthMetrics } = require('./utils/monitoring');
+    const healthMetrics = getHealthMetrics();
+    
     const healthCheckDuration = Date.now() - healthCheckStart;
     const response = {
       status: 'OK',
@@ -157,11 +185,8 @@ app.get('/api/health', async (req, res) => {
       database: 'connected',
       databaseCheckDuration: dbCheckDuration,
       healthCheckDuration: healthCheckDuration,
-      memory: {
-        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-        rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
-      }
+      memory: healthMetrics.memory,
+      performance: healthMetrics.performance,
     };
     
     console.log(`[${new Date().toISOString()}] ✅ Health Check - Başarılı (${healthCheckDuration}ms)`, JSON.stringify(response, null, 2));
@@ -202,6 +227,23 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Metrics endpoint
+app.get('/api/metrics', async (req, res) => {
+  try {
+    const { getHealthMetrics } = require('./utils/monitoring');
+    const metrics = getHealthMetrics();
+    res.json({
+      success: true,
+      data: metrics,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Metrics alınamadı',
+    });
+  }
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -239,6 +281,19 @@ if (process.env.NODE_ENV === 'production') {
   // Production'da database logger'ı devre dışı bırak (kota tasarrufu için)
 } else {
   prisma.$use(databaseLoggerMiddleware);
+}
+
+// Queue Workers başlat
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    const { startAIAnalysisWorker } = require('./jobs/aiAnalysisJob');
+    const { startEmailWorker } = require('./jobs/emailJob');
+    startAIAnalysisWorker();
+    startEmailWorker();
+    console.log('✅ Queue workers başlatıldı (AI Analysis, Email)');
+  } catch (error) {
+    console.warn('⚠️ Queue workers başlatılamadı (Redis bağlantısı yok olabilir):', error instanceof Error ? error.message : error);
+  }
 }
 
 // Start server (only if not in test environment)
@@ -311,6 +366,15 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`[${new Date().toISOString()}] 2️⃣  Veritabanı bağlantısı kesiliyor...`);
         await disconnectPrisma();
         console.log(`[${new Date().toISOString()}] ✓ Veritabanı bağlantısı kesildi`);
+        
+        console.log(`[${new Date().toISOString()}] 3️⃣  Queue'lar kapatılıyor...`);
+        try {
+          const { closeAllQueues } = require('./services/queueService');
+          await closeAllQueues();
+          console.log(`[${new Date().toISOString()}] ✓ Queue'lar kapatıldı`);
+        } catch (error) {
+          console.warn(`[${new Date().toISOString()}] ⚠️ Queue kapatma hatası:`, error);
+        }
         
         const shutdownDuration = Date.now() - shutdownStart;
         console.log(`\n[${new Date().toISOString()}] ✅ Sunucu başarıyla kapatıldı (${shutdownDuration}ms)`);

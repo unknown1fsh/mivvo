@@ -16,7 +16,7 @@ export interface CreateTicketRequest {
   category: string;
   priority: string;
   reportId?: number;
-  attachments?: string;
+  attachments?: string; // JSON string array of URLs
 }
 
 export interface TicketFilter {
@@ -32,13 +32,25 @@ export interface TicketFilter {
  * Yeni Ticket Oluştur
  */
 export async function createTicket(data: CreateTicketRequest) {
+  // Enum değerlerini validate et
+  const validCategories = ['GENERAL', 'TECHNICAL', 'BILLING', 'REPORT_ISSUE', 'FEATURE_REQUEST'];
+  const validPriorities = ['LOW', 'NORMAL', 'HIGH', 'URGENT'];
+  
+  const category = (data.category && validCategories.includes(data.category.toUpperCase())) 
+    ? data.category.toUpperCase() 
+    : 'GENERAL';
+  
+  const priority = (data.priority && validPriorities.includes(data.priority.toUpperCase())) 
+    ? data.priority.toUpperCase() 
+    : 'NORMAL';
+
   const ticket = await prisma.supportTicket.create({
     data: {
       userId: data.userId,
       subject: data.subject,
       description: data.description,
-      category: data.category as any,
-      priority: data.priority as any,
+      category: category as any,
+      priority: priority as any,
       reportId: data.reportId || null,
       attachments: data.attachments || null,
     },

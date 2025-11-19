@@ -23,6 +23,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { httpLogger, createRequestContext } from '../utils/logger';
+import { recordPerformanceMetric } from '../utils/monitoring';
 
 // Extend Request interface to include user property
 declare global {
@@ -151,6 +152,15 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction) =
         userId: req.user?.id,
       });
     }
+
+    // Performance metric kaydet
+    recordPerformanceMetric({
+      endpoint: req.path,
+      method: req.method,
+      duration: responseTime,
+      statusCode: res.statusCode,
+      timestamp: new Date(),
+    });
   });
   
   next();

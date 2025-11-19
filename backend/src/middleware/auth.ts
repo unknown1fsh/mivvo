@@ -76,9 +76,15 @@ export const authenticate = async (
     }
 
     // JWT_SECRET environment variable kontrolü
+    // envValidation'dan validated secret kullan
     const secret = process.env.JWT_SECRET;
-    if (!secret) {
-      throw new Error('JWT_SECRET environment variable is not set');
+    if (!secret || secret.length < 32) {
+      console.error('❌ JWT_SECRET is missing or too short');
+      res.status(500).json({
+        success: false,
+        message: 'Sunucu yapılandırma hatası.',
+      });
+      return;
     }
 
     // Token'ı doğrula ve decode et
