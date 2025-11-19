@@ -303,54 +303,8 @@ export interface UploadedAudio {
 }
 
 // ===== PAINT ANALYSIS RESULT INTERFACE =====
-
-/**
- * Paint Analysis Result (Boya Analizi Sonucu)
- * 
- * AI boya analizi sonuçları.
- * 
- * OpenAI Vision API'den dönen analiz sonuçları.
- */
-export interface PaintAnalysisResult {
-  /** Rapor ID */
-  id: string
-  
-  /** Araç bilgileri */
-  vehicleInfo: VehicleInfo
-  
-  /** Genel skor (0-100) */
-  overallScore: number
-  
-  /** Boya durumu (örn: 'Mükemmel', 'İyi', 'Orta', 'Kötü') */
-  paintCondition: string
-  
-  /** Renk eşleşme skoru (0-100) */
-  colorMatching: number
-  
-  /** Boya kalınlığı (mikron) */
-  paintThickness: number
-  
-  /** Çizik sayısı */
-  scratchCount: number
-  
-  /** Göçük sayısı */
-  dentCount: number
-  
-  /** Pas tespit edildi mi? */
-  rustDetected: boolean
-  
-  /** Oksidasyon seviyesi (0-100) */
-  oxidationLevel: number
-  
-  /** Parlaklık seviyesi (0-100) */
-  glossLevel: number
-  
-  /** Tamir önerileri */
-  recommendations: string[]
-  
-  /** Analiz tarihi */
-  createdAt: Date
-}
+// Note: PaintAnalysisResult is now exported from './paintAnalysis' to avoid duplicate exports
+// Use: import { PaintAnalysisResult } from './paintAnalysis'
 
 // ===== ENGINE SOUND ANALYSIS RESULT INTERFACE =====
 

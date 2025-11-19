@@ -19,7 +19,8 @@
  * ```
  */
 
-import { VehicleInfo, PaintAnalysisResult, EngineSoundAnalysisResult } from './vehicle'
+import { VehicleInfo, EngineSoundAnalysisResult } from './vehicle'
+import { PaintAnalysisResult } from './paintAnalysis'
 
 // ===== REPORT INTERFACE =====
 

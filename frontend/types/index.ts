@@ -106,8 +106,29 @@ export * from './audioAnalysis'
  * Değer Tahmini Tipleri
  * 
  * Değer tahmini raporları ile ilgili tüm tipler.
+ * Note: Recommendations is exported from './audioAnalysis' to avoid conflict
  */
-export * from './valueEstimation'
+export type {
+  ValueEstimationResult,
+  MarketAnalysis,
+  VehicleCondition,
+  PriceBreakdown,
+  MarketPosition,
+  InvestmentAnalysis,
+  // Recommendations is excluded - exported from audioAnalysis
+  ComparableVehicle,
+} from './valueEstimation'
+export {
+  RiskLevel,
+  RiskLevelDescriptions,
+  RiskLevelColors,
+  RiskLevelBgColors,
+  getValueRangeCategory,
+  getLiquidityCategory,
+  getConditionCategory,
+  formatPrice,
+  formatPercentage,
+} from './valueEstimation'
 
 // ===== COMPREHENSIVE EXPERTISE TYPES =====
 
