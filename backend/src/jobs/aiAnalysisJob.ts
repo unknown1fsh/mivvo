@@ -77,13 +77,14 @@ export function startAIAnalysisWorker(): void {
       });
 
       // AI Analysis Result kaydı oluştur
+      const jobTimestamp = (job as any).timestamp || job.processedOn || Date.now();
       await prisma.aiAnalysisResult.create({
         data: {
           reportId,
           analysisType,
           resultData: analysisResult,
           confidenceScore: analysisResult.confidence || analysisResult.güven || null,
-          processingTimeMs: Date.now() - job.timestamp,
+          processingTimeMs: Date.now() - jobTimestamp,
         },
       });
 

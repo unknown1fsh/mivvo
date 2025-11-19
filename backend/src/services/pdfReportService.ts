@@ -181,7 +181,7 @@ async function generatePDFContent(
     doc.moveDown();
 
     // İlk resmi ekle (örnek - gerçek implementasyonda base64'ü decode edip eklemek gerekir)
-    doc.fontSize(10).text('Not: Görseller PDF\'e eklenmek için optimize edilmelidir.', { italic: true });
+    doc.fontSize(10).text('Not: Görseller PDF\'e eklenmek için optimize edilmelidir.');
   }
 
   // Footer
