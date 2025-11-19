@@ -58,8 +58,8 @@ export default function ReportDetailPage() {
       setLoading(true)
       const response = await api.get(`/api/user/reports/${reportId}`)
       
-      if (response.data.success) {
-        setReport(response.data.data.report)
+      if ((response.data as any)?.success) {
+        setReport((response.data as any).data.report)
       }
     } catch (error) {
       console.error('Rapor yüklenemedi:', error)

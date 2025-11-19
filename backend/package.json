@@ -8,6 +8,7 @@
     "build": "prisma generate && tsc",
     "postinstall": "prisma generate",
     "start": "cross-env NODE_ENV=production node dist/index.js",
+    "start:railway": "npx prisma migrate deploy || echo 'Migration failed, continuing...' && npm run start",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

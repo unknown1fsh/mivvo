@@ -313,39 +313,52 @@ if (process.env.NODE_ENV !== 'test') {
   console.log(`   • Railway Service: ${process.env.RAILWAY_SERVICE_NAME || 'N/A'}`);
   console.log(`   • Railway Deployment: ${process.env.RAILWAY_DEPLOYMENT_ID || 'N/A'}`);
   
-  server = app.listen(PORT, () => {
-    const startupDuration = Date.now() - startupTime;
-    console.log(`\n[${new Date().toISOString()}] 📡 Sunucu Durumu:`);
-    console.log(`   ✓ Backend sunucusu başarıyla başlatıldı (${startupDuration}ms)`);
-    console.log(`   ✓ Port: ${PORT}`);
-    console.log(`   ✓ Ortam: ${process.env.NODE_ENV === 'production' ? 'Üretim' : 'Geliştirme'}`);
-    console.log(`   ✓ Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`   ✓ Memory: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB / ${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)}MB`);
-    
-    console.log(`\n[${new Date().toISOString()}] 🔌 Aktif API Route'ları:`);
-    console.log(`   • /api/auth - Kullanıcı kimlik doğrulama`);
-    console.log(`   • /api/user - Kullanıcı işlemleri`);
-    console.log(`   • /api/vehicle - Araç raporları`);
-    console.log(`   • /api/payment - Ödeme işlemleri`);
-    console.log(`   • /api/admin - Yönetici paneli`);
-    console.log(`   • /api/damage-analysis - Hasar analizi`);
-    console.log(`   • /api/paint-analysis - Boya analizi`);
-    console.log(`   • /api/engine-sound - Motor sesi analizi`);
-    console.log(`   • /api/comprehensive-expertise - Kapsamlı ekspertiz`);
-    
-    console.log(`\n[${new Date().toISOString()}] 🗄️  Veritabanı:`);
-    console.log(`   • DATABASE_URL: ${process.env.DATABASE_URL ? '✓ Tanımlı' : '✗ Tanımlı değil'}`);
-    console.log(`   • Database Logger: ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Kapatıldı (kota tasarrufu)' : '✓ Aktif'}`);
-    
-    console.log(`\n[${new Date().toISOString()}] 📊 Loglama Sistemi:`);
-    console.log(`   • HTTP Logger: ✓ Aktif`);
-    console.log(`   • Request Logger: ✓ Aktif`);
-    console.log(`   • Log Level: ${process.env.NODE_ENV === 'production' ? 'INFO (sadece hata logları)' : 'DEBUG (tüm loglar)'}`);
-    console.log(`   • Console Output: ✓ Aktif (Railway için)`);
-    
-    console.log(`\n[${new Date().toISOString()}] ✨ Sunucu hazır ve istek almaya başladı!`);
-    console.log(`[${new Date().toISOString()}] 🎯 Railway Deployment için hazır\n`);
-  });
+  try {
+    server = app.listen(PORT, () => {
+      const startupDuration = Date.now() - startupTime;
+      console.log(`\n[${new Date().toISOString()}] 📡 Sunucu Durumu:`);
+      console.log(`   ✓ Backend sunucusu başarıyla başlatıldı (${startupDuration}ms)`);
+      console.log(`   ✓ Port: ${PORT}`);
+      console.log(`   ✓ Ortam: ${process.env.NODE_ENV === 'production' ? 'Üretim' : 'Geliştirme'}`);
+      console.log(`   ✓ Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`   ✓ Memory: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB / ${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)}MB`);
+      
+      console.log(`\n[${new Date().toISOString()}] 🔌 Aktif API Route'ları:`);
+      console.log(`   • /api/auth - Kullanıcı kimlik doğrulama`);
+      console.log(`   • /api/user - Kullanıcı işlemleri`);
+      console.log(`   • /api/vehicle - Araç raporları`);
+      console.log(`   • /api/payment - Ödeme işlemleri`);
+      console.log(`   • /api/admin - Yönetici paneli`);
+      console.log(`   • /api/damage-analysis - Hasar analizi`);
+      console.log(`   • /api/paint-analysis - Boya analizi`);
+      console.log(`   • /api/engine-sound - Motor sesi analizi`);
+      console.log(`   • /api/comprehensive-expertise - Kapsamlı ekspertiz`);
+      
+      console.log(`\n[${new Date().toISOString()}] 🗄️  Veritabanı:`);
+      console.log(`   • DATABASE_URL: ${process.env.DATABASE_URL ? '✓ Tanımlı' : '✗ Tanımlı değil'}`);
+      console.log(`   • Database Logger: ${process.env.NODE_ENV === 'production' ? '⚠️  Production: Kapatıldı (kota tasarrufu)' : '✓ Aktif'}`);
+      
+      console.log(`\n[${new Date().toISOString()}] 📊 Loglama Sistemi:`);
+      console.log(`   • HTTP Logger: ✓ Aktif`);
+      console.log(`   • Request Logger: ✓ Aktif`);
+      console.log(`   • Log Level: ${process.env.NODE_ENV === 'production' ? 'INFO (sadece hata logları)' : 'DEBUG (tüm loglar)'}`);
+      console.log(`   • Console Output: ✓ Aktif (Railway için)`);
+      
+      console.log(`\n[${new Date().toISOString()}] ✨ Sunucu hazır ve istek almaya başladı!`);
+      console.log(`[${new Date().toISOString()}] 🎯 Railway Deployment için hazır\n`);
+    });
+
+    server.on('error', (error: any) => {
+      console.error(`[${new Date().toISOString()}] ❌ Server başlatma hatası:`, error);
+      if (error.code === 'EADDRINUSE') {
+        console.error(`[${new Date().toISOString()}] ❌ Port ${PORT} zaten kullanılıyor!`);
+      }
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error(`[${new Date().toISOString()}] ❌ Startup hatası:`, error);
+    process.exit(1);
+  }
 
   // Graceful shutdown
   const gracefulShutdown = async (signal: string) => {
