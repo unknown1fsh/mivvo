@@ -57,23 +57,4 @@ const nextConfig = {
   },
 }
 
-// Sentry configuration (opsiyonel - sadece SENTRY_DSN varsa)
-if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  try {
-    const { withSentryConfig } = require('@sentry/nextjs');
-    const sentryWebpackPluginOptions = {
-      silent: true,
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-      widenClientFileUpload: true,
-      hideSourceMaps: true,
-      disableLogger: true,
-    };
-    module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
-  } catch (error) {
-    console.warn('Sentry config yüklenemedi, normal config kullanılıyor:', error);
-    module.exports = nextConfig;
-  }
-} else {
-  module.exports = nextConfig;
-}
+module.exports = nextConfig
