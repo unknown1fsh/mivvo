@@ -118,6 +118,18 @@ export * from './valueEstimation'
  * Note: getLiquidityCategory is exported from valueEstimation, not from comprehensiveExpertise
  */
 export {
+  ExpertiseGrade,
+  ExpertRecommendation,
+  InvestmentDecisionType,
+  ExpertiseGradeDescriptions,
+  ExpertiseGradeColors,
+  ExpertiseGradeBgColors,
+  ExpertRecommendationDescriptions,
+  ExpertRecommendationColors,
+  InvestmentDecisionDescriptions,
+  InvestmentDecisionColors,
+  getOverallScoreCategory,
+  getROICategory,
   getComprehensiveLiquidityCategory,
   // Don't export getLiquidityCategory to avoid conflict with valueEstimation
 } from './comprehensiveExpertise'
