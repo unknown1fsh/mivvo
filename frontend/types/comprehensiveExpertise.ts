@@ -464,6 +464,7 @@ export function getROICategory(roi: number): string {
 
 /**
  * Likidite skorunu kategoriye çevirir (Comprehensive Expertise için)
+ * Note: getLiquidityCategory is exported from valueEstimation, this is a separate function
  */
 export function getComprehensiveLiquidityCategory(score: number): string {
   if (score >= 90) return 'Mükemmel'
@@ -472,6 +473,3 @@ export function getComprehensiveLiquidityCategory(score: number): string {
   if (score >= 60) return 'Kötü'
   return 'Çok Kötü'
 }
-
-// Backward compatibility - use getComprehensiveLiquidityCategory instead
-export const getLiquidityCategory = getComprehensiveLiquidityCategory
