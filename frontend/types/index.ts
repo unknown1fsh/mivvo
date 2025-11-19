@@ -118,7 +118,6 @@ export * from './valueEstimation'
  * Note: getLiquidityCategory is exported from valueEstimation, not from comprehensiveExpertise
  */
 export {
-  ComprehensiveExpertiseResult,
   getComprehensiveLiquidityCategory,
   // Don't export getLiquidityCategory to avoid conflict with valueEstimation
 } from './comprehensiveExpertise'
