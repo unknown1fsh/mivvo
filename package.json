@@ -15,6 +15,7 @@
     "build:clean": "npm run clean && npm run build",
     "start": "npm run dev:full",
     "start:full": "node scripts/start-full.js",
+    "start:railway": "cd backend && npm run start:railway",
     "start:backend": "cd backend && npm run start",
     "start:frontend": "cd frontend && npm run start",
     "install:all": "npm run install:backend && npm run install:frontend",
