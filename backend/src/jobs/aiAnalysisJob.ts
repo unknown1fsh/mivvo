@@ -36,6 +36,7 @@ export async function addAIAnalysisJob(data: AIAnalysisJobData): Promise<string>
 export function startAIAnalysisWorker(): void {
   createWorker<AIAnalysisJobData>(AI_ANALYSIS_QUEUE, async (job) => {
     const { reportId, imagePath, vehicleInfo, analysisType } = job.data;
+    const jobStartTime = Date.now(); // Job başlangıç zamanı
 
     logInfo('AI analiz job başlatıldı', { reportId, analysisType });
 
@@ -77,14 +78,14 @@ export function startAIAnalysisWorker(): void {
       });
 
       // AI Analysis Result kaydı oluştur
-      const jobTimestamp = (job as any).timestamp || job.processedOn || Date.now();
+      const processingTimeMs = Date.now() - jobStartTime;
       await prisma.aiAnalysisResult.create({
         data: {
           reportId,
           analysisType,
           resultData: analysisResult,
           confidenceScore: analysisResult.confidence || analysisResult.güven || null,
-          processingTimeMs: Date.now() - jobTimestamp,
+          processingTimeMs,
         },
       });
 

@@ -1,5 +1,5 @@
 declare module 'swagger-jsdoc' {
-  interface Options {
+  export interface Options {
     definition: {
       openapi?: string;
       info?: {
