@@ -1,6 +1,27 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''
+// Resolve API base URL
+function getApiBaseUrl(): string {
+  // Production/Preview ortamında NEXT_PUBLIC_API_URL kullan
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL
+  }
+  
+  // Development ortamında localhost kullan
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3001'
+  }
+  
+  // Fallback: Client-side'da window.location.origin kullan
+  if (typeof window !== 'undefined') {
+    return window.location.origin.replace(':3000', ':3001')
+  }
+  
+  // Server-side fallback
+  return 'http://localhost:3001'
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 // Create axios instance
 const api = axios.create({

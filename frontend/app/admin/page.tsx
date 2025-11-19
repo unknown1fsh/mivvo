@@ -28,6 +28,14 @@ import {
   XMarkIcon,
   EyeIcon,
   ChatBubbleLeftIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+  TagIcon,
+  CalendarIcon,
+  UserCircleIcon,
+  ArrowRightIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
@@ -89,6 +97,15 @@ export default function AdminPage() {
     priority?: string
     category?: string
   }>({})
+  const [supportTicketSearch, setSupportTicketSearch] = useState('')
+  const [supportTicketStats, setSupportTicketStats] = useState({
+    total: 0,
+    open: 0,
+    inProgress: 0,
+    resolved: 0,
+    closed: 0,
+    urgent: 0,
+  })
 
   // Auth Check
   useEffect(() => {
@@ -203,20 +220,65 @@ export default function AdminPage() {
     try {
       const response = await adminService.getAllSupportTickets({
         page,
-        limit: 10,
+        limit: 20,
         status: filters.status,
         priority: filters.priority,
         category: filters.category,
       })
 
       if (response && response.success && response.data) {
-        setSupportTickets(response.data.tickets || [])
+        const tickets = response.data.tickets || []
+        setSupportTickets(tickets)
         setSupportTicketPage(response.data.page || 1)
         setSupportTicketTotalPages(response.data.totalPages || 1)
+        
+        // İstatistikleri hesapla
+        setSupportTicketStats({
+          total: response.data.total || 0,
+          open: tickets.filter((t: any) => t.status === 'OPEN').length,
+          inProgress: tickets.filter((t: any) => t.status === 'IN_PROGRESS').length,
+          resolved: tickets.filter((t: any) => t.status === 'RESOLVED').length,
+          closed: tickets.filter((t: any) => t.status === 'CLOSED').length,
+          urgent: tickets.filter((t: any) => t.priority === 'URGENT').length,
+        })
       }
     } catch (error) {
       console.error('Error fetching support tickets:', error)
       toast.error('Destek talepleri yüklenirken hata oluştu')
+    }
+  }
+
+  const handleUpdateTicketStatus = async (ticketId: number, newStatus: string) => {
+    try {
+      await adminService.updateSupportTicketStatus(ticketId, newStatus)
+      toast.success('Ticket durumu güncellendi')
+      fetchSupportTickets(supportTicketPage, supportTicketFilters)
+      if (selectedTicket?.id === ticketId) {
+        const response = await adminService.getSupportTicketById(ticketId)
+        if (response && response.success) {
+          setSelectedTicket(response.data.ticket)
+        }
+      }
+    } catch (error) {
+      console.error('Error updating ticket status:', error)
+      toast.error('Ticket durumu güncellenirken hata oluştu')
+    }
+  }
+
+  const handleUpdateTicketPriority = async (ticketId: number, newPriority: string) => {
+    try {
+      await adminService.updateSupportTicketPriority(ticketId, newPriority)
+      toast.success('Ticket önceliği güncellendi')
+      fetchSupportTickets(supportTicketPage, supportTicketFilters)
+      if (selectedTicket?.id === ticketId) {
+        const response = await adminService.getSupportTicketById(ticketId)
+        if (response && response.success) {
+          setSelectedTicket(response.data.ticket)
+        }
+      }
+    } catch (error) {
+      console.error('Error updating ticket priority:', error)
+      toast.error('Ticket önceliği güncellenirken hata oluştu')
     }
   }
 
@@ -994,100 +1056,158 @@ export default function AdminPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
             >
+              {/* İstatistik Kartları */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <StatsCard
+                  title="Toplam Talep"
+                  value={supportTicketStats.total}
+                  icon={ChatBubbleLeftIcon}
+                  color="blue"
+                  delay={0}
+                />
+                <StatsCard
+                  title="Açık"
+                  value={supportTicketStats.open}
+                  icon={ExclamationCircleIcon}
+                  color="yellow"
+                  delay={0.1}
+                />
+                <StatsCard
+                  title="İşlemde"
+                  value={supportTicketStats.inProgress}
+                  icon={ClockIcon}
+                  color="blue"
+                  delay={0.2}
+                />
+                <StatsCard
+                  title="Çözüldü"
+                  value={supportTicketStats.resolved}
+                  icon={CheckCircleIcon}
+                  color="green"
+                  delay={0.3}
+                />
+                <StatsCard
+                  title="Kapalı"
+                  value={supportTicketStats.closed}
+                  icon={XCircleIcon}
+                  color="indigo"
+                  delay={0.4}
+                />
+                <StatsCard
+                  title="Acil"
+                  value={supportTicketStats.urgent}
+                  icon={ExclamationCircleIcon}
+                  color="red"
+                  delay={0.5}
+                />
+              </div>
+
+              {/* Arama ve Filtreler */}
               <div className="card">
-                {/* Filter Bar */}
                 <div className="p-6 border-b border-gray-200">
-                  <div className="flex flex-wrap items-center gap-4">
-                    <select
-                      value={supportTicketFilters.status || ''}
-                      onChange={(e) => {
-                        const newFilters = { ...supportTicketFilters, status: e.target.value || undefined }
-                        setSupportTicketFilters(newFilters)
-                        fetchSupportTickets(1, newFilters)
-                      }}
-                      className="input"
-                    >
-                      <option value="">Tüm Durumlar</option>
-                      <option value="OPEN">Açık</option>
-                      <option value="IN_PROGRESS">İşlemde</option>
-                      <option value="RESOLVED">Çözüldü</option>
-                      <option value="CLOSED">Kapalı</option>
-                    </select>
-                    <select
-                      value={supportTicketFilters.priority || ''}
-                      onChange={(e) => {
-                        const newFilters = { ...supportTicketFilters, priority: e.target.value || undefined }
-                        setSupportTicketFilters(newFilters)
-                        fetchSupportTickets(1, newFilters)
-                      }}
-                      className="input"
-                    >
-                      <option value="">Tüm Öncelikler</option>
-                      <option value="URGENT">Acil</option>
-                      <option value="HIGH">Yüksek</option>
-                      <option value="NORMAL">Normal</option>
-                      <option value="LOW">Düşük</option>
-                    </select>
-                    <select
-                      value={supportTicketFilters.category || ''}
-                      onChange={(e) => {
-                        const newFilters = { ...supportTicketFilters, category: e.target.value || undefined }
-                        setSupportTicketFilters(newFilters)
-                        fetchSupportTickets(1, newFilters)
-                      }}
-                      className="input"
-                    >
-                      <option value="">Tüm Kategoriler</option>
-                      <option value="GENERAL">Genel</option>
-                      <option value="TECHNICAL">Teknik</option>
-                      <option value="BILLING">Faturalama</option>
-                      <option value="REPORT_ISSUE">Rapor Sorunu</option>
-                      <option value="FEATURE_REQUEST">Özellik İsteği</option>
-                    </select>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Arama */}
+                    <div className="flex-1">
+                      <div className="relative">
+                        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Konu, kullanıcı veya açıklama ara..."
+                          value={supportTicketSearch}
+                          onChange={(e) => setSupportTicketSearch(e.target.value)}
+                          className="input pl-10 w-full"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Filtreler */}
+                    <div className="flex flex-wrap gap-3">
+                      <select
+                        value={supportTicketFilters.status || ''}
+                        onChange={(e) => {
+                          const newFilters = { ...supportTicketFilters, status: e.target.value || undefined }
+                          setSupportTicketFilters(newFilters)
+                          fetchSupportTickets(1, newFilters)
+                        }}
+                        className="input min-w-[150px]"
+                      >
+                        <option value="">Tüm Durumlar</option>
+                        <option value="OPEN">🔓 Açık</option>
+                        <option value="IN_PROGRESS">⚙️ İşlemde</option>
+                        <option value="RESOLVED">✅ Çözüldü</option>
+                        <option value="CLOSED">🔒 Kapalı</option>
+                      </select>
+                      <select
+                        value={supportTicketFilters.priority || ''}
+                        onChange={(e) => {
+                          const newFilters = { ...supportTicketFilters, priority: e.target.value || undefined }
+                          setSupportTicketFilters(newFilters)
+                          fetchSupportTickets(1, newFilters)
+                        }}
+                        className="input min-w-[150px]"
+                      >
+                        <option value="">Tüm Öncelikler</option>
+                        <option value="URGENT">🔴 Acil</option>
+                        <option value="HIGH">🟠 Yüksek</option>
+                        <option value="NORMAL">🔵 Normal</option>
+                        <option value="LOW">⚪ Düşük</option>
+                      </select>
+                      <select
+                        value={supportTicketFilters.category || ''}
+                        onChange={(e) => {
+                          const newFilters = { ...supportTicketFilters, category: e.target.value || undefined }
+                          setSupportTicketFilters(newFilters)
+                          fetchSupportTickets(1, newFilters)
+                        }}
+                        className="input min-w-[150px]"
+                      >
+                        <option value="">Tüm Kategoriler</option>
+                        <option value="GENERAL">📋 Genel</option>
+                        <option value="TECHNICAL">🔧 Teknik</option>
+                        <option value="BILLING">💳 Faturalama</option>
+                        <option value="REPORT_ISSUE">📊 Rapor Sorunu</option>
+                        <option value="FEATURE_REQUEST">💡 Özellik İsteği</option>
+                      </select>
+                      <button
+                        onClick={() => {
+                          setSupportTicketFilters({})
+                          setSupportTicketSearch('')
+                          fetchSupportTickets(1, {})
+                        }}
+                        className="btn btn-secondary flex items-center space-x-2"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                        <span>Temizle</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
                 
-                {/* Support Tickets Table */}
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Konu
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Kullanıcı
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Kategori
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Öncelik
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Durum
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tarih
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          İşlemler
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {supportTickets.length === 0 ? (
-                        <tr>
-                          <td colSpan={8} className="px-6 py-4 text-center text-sm text-gray-500">
-                            Henüz destek talebi bulunmuyor
-                          </td>
-                        </tr>
-                      ) : (
-                        supportTickets.map((ticket: any) => {
+                {/* Support Tickets - Modern Card View */}
+                <div className="p-6">
+                  {supportTickets.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ChatBubbleLeftIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-lg font-medium">Henüz destek talebi bulunmuyor</p>
+                      <p className="text-gray-400 text-sm mt-2">Filtreleri temizleyip tekrar deneyin</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {supportTickets
+                        .filter((ticket: any) => {
+                          if (!supportTicketSearch) return true
+                          const search = supportTicketSearch.toLowerCase()
+                          return (
+                            ticket.subject?.toLowerCase().includes(search) ||
+                            ticket.description?.toLowerCase().includes(search) ||
+                            ticket.user?.firstName?.toLowerCase().includes(search) ||
+                            ticket.user?.lastName?.toLowerCase().includes(search) ||
+                            ticket.user?.email?.toLowerCase().includes(search)
+                          )
+                        })
+                        .map((ticket: any) => {
                           const getPriorityText = (priority: string) => {
                             switch (priority) {
                               case 'URGENT': return 'Acil'
@@ -1100,11 +1220,11 @@ export default function AdminPage() {
 
                           const getPriorityColor = (priority: string) => {
                             switch (priority) {
-                              case 'URGENT': return 'bg-red-100 text-red-700'
-                              case 'HIGH': return 'bg-orange-100 text-orange-700'
-                              case 'NORMAL': return 'bg-blue-100 text-blue-700'
-                              case 'LOW': return 'bg-gray-100 text-gray-700'
-                              default: return 'bg-gray-100 text-gray-700'
+                              case 'URGENT': return 'bg-red-100 text-red-700 border-red-200'
+                              case 'HIGH': return 'bg-orange-100 text-orange-700 border-orange-200'
+                              case 'NORMAL': return 'bg-blue-100 text-blue-700 border-blue-200'
+                              case 'LOW': return 'bg-gray-100 text-gray-700 border-gray-200'
+                              default: return 'bg-gray-100 text-gray-700 border-gray-200'
                             }
                           }
 
@@ -1120,70 +1240,146 @@ export default function AdminPage() {
 
                           const getStatusColor = (status: string) => {
                             switch (status) {
-                              case 'OPEN': return 'bg-yellow-100 text-yellow-700'
-                              case 'IN_PROGRESS': return 'bg-blue-100 text-blue-700'
-                              case 'RESOLVED': return 'bg-green-100 text-green-700'
-                              case 'CLOSED': return 'bg-gray-100 text-gray-700'
-                              default: return 'bg-gray-100 text-gray-700'
+                              case 'OPEN': return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                              case 'IN_PROGRESS': return 'bg-blue-100 text-blue-700 border-blue-200'
+                              case 'RESOLVED': return 'bg-green-100 text-green-700 border-green-200'
+                              case 'CLOSED': return 'bg-gray-100 text-gray-700 border-gray-200'
+                              default: return 'bg-gray-100 text-gray-700 border-gray-200'
                             }
                           }
 
                           const getCategoryText = (category: string) => {
                             switch (category) {
-                              case 'GENERAL': return 'Genel'
-                              case 'TECHNICAL': return 'Teknik'
-                              case 'BILLING': return 'Faturalama'
-                              case 'REPORT_ISSUE': return 'Rapor Sorunu'
-                              case 'FEATURE_REQUEST': return 'Özellik İsteği'
+                              case 'GENERAL': return '📋 Genel'
+                              case 'TECHNICAL': return '🔧 Teknik'
+                              case 'BILLING': return '💳 Faturalama'
+                              case 'REPORT_ISSUE': return '📊 Rapor Sorunu'
+                              case 'FEATURE_REQUEST': return '💡 Özellik İsteği'
                               default: return category
                             }
                           }
 
+                          const getCategoryIcon = (category: string) => {
+                            switch (category) {
+                              case 'GENERAL': return '📋'
+                              case 'TECHNICAL': return '🔧'
+                              case 'BILLING': return '💳'
+                              case 'REPORT_ISSUE': return '📊'
+                              case 'FEATURE_REQUEST': return '💡'
+                              default: return '📝'
+                            }
+                          }
+
                           return (
-                            <tr key={ticket.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                #{ticket.id}
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="text-sm font-medium text-gray-900">{ticket.subject}</div>
-                                <div className="text-xs text-gray-500 line-clamp-1">{ticket.description}</div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm text-gray-900">
-                                  {ticket.user?.firstName} {ticket.user?.lastName}
+                            <motion.div
+                              key={ticket.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all cursor-pointer group"
+                              onClick={() => handleTicketClick(ticket.id)}
+                            >
+                              {/* Header */}
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 mb-2">
+                                    <span className="text-lg font-bold text-gray-900">#{ticket.id}</span>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${getPriorityColor(ticket.priority)}`}>
+                                      {getPriorityText(ticket.priority)}
+                                    </span>
+                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold border ${getStatusColor(ticket.status)}`}>
+                                      {getStatusText(ticket.status)}
+                                    </span>
+                                  </div>
+                                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-1">
+                                    {ticket.subject}
+                                  </h3>
                                 </div>
-                                <div className="text-xs text-gray-500">{ticket.user?.email}</div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {getCategoryText(ticket.category)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
-                                  {getPriorityText(ticket.priority)}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
-                                  {getStatusText(ticket.status)}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {formatDate(ticket.createdAt)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              </div>
+
+                              {/* Description */}
+                              <p className="text-sm text-gray-600 line-clamp-2 mb-4">
+                                {ticket.description}
+                              </p>
+
+                              {/* Meta Info */}
+                              <div className="space-y-2 mb-4">
+                                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                  <UserCircleIcon className="w-4 h-4" />
+                                  <span>{ticket.user?.firstName} {ticket.user?.lastName}</span>
+                                  <span className="text-gray-300">•</span>
+                                  <span className="text-xs">{ticket.user?.email}</span>
+                                </div>
+                                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                  <div className="flex items-center space-x-1">
+                                    <TagIcon className="w-3 h-3" />
+                                    <span>{getCategoryText(ticket.category)}</span>
+                                  </div>
+                                  <div className="flex items-center space-x-1">
+                                    <CalendarIcon className="w-3 h-3" />
+                                    <span>{formatDate(ticket.createdAt)}</span>
+                                  </div>
+                                  {ticket.messages && ticket.messages.length > 0 && (
+                                    <div className="flex items-center space-x-1">
+                                      <ChatBubbleLeftIcon className="w-3 h-3" />
+                                      <span>{ticket.messages.length} mesaj</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Quick Actions */}
+                              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                                <div className="flex space-x-2">
+                                  {ticket.status !== 'OPEN' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateTicketStatus(ticket.id, 'OPEN')
+                                      }}
+                                      className="px-3 py-1 text-xs bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-colors"
+                                    >
+                                      Aç
+                                    </button>
+                                  )}
+                                  {ticket.status !== 'IN_PROGRESS' && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateTicketStatus(ticket.id, 'IN_PROGRESS')
+                                      }}
+                                      className="px-3 py-1 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+                                    >
+                                      İşleme Al
+                                    </button>
+                                  )}
+                                  {ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateTicketStatus(ticket.id, 'RESOLVED')
+                                      }}
+                                      className="px-3 py-1 text-xs bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                                    >
+                                      Çöz
+                                    </button>
+                                  )}
+                                </div>
                                 <button
-                                  onClick={() => handleTicketClick(ticket.id)}
-                                  className="text-blue-600 hover:text-blue-900"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleTicketClick(ticket.id)
+                                  }}
+                                  className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center space-x-1"
                                 >
-                                  Detay
+                                  <span>Detaylar</span>
+                                  <ArrowRightIcon className="w-4 h-4" />
                                 </button>
-                              </td>
-                            </tr>
+                              </div>
+                            </motion.div>
                           )
-                        })
-                      )}
-                    </tbody>
-                  </table>
+                        })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Pagination */}

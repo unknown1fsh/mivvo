@@ -100,7 +100,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   private reportError(error: Error, errorInfo: ErrorInfo) {
     // Production'da error reporting servisine gönder
     if (process.env.NODE_ENV === 'production') {
-      // Sentry, Bugsnag, vb. servislere gönder
+      // Sentry'ye gönder
+      if (typeof window !== 'undefined' && (window as any).Sentry) {
+        (window as any).Sentry.captureException(error, {
+          contexts: {
+            react: {
+              componentStack: errorInfo.componentStack,
+            },
+          },
+        });
+      }
       console.error('Error reported to external service:', {
         error: error.message,
         stack: error.stack,

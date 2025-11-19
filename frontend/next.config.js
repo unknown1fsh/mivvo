@@ -1,16 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // !! WARN !!
-    // Dangerously allow production builds to successfully complete even if
-    // your project has type errors.
-    // !! WARN !!
-    ignoreBuildErrors: true,
+    // Type errors must be fixed before production builds
+    ignoreBuildErrors: false,
   },
   eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
+    // ESLint errors must be fixed before production builds
+    ignoreDuringBuilds: false,
   },
   images: {
     domains: ['localhost', 'res.cloudinary.com', 'images.unsplash.com'],
@@ -21,9 +17,11 @@ const nextConfig = {
       // Örnek: NEXT_PUBLIC_API_URL=${{Mivvo-Backend.RAILWAY_PUBLIC_DOMAIN}}
       NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001'),
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || (process.env.NODE_ENV === 'production' ? 'https://mivvo.up.railway.app' : 'http://localhost:3000'),
-      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'your-secret-key-here',
+      // NEXTAUTH_SECRET and JWT_SECRET must be set in environment variables
+      // No fallback values for security
+      NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
       DATABASE_URL: process.env.DATABASE_URL,
-      JWT_SECRET: process.env.JWT_SECRET || 'your-jwt-secret',
+      JWT_SECRET: process.env.JWT_SECRET,
       CORS_ORIGIN: process.env.CORS_ORIGIN || (process.env.NODE_ENV === 'production' ? 'https://mivvo.up.railway.app' : 'http://localhost:3000'),
   },
   compiler: {
@@ -59,4 +57,23 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+// Sentry configuration (opsiyonel - sadece SENTRY_DSN varsa)
+if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+  try {
+    const { withSentryConfig } = require('@sentry/nextjs');
+    const sentryWebpackPluginOptions = {
+      silent: true,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      widenClientFileUpload: true,
+      hideSourceMaps: true,
+      disableLogger: true,
+    };
+    module.exports = withSentryConfig(nextConfig, sentryWebpackPluginOptions);
+  } catch (error) {
+    console.warn('Sentry config yüklenemedi, normal config kullanılıyor:', error);
+    module.exports = nextConfig;
+  }
+} else {
+  module.exports = nextConfig;
+}
