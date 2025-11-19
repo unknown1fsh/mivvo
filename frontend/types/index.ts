@@ -115,5 +115,14 @@ export * from './valueEstimation'
  * Kapsamlı Ekspertiz Tipleri
  * 
  * Kapsamlı ekspertiz raporları ile ilgili tüm tipler.
+ * Note: getLiquidityCategory is exported from valueEstimation, not from comprehensiveExpertise
  */
-export * from './comprehensiveExpertise'
+export {
+  ComprehensiveExpertiseData,
+  ComprehensiveExpertiseReport,
+  getComprehensiveLiquidityCategory,
+  // Don't export getLiquidityCategory to avoid conflict with valueEstimation
+} from './comprehensiveExpertise'
+export type {
+  ComprehensiveExpertiseData as ComprehensiveExpertiseDataType,
+} from './comprehensiveExpertise'
