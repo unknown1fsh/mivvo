@@ -764,7 +764,7 @@ export class DamageAnalysisService {
     }
 
     // AI'dan veri gelmediğinde detaylı hata logla
-    console.error('[AI] ❌ calculateAnalysisResults - AI'dan veri gelmedi:', {
+    console.error('[AI] ❌ calculateAnalysisResults - AI\'dan veri gelmedi:', {
       analysisResultsCount: analysisResults.length,
       combinedAnalysis: combinedAnalysis,
       hasGenelDeğerlendirme: !!combinedAnalysis?.genelDeğerlendirme
