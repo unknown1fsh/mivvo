@@ -217,6 +217,22 @@ export const getUserById = async (req: AuthRequest, res: Response): Promise<void
     return;
   }
 
+  // Eğer kredi kaydı yoksa oluştur (backward compatibility)
+  if (!user.userCredits) {
+    console.log(`⚠️ Admin - UserCredits not found for user ${user.id}, creating...`);
+    
+    user.userCredits = await prisma.userCredits.create({
+      data: {
+        userId: user.id,
+        balance: 0,
+        totalPurchased: 0,
+        totalUsed: 0,
+      },
+    });
+    
+    console.log(`✅ Admin - UserCredits created for user ${user.id}`);
+  }
+
   res.json({
     success: true,
     data: { user },
@@ -823,46 +839,56 @@ export const addUserCredits = async (req: AuthRequest, res: Response): Promise<v
     return;
   }
 
-  // Kullanıcı kredisi yoksa oluştur
-  if (!user.userCredits) {
-    await prisma.userCredits.create({
+  // Atomik işlem: Kredi kaydı oluştur/güncelle + Transaction kaydı
+  const result = await prisma.$transaction(async (tx) => {
+    // Kullanıcı kredisi yoksa oluştur
+    let userCredits = await tx.userCredits.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!userCredits) {
+      userCredits = await tx.userCredits.create({
+        data: {
+          userId: user.id,
+          balance: 0,
+          totalPurchased: 0,
+          totalUsed: 0,
+        },
+      });
+    }
+
+    // Kredi ekle
+    const updatedCredits = await tx.userCredits.update({
+      where: { userId: user.id },
       data: {
-        userId: user.id,
-        balance: 0,
-        totalPurchased: 0,
-        totalUsed: 0,
+        balance: {
+          increment: amount,
+        },
+        totalPurchased: {
+          increment: amount,
+        },
       },
     });
-  }
 
-  // Kredi ekle
-  const updatedCredits = await prisma.userCredits.update({
-    where: { userId: user.id },
-    data: {
-      balance: {
-        increment: amount,
+    // Transaction kaydı oluştur
+    await tx.creditTransaction.create({
+      data: {
+        userId: user.id,
+        transactionType: 'PURCHASE',
+        amount: amount,
+        description: description,
+        referenceId: `admin_add_${req.user!.id}_${Date.now()}`,
+        status: 'COMPLETED',
       },
-      totalPurchased: {
-        increment: amount,
-      },
-    },
-  });
+    });
 
-  // Transaction kaydı oluştur
-  await prisma.creditTransaction.create({
-    data: {
-      userId: user.id,
-      transactionType: 'PURCHASE',
-      amount: amount,
-      description: description,
-      referenceId: `admin_add_${req.user!.id}_${Date.now()}`,
-    },
+    return updatedCredits;
   });
 
   res.json({
     success: true,
     message: `${amount} kredi başarıyla eklendi.`,
-    data: { credits: updatedCredits },
+    data: { credits: result },
   });
 };
 
