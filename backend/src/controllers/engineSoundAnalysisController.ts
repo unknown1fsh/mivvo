@@ -323,10 +323,38 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
   // AI analizi simüle et (background job - 5 saniye)
   // TODO: Gerçek uygulamada Bull/Agenda gibi queue kullanılmalı
   setTimeout(async () => {
+    // Retry mekanizması: Maksimum 2 deneme
+    let analysisResult: any = null
+    let lastError: any = null
+    const maxRetries = 2
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        if (attempt > 1) {
+          console.log(`🔄 Motor sesi analizi tekrar deneniyor... (Deneme ${attempt}/${maxRetries})`)
+          // Retry arasında kısa bir bekleme
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        } else {
+          console.log('🔊 Engine Sound Analysis - AI analizi başlatılıyor...')
+        }
+
+        analysisResult = await simulateEngineSoundAnalysis(audioFiles, vehicleInfo)
+        
+        // Başarılı oldu, döngüden çık
+        break
+      } catch (error) {
+        lastError = error
+        console.error(`❌ Motor sesi analizi hatası (Deneme ${attempt}/${maxRetries}):`, error)
+        
+        // Son deneme ise hatayı fırlat
+        if (attempt === maxRetries) {
+          throw lastError
+        }
+        // Değilse bir sonraki denemeye geç
+      }
+    }
+
     try {
-      console.log('🔊 Engine Sound Analysis - AI analizi başlatılıyor...');
-      const analysisResult = await simulateEngineSoundAnalysis(audioFiles, vehicleInfo);
-      
       // Debug: AI sonucunu detaylı logla
       console.log('📊 Engine Sound Analysis - AI Sonucu Detayları:', {
         hasAnalysisResult: !!analysisResult,
@@ -340,17 +368,26 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
         engineHealth: analysisResult?.engineHealth
       });
       
-      // Veri validasyonu
+      // SIKI VALİDASYON: AI sonucu boş mu kontrol et
       if (!analysisResult || Object.keys(analysisResult).length === 0) {
-        throw new Error('AI analizi boş sonuç döndü');
+        console.error('❌ Engine Sound Analysis - AI analizi boş sonuç döndü')
+        throw new Error('AI analizi boş sonuç döndü. Motor sesi analizi yapılamadı.')
       }
       
-      if (!analysisResult.overallScore || !analysisResult.engineHealth || !analysisResult.rpmAnalysis) {
-        console.warn('⚠️ Engine Sound Analysis - Eksik veri alanları:', {
-          hasOverallScore: !!analysisResult.overallScore,
-          hasEngineHealth: !!analysisResult.engineHealth,
-          hasRpmAnalysis: !!analysisResult.rpmAnalysis
-        });
+      // SIKI VALİDASYON: Zorunlu alanlar kontrolü
+      if (!analysisResult.overallScore) {
+        console.error('❌ Engine Sound Analysis - overallScore eksik')
+        throw new Error('AI analiz sonucu eksik. Genel puan bilgisi alınamadı.')
+      }
+
+      if (!analysisResult.engineHealth) {
+        console.error('❌ Engine Sound Analysis - engineHealth eksik')
+        throw new Error('AI analiz sonucu eksik. Motor sağlığı bilgisi alınamadı.')
+      }
+
+      if (!analysisResult.rpmAnalysis) {
+        console.error('❌ Engine Sound Analysis - rpmAnalysis eksik')
+        throw new Error('AI analiz sonucu eksik. RPM analizi bilgisi alınamadı.')
       }
       
       await prisma.vehicleReport.update({
@@ -367,9 +404,12 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
         dataKeys: Object.keys(analysisResult)
       });
     } catch (error) {
-      console.error('Motor sesi analizi hatası:', error);
+      console.error('❌ Motor sesi analizi hatası:', error);
       
-      // Analiz başarısız oldu - Krediyi iade et
+      // Analiz başarısız oldu - Krediyi iade et (GARANTİLİ)
+      let creditRefunded = false
+      let refundError: any = null
+      
       try {
         const userId = req.user!.id
         const serviceCost = CREDIT_PRICING.ENGINE_SOUND_ANALYSIS
@@ -378,21 +418,33 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
           userId,
           report.id,
           serviceCost,
-          'Motor sesi analizi AI servisi başarısız'
+          'Motor sesi analizi AI servisi başarısız - Kredi otomatik iade edildi'
         )
         
+        creditRefunded = true
         console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
-      } catch (refundError) {
-        console.error('❌ Kredi iade hatası:', refundError)
+      } catch (refundErr) {
+        refundError = refundErr
+        console.error('❌ Kredi iade hatası:', refundErr)
+        // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
       }
       
-      await prisma.vehicleReport.update({
-        where: { id: report.id },
-        data: { 
-          status: 'FAILED',
-          expertNotes: 'Motor sesi analizi başarısız oldu. Kredi iade edildi.'
-        },
-      });
+      // Raporu MUTLAKA FAILED olarak işaretle (kredi iade başarılı olsa da olmasa da)
+      try {
+        await prisma.vehicleReport.update({
+          where: { id: report.id },
+          data: { 
+            status: 'FAILED',
+            expertNotes: creditRefunded 
+              ? 'Motor sesi analizi başarısız oldu. AI servisinden veri alınamadı. Kredi otomatik iade edildi.'
+              : 'Motor sesi analizi başarısız oldu. AI servisinden veri alınamadı. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.'
+          },
+        })
+        console.log('✅ Rapor FAILED durumuna geçirildi')
+      } catch (updateError) {
+        console.error('❌ Rapor güncelleme hatası:', updateError)
+        // Rapor güncelleme hatası olsa bile hata fırlat
+      }
     }
   }, 5000); // 5 saniye sonra analiz tamamlanır
 

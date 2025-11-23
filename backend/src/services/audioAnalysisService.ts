@@ -150,8 +150,12 @@ export class AudioAnalysisService {
     try {
       const openaiApiKey = process.env.OPENAI_API_KEY
       if (openaiApiKey) {
-        this.openaiClient = new OpenAI({ apiKey: openaiApiKey })
-        console.log('[AI] OpenAI Motor Ses Analizi servisi hazırlandı')
+        this.openaiClient = new OpenAI({ 
+          apiKey: openaiApiKey,
+          timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
+          maxRetries: 2 // Maksimum 2 deneme (retry mekanizması)
+        })
+        console.log('[AI] OpenAI Motor Ses Analizi servisi hazırlandı (timeout: 120s, maxRetries: 2)')
       } else {
         throw new Error('OpenAI API key bulunamadı')
       }
@@ -243,6 +247,20 @@ export class AudioAnalysisService {
 
       // JSON parse et
       const parsed = this.extractJsonFromText(text)
+      
+      // SIKI VALİDASYON: Zorunlu alanları kontrol et
+      if (!parsed.overallScore) {
+        throw new Error('AI analiz sonucu eksik. Genel puan bilgisi alınamadı.')
+      }
+
+      if (!parsed.engineHealth) {
+        throw new Error('AI analiz sonucu eksik. Motor sağlığı bilgisi alınamadı.')
+      }
+
+      if (!parsed.rpmAnalysis) {
+        throw new Error('AI analiz sonucu eksik. RPM analizi bilgisi alınamadı.')
+      }
+
       console.log('[AI] ✅ GERÇEK AI motor analizi tamamlandı (Whisper + GPT-4)')
       return parsed as AudioAnalysisResult
       

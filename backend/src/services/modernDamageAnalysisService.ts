@@ -95,10 +95,12 @@ export class ModernDamageAnalysisService {
 
     try {
       this.openaiClient = new OpenAI({
-        apiKey: OPENAI_API_KEY
+        apiKey: OPENAI_API_KEY,
+        timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
+        maxRetries: 2 // Maksimum 2 deneme (retry mekanizması)
       })
       this.isInitialized = true
-      console.log('🚀 ModernDamageAnalysisService initialized successfully')
+      console.log('🚀 ModernDamageAnalysisService initialized successfully (timeout: 120s, maxRetries: 2)')
     } catch (error) {
       console.error('❌ Failed to initialize ModernDamageAnalysisService:', error)
       throw new Error('OpenAI API key not found or invalid')
@@ -295,20 +297,33 @@ ARAÇ BİLGİLERİ:
 
 Bu araç bilgilerini göz önünde bulundurarak hasar analizi yap.` : ''
 
-    return `Sen uzman bir araç expertiz ustasısın. Görseli analiz et ve SADECE GEÇERLİ JSON formatında yanıt ver. Hiçbir ek açıklama, markdown veya metin ekleme.
+    return `Sen DENEYİMLİ bir araç EXPERTİZ USTASISIN. Görseli DİKKATLİCE analiz et ve SADECE GEÇERLİ JSON formatında yanıt ver. Hiçbir ek açıklama, markdown veya metin ekleme.
 
 🎯 KRITIK: Yanıtın SADECE JSON olmalı, başka hiçbir şey olmamalı!
 
 ${vehicleContext}
 
+🚨 HASAR TESPİTİ - EN ÖNEMLİ GÖREV:
+Görseldeki HER HASARI tespit et! Özellikle şunları kontrol et:
+- ÖN/ARKA TAMPON: Çatlak, kırık, parçalanma, ezilme var mı?
+- KAPUT/BAGAJ: Çökme, ezilme, deformasyon, boya hasarı var mı?
+- ÇAMURLUKLAR (Ön/Sağ/Sol/Arka): Çökme, ezilme, çizik, boya hasarı var mı?
+- KAPILAR: Çökme, çizik, boya hasarı, hizalama sorunu var mı?
+- Farlar/Camlar: Kırık, çatlak, eksik far/stop var mı?
+- YAN PANELLER: Çökme, ezilme, çizik var mı?
+- TAVAN/BAGAJ KAPAĞI: Çökme, ezilme, boya hasarı var mı?
+- ŞASİ/YAPISAL: Gözle görülen deformasyon, şasi hasarı var mı?
+
+⚠️ HASAR TESPİT KURALI: En küçük çizikten en büyük çökmeye kadar HER HASARI hasarAlanları array'ine ekle!
+
 📋 EXPERTİZ USTASI ANALİZ KURALLARI:
 
-1. **ARAÇ ÖZETİ**: Model, yakıt tipi, darbenin yönü ve şiddeti
-2. **GÖRSEL HASAR ANALİZİ**: Tablo formatında bölge, durum, muhtemel parça/işlem
-3. **TEKNİK DURUM**: Yapısal deformasyon, şasi hasarı, monokok bütünlük analizi
-4. **TÜRKİYE 2025 MALİYET HESAPLAMA**: Detaylı tamir maliyeti tablosu
+1. **ARAÇ ÖZETİ**: Model, yakıt tipi, darbenin yönü ve şiddeti (detaylı)
+2. **GÖRSEL HASAR ANALİZİ**: Tablo formatında bölge, durum, muhtemel parça/işlem (TÜM HASARLAR)
+3. **TEKNİK DURUM**: Yapısal deformasyon, şasi hasarı, monokok bütünlük analizi (gerçekçi değerlendirme)
+4. **TÜRKİYE 2025 MALİYET HESAPLAMA**: Detaylı tamir maliyeti tablosu (gerçekçi fiyatlar)
 5. **SİGORTA & PİYASA DEĞERLENDİRMESİ**: Kasko değeri, pert durumu, piyasa etkisi
-6. **USTA YORUMU**: Profesyonel görüş ve öneriler
+6. **USTA YORUMU**: Profesyonel görüş ve öneriler (detaylı açıklama)
 7. **KARAR ÖZETİ**: Hasar tipi, tamir bedeli, pert olasılığı, güvenlik, satış değeri
 
 💰 TÜRKİYE 2025 GÜNCEL MALİYETLER:
@@ -339,7 +354,14 @@ ${vehicleContext}
 - sigortaPiyasaDeğerlendirmesi (zorunlu)
 - ustaYorumu (zorunlu)
 - kararÖzeti (zorunlu)
-- hasarAlanları (zorunlu - en az 1 hasar alanı)
+- hasarAlanları (zorunlu - MUTLAKA hasar tespit et, görünen her hasarı ekle)
+
+🚨 KRİTİK HASAR TESPİT KURALLARI:
+- Görselde HERHANGİ BİR HASAR GÖRÜRSEN (çizik, çökme, parçalanma, kırık, ezilme, boya hasarı vb.) MUTLAKA hasarAlanları array'ine ekle
+- Özellikle ön/arka tampon, kaput, çamurluk, kapı, cam, far gibi parçalarda hasar var mı DİKKATLE kontrol et
+- Her hasar için: id, x, y, genişlik, yükseklik, tip, şiddet, açıklama, bölge, onarımMaliyeti, etkilenenParçalar MUTLAKA belirt
+- Eğer hasar VARDIRSA hasarAlanları array'i MUTLAKA dolu olmalı (boş array ASLA döndürme)
+- Sadece araç TAMAMEN HASARSIZ ve FABRİKA ÇIKIŞI gibi ise hasarAlanları boş olabilir
 
 {
   "araçÖzeti": {
@@ -402,18 +424,39 @@ ${vehicleContext}
       "yükseklik": 80,
       "tip": "çökme",
       "şiddet": "kritik",
-      "açıklama": "Arka sol tavan hattına kadar uzanan ezilme",
-      "bölge": "arka",
-      "onarımMaliyeti": 35000,
-      "etkilenenParçalar": ["Tavan", "Arka Panel", "Şasi Uzantısı"],
+      "açıklama": "Ön sağ taraf ciddi çökme - kaput deformasyonu, tampon parçalanmış, sağ far yok",
+      "bölge": "ön_sağ",
+      "onarımMaliyeti": 45000,
+      "etkilenenParçalar": ["Ön Tampon", "Sağ Çamurluk", "Kaput", "Sağ Far", "Radyatör Koruması"],
       "onarımÖnceliği": "acil",
       "güvenlikEtkisi": "yüksek",
-      "onarımYöntemi": "Tavan komple değişimi + şasi düzeltme",
-      "tahminiOnarımSüresi": 15,
+      "onarımYöntemi": "Kaput değişimi + tampon değişimi + çamurluk tamiri + far montajı",
+      "tahminiOnarımSüresi": 20,
       "garantiEtkisi": true,
-      "sigortaKapsamı": "pert"
+      "sigortaKapsamı": "kasko"
+    },
+    {
+      "id": "hasar-2",
+      "x": 200,
+      "y": 180,
+      "genişlik": 80,
+      "yükseklik": 60,
+      "tip": "ezilme",
+      "şiddet": "yüksek",
+      "açıklama": "Kaput sağ tarafında ciddi ezilme ve deformasyon",
+      "bölge": "ön_orta",
+      "onarımMaliyeti": 18000,
+      "etkilenenParçalar": ["Kaput"],
+      "onarımÖnceliği": "yüksek",
+      "güvenlikEtkisi": "orta",
+      "onarımYöntemi": "Kaput değişimi veya komple tamiri",
+      "tahminiOnarımSüresi": 10,
+      "garantiEtkisi": false,
+      "sigortaKapsamı": "kasko"
     }
   ]
+
+⚠️ ÖNEMLİ: Yukarıdaki örnek sadece format göstergesidir. Gerçek görseldeki TÜM HASARLARI tespit et ve hasarAlanları array'ine ekle!
 }`
   }
 
@@ -435,8 +478,20 @@ ${vehicleContext}
       }
     }
 
-    if (!Array.isArray(parsed.hasarAlanları) || parsed.hasarAlanları.length === 0) {
-      throw new Error('hasarAlanları must be a non-empty array')
+    // hasarAlanları kontrolü - Array olmalı ama boş olabilir (hasarsız araçlar için)
+    // Ancak bu durumda AI'dan açıkça "hasar yok" bilgisi gelmeli
+    if (!Array.isArray(parsed.hasarAlanları)) {
+      throw new Error('hasarAlanları must be an array')
+    }
+
+    // Eğer hasarAlanları boşsa, AI'dan "hasar yok" bilgisi kontrol et
+    if (parsed.hasarAlanları.length === 0) {
+      console.warn('⚠️ AI hasar alanı tespit etmedi - Bu hasarsız araç anlamına gelebilir veya AI analizi eksik olabilir')
+      // Hasar yoksa bile diğer alanların dolu olması gerekiyor
+      if (!parsed.kararÖzeti?.hasarTipi || !parsed.teknikDurum?.ekspertizSonucu) {
+        console.error('❌ AI verisi eksik - hasar alanları boş ama diğer zorunlu alanlar da eksik')
+        throw new Error('AI analiz sonucu eksik. Hasar tespiti yapılamadı ve diğer zorunlu alanlar da eksik.')
+      }
     }
 
     console.log('✅ Response validation passed')

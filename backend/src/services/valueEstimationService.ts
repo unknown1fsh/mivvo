@@ -105,8 +105,12 @@ export class ValueEstimationService {
     try {
       const openaiApiKey = process.env.OPENAI_API_KEY
       if (openaiApiKey) {
-        this.openaiClient = new OpenAI({ apiKey: openaiApiKey })
-        console.log('[AI] OpenAI Değer Tahmini servisi hazırlandı')
+        this.openaiClient = new OpenAI({ 
+          apiKey: openaiApiKey,
+          timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
+          maxRetries: 2 // Maksimum 2 deneme (retry mekanizması)
+        })
+        console.log('[AI] OpenAI Değer Tahmini servisi hazırlandı (timeout: 120s, maxRetries: 2)')
       } else {
         throw new Error('OpenAI API key bulunamadı')
       }
@@ -590,6 +594,20 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     }
 
     const parsed = this.extractJsonPayload(text)
+    
+    // SIKI VALİDASYON: Zorunlu alanları kontrol et
+    if (!parsed.estimatedValue) {
+      throw new Error('AI analiz sonucu eksik. Tahmini değer bilgisi alınamadı.')
+    }
+
+    if (!parsed.marketAnalysis) {
+      throw new Error('AI analiz sonucu eksik. Piyasa analizi bilgisi alınamadı.')
+    }
+
+    if (!parsed.vehicleCondition) {
+      throw new Error('AI analiz sonucu eksik. Araç durumu bilgisi alınamadı.')
+    }
+
     return parsed as ValueEstimationResult
   }
 

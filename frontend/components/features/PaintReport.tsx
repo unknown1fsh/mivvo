@@ -28,11 +28,12 @@ interface PaintReportProps {
     model: string
     year: number
   }
+  vehicleImages?: Array<{ imageUrl: string; id?: number }>
   onGeneratePDF?: () => void
   isGeneratingPDF?: boolean
 }
 
-export function PaintReport({ report, vehicleInfo, onGeneratePDF, isGeneratingPDF }: PaintReportProps) {
+export function PaintReport({ report, vehicleInfo, vehicleImages = [], onGeneratePDF, isGeneratingPDF }: PaintReportProps) {
   // Backend'den gelen veriyi direkt kullan - artık mapping gerek yok
   const data = report as any
   
@@ -65,8 +66,81 @@ export function PaintReport({ report, vehicleInfo, onGeneratePDF, isGeneratingPD
     }
   }
 
+  // Veri kontrolü - AI analiz verisi eksikse hata göster
+  if (!report || !data || !data.boyaKalitesi || !data.renkAnalizi || !data.yüzeyAnalizi) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ExclamationTriangleIcon className="w-10 h-10 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              AI Analiz Verisi Alınamadı
+            </h2>
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
+              <p className="text-gray-800 font-medium mb-2">
+                ⚠️ AI Servisinden Veri Alınamadı
+              </p>
+              <p className="text-gray-600 text-sm">
+                Boya analizi verileri eksik veya AI servisinden veri alınamadı. Bu durum genellikle geçici bir sorundur.
+              </p>
+            </div>
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
+              <p className="text-green-800 font-medium mb-2">
+                ✅ Krediniz Otomatik İade Edildi
+              </p>
+              <p className="text-green-700 text-sm">
+                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Tekrar Dene
+              </button>
+              <a
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                Dashboard&apos;a Dön
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-8">
+      {/* Yüklenen Fotoğraflar - En Üstte */}
+      {vehicleImages && vehicleImages.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+        >
+          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <EyeIcon className="w-6 h-6 text-blue-500 mr-2" />
+            Yüklenen Fotoğraflar
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {vehicleImages.map((img, index) => (
+              <div key={img.id || index} className="relative group">
+                <img
+                  src={img.imageUrl}
+                  alt={`Araç fotoğrafı ${index + 1}`}
+                  className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                />
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
       {/* Genel Değerlendirme */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}

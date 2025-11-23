@@ -201,8 +201,12 @@ export class ComprehensiveExpertiseService {
     try {
       const openaiApiKey = process.env.OPENAI_API_KEY
       if (openaiApiKey) {
-        this.openaiClient = new OpenAI({ apiKey: openaiApiKey })
-        console.log('[AI] OpenAI Tam Expertiz servisi hazırlandı')
+        this.openaiClient = new OpenAI({ 
+          apiKey: openaiApiKey,
+          timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
+          maxRetries: 2 // Maksimum 2 deneme (retry mekanizması)
+        })
+        console.log('[AI] OpenAI Tam Expertiz servisi hazırlandı (timeout: 120s, maxRetries: 2)')
       } else {
         throw new Error('OpenAI API key bulunamadı')
       }
@@ -1067,6 +1071,23 @@ Lütfen tüm sayısal değerleri sayı olarak döndür.`
 
       const comprehensiveData = this.extractJsonPayload(text)
       console.log('✅ JSON başarıyla parse edildi')
+
+      // SIKI VALİDASYON: Zorunlu alanları kontrol et
+      if (!comprehensiveData.overallScore) {
+        throw new Error('AI analiz sonucu eksik. Genel puan bilgisi alınamadı.')
+      }
+
+      if (!comprehensiveData.expertiseGrade) {
+        throw new Error('AI analiz sonucu eksik. Ekspertiz notu bilgisi alınamadı.')
+      }
+
+      if (!comprehensiveData.comprehensiveSummary) {
+        throw new Error('AI analiz sonucu eksik. Kapsamlı özet bilgisi alınamadı.')
+      }
+
+      if (!comprehensiveData.expertOpinion) {
+        throw new Error('AI analiz sonucu eksik. Uzman görüşü bilgisi alınamadı.')
+      }
 
       const result: ComprehensiveExpertiseResult = {
         ...comprehensiveData,

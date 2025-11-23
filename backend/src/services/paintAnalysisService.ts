@@ -605,6 +605,32 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
         throw new Error('Invalid JSON response from OpenAI')
       }
 
+      // SIKI VALİDASYON: Zorunlu alanları kontrol et
+      if (!parsed.boyaKalitesi) {
+        throw new Error('AI analiz sonucu eksik. Boya kalitesi bilgisi alınamadı.')
+      }
+
+      if (!parsed.renkAnalizi) {
+        throw new Error('AI analiz sonucu eksik. Renk analizi bilgisi alınamadı.')
+      }
+
+      if (!parsed.yüzeyAnalizi) {
+        throw new Error('AI analiz sonucu eksik. Yüzey analizi bilgisi alınamadı.')
+      }
+
+      // SIKI VALİDASYON: Zorunlu alanları kontrol et
+      if (!parsed.boyaKalitesi) {
+        throw new Error('AI analiz sonucu eksik. Boya kalitesi bilgisi alınamadı.')
+      }
+
+      if (!parsed.renkAnalizi) {
+        throw new Error('AI analiz sonucu eksik. Renk analizi bilgisi alınamadı.')
+      }
+
+      if (!parsed.yüzeyAnalizi) {
+        throw new Error('AI analiz sonucu eksik. Yüzey analizi bilgisi alınamadı.')
+      }
+
       // Add metadata
       const result: PaintAnalysisResult = {
         ...parsed,

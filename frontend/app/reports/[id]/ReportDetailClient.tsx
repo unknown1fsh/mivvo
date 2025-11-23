@@ -80,6 +80,7 @@ function normalizeDamageReportData(apiData: any) {
     createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || aiAnalysisData?.genelDeğerlendirme?.satışDeğeri || 0,
+    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
   }
@@ -119,6 +120,7 @@ function normalizePaintReportData(apiData: any) {
     createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.boyaKalitesi?.genelPuan || aiAnalysisData?.overallScore || 0,
+    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
     // PaintReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
@@ -160,6 +162,7 @@ function normalizeAudioReportData(apiData: any) {
     createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || 0,
+    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
     // AudioReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
@@ -200,6 +203,7 @@ function normalizeValueReportData(apiData: any) {
     createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: 0, // Value report'ta overallScore yok, estimatedValue kullanılır
+    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
     // ValueReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || [],
@@ -248,6 +252,7 @@ function normalizeComprehensiveReportData(apiData: any) {
     createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || 0,
+    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
     // ComprehensiveReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
@@ -309,6 +314,7 @@ function normalizeReportData(apiData: any, analysisType: string) {
         createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
         totalCost: reportData?.totalCost || apiData?.totalCost || 0,
         overallScore: aiAnalysisData?.overallScore || 0,
+        expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
         aiAnalysisData: aiAnalysisData,
         vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
       }
@@ -462,6 +468,62 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
           >
             Dashboard&apos;a Dön
           </Link>
+        </div>
+      </div>
+    )
+  }
+
+  // Rapor FAILED durumundaysa belirgin hata mesajı göster
+  if (report.status === 'FAILED') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ExclamationTriangleIcon className="w-10 h-10 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              AI Analizi Tamamlanamadı
+            </h2>
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
+              <p className="text-gray-800 font-medium mb-2">
+                ⚠️ Analiz sırasında bir sorun oluştu
+              </p>
+              <p className="text-gray-600 text-sm">
+                AI servisinden veri alınamadı. Bu durum genellikle geçici bir sorundur ve servis yoğunluğundan kaynaklanabilir.
+              </p>
+            </div>
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
+              <p className="text-green-800 font-medium mb-2">
+                ✅ Krediniz Otomatik İade Edildi
+              </p>
+              <p className="text-green-700 text-sm">
+                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir. 
+                Herhangi bir ücret ödememiş oldunuz.
+              </p>
+            </div>
+            {report.expertNotes && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left">
+                <p className="text-gray-700 text-sm">
+                  <strong>Teknik Detay:</strong> {report.expertNotes}
+                </p>
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Dashboard&apos;a Dön
+              </Link>
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                Tekrar Dene
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -689,6 +751,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
                 <DamageReport
                   data={report.aiAnalysisData as DamageAnalysisResult}
                   vehicleInfo={report.vehicleInfo}
+                  vehicleImages={report.vehicleImages || []}
                   showActions={true}
                 />
               </>
@@ -698,6 +761,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
               <PaintReport 
                 report={report.aiAnalysisData as any}
                 vehicleInfo={report.vehicleInfo}
+                vehicleImages={report.vehicleImages || []}
                 onGeneratePDF={generatePDF}
                 isGeneratingPDF={isGeneratingPDF}
               />
@@ -707,6 +771,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
               <AudioReport 
                 data={report.aiAnalysisData as AudioAnalysisResult}
                 vehicleInfo={report.vehicleInfo}
+                vehicleImages={report.vehicleImages || []}
                 showActions={true}
               />
             )}
@@ -715,6 +780,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
               <ValueReport 
                 data={report.aiAnalysisData as ValueEstimationResult}
                 vehicleInfo={report.vehicleInfo}
+                vehicleImages={report.vehicleImages || []}
                 showActions={true}
               />
             )}
@@ -723,6 +789,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
               <ComprehensiveReport 
                 data={report.aiAnalysisData as ComprehensiveExpertiseResult}
                 vehicleInfo={report.vehicleInfo}
+                vehicleImages={report.vehicleImages || []}
                 showActions={true}
               />
             )}

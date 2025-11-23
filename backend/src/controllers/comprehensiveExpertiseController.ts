@@ -481,15 +481,44 @@ export class ComprehensiveExpertiseController {
 
       console.log('🚗 Araç bilgileri kapsamlı expertiz prompt\'a dahil ediliyor:', vehicleInfo)
 
+      // Retry mekanizması: Maksimum 2 deneme
+      let expertiseResult: any = null
+      let lastError: any = null
+      const maxRetries = 2
+      
       // AI analizi gerçekleştir
       const imagePaths = report.vehicleImages.map(img => img.imageUrl)
       const audioPath = report.vehicleAudios.length > 0 ? report.vehicleAudios[0].audioPath : undefined
       
-      const expertiseResult = await ComprehensiveExpertiseService.generateComprehensiveReport(
-        vehicleInfo,
-        imagePaths,
-        audioPath
-      )
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          if (attempt > 1) {
+            console.log(`🔄 Kapsamlı ekspertiz tekrar deneniyor... (Deneme ${attempt}/${maxRetries})`)
+            // Retry arasında kısa bir bekleme
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          } else {
+            console.log('📋 OpenAI ile tam expertiz başlatılıyor...')
+          }
+
+          expertiseResult = await ComprehensiveExpertiseService.generateComprehensiveReport(
+            vehicleInfo,
+            imagePaths,
+            audioPath
+          )
+          
+          // Başarılı oldu, döngüden çık
+          break
+        } catch (error) {
+          lastError = error
+          console.error(`❌ Kapsamlı ekspertiz hatası (Deneme ${attempt}/${maxRetries}):`, error)
+          
+          // Son deneme ise hatayı fırlat
+          if (attempt === maxRetries) {
+            throw lastError
+          }
+          // Değilse bir sonraki denemeye geç
+        }
+      }
 
       console.log('✅ Tam expertiz tamamlandı')
       
@@ -507,18 +536,26 @@ export class ComprehensiveExpertiseController {
         expertiseGrade: expertiseResult?.expertiseGrade
       });
       
-      // Veri validasyonu
+      // SIKI VALİDASYON: AI sonucu boş mu kontrol et
       if (!expertiseResult || Object.keys(expertiseResult).length === 0) {
-        console.error('❌ Comprehensive Expertise - AI analizi boş sonuç döndü');
-        throw new Error('AI analizi boş sonuç döndü');
+        console.error('❌ Comprehensive Expertise - AI analizi boş sonuç döndü')
+        throw new Error('AI analizi boş sonuç döndü. Kapsamlı ekspertiz yapılamadı.')
       }
       
-      if (!expertiseResult.overallScore || !expertiseResult.expertiseGrade || !expertiseResult.comprehensiveSummary) {
-        console.warn('⚠️ Comprehensive Expertise - Eksik veri alanları:', {
-          hasOverallScore: !!expertiseResult.overallScore,
-          hasExpertiseGrade: !!expertiseResult.expertiseGrade,
-          hasComprehensiveSummary: !!expertiseResult.comprehensiveSummary
-        });
+      // SIKI VALİDASYON: Zorunlu alanlar kontrolü
+      if (!expertiseResult.overallScore) {
+        console.error('❌ Comprehensive Expertise - overallScore eksik')
+        throw new Error('AI analiz sonucu eksik. Genel puan bilgisi alınamadı.')
+      }
+
+      if (!expertiseResult.expertiseGrade) {
+        console.error('❌ Comprehensive Expertise - expertiseGrade eksik')
+        throw new Error('AI analiz sonucu eksik. Ekspertiz notu bilgisi alınamadı.')
+      }
+
+      if (!expertiseResult.comprehensiveSummary) {
+        console.error('❌ Comprehensive Expertise - comprehensiveSummary eksik')
+        throw new Error('AI analiz sonucu eksik. Kapsamlı özet bilgisi alınamadı.')
       }
 
       // Raporu güncelle
@@ -548,36 +585,58 @@ export class ComprehensiveExpertiseController {
     } catch (error) {
       console.error('❌ Tam expertiz hatası:', error)
       
-      // Analiz başarısız oldu - Krediyi iade et
+      // Analiz başarısız oldu - Krediyi iade et (GARANTİLİ)
+      let creditRefunded = false
+      let refundError: any = null
+      
       try {
         const userId = req.user!.id
-        const serviceCost = 85 // Tam ekspertiz maliyeti (CreditPricing'den alınmalı)
+        const serviceCost = CREDIT_PRICING.COMPREHENSIVE_EXPERTISE
         
         await refundCreditForFailedAnalysis(
           userId,
           parseInt(req.params.reportId),
           serviceCost,
-          'AI analizi tamamlanamadı'
+          'Kapsamlı ekspertiz AI servisi başarısız - Kredi otomatik iade edildi'
         )
         
+        creditRefunded = true
         console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
-        
-        res.status(500).json({
-          success: false,
-          message: ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND,
-          creditRefunded: true,
-          refundedAmount: serviceCost,
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-        })
-      } catch (refundError) {
-        console.error('❌ Kredi iade hatası:', refundError)
-        
-        res.status(500).json({
-          success: false,
-          message: 'Tam expertiz gerçekleştirilemedi',
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-        })
+      } catch (refundErr) {
+        refundError = refundErr
+        console.error('❌ Kredi iade hatası:', refundErr)
+        // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
       }
+      
+      // Raporu MUTLAKA FAILED olarak işaretle (kredi iade başarılı olsa da olmasa da)
+      try {
+        await prisma.vehicleReport.update({
+          where: { id: parseInt(req.params.reportId) },
+          data: {
+            status: 'FAILED',
+            expertNotes: creditRefunded 
+              ? 'Kapsamlı ekspertiz başarısız oldu. AI servisinden veri alınamadı. Kredi otomatik iade edildi.'
+              : 'Kapsamlı ekspertiz başarısız oldu. AI servisinden veri alınamadı. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.'
+          }
+        })
+        console.log('✅ Rapor FAILED durumuna geçirildi')
+      } catch (updateError) {
+        console.error('❌ Rapor güncelleme hatası:', updateError)
+        // Rapor güncelleme hatası olsa bile hata fırlat
+      }
+      
+      // Kullanıcıya net hata mesajı ver
+      const errorMessage = creditRefunded
+        ? ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND || 'AI analizi tamamlanamadı. Krediniz otomatik olarak iade edildi. Lütfen daha sonra tekrar deneyin.'
+        : 'AI analizi tamamlanamadı. Kredi iade işlemi sırasında bir sorun oluştu. Lütfen destek ile iletişime geçin.'
+      
+      res.status(500).json({
+        success: false,
+        message: errorMessage,
+        creditRefunded,
+        refundedAmount: creditRefunded ? CREDIT_PRICING.COMPREHENSIVE_EXPERTISE : undefined,
+        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+      })
     }
   }
 

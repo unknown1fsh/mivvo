@@ -330,9 +330,39 @@ export class ValueEstimationController {
 
       console.log('🚗 Araç bilgileri değer tahmini prompt\'a dahil ediliyor:', vehicleInfo)
 
+      // Retry mekanizması: Maksimum 2 deneme
+      let valueResult: any = null
+      let lastError: any = null
+      const maxRetries = 2
+      
       // AI analizi gerçekleştir - Resimleri de gönder
       const imagePaths = report.vehicleImages.map(img => img.imageUrl)
-      const valueResult = await ValueEstimationService.estimateValue(vehicleInfo, imagePaths)
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          if (attempt > 1) {
+            console.log(`🔄 Değer tahmini tekrar deneniyor... (Deneme ${attempt}/${maxRetries})`)
+            // Retry arasında kısa bir bekleme
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          } else {
+            console.log('💰 OpenAI ile değer tahmini başlatılıyor...')
+          }
+
+          valueResult = await ValueEstimationService.estimateValue(vehicleInfo, imagePaths)
+          
+          // Başarılı oldu, döngüden çık
+          break
+        } catch (error) {
+          lastError = error
+          console.error(`❌ Değer tahmini hatası (Deneme ${attempt}/${maxRetries}):`, error)
+          
+          // Son deneme ise hatayı fırlat
+          if (attempt === maxRetries) {
+            throw lastError
+          }
+          // Değilse bir sonraki denemeye geç
+        }
+      }
 
       console.log('✅ Değer tahmini tamamlandı')
       
@@ -348,17 +378,21 @@ export class ValueEstimationController {
         confidence: valueResult?.confidence
       });
       
-      // Veri validasyonu
+      // SIKI VALİDASYON: AI sonucu boş mu kontrol et
       if (!valueResult || Object.keys(valueResult).length === 0) {
-        console.error('❌ Value Estimation - AI analizi boş sonuç döndü');
-        throw new Error('AI analizi boş sonuç döndü');
+        console.error('❌ Value Estimation - AI analizi boş sonuç döndü')
+        throw new Error('AI analizi boş sonuç döndü. Değer tahmini yapılamadı.')
       }
       
-      if (!valueResult.estimatedValue || !valueResult.marketAnalysis) {
-        console.warn('⚠️ Value Estimation - Eksik veri alanları:', {
-          hasEstimatedValue: !!valueResult.estimatedValue,
-          hasMarketAnalysis: !!valueResult.marketAnalysis
-        });
+      // SIKI VALİDASYON: Zorunlu alanlar kontrolü
+      if (!valueResult.estimatedValue) {
+        console.error('❌ Value Estimation - estimatedValue eksik')
+        throw new Error('AI analiz sonucu eksik. Tahmini değer bilgisi alınamadı.')
+      }
+
+      if (!valueResult.marketAnalysis) {
+        console.error('❌ Value Estimation - marketAnalysis eksik')
+        throw new Error('AI analiz sonucu eksik. Piyasa analizi bilgisi alınamadı.')
       }
 
       // Raporu güncelle
@@ -388,7 +422,10 @@ export class ValueEstimationController {
     } catch (error) {
       console.error('❌ Değer tahmini hatası:', error)
       
-      // Analiz başarısız oldu - Krediyi iade et
+      // Analiz başarısız oldu - Krediyi iade et (GARANTİLİ)
+      let creditRefunded = false
+      let refundError: any = null
+      
       try {
         const userId = req.user!.id
         const serviceCost = CREDIT_PRICING.VALUE_ESTIMATION
@@ -397,27 +434,46 @@ export class ValueEstimationController {
           userId,
           parseInt(req.params.reportId),
           serviceCost,
-          'Değer tahmini AI servisi başarısız'
+          'Değer tahmini AI servisi başarısız - Kredi otomatik iade edildi'
         )
         
+        creditRefunded = true
         console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
-        
-        res.status(500).json({
-          success: false,
-          message: ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND,
-          creditRefunded: true,
-          refundedAmount: serviceCost,
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-        })
-      } catch (refundError) {
-        console.error('❌ Kredi iade hatası:', refundError)
-        
-        res.status(500).json({
-          success: false,
-          message: 'Değer tahmini gerçekleştirilemedi',
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-        })
+      } catch (refundErr) {
+        refundError = refundErr
+        console.error('❌ Kredi iade hatası:', refundErr)
+        // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
       }
+      
+      // Raporu MUTLAKA FAILED olarak işaretle (kredi iade başarılı olsa da olmasa da)
+      try {
+        await prisma.vehicleReport.update({
+          where: { id: parseInt(req.params.reportId) },
+          data: {
+            status: 'FAILED',
+            expertNotes: creditRefunded 
+              ? 'Değer tahmini başarısız oldu. AI servisinden veri alınamadı. Kredi otomatik iade edildi.'
+              : 'Değer tahmini başarısız oldu. AI servisinden veri alınamadı. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.'
+          }
+        })
+        console.log('✅ Rapor FAILED durumuna geçirildi')
+      } catch (updateError) {
+        console.error('❌ Rapor güncelleme hatası:', updateError)
+        // Rapor güncelleme hatası olsa bile hata fırlat
+      }
+      
+      // Kullanıcıya net hata mesajı ver
+      const errorMessage = creditRefunded
+        ? ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND || 'AI analizi tamamlanamadı. Krediniz otomatik olarak iade edildi. Lütfen daha sonra tekrar deneyin.'
+        : 'AI analizi tamamlanamadı. Kredi iade işlemi sırasında bir sorun oluştu. Lütfen destek ile iletişime geçin.'
+      
+      res.status(500).json({
+        success: false,
+        message: errorMessage,
+        creditRefunded,
+        refundedAmount: creditRefunded ? CREDIT_PRICING.VALUE_ESTIMATION : undefined,
+        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+      })
     }
   }
 

@@ -90,10 +90,11 @@ export const useDamageAnalysis = () => {
         throw new Error(uploadResponse.data?.message || 'Fotoğraflar yüklenemedi')
       }
 
-      toast.loading('AI analizi başlatıldı...', { id: toastId })
+      toast.loading('AI analizi başlatıldı... (Bu işlem birkaç dakika sürebilir)', { id: toastId })
 
+      // Timeout: 300 saniye (5 dakika) - trafik yoğunluğuna göre yeterli süre
       const analysisResponse = await api.post(`/api/damage-analysis/${reportId}/analyze`, {}, {
-        timeout: 600000
+        timeout: 300000 // 300000ms = 300 saniye = 5 dakika
       })
 
       if (!analysisResponse.data?.success) {

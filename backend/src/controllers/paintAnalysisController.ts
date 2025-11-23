@@ -383,9 +383,36 @@ export class PaintAnalysisController {
 
       console.log('🚗 Araç bilgileri prompt\'a dahil ediliyor:', vehicleInfo)
 
-      // OpenAI Vision API ile analiz
-      console.log('🤖 PaintAnalysisService.analyzePaint çağrılıyor...')
-      const paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl, vehicleInfo)
+      // Retry mekanizması: Maksimum 2 deneme
+      let paintResult: any = null
+      let lastError: any = null
+      const maxRetries = 2
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          if (attempt > 1) {
+            console.log(`🔄 Boya analizi tekrar deneniyor... (Deneme ${attempt}/${maxRetries})`)
+            // Retry arasında kısa bir bekleme
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          } else {
+            console.log('🤖 PaintAnalysisService.analyzePaint çağrılıyor...')
+          }
+
+          paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl, vehicleInfo)
+          
+          // Başarılı oldu, döngüden çık
+          break
+        } catch (error) {
+          lastError = error
+          console.error(`❌ Boya analizi hatası (Deneme ${attempt}/${maxRetries}):`, error)
+          
+          // Son deneme ise hatayı fırlat
+          if (attempt === maxRetries) {
+            throw lastError
+          }
+          // Değilse bir sonraki denemeye geç
+        }
+      }
 
       console.log('✅ Boya analizi tamamlandı')
       
@@ -400,18 +427,26 @@ export class PaintAnalysisController {
         genelPuan: paintResult?.boyaKalitesi?.genelPuan
       });
       
-      // AI sonucu boş mu kontrol et
+      // SIKI VALİDASYON: AI sonucu boş mu kontrol et
       if (!paintResult || Object.keys(paintResult).length === 0) {
-        console.error('❌ Paint Analysis - AI analizi boş sonuç döndü');
-        throw new Error('AI analizi boş sonuç döndü')
+        console.error('❌ Paint Analysis - AI analizi boş sonuç döndü')
+        throw new Error('AI analizi boş sonuç döndü. Boya analizi yapılamadı.')
       }
       
-      // Veri formatı validasyonu
-      if (!paintResult.boyaKalitesi || !paintResult.renkAnalizi) {
-        console.warn('⚠️ Paint Analysis - Eksik veri alanları:', {
-          hasBoyaKalitesi: !!paintResult.boyaKalitesi,
-          hasRenkAnalizi: !!paintResult.renkAnalizi
-        });
+      // SIKI VALİDASYON: Zorunlu alanlar kontrolü
+      if (!paintResult.boyaKalitesi) {
+        console.error('❌ Paint Analysis - boyaKalitesi eksik')
+        throw new Error('AI analiz sonucu eksik. Boya kalitesi bilgisi alınamadı.')
+      }
+
+      if (!paintResult.renkAnalizi) {
+        console.error('❌ Paint Analysis - renkAnalizi eksik')
+        throw new Error('AI analiz sonucu eksik. Renk analizi bilgisi alınamadı.')
+      }
+
+      if (!paintResult.yüzeyAnalizi) {
+        console.error('❌ Paint Analysis - yüzeyAnalizi eksik')
+        throw new Error('AI analiz sonucu eksik. Yüzey analizi bilgisi alınamadı.')
       }
 
       // Raporu güncelle (COMPLETED)
@@ -442,7 +477,10 @@ export class PaintAnalysisController {
     } catch (error) {
       console.error('❌ Boya analizi hatası:', error)
       
-      // Analiz başarısız oldu - Krediyi iade et
+      // Analiz başarısız oldu - Krediyi iade et (GARANTİLİ)
+      let creditRefunded = false
+      let refundError: any = null
+      
       try {
         const userId = req.user!.id
         const serviceCost = CREDIT_PRICING.PAINT_ANALYSIS
@@ -451,27 +489,46 @@ export class PaintAnalysisController {
           userId,
           parseInt(req.params.reportId),
           serviceCost,
-          'Boya analizi AI servisi başarısız'
+          'Boya analizi AI servisi başarısız - Kredi otomatik iade edildi'
         )
         
+        creditRefunded = true
         console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
-        
-        res.status(500).json({
-          success: false,
-          message: ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND,
-          creditRefunded: true,
-          refundedAmount: serviceCost,
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-        })
-      } catch (refundError) {
-        console.error('❌ Kredi iade hatası:', refundError)
-        
-        res.status(500).json({
-          success: false,
-          message: 'Boya analizi gerçekleştirilemedi',
-          error: error instanceof Error ? error.message : 'Bilinmeyen hata'
-        })
+      } catch (refundErr) {
+        refundError = refundErr
+        console.error('❌ Kredi iade hatası:', refundErr)
+        // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
       }
+      
+      // Raporu MUTLAKA FAILED olarak işaretle (kredi iade başarılı olsa da olmasa da)
+      try {
+        await prisma.vehicleReport.update({
+          where: { id: parseInt(req.params.reportId) },
+          data: {
+            status: 'FAILED',
+            expertNotes: creditRefunded 
+              ? 'Boya analizi başarısız oldu. AI servisinden veri alınamadı. Kredi otomatik iade edildi.'
+              : 'Boya analizi başarısız oldu. AI servisinden veri alınamadı. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.'
+          }
+        })
+        console.log('✅ Rapor FAILED durumuna geçirildi')
+      } catch (updateError) {
+        console.error('❌ Rapor güncelleme hatası:', updateError)
+        // Rapor güncelleme hatası olsa bile hata fırlat
+      }
+      
+      // Kullanıcıya net hata mesajı ver
+      const errorMessage = creditRefunded
+        ? ERROR_MESSAGES.ANALYSIS.AI_FAILED_WITH_REFUND || 'AI analizi tamamlanamadı. Krediniz otomatik olarak iade edildi. Lütfen daha sonra tekrar deneyin.'
+        : 'AI analizi tamamlanamadı. Kredi iade işlemi sırasında bir sorun oluştu. Lütfen destek ile iletişime geçin.'
+      
+      res.status(500).json({
+        success: false,
+        message: errorMessage,
+        creditRefunded,
+        refundedAmount: creditRefunded ? CREDIT_PRICING.PAINT_ANALYSIS : undefined,
+        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+      })
     }
   }
 
