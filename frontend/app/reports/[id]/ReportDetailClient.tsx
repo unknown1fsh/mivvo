@@ -46,28 +46,68 @@ function getAnalysisTypeFromReportType(reportType: string): 'damage' | 'paint' |
 
 // API'den gelen rapor verisini normalize eden fonksiyon
 function normalizeReportData(apiData: any, analysisType: string) {
+  // Backend'den gelen veri formatı:
+  // response.data = rapor objesi { id, vehiclePlate, aiAnalysisData: {...}, ... }
+  // response.data.aiAnalysisData = JSON field içinde analiz sonuçları
+  
+  console.log('🔍 normalizeReportData - Ham veri:', {
+    hasApiData: !!apiData,
+    apiDataKeys: apiData ? Object.keys(apiData) : [],
+    hasAiAnalysisData: !!(apiData?.aiAnalysisData),
+    aiAnalysisDataType: apiData?.aiAnalysisData ? typeof apiData.aiAnalysisData : 'undefined',
+    aiAnalysisDataKeys: apiData?.aiAnalysisData ? Object.keys(apiData.aiAnalysisData) : [],
+    vehiclePlate: apiData?.vehiclePlate,
+    id: apiData?.id
+  })
+  
+  // Rapor objesi (backend'den direkt gelen)
+  const reportData = apiData.report || apiData
+  
+  // aiAnalysisData'yı extract et (JSON field)
+  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData
+  
+  console.log('🔍 normalizeReportData - aiAnalysisData:', {
+    hasAiAnalysisData: !!aiAnalysisData,
+    aiAnalysisDataKeys: aiAnalysisData ? Object.keys(aiAnalysisData) : [],
+    hasHasarAlanları: !!(aiAnalysisData?.hasarAlanları),
+    hasarAlanlarıLength: aiAnalysisData?.hasarAlanları?.length || 0,
+    hasGenelDeğerlendirme: !!(aiAnalysisData?.genelDeğerlendirme),
+    genelDeğerlendirmeKeys: aiAnalysisData?.genelDeğerlendirme ? Object.keys(aiAnalysisData.genelDeğerlendirme) : []
+  })
+  
   const baseData = {
-    id: apiData.report?.id || apiData.id,
+    id: reportData?.id || apiData?.id,
     vehicleInfo: {
-      plate: apiData.report?.vehiclePlate || apiData.vehicleInfo?.plate || '',
-      brand: apiData.report?.vehicleBrand || apiData.vehicleInfo?.make || '',
-      model: apiData.report?.vehicleModel || apiData.vehicleInfo?.model || '',
-      year: apiData.report?.vehicleYear || apiData.vehicleInfo?.year || 0,
-      vin: apiData.report?.vehicleVin || apiData.vehicleInfo?.vin || '',
-      color: apiData.report?.vehicleColor || apiData.vehicleInfo?.color || '',
-      mileage: apiData.report?.mileage || apiData.vehicleInfo?.mileage || 0,
-      fuelType: apiData.report?.fuelType || apiData.vehicleInfo?.fuelType || '',
-      transmission: apiData.report?.transmission || apiData.vehicleInfo?.transmission || '',
-      engine: apiData.report?.engine || apiData.vehicleInfo?.engine || '',
-      bodyType: apiData.report?.bodyType || apiData.vehicleInfo?.bodyType || '',
+      plate: reportData?.vehiclePlate || apiData?.vehicleInfo?.plate || apiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || apiData?.vehicleInfo?.make || apiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || apiData?.vehicleInfo?.model || apiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || apiData?.vehicleInfo?.year || apiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || apiData?.vehicleInfo?.vin || apiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || apiData?.vehicleInfo?.color || apiData?.vehicleColor || '',
+      mileage: reportData?.mileage || apiData?.vehicleInfo?.mileage || apiData?.mileage || 0,
+      fuelType: reportData?.fuelType || apiData?.vehicleInfo?.fuelType || apiData?.fuelType || '',
+      transmission: reportData?.transmission || apiData?.vehicleInfo?.transmission || apiData?.transmission || '',
+      engine: reportData?.engine || apiData?.vehicleInfo?.engine || apiData?.engine || '',
+      bodyType: reportData?.bodyType || apiData?.vehicleInfo?.bodyType || apiData?.bodyType || '',
     },
-    reportType: apiData.report?.reportType || analysisType,
-    status: apiData.report?.status || apiData.status || 'COMPLETED',
-    createdAt: apiData.report?.createdAt || apiData.createdAt || new Date().toISOString(),
-    totalCost: apiData.report?.totalCost || 0,
-    overallScore: apiData.overallScore || 0,
-    aiAnalysisData: apiData.aiAnalysisData || apiData,
+    reportType: reportData?.reportType || analysisType,
+    status: reportData?.status || apiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    overallScore: aiAnalysisData?.overallScore || aiAnalysisData?.genelDeğerlendirme?.satışDeğeri || 0,
+    // aiAnalysisData'yı direkt kullan - DamageReport component'i bunu bekliyor
+    aiAnalysisData: aiAnalysisData || {},
+    // Vehicle images
+    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
   }
+  
+  console.log('🔍 normalizeReportData - Normalize edilmiş veri:', {
+    id: baseData.id,
+    hasAiAnalysisData: !!baseData.aiAnalysisData,
+    overallScore: baseData.overallScore,
+    vehicleInfo: baseData.vehicleInfo,
+    status: baseData.status
+  })
   
   return baseData
 }
@@ -130,7 +170,29 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
           throw new Error('Rapor verisi alınamadı')
         }
         
+        // Debug: Backend'den gelen ham veriyi logla
+        console.log('📥 ReportDetailClient - Backend Response:', {
+          hasResponse: !!response,
+          hasData: !!response.data,
+          responseKeys: response?.data ? Object.keys(response.data) : [],
+          responseDataStructure: response?.data ? JSON.stringify(response.data, null, 2).substring(0, 1000) + '...' : 'No data',
+          hasAiAnalysisData: !!(response?.data?.aiAnalysisData),
+          aiAnalysisDataType: response?.data?.aiAnalysisData ? typeof response.data.aiAnalysisData : 'undefined',
+          vehiclePlate: response?.data?.vehiclePlate,
+          reportId: response?.data?.id
+        })
+        
         const normalizedData = normalizeReportData(response.data, detectedAnalysisType)
+        
+        // Debug: Normalize edilmiş veriyi logla
+        console.log('✅ ReportDetailClient - Normalized Data:', {
+          hasNormalizedData: !!normalizedData,
+          hasAiAnalysisData: !!normalizedData?.aiAnalysisData,
+          aiAnalysisDataKeys: normalizedData?.aiAnalysisData ? Object.keys(normalizedData.aiAnalysisData) : [],
+          overallScore: normalizedData?.overallScore,
+          vehicleInfo: normalizedData?.vehicleInfo
+        })
+        
         setReport(normalizedData)
       } catch (err: any) {
         console.error('Rapor yükleme hatası:', err)
@@ -405,11 +467,28 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
           {/* Analysis Report Content */}
           <div className="card p-6">
             {analysisType === 'damage' && (
-              <DamageReport
-                data={report.aiAnalysisData as DamageAnalysisResult}
-                vehicleInfo={report.vehicleInfo}
-                showActions={true}
-              />
+              <>
+                {/* Debug: DamageReport'a giden veriyi logla */}
+                {(() => {
+                  const damageReportData = report.aiAnalysisData as DamageAnalysisResult
+                  console.log('🎯 ReportDetailClient - DamageReport Data:', {
+                    hasAiAnalysisData: !!report.aiAnalysisData,
+                    aiAnalysisDataKeys: report.aiAnalysisData ? Object.keys(report.aiAnalysisData) : [],
+                    hasHasarAlanları: !!(damageReportData?.hasarAlanları),
+                    hasarAlanlarıLength: damageReportData?.hasarAlanları?.length || 0,
+                    hasGenelDeğerlendirme: !!(damageReportData?.genelDeğerlendirme),
+                    genelDeğerlendirmeKeys: damageReportData?.genelDeğerlendirme ? Object.keys(damageReportData.genelDeğerlendirme) : [],
+                    overallScore: damageReportData?.genelDeğerlendirme?.satışDeğeri || damageReportData?.overallScore,
+                    vehicleInfo: report.vehicleInfo
+                  })
+                  return null
+                })()}
+                <DamageReport
+                  data={report.aiAnalysisData as DamageAnalysisResult}
+                  vehicleInfo={report.vehicleInfo}
+                  showActions={true}
+                />
+              </>
             )}
             
             {analysisType === 'paint' && (

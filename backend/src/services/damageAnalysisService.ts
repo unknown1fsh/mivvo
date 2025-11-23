@@ -413,6 +413,19 @@ export class DamageAnalysisService {
       throw new UnauthorizedException(ERROR_MESSAGES.REPORT.ACCESS_DENIED);
     }
 
+    // Debug: Rapor verisini logla
+    console.log('🔍 DamageAnalysisService.getReport - Rapor verisi:', {
+      reportId: report.id,
+      status: report.status,
+      hasAiAnalysisData: !!report.aiAnalysisData,
+      aiAnalysisDataType: report.aiAnalysisData ? typeof report.aiAnalysisData : 'undefined',
+      aiAnalysisDataKeys: report.aiAnalysisData ? Object.keys(report.aiAnalysisData as any) : [],
+      hasHasarAlanları: !!(report.aiAnalysisData && (report.aiAnalysisData as any).hasarAlanları),
+      hasarAlanlarıLength: report.aiAnalysisData && (report.aiAnalysisData as any).hasarAlanları ? (report.aiAnalysisData as any).hasarAlanları.length : 0,
+      hasGenelDeğerlendirme: !!(report.aiAnalysisData && (report.aiAnalysisData as any).genelDeğerlendirme),
+      vehiclePlate: report.vehiclePlate
+    });
+
     return report;
   }
 
