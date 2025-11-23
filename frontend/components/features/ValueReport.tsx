@@ -83,7 +83,6 @@ export function ValueReport({ data, vehicleInfo, vehicleImages = [], showActions
   }
 
   const getRiskColor = (risk: RiskLevel | 'unknown') => {
-  const getRiskColor = (risk: RiskLevel | 'unknown') => {
     switch (risk) {
       case 'low': return 'text-green-600 bg-green-100'
       case 'medium': return 'text-yellow-600 bg-yellow-100'

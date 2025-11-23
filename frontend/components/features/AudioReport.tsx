@@ -105,6 +105,28 @@ export function AudioReport({ data, vehicleInfo, vehicleImages = [], showActions
     }
   }
 
+  const getSeverityColor = (severity: IssueSeverity) => {
+    switch (severity) {
+      case 'minimal': return 'text-gray-600 bg-gray-100'
+      case 'low': return 'text-blue-600 bg-blue-100'
+      case 'medium': return 'text-yellow-600 bg-yellow-100'
+      case 'high': return 'text-orange-600 bg-orange-100'
+      case 'critical': return 'text-red-600 bg-red-100'
+      default: return 'text-gray-600 bg-gray-100'
+    }
+  }
+
+  const getSeverityDescription = (severity: IssueSeverity) => {
+    switch (severity) {
+      case 'minimal': return 'Minimal'
+      case 'low': return 'Düşük'
+      case 'medium': return 'Orta'
+      case 'high': return 'Yüksek'
+      case 'critical': return 'Kritik'
+      default: return 'Bilinmiyor'
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* Yüklenen Fotoğraflar - En Üstte */}
@@ -132,30 +154,6 @@ export function AudioReport({ data, vehicleInfo, vehicleImages = [], showActions
         </motion.div>
       )}
 
-  const getSeverityColor = (severity: IssueSeverity) => {
-    switch (severity) {
-      case 'minimal': return 'text-gray-600 bg-gray-100'
-      case 'low': return 'text-blue-600 bg-blue-100'
-      case 'medium': return 'text-yellow-600 bg-yellow-100'
-      case 'high': return 'text-orange-600 bg-orange-100'
-      case 'critical': return 'text-red-600 bg-red-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
-  }
-
-  const getSeverityDescription = (severity: IssueSeverity) => {
-    switch (severity) {
-      case 'minimal': return 'Minimal'
-      case 'low': return 'Düşük'
-      case 'medium': return 'Orta'
-      case 'high': return 'Yüksek'
-      case 'critical': return 'Kritik'
-      default: return 'Bilinmiyor'
-    }
-  }
-
-  return (
-    <div className="space-y-8">
       {/* Genel Değerlendirme */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
