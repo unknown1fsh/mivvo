@@ -77,7 +77,7 @@ const errorConfig = {
     iconBg: 'bg-orange-100',
     iconColor: 'text-orange-600',
     title: 'Yetersiz Kredi Bakiyesi',
-    message: `Bu analiz için yeterli krediniz bulunmamaktadır. Mevcut bakiyeniz: ${remainingCredit || 0}₺. Lütfen kredi satın alarak devam edin.`,
+    message: 'Bu analiz için yeterli krediniz bulunmamaktadır. Lütfen kredi satın alarak devam edin.',
     badge: '💳 Kredi Gerekli',
     badgeBg: 'bg-blue-100',
     badgeText: 'text-blue-800'
