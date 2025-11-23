@@ -150,11 +150,10 @@ export const usePaintAnalysis = () => {
       if (statusCode === 402 || errorMessage.includes('Yetersiz kredi') || errorMessage.includes('yetersiz bakiye') || errorMessage.includes('insufficient')) {
         toast.error(`💳 ${errorMessage}`, { 
           duration: 5000,
-          action: {
-            label: 'Kredi Satın Al',
-            onClick: () => {
-              window.location.href = '/dashboard/purchase'
-            }
+          style: {
+            background: '#fffbeb',
+            color: '#b45309',
+            border: '1px solid #fcd34d'
           }
         })
         // Otomatik yönlendirme
