@@ -96,9 +96,20 @@ export const getUserCredits = async (req: AuthRequest, res: Response): Promise<v
     console.log(`✅ UserCredits created for user ${req.user!.id}`);
   }
 
+  // Decimal değerleri number'a çevir (JSON serialize sorununu önlemek için)
   res.json({
     success: true,
-    data: { credits: userCredits },
+    data: {
+      credits: {
+        id: userCredits.id,
+        userId: userCredits.userId,
+        balance: parseFloat(userCredits.balance.toString()),
+        totalPurchased: parseFloat(userCredits.totalPurchased.toString()),
+        totalUsed: parseFloat(userCredits.totalUsed.toString()),
+        createdAt: userCredits.createdAt,
+        updatedAt: userCredits.updatedAt,
+      },
+    },
   });
 };
 

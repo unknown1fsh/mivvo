@@ -388,6 +388,16 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
     },
   });
 
+  // Decimal değerleri number'a çevir (JSON serialize sorununu önlemek için)
+  if (user && user.userCredits) {
+    user.userCredits = {
+      ...user.userCredits,
+      balance: parseFloat(user.userCredits.balance.toString()),
+      totalPurchased: parseFloat(user.userCredits.totalPurchased.toString()),
+      totalUsed: parseFloat(user.userCredits.totalUsed.toString()),
+    } as any;
+  }
+
   res.json({
     success: true,
     user,

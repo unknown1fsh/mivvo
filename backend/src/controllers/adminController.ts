@@ -138,12 +138,23 @@ export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void
     }
   }
 
+  // Decimal değerleri number'a çevir (JSON serialize sorununu önlemek için)
+  const usersWithNumericCredits = users.map(user => ({
+    ...user,
+    userCredits: user.userCredits ? {
+      ...user.userCredits,
+      balance: parseFloat(user.userCredits.balance.toString()),
+      totalPurchased: parseFloat(user.userCredits.totalPurchased.toString()),
+      totalUsed: parseFloat(user.userCredits.totalUsed.toString()),
+    } : null,
+  }));
+
   const total = await prisma.user.count({ where });
 
   res.json({
     success: true,
     data: {
-      users,
+      users: usersWithNumericCredits,
       pagination: {
         page: Number(page),
         limit: Number(limit),
@@ -231,6 +242,16 @@ export const getUserById = async (req: AuthRequest, res: Response): Promise<void
     });
     
     console.log(`✅ Admin - UserCredits created for user ${user.id}`);
+  }
+
+  // Decimal değerleri number'a çevir (JSON serialize sorununu önlemek için)
+  if (user && user.userCredits) {
+    user.userCredits = {
+      ...user.userCredits,
+      balance: parseFloat(user.userCredits.balance.toString()),
+      totalPurchased: parseFloat(user.userCredits.totalPurchased.toString()),
+      totalUsed: parseFloat(user.userCredits.totalUsed.toString()),
+    } as any;
   }
 
   res.json({
@@ -885,10 +906,21 @@ export const addUserCredits = async (req: AuthRequest, res: Response): Promise<v
     return updatedCredits;
   });
 
+  // Decimal değerleri number'a çevir (JSON serialize sorununu önlemek için)
+  const creditsResponse = {
+    id: result.id,
+    userId: result.userId,
+    balance: parseFloat(result.balance.toString()),
+    totalPurchased: parseFloat(result.totalPurchased.toString()),
+    totalUsed: parseFloat(result.totalUsed.toString()),
+    createdAt: result.createdAt,
+    updatedAt: result.updatedAt,
+  };
+
   res.json({
     success: true,
     message: `${amount} kredi başarıyla eklendi.`,
-    data: { credits: result },
+    data: { credits: creditsResponse },
   });
 };
 
@@ -969,7 +1001,18 @@ export const resetUserCredits = async (req: AuthRequest, res: Response): Promise
   res.json({
     success: true,
     message: 'Kullanıcı kredileri sıfırlandı.',
-    data: { credits: updatedCredits, resetAmount: oldBalance },
+    data: {
+      credits: {
+        id: updatedCredits.id,
+        userId: updatedCredits.userId,
+        balance: parseFloat(updatedCredits.balance.toString()),
+        totalPurchased: parseFloat(updatedCredits.totalPurchased.toString()),
+        totalUsed: parseFloat(updatedCredits.totalUsed.toString()),
+        createdAt: updatedCredits.createdAt,
+        updatedAt: updatedCredits.updatedAt,
+      },
+      resetAmount: parseFloat(oldBalance.toString()),
+    },
   });
 };
 
@@ -1048,7 +1091,17 @@ export const refundUserCredits = async (req: AuthRequest, res: Response): Promis
   res.json({
     success: true,
     message: `${amount} kredi iadesi başarıyla yapıldı.`,
-    data: { credits: updatedCredits },
+    data: {
+      credits: {
+        id: updatedCredits.id,
+        userId: updatedCredits.userId,
+        balance: parseFloat(updatedCredits.balance.toString()),
+        totalPurchased: parseFloat(updatedCredits.totalPurchased.toString()),
+        totalUsed: parseFloat(updatedCredits.totalUsed.toString()),
+        createdAt: updatedCredits.createdAt,
+        updatedAt: updatedCredits.updatedAt,
+      },
+    },
   });
 };
 
