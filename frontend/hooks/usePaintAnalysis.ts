@@ -98,7 +98,10 @@ export const usePaintAnalysis = () => {
       setCurrentStep('AI analizi yapılıyor...')
       setProgress(60)
       
-      const analyzeResponse = await api.post(`/api/paint-analysis/${reportId}/analyze`)
+      // Timeout: 300 saniye (5 dakika) - trafik yoğunluğuna göre yeterli süre
+      const analyzeResponse = await api.post(`/api/paint-analysis/${reportId}/analyze`, {}, {
+        timeout: 300000 // 300000ms = 300 saniye = 5 dakika
+      })
 
       if (!analyzeResponse.data.success) {
         throw new Error(analyzeResponse.data.message || 'Analiz gerçekleştirilemedi')

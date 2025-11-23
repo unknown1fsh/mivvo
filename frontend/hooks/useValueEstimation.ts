@@ -62,7 +62,10 @@ export const useValueEstimation = () => {
       // 3. AI analizi gerçekleştir
       toast.loading('Mivvo AI ile piyasa analizi yapılıyor...', { id: 'value-estimation' })
       
-      const analyzeResponse = await api.post(`/api/value-estimation/${reportId}/analyze`)
+      // Timeout: 300 saniye (5 dakika) - trafik yoğunluğuna göre yeterli süre
+      const analyzeResponse = await api.post(`/api/value-estimation/${reportId}/analyze`, {}, {
+        timeout: 300000 // 300000ms = 300 saniye = 5 dakika
+      })
 
       if (!analyzeResponse.data.success) {
         throw new Error(analyzeResponse.data.message || 'Analiz gerçekleştirilemedi')
