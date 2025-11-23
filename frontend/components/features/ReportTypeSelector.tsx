@@ -33,17 +33,22 @@ export const ReportTypeSelector = ({ reportTypes, onSelect }: ReportTypeSelector
         setUserBalance(response.data.data.balance)
       } else if (response?.data?.balance !== undefined) {
         setUserBalance(response.data.balance)
+      } else {
+        // Veri gelmediyse güvenlik için 0 olarak ayarla
+        setUserBalance(0)
       }
     } catch (error) {
       console.error('Kredi bakiyesi yüklenemedi:', error)
-      // Hata durumunda null olarak bırak, böylece tüm kartlar aktif görünür
+      // Hata durumunda güvenlik için 0 olarak ayarla, böylece tüm kartlar kilitli görünür
+      setUserBalance(0)
     } finally {
       setIsLoadingBalance(false)
     }
   }
 
   const hasEnoughCredits = (price: number): boolean => {
-    if (userBalance === null) return true // Yüklenirken varsayılan olarak aktif
+    // Yüklenirken veya bakiye null ise kilitli göster (güvenlik için)
+    if (isLoadingBalance || userBalance === null) return false
     return userBalance >= price
   }
 
