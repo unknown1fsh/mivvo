@@ -314,16 +314,30 @@ export default function AnalysisTypesPage() {
     try {
       setIsLoadingBalance(true)
       const response = await userAPI.getCredits()
-      if (response?.data?.success && response?.data?.data?.balance !== undefined) {
-        setUserBalance(response.data.data.balance)
+      console.log('📊 AnalysisTypesPage - Credits API Response:', response)
+      
+      // Backend response yapısı: { success: true, data: { credits: { balance: ... } } }
+      if (response?.data?.success && response?.data?.data?.credits?.balance !== undefined) {
+        const balance = Number(response.data.data.credits.balance)
+        console.log('✅ AnalysisTypesPage - Balance loaded:', balance)
+        setUserBalance(balance)
+      } else if (response?.data?.success && response?.data?.data?.balance !== undefined) {
+        // Fallback: direkt balance varsa
+        const balance = Number(response.data.data.balance)
+        console.log('✅ AnalysisTypesPage - Balance loaded (fallback):', balance)
+        setUserBalance(balance)
       } else if (response?.data?.balance !== undefined) {
-        setUserBalance(response.data.balance)
+        // Fallback 2: root seviyesinde balance varsa
+        const balance = Number(response.data.balance)
+        console.log('✅ AnalysisTypesPage - Balance loaded (fallback 2):', balance)
+        setUserBalance(balance)
       } else {
+        console.warn('⚠️ AnalysisTypesPage - Balance data not found in response')
         // Veri gelmediyse güvenlik için 0 olarak ayarla
         setUserBalance(0)
       }
     } catch (error) {
-      console.error('Kredi bakiyesi yüklenemedi:', error)
+      console.error('❌ AnalysisTypesPage - Kredi bakiyesi yüklenemedi:', error)
       // Hata durumunda güvenlik için 0 olarak ayarla, böylece tüm kartlar kilitli görünür
       setUserBalance(0)
     } finally {
