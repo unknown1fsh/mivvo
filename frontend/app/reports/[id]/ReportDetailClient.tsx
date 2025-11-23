@@ -44,72 +44,275 @@ function getAnalysisTypeFromReportType(reportType: string): 'damage' | 'paint' |
   return typeMap[reportType] || 'comprehensive'
 }
 
-// API'den gelen rapor verisini normalize eden fonksiyon
-function normalizeReportData(apiData: any, analysisType: string) {
-  // Backend'den gelen veri formatı:
-  // response.data = rapor objesi { id, vehiclePlate, aiAnalysisData: {...}, ... }
-  // response.data.aiAnalysisData = JSON field içinde analiz sonuçları
-  
-  console.log('🔍 normalizeReportData - Ham veri:', {
-    hasApiData: !!apiData,
-    apiDataKeys: apiData ? Object.keys(apiData) : [],
-    hasAiAnalysisData: !!(apiData?.aiAnalysisData),
-    aiAnalysisDataType: apiData?.aiAnalysisData ? typeof apiData.aiAnalysisData : 'undefined',
-    aiAnalysisDataKeys: apiData?.aiAnalysisData ? Object.keys(apiData.aiAnalysisData) : [],
-    vehiclePlate: apiData?.vehiclePlate,
-    id: apiData?.id
-  })
-  
-  // Rapor objesi (backend'den direkt gelen)
+// ===== RAPOR TÜRÜNE ÖZGÜ NORMALIZE FONKSİYONLARI =====
+
+/**
+ * Hasar Analizi Raporu Normalize Fonksiyonu
+ * Backend'den gelen hasar analizi verisini DamageReport component'inin beklediği formata çevirir
+ */
+function normalizeDamageReportData(apiData: any) {
   const reportData = apiData.report || apiData
+  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
   
-  // aiAnalysisData'yı extract et (JSON field)
-  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData
-  
-  console.log('🔍 normalizeReportData - aiAnalysisData:', {
+  console.log('🔍 normalizeDamageReportData:', {
     hasAiAnalysisData: !!aiAnalysisData,
-    aiAnalysisDataKeys: aiAnalysisData ? Object.keys(aiAnalysisData) : [],
     hasHasarAlanları: !!(aiAnalysisData?.hasarAlanları),
-    hasarAlanlarıLength: aiAnalysisData?.hasarAlanları?.length || 0,
-    hasGenelDeğerlendirme: !!(aiAnalysisData?.genelDeğerlendirme),
-    genelDeğerlendirmeKeys: aiAnalysisData?.genelDeğerlendirme ? Object.keys(aiAnalysisData.genelDeğerlendirme) : []
+    hasGenelDeğerlendirme: !!(aiAnalysisData?.genelDeğerlendirme)
   })
   
-  const baseData = {
+  return {
     id: reportData?.id || apiData?.id,
     vehicleInfo: {
-      plate: reportData?.vehiclePlate || apiData?.vehicleInfo?.plate || apiData?.vehiclePlate || '',
-      brand: reportData?.vehicleBrand || apiData?.vehicleInfo?.make || apiData?.vehicleBrand || '',
-      model: reportData?.vehicleModel || apiData?.vehicleInfo?.model || apiData?.vehicleModel || '',
-      year: reportData?.vehicleYear || apiData?.vehicleInfo?.year || apiData?.vehicleYear || 0,
-      vin: reportData?.vehicleVin || apiData?.vehicleInfo?.vin || apiData?.vehicleVin || '',
-      color: reportData?.vehicleColor || apiData?.vehicleInfo?.color || apiData?.vehicleColor || '',
-      mileage: reportData?.mileage || apiData?.vehicleInfo?.mileage || apiData?.mileage || 0,
-      fuelType: reportData?.fuelType || apiData?.vehicleInfo?.fuelType || apiData?.fuelType || '',
-      transmission: reportData?.transmission || apiData?.vehicleInfo?.transmission || apiData?.transmission || '',
-      engine: reportData?.engine || apiData?.vehicleInfo?.engine || apiData?.engine || '',
-      bodyType: reportData?.bodyType || apiData?.vehicleInfo?.bodyType || apiData?.bodyType || '',
+      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
+      mileage: reportData?.mileage || apiData?.mileage || 0,
+      fuelType: reportData?.fuelType || apiData?.fuelType || '',
+      transmission: reportData?.transmission || apiData?.transmission || '',
+      engine: reportData?.engine || apiData?.engine || '',
+      bodyType: reportData?.bodyType || apiData?.bodyType || '',
     },
-    reportType: reportData?.reportType || analysisType,
+    reportType: reportData?.reportType || 'damage',
     status: reportData?.status || apiData?.status || 'COMPLETED',
     createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || aiAnalysisData?.genelDeğerlendirme?.satışDeğeri || 0,
-    // aiAnalysisData'yı direkt kullan - DamageReport component'i bunu bekliyor
-    aiAnalysisData: aiAnalysisData || {},
-    // Vehicle images
+    aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
   }
+}
+
+/**
+ * Boya Analizi Raporu Normalize Fonksiyonu
+ * Backend'den gelen boya analizi verisini PaintReport component'inin beklediği formata çevirir
+ */
+function normalizePaintReportData(apiData: any) {
+  const reportData = apiData.report || apiData
+  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
   
-  console.log('🔍 normalizeReportData - Normalize edilmiş veri:', {
-    id: baseData.id,
-    hasAiAnalysisData: !!baseData.aiAnalysisData,
-    overallScore: baseData.overallScore,
-    vehicleInfo: baseData.vehicleInfo,
-    status: baseData.status
+  console.log('🎨 normalizePaintReportData:', {
+    hasAiAnalysisData: !!aiAnalysisData,
+    hasBoyaKalitesi: !!(aiAnalysisData?.boyaKalitesi),
+    hasRenkAnalizi: !!(aiAnalysisData?.renkAnalizi)
   })
   
-  return baseData
+  return {
+    id: reportData?.id || apiData?.id,
+    vehicleInfo: {
+      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
+      mileage: reportData?.mileage || apiData?.mileage || 0,
+      fuelType: reportData?.fuelType || apiData?.fuelType || '',
+      transmission: reportData?.transmission || apiData?.transmission || '',
+      engine: reportData?.engine || apiData?.engine || '',
+      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+    },
+    reportType: reportData?.reportType || 'paint',
+    status: reportData?.status || apiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    overallScore: aiAnalysisData?.boyaKalitesi?.genelPuan || aiAnalysisData?.overallScore || 0,
+    // PaintReport component'i direkt aiAnalysisData bekliyor
+    aiAnalysisData: aiAnalysisData,
+    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+  }
+}
+
+/**
+ * Motor Ses Analizi Raporu Normalize Fonksiyonu
+ * Backend'den gelen ses analizi verisini AudioReport component'inin beklediği formata çevirir
+ */
+function normalizeAudioReportData(apiData: any) {
+  const reportData = apiData.report || apiData
+  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  
+  console.log('🔊 normalizeAudioReportData:', {
+    hasAiAnalysisData: !!aiAnalysisData,
+    hasRpmAnalysis: !!(aiAnalysisData?.rpmAnalysis),
+    hasSoundQuality: !!(aiAnalysisData?.soundQuality),
+    hasDetectedIssues: !!(aiAnalysisData?.detectedIssues)
+  })
+  
+  return {
+    id: reportData?.id || apiData?.id,
+    vehicleInfo: {
+      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
+      mileage: reportData?.mileage || apiData?.mileage || 0,
+      fuelType: reportData?.fuelType || apiData?.fuelType || '',
+      transmission: reportData?.transmission || apiData?.transmission || '',
+      engine: reportData?.engine || apiData?.engine || '',
+      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+    },
+    reportType: reportData?.reportType || 'engine',
+    status: reportData?.status || apiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    overallScore: aiAnalysisData?.overallScore || 0,
+    // AudioReport component'i direkt aiAnalysisData bekliyor
+    aiAnalysisData: aiAnalysisData,
+    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+  }
+}
+
+/**
+ * Değer Tahmini Raporu Normalize Fonksiyonu
+ * Backend'den gelen değer tahmini verisini ValueReport component'inin beklediği formata çevirir
+ */
+function normalizeValueReportData(apiData: any) {
+  const reportData = apiData.report || apiData
+  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  
+  console.log('💰 normalizeValueReportData:', {
+    hasAiAnalysisData: !!aiAnalysisData,
+    hasEstimatedValue: !!(aiAnalysisData?.estimatedValue),
+    hasMarketAnalysis: !!(aiAnalysisData?.marketAnalysis)
+  })
+  
+  return {
+    id: reportData?.id || apiData?.id,
+    vehicleInfo: {
+      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
+      mileage: reportData?.mileage || apiData?.mileage || 0,
+      fuelType: reportData?.fuelType || apiData?.fuelType || '',
+      transmission: reportData?.transmission || apiData?.transmission || '',
+      engine: reportData?.engine || apiData?.engine || '',
+      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+    },
+    reportType: reportData?.reportType || 'value',
+    status: reportData?.status || apiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    overallScore: 0, // Value report'ta overallScore yok, estimatedValue kullanılır
+    // ValueReport component'i direkt aiAnalysisData bekliyor
+    aiAnalysisData: aiAnalysisData,
+    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || [],
+    // Değer tahmini için özel field'lar
+    marketValue: {
+      estimatedValue: aiAnalysisData?.estimatedValue || 0,
+      marketRange: aiAnalysisData?.marketAnalysis?.priceRange || { min: 0, max: 0, average: 0 },
+      depreciation: aiAnalysisData?.vehicleCondition?.depreciation || 0,
+      comparison: aiAnalysisData?.marketPosition?.priceComparison || 'Değerlendiriliyor'
+    }
+  }
+}
+
+/**
+ * Tam Ekspertiz Raporu Normalize Fonksiyonu
+ * Backend'den gelen kapsamlı ekspertiz verisini ComprehensiveReport component'inin beklediği formata çevirir
+ */
+function normalizeComprehensiveReportData(apiData: any) {
+  const reportData = apiData.report || apiData
+  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  
+  console.log('📋 normalizeComprehensiveReportData:', {
+    hasAiAnalysisData: !!aiAnalysisData,
+    hasOverallScore: !!(aiAnalysisData?.overallScore),
+    hasExpertiseGrade: !!(aiAnalysisData?.expertiseGrade),
+    hasComprehensiveSummary: !!(aiAnalysisData?.comprehensiveSummary)
+  })
+  
+  return {
+    id: reportData?.id || apiData?.id,
+    vehicleInfo: {
+      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
+      mileage: reportData?.mileage || apiData?.mileage || 0,
+      fuelType: reportData?.fuelType || apiData?.fuelType || '',
+      transmission: reportData?.transmission || apiData?.transmission || '',
+      engine: reportData?.engine || apiData?.engine || '',
+      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+    },
+    reportType: reportData?.reportType || 'comprehensive',
+    status: reportData?.status || apiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    overallScore: aiAnalysisData?.overallScore || 0,
+    // ComprehensiveReport component'i direkt aiAnalysisData bekliyor
+    aiAnalysisData: aiAnalysisData,
+    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+  }
+}
+
+/**
+ * Ana Normalize Fonksiyonu
+ * Rapor tipine göre doğru normalize fonksiyonunu çağırır
+ */
+function normalizeReportData(apiData: any, analysisType: string) {
+  console.log('🔍 normalizeReportData - Ham veri:', {
+    analysisType,
+    hasApiData: !!apiData,
+    apiDataKeys: apiData ? Object.keys(apiData) : [],
+    vehiclePlate: apiData?.vehiclePlate || apiData?.report?.vehiclePlate
+  })
+  
+  // Rapor tipine göre doğru normalize fonksiyonunu çağır
+  switch (analysisType) {
+    case 'damage':
+      return normalizeDamageReportData(apiData)
+    
+    case 'paint':
+      return normalizePaintReportData(apiData)
+    
+    case 'engine':
+      return normalizeAudioReportData(apiData)
+    
+    case 'value':
+      return normalizeValueReportData(apiData)
+    
+    case 'comprehensive':
+      return normalizeComprehensiveReportData(apiData)
+    
+    default:
+      // Fallback: Generic normalize (eski yöntem)
+      console.warn(`⚠️ Bilinmeyen rapor tipi: ${analysisType}, generic normalize kullanılıyor`)
+      const reportData = apiData.report || apiData
+      const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+      
+      return {
+        id: reportData?.id || apiData?.id,
+        vehicleInfo: {
+          plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
+          brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
+          model: reportData?.vehicleModel || apiData?.vehicleModel || '',
+          year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
+          vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
+          color: reportData?.vehicleColor || apiData?.vehicleColor || '',
+          mileage: reportData?.mileage || apiData?.mileage || 0,
+          fuelType: reportData?.fuelType || apiData?.fuelType || '',
+          transmission: reportData?.transmission || apiData?.transmission || '',
+          engine: reportData?.engine || apiData?.engine || '',
+          bodyType: reportData?.bodyType || apiData?.bodyType || '',
+        },
+        reportType: reportData?.reportType || analysisType,
+        status: reportData?.status || apiData?.status || 'COMPLETED',
+        createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
+        totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+        overallScore: aiAnalysisData?.overallScore || 0,
+        aiAnalysisData: aiAnalysisData,
+        vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+      }
+  }
 }
 
 
@@ -493,7 +696,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
             
             {analysisType === 'paint' && (
               <PaintReport 
-                report={report.aiAnalysisData as PaintAnalysisResult}
+                report={report.aiAnalysisData as any}
                 vehicleInfo={report.vehicleInfo}
                 onGeneratePDF={generatePDF}
                 isGeneratingPDF={isGeneratingPDF}
