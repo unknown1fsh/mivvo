@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { FadeInUp } from '@/components/motion'
 import jsPDF from 'jspdf'
 import { analysisAPI } from '@/lib/api'
+import api from '@/lib/api'
 import { ReportLoading } from '@/components/ui/ReportLoading'
 import { 
   DamageAnalysisResult, 
@@ -27,17 +28,20 @@ import { AudioReport } from '@/components/features/AudioReport'
 import { ValueReport } from '@/components/features/ValueReport'
 import { ComprehensiveReport } from '@/components/features/ComprehensiveReport'
 
-// Analiz tipini belirleyen utility fonksiyonu
-function getAnalysisType(reportId: string): 'damage' | 'paint' | 'engine' | 'value' | 'comprehensive' {
-  // Report ID'den analiz tipini belirle (örnek: damage_123, paint_456, vb.)
-  if (reportId.includes('damage')) return 'damage'
-  if (reportId.includes('paint')) return 'paint'
-  if (reportId.includes('audio') || reportId.includes('engine')) return 'engine'
-  if (reportId.includes('value')) return 'value'
-  if (reportId.includes('comprehensive') || reportId.includes('full')) return 'comprehensive'
+// ReportType'dan analiz tipini belirleyen utility fonksiyonu
+function getAnalysisTypeFromReportType(reportType: string): 'damage' | 'paint' | 'engine' | 'value' | 'comprehensive' {
+  const typeMap: Record<string, 'damage' | 'paint' | 'engine' | 'value' | 'comprehensive'> = {
+    'DAMAGE_ASSESSMENT': 'damage',
+    'DAMAGE_DETECTION': 'damage',
+    'PAINT_ANALYSIS': 'paint',
+    'ENGINE_SOUND_ANALYSIS': 'engine',
+    'AUDIO_ANALYSIS': 'engine',
+    'VALUE_ESTIMATION': 'value',
+    'COMPREHENSIVE_EXPERTISE': 'comprehensive',
+    'FULL_REPORT': 'comprehensive',
+  }
   
-  // Varsayılan olarak comprehensive döndür
-  return 'comprehensive'
+  return typeMap[reportType] || 'comprehensive'
 }
 
 // API'den gelen rapor verisini normalize eden fonksiyon
@@ -74,8 +78,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  const analysisType = getAnalysisType(reportId)
+  const [analysisType, setAnalysisType] = useState<'damage' | 'paint' | 'engine' | 'value' | 'comprehensive'>('damage')
 
   useEffect(() => {
     const fetchReport = async () => {
@@ -83,8 +86,27 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
         setLoading(true)
         setError(null)
         
+        // Önce rapor tipini öğrenmek için user reports endpoint'inden raporu bul
+        const reportsResponse = await api.get('/api/user/reports')
+        
+        if (!reportsResponse.data?.success) {
+          throw new Error('Raporlar alınamadı')
+        }
+        
+        const reports = reportsResponse.data.data?.reports || []
+        const reportData = reports.find((r: any) => r.id.toString() === reportId.toString())
+        
+        if (!reportData) {
+          throw new Error('Rapor bulunamadı')
+        }
+        
+        // ReportType'a göre analiz tipini belirle
+        const detectedAnalysisType = getAnalysisTypeFromReportType(reportData.reportType)
+        setAnalysisType(detectedAnalysisType)
+        
+        // Doğru endpoint'e istek at
         let response
-        switch (analysisType) {
+        switch (detectedAnalysisType) {
           case 'damage':
             response = await analysisAPI.damageAnalysis.getReport(reportId)
             break
@@ -104,18 +126,25 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
             throw new Error('Geçersiz analiz tipi')
         }
         
-        const normalizedData = normalizeReportData(response.data, analysisType)
+        if (!response || !response.data) {
+          throw new Error('Rapor verisi alınamadı')
+        }
+        
+        const normalizedData = normalizeReportData(response.data, detectedAnalysisType)
         setReport(normalizedData)
       } catch (err: any) {
         console.error('Rapor yükleme hatası:', err)
-        setError(err.response?.data?.message || 'Rapor yüklenirken bir hata oluştu')
+        const errorMessage = err.response?.data?.message || err.message || 'Rapor yüklenirken bir hata oluştu'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchReport()
-  }, [reportId, analysisType])
+    if (reportId) {
+      fetchReport()
+    }
+  }, [reportId])
 
   if (loading) {
     return (
@@ -309,26 +338,28 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
                 </div>
 
                 {/* Section Scores */}
-                <div className="grid grid-cols-2 gap-4">
-                  {Object.entries(report.sections).map(([key, section]) => {
-                    const sectionData = section as any
-                    return (
-                    <div key={key} className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">
-                          {key}
-                        </span>
-                        <span className="text-sm font-bold text-gray-900">{sectionData.score}</span>
+                {report.sections && typeof report.sections === 'object' && Object.keys(report.sections).length > 0 && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {Object.entries(report.sections).map(([key, section]) => {
+                      const sectionData = section as any
+                      return (
+                      <div key={key} className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-gray-700">
+                            {key}
+                          </span>
+                          <span className="text-sm font-bold text-gray-900">{sectionData?.score || 0}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${sectionData?.score || 0}%` }}
+                          ></div>
+                        </div>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${sectionData.score}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  )})}
-                </div>
+                    )})}
+                  </div>
+                )}
               </div>
             </div>
 
