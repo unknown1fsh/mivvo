@@ -118,11 +118,10 @@ export const useDamageAnalysis = () => {
         toast.error(`💳 ${message}`, { 
           id: toastId, 
           duration: 5000,
-          action: {
-            label: 'Kredi Satın Al',
-            onClick: () => {
-              window.location.href = '/dashboard/purchase'
-            }
+          style: {
+            background: '#fffbeb',
+            color: '#b45309',
+            border: '1px solid #fcd34d'
           }
         })
         // Otomatik yönlendirme
