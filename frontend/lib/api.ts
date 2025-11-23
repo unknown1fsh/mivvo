@@ -2,49 +2,130 @@ import axios from 'axios'
 
 // Resolve API base URL
 function getApiBaseUrl(): string {
-  // Production/Preview ortamında NEXT_PUBLIC_API_URL kullan
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL
+  // Debug logging
+  console.log('🔍 lib/api.ts - API Base URL Resolution:', {
+    NODE_ENV: process.env.NODE_ENV,
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    isClient: typeof window !== 'undefined',
+    currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'server'
+  });
+
+  // Railway deployment için NEXT_PUBLIC_API_URL kullan
+  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim()
+  if (apiUrl) {
+    console.log('🚀 lib/api.ts - API URL kullanılıyor:', apiUrl)
+    // Eğer https:// ile başlamıyorsa ekle
+    if (apiUrl.startsWith('https://') || apiUrl.startsWith('http://')) {
+      return apiUrl.replace(/\/$/, '')
+    }
+    return `https://${apiUrl}`.replace(/\/$/, '')
   }
-  
-  // Development ortamında localhost kullan
-  if (process.env.NODE_ENV === 'development') {
+
+  // Development için localhost
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.log('🔧 lib/api.ts - Development mod - localhost kullanılıyor')
+    return 'http://localhost:3001'
+  }
+
+  // Production'da NEXT_PUBLIC_API_URL yoksa hata ver
+  if (process.env.NODE_ENV === 'production') {
+    console.error('❌ lib/api.ts - HATA: NEXT_PUBLIC_API_URL environment variable tanımlı değil!')
+    console.error('❌ Railway\'de Frontend service\'inin NEXT_PUBLIC_API_URL environment variable\'ını backend service URL\'ine ayarlayın')
+    // Production'da fallback kullanma, direkt backend URL'i kullan (güvenlik riski olabilir ama çalışması için)
+    if (typeof window !== 'undefined') {
+      // Production'da window.location.origin yerine direkt backend URL kullan (eğer NEXT_PUBLIC_API_URL yoksa)
+      const origin = window.location.origin
+      // www.mivvo.org ise backend URL'ini oluştur
+      if (origin.includes('mivvo.org')) {
+        const backendUrl = 'https://mivvobackend.up.railway.app'
+        console.warn('⚠️ lib/api.ts - Fallback backend URL kullanılıyor:', backendUrl)
+        return backendUrl
+      }
+      console.error('❌ lib/api.ts - Production ortamında NEXT_PUBLIC_API_URL tanımlı değil ve origin tespit edilemedi')
+    }
+    throw new Error('NEXT_PUBLIC_API_URL environment variable is required in production')
+  }
+
+  // Fallback: relative URL (aynı origin) - sadece development için
+  console.log('⚠️ lib/api.ts - Fallback - relative URL kullanılıyor')
+  return ''
+}
+
+// API Base URL'i dinamik olarak çözümle (runtime'da)
+function getApiBaseUrlRuntime(): string {
+  // Client-side'da runtime'da çözümle
+  if (typeof window !== 'undefined') {
+    // NEXT_PUBLIC_API_URL environment variable'ı build zamanında inject edilir
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL
+    if (apiUrl) {
+      // Eğer https:// ile başlamıyorsa ekle
+      if (apiUrl.startsWith('https://') || apiUrl.startsWith('http://')) {
+        return apiUrl.replace(/\/$/, '')
+      }
+      return `https://${apiUrl}`.replace(/\/$/, '')
+    }
+    
+    // Production ortamında ve NEXT_PUBLIC_API_URL yoksa backend URL'i kullan
+    if (process.env.NODE_ENV === 'production') {
+      // Railway backend URL'ini direkt kullan
+      return 'https://mivvobackend.up.railway.app'
+    }
+    
+    // Development ortamında localhost kullan
     return 'http://localhost:3001'
   }
   
-  // Fallback: Client-side'da window.location.origin kullan
-  if (typeof window !== 'undefined') {
-    return window.location.origin.replace(':3000', ':3001')
-  }
-  
-  // Server-side fallback
-  return 'http://localhost:3001'
+  // Server-side (SSR) için build zamanındaki değeri kullan
+  return getApiBaseUrl()
 }
 
-const API_BASE_URL = getApiBaseUrl()
-
-// Create axios instance
+// Create axios instance with dynamic base URL interceptor
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: typeof window !== 'undefined' ? '' : getApiBaseUrl(), // Client-side'da boş, interceptor ile doldurulacak
   timeout: 300000, // 5 dakika timeout
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// Request interceptor to add auth token
+// Request interceptor to dynamically set base URL and add auth token
 api.interceptors.request.use(
   (config) => {
+    // Client-side'da baseURL'i runtime'da ayarla
+    if (typeof window !== 'undefined') {
+      const runtimeBaseUrl = getApiBaseUrlRuntime()
+      // Eğer config.url relative değilse (absolute URL ise), olduğu gibi bırak
+      if (!config.url?.startsWith('http://') && !config.url?.startsWith('https://')) {
+        // Relative URL ise baseURL ile birleştir
+        if (config.baseURL && !config.baseURL.startsWith('http')) {
+          // BaseURL relative ise runtime URL ile değiştir
+          config.baseURL = runtimeBaseUrl
+        } else if (!config.baseURL) {
+          config.baseURL = runtimeBaseUrl
+        }
+      }
+      
+      console.log('🔍 lib/api.ts - Axios Request:', {
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: config.baseURL ? `${config.baseURL}${config.url || ''}` : config.url,
+        method: config.method
+      })
+    }
+    
+    // Token ekle
     const token = localStorage.getItem('auth_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
     return config
   },
   (error) => {
     return Promise.reject(error)
   }
 )
+
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
