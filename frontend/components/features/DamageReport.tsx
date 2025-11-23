@@ -206,13 +206,9 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {vehicleImages.map((img, index) => {
-              // Bu resme ait hasar alanlarını bul
+              // Tüm hasar alanlarını göster (resim-hasar eşleştirmesi için bölge bilgisi gerekli ama şu an yok)
               const imageDamages = isDetailedAnalysis 
-                ? (data.hasarAlanları || []).filter((d: any) => 
-                    d.bölge === img.bölge || 
-                    d.location === img.location ||
-                    !d.bölge // Eğer bölge bilgisi yoksa tüm hasarları göster
-                  )
+                ? (data.hasarAlanları || [])
                 : []
               
               return (
