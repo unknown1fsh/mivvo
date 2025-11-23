@@ -224,7 +224,9 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
       pdf.text(`Genel Puan: ${report.overallScore}/100`, 20, 90)
       
       // Piyasa değeri
-      pdf.text(`Tahmini Değer: ${report.marketValue.estimatedValue.toLocaleString()}₺`, 20, 110)
+      if (report.marketValue?.estimatedValue) {
+        pdf.text(`Tahmini Değer: ${report.marketValue.estimatedValue.toLocaleString()}₺`, 20, 110)
+      }
       
       // Öneri
       pdf.setFontSize(12)
@@ -364,32 +366,40 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
             </div>
 
             {/* Market Value */}
-            <div className="card p-6 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <CurrencyDollarIcon className="w-5 h-5 text-green-600 mr-2" />
-                Piyasa Değeri
-              </h3>
-              
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  {report.marketValue.estimatedValue.toLocaleString()}₺
-                </div>
-                <div className="text-sm text-gray-600 mb-4">
-                  {report.marketValue.marketRange.min.toLocaleString()}₺ - {report.marketValue.marketRange.max.toLocaleString()}₺
-                </div>
+            {report.marketValue && (
+              <div className="card p-6 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <CurrencyDollarIcon className="w-5 h-5 text-green-600 mr-2" />
+                  Piyasa Değeri
+                </h3>
                 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Değer Kaybı:</span>
-                    <span className="font-medium">{report.marketValue.depreciation}%</span>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    {report.marketValue?.estimatedValue?.toLocaleString() || '0'}₺
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Piyasa Durumu:</span>
-                    <span className="font-medium text-green-600">{report.marketValue.comparison}</span>
+                  {report.marketValue?.marketRange && (
+                    <div className="text-sm text-gray-600 mb-4">
+                      {report.marketValue.marketRange.min?.toLocaleString() || '0'}₺ - {report.marketValue.marketRange.max?.toLocaleString() || '0'}₺
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2 text-sm">
+                    {report.marketValue?.depreciation !== undefined && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Değer Kaybı:</span>
+                        <span className="font-medium">{report.marketValue.depreciation}%</span>
+                      </div>
+                    )}
+                    {report.marketValue?.comparison && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Piyasa Durumu:</span>
+                        <span className="font-medium text-green-600">{report.marketValue.comparison}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Analysis Report Content */}
