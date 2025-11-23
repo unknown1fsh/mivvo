@@ -492,6 +492,34 @@ export class ComprehensiveExpertiseController {
       )
 
       console.log('✅ Tam expertiz tamamlandı')
+      
+      // Debug: AI sonucunu detaylı logla
+      console.log('📊 Comprehensive Expertise - AI Sonucu Detayları:', {
+        hasExpertiseResult: !!expertiseResult,
+        expertiseResultKeys: expertiseResult ? Object.keys(expertiseResult) : [],
+        hasOverallScore: !!(expertiseResult?.overallScore),
+        hasExpertiseGrade: !!(expertiseResult?.expertiseGrade),
+        hasComprehensiveSummary: !!(expertiseResult?.comprehensiveSummary),
+        hasExpertOpinion: !!(expertiseResult?.expertOpinion),
+        hasFinalRecommendations: !!(expertiseResult?.finalRecommendations),
+        hasInvestmentDecision: !!(expertiseResult?.investmentDecision),
+        overallScore: expertiseResult?.overallScore,
+        expertiseGrade: expertiseResult?.expertiseGrade
+      });
+      
+      // Veri validasyonu
+      if (!expertiseResult || Object.keys(expertiseResult).length === 0) {
+        console.error('❌ Comprehensive Expertise - AI analizi boş sonuç döndü');
+        throw new Error('AI analizi boş sonuç döndü');
+      }
+      
+      if (!expertiseResult.overallScore || !expertiseResult.expertiseGrade || !expertiseResult.comprehensiveSummary) {
+        console.warn('⚠️ Comprehensive Expertise - Eksik veri alanları:', {
+          hasOverallScore: !!expertiseResult.overallScore,
+          hasExpertiseGrade: !!expertiseResult.expertiseGrade,
+          hasComprehensiveSummary: !!expertiseResult.comprehensiveSummary
+        });
+      }
 
       // Raporu güncelle
       await prisma.vehicleReport.update({
@@ -501,6 +529,12 @@ export class ComprehensiveExpertiseController {
           aiAnalysisData: expertiseResult as any
         }
       })
+      
+      console.log('💾 Comprehensive Expertise - Rapor veritabanına kaydedildi:', {
+        reportId: parseInt(reportId),
+        hasAiAnalysisData: true,
+        dataKeys: Object.keys(expertiseResult)
+      });
 
       res.json({
         success: true,

@@ -388,11 +388,30 @@ export class PaintAnalysisController {
       const paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl, vehicleInfo)
 
       console.log('✅ Boya analizi tamamlandı')
-      console.log('📊 AI Analiz Sonucu:', JSON.stringify(paintResult, null, 2))
+      
+      // Debug: AI sonucunu detaylı logla
+      console.log('📊 Paint Analysis - AI Sonucu Detayları:', {
+        hasPaintResult: !!paintResult,
+        paintResultKeys: paintResult ? Object.keys(paintResult) : [],
+        hasBoyaKalitesi: !!(paintResult?.boyaKalitesi),
+        hasRenkAnalizi: !!(paintResult?.renkAnalizi),
+        hasYüzeyAnalizi: !!(paintResult?.yüzeyAnalizi),
+        boyaDurumu: paintResult?.boyaDurumu,
+        genelPuan: paintResult?.boyaKalitesi?.genelPuan
+      });
       
       // AI sonucu boş mu kontrol et
       if (!paintResult || Object.keys(paintResult).length === 0) {
+        console.error('❌ Paint Analysis - AI analizi boş sonuç döndü');
         throw new Error('AI analizi boş sonuç döndü')
+      }
+      
+      // Veri formatı validasyonu
+      if (!paintResult.boyaKalitesi || !paintResult.renkAnalizi) {
+        console.warn('⚠️ Paint Analysis - Eksik veri alanları:', {
+          hasBoyaKalitesi: !!paintResult.boyaKalitesi,
+          hasRenkAnalizi: !!paintResult.renkAnalizi
+        });
       }
 
       // Raporu güncelle (COMPLETED)
@@ -403,6 +422,12 @@ export class PaintAnalysisController {
           aiAnalysisData: paintResult as any
         }
       })
+      
+      console.log('💾 Paint Analysis - Rapor veritabanına kaydedildi:', {
+        reportId: parseInt(reportId),
+        hasAiAnalysisData: true,
+        dataKeys: Object.keys(paintResult)
+      });
 
       res.json({
         success: true,

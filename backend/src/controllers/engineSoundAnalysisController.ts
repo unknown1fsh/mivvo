@@ -324,7 +324,34 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
   // TODO: Gerçek uygulamada Bull/Agenda gibi queue kullanılmalı
   setTimeout(async () => {
     try {
+      console.log('🔊 Engine Sound Analysis - AI analizi başlatılıyor...');
       const analysisResult = await simulateEngineSoundAnalysis(audioFiles, vehicleInfo);
+      
+      // Debug: AI sonucunu detaylı logla
+      console.log('📊 Engine Sound Analysis - AI Sonucu Detayları:', {
+        hasAnalysisResult: !!analysisResult,
+        analysisResultKeys: analysisResult ? Object.keys(analysisResult) : [],
+        hasOverallScore: !!(analysisResult?.overallScore),
+        hasEngineHealth: !!(analysisResult?.engineHealth),
+        hasRpmAnalysis: !!(analysisResult?.rpmAnalysis),
+        hasSoundQuality: !!(analysisResult?.soundQuality),
+        hasDetectedIssues: !!(analysisResult?.detectedIssues),
+        overallScore: analysisResult?.overallScore,
+        engineHealth: analysisResult?.engineHealth
+      });
+      
+      // Veri validasyonu
+      if (!analysisResult || Object.keys(analysisResult).length === 0) {
+        throw new Error('AI analizi boş sonuç döndü');
+      }
+      
+      if (!analysisResult.overallScore || !analysisResult.engineHealth || !analysisResult.rpmAnalysis) {
+        console.warn('⚠️ Engine Sound Analysis - Eksik veri alanları:', {
+          hasOverallScore: !!analysisResult.overallScore,
+          hasEngineHealth: !!analysisResult.engineHealth,
+          hasRpmAnalysis: !!analysisResult.rpmAnalysis
+        });
+      }
       
       await prisma.vehicleReport.update({
         where: { id: report.id },
@@ -332,6 +359,12 @@ export const startEngineSoundAnalysis = asyncHandler(async (req: AuthRequest, re
           status: 'COMPLETED',
           aiAnalysisData: analysisResult as any,
         },
+      });
+      
+      console.log('💾 Engine Sound Analysis - Rapor veritabanına kaydedildi:', {
+        reportId: report.id,
+        hasAiAnalysisData: true,
+        dataKeys: Object.keys(analysisResult)
       });
     } catch (error) {
       console.error('Motor sesi analizi hatası:', error);

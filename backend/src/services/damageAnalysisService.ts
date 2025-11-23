@@ -413,8 +413,8 @@ export class DamageAnalysisService {
       throw new UnauthorizedException(ERROR_MESSAGES.REPORT.ACCESS_DENIED);
     }
 
-    // Debug: Rapor verisini logla
-    console.log('🔍 DamageAnalysisService.getReport - Rapor verisi:', {
+    // Debug: Rapor verisini logla (Frontend'e gönderilmeden önce)
+    console.log('🔍 DamageAnalysisService.getReport - Frontend\'e gönderilecek rapor verisi:', {
       reportId: report.id,
       status: report.status,
       hasAiAnalysisData: !!report.aiAnalysisData,
@@ -423,6 +423,7 @@ export class DamageAnalysisService {
       hasHasarAlanları: !!(report.aiAnalysisData && (report.aiAnalysisData as any).hasarAlanları),
       hasarAlanlarıLength: report.aiAnalysisData && (report.aiAnalysisData as any).hasarAlanları ? (report.aiAnalysisData as any).hasarAlanları.length : 0,
       hasGenelDeğerlendirme: !!(report.aiAnalysisData && (report.aiAnalysisData as any).genelDeğerlendirme),
+      genelDeğerlendirmeKeys: report.aiAnalysisData && (report.aiAnalysisData as any).genelDeğerlendirme ? Object.keys((report.aiAnalysisData as any).genelDeğerlendirme) : [],
       vehiclePlate: report.vehiclePlate
     });
 
@@ -600,36 +601,33 @@ export class DamageAnalysisService {
 
         const damageResult = await AIService.detectDamage(image.imageUrl, vehicleInfo);
         
-        // AI'dan gelen detaylı veriyi koru
-        const processedDamageAreas = damageResult?.hasarAlanları ? damageResult.hasarAlanları.map((damage: any) => ({
-          ...damage,
-          // AI'dan gelen detaylı analiz verilerini koru
-          genelDeğerlendirme: damageResult.genelDeğerlendirme,
-          teknikAnaliz: damageResult.teknikAnaliz,
-          güvenlikDeğerlendirmesi: damageResult.güvenlikDeğerlendirmesi,
-          onarımTahmini: damageResult.onarımTahmini,
-          aiSağlayıcı: damageResult.aiSağlayıcı,
-          model: damageResult.model,
-          güven: damageResult.güven,
-          analizZamanı: damageResult.analizZamanı,
-          // Fallback değerler
-          description: damage.açıklama || damage.description || 'Hasar tespit edildi',
-          repairCost: damage.onarımMaliyeti || damage.repairCost || 0,
-          partsAffected: damage.etkilenenParçalar || damage.partsAffected || [],
-          area: damage.bölge || damage.area || 'front',
-          confidence: damage.güven || damage.confidence || 0,
-          severity: damage.şiddet || damage.severity || 'orta',
-          type: damage.tür || damage.type || 'hasar'
-        })) : [];
-
+        // Debug: AI'dan gelen ham veriyi logla
+        console.log(`[AI] Resim ${i + 1} AI sonucu:`, {
+          hasDamageResult: !!damageResult,
+          damageResultKeys: damageResult ? Object.keys(damageResult) : [],
+          hasHasarAlanları: !!(damageResult?.hasarAlanları),
+          hasarAlanlarıLength: damageResult?.hasarAlanları?.length || 0,
+          hasGenelDeğerlendirme: !!(damageResult?.genelDeğerlendirme),
+          genelDeğerlendirmeKeys: damageResult?.genelDeğerlendirme ? Object.keys(damageResult.genelDeğerlendirme) : []
+        });
+        
+        // AI'dan gelen damageResult direkt DamageDetectionResult formatında
+        // Root seviyesinde: genelDeğerlendirme, teknikAnaliz, güvenlikDeğerlendirmesi, onarımTahmini, hasarAlanları vb.
+        // damageResult'u direkt kullan, hasar alanlarına ek field ekleme
+        
+        const damageAreas = damageResult?.hasarAlanları || [];
+        
+        // analysisResults array'ine damageResult'u direkt ekle
+        // combineAIResults fonksiyonu bu veriyi birleştirecek
         analysisResults.push({
           imageId: image.id,
           imagePath: image.imageUrl,
-          damageAreas: processedDamageAreas,
-          totalDamageScore: this.calculateDamageScore(processedDamageAreas)
+          damageResult: damageResult, // AI'dan gelen tam sonuç
+          damageAreas: damageAreas, // Sadece hasar alanları (fallback için)
+          totalDamageScore: this.calculateDamageScore(damageAreas)
         });
 
-        console.log(`✅ Resim ${i + 1} analizi tamamlandı: ${processedDamageAreas.length} hasar`);
+        console.log(`✅ Resim ${i + 1} analizi tamamlandı: ${damageAreas.length} hasar`);
       } catch (error) {
         logError(`Resim ${image.id} analiz hatası`, error, {
           imageId: image.id,
@@ -687,20 +685,43 @@ export class DamageAnalysisService {
    * @private
    */
   private calculateAnalysisResults(analysisResults: any[], imageCount: number): any {
+    // Debug: Gelen analysisResults'u logla
+    console.log('[AI] calculateAnalysisResults - Gelen results:', {
+      resultsCount: analysisResults.length,
+      firstResultKeys: analysisResults[0] ? Object.keys(analysisResults[0]) : [],
+      hasDamageResult: !!(analysisResults[0]?.damageResult),
+      hasDamageAreas: !!(analysisResults[0]?.damageAreas)
+    });
+    
     // AI'dan gelen detaylı veriyi koru ve genişlet - null-safe
-    const allDamages = analysisResults.flatMap(r => r.damageAreas || r.hasarAlanları || []);
+    // analysisResults artık { damageResult, damageAreas } formatında
+    const allDamages = analysisResults.flatMap(r => {
+      // damageResult içinden hasarAlanları al, yoksa fallback olarak damageAreas kullan
+      return r.damageResult?.hasarAlanları || r.damageAreas || [];
+    });
     const totalDamages = allDamages.length;
-    const criticalDamages = allDamages.filter(d => d.şiddet === 'yüksek' || d.şiddet === 'kritik').length;
+    const criticalDamages = allDamages.filter(d => {
+      const severity = d.şiddet || d.severity;
+      return severity === 'yüksek' || severity === 'kritik' || severity === 'high' || severity === 'critical';
+    }).length;
 
     // Modern AI servisi kullanıldığı için error kontrolü kaldırıldı
     console.log('[AI] Analysis results received:', analysisResults.length, 'results');
-    console.log('[AI] First result keys:', analysisResults[0] ? Object.keys(analysisResults[0]) : 'No results');
+    console.log('[AI] Total damages:', totalDamages, 'Critical:', criticalDamages);
 
     // AI'dan gelen detaylı analiz sonuçlarını birleştir
     const combinedAnalysis = this.combineAIResults(analysisResults);
     
+    // Debug: combineAIResults sonucunu logla
+    console.log('[AI] calculateAnalysisResults - Combined analysis:', {
+      hasCombinedAnalysis: !!combinedAnalysis,
+      hasGenelDeğerlendirme: !!combinedAnalysis?.genelDeğerlendirme,
+      hasarAlanlarıCount: combinedAnalysis?.hasarAlanları?.length || 0
+    });
+    
     // Eğer AI'dan detaylı analiz geldiyse onu kullan, yoksa hesapla
     if (combinedAnalysis && combinedAnalysis.genelDeğerlendirme) {
+      console.log('[AI] ✅ AI analiz sonucu başarıyla birleştirildi');
       return {
         // AI'dan gelen detaylı veri
         hasarAlanları: combinedAnalysis.hasarAlanları || [],
@@ -742,7 +763,13 @@ export class DamageAnalysisService {
       };
     }
 
-    // AI'dan veri gelmediğinde kullanıcı dostu mesaj döndür
+    // AI'dan veri gelmediğinde detaylı hata logla
+    console.error('[AI] ❌ calculateAnalysisResults - AI'dan veri gelmedi:', {
+      analysisResultsCount: analysisResults.length,
+      combinedAnalysis: combinedAnalysis,
+      hasGenelDeğerlendirme: !!combinedAnalysis?.genelDeğerlendirme
+    });
+    
     throw new Error('Şu anda kullanıcıların yoğun ilgisi sebebiyle servis yoğunluğu yaşanmaktadır. Lütfen birkaç dakika sonra tekrar deneyiniz. Analiz işleminiz için kredi iade edilecektir.');
   }
 
@@ -759,30 +786,61 @@ export class DamageAnalysisService {
    */
   private combineAIResults(analysisResults: any[]): any {
     if (!analysisResults || analysisResults.length === 0) {
+      console.log('[AI] combineAIResults: analysisResults boş');
       return null;
     }
 
-    // İlk resmin detaylı analizini al (AI'dan gelen tam veri)
+    // İlk resmin AI sonucunu al (damageResult root seviyesinde tüm field'ları içeriyor)
     const firstResult = analysisResults[0];
-    if (firstResult.damageAreas && firstResult.damageAreas.length > 0) {
-      const firstDamage = firstResult.damageAreas[0];
+    
+    // Debug logging
+    console.log('[AI] combineAIResults - First result:', {
+      hasDamageResult: !!firstResult.damageResult,
+      hasDamageAreas: !!firstResult.damageAreas,
+      damageResultKeys: firstResult.damageResult ? Object.keys(firstResult.damageResult) : [],
+      hasGenelDeğerlendirme: !!(firstResult.damageResult?.genelDeğerlendirme),
+      hasarAlanlarıLength: firstResult.damageResult?.hasarAlanları?.length || 0
+    });
+    
+    // damageResult direkt DamageDetectionResult formatında
+    // Root seviyesinde: genelDeğerlendirme, teknikAnaliz, güvenlikDeğerlendirmesi, onarımTahmini, hasarAlanları vb.
+    const firstDamageResult = firstResult.damageResult;
+    
+    if (!firstDamageResult) {
+      console.log('[AI] combineAIResults: damageResult yok');
+      return null;
+    }
+    
+    // Eğer AI'dan gelen detaylı analiz varsa onu kullan
+    if (firstDamageResult.genelDeğerlendirme) {
+      // Tüm resimlerden hasar alanlarını birleştir
+      const allHasarAlanları = analysisResults.flatMap(r => {
+        // damageResult içinden hasarAlanları al, yoksa fallback olarak damageAreas kullan
+        return r.damageResult?.hasarAlanları || r.damageAreas || [];
+      });
       
-      // Eğer AI'dan gelen detaylı analiz varsa onu kullan
-      if (firstDamage.genelDeğerlendirme) {
-        return {
-          hasarAlanları: analysisResults.flatMap(r => r.damageAreas),
-          genelDeğerlendirme: firstDamage.genelDeğerlendirme,
-          teknikAnaliz: firstDamage.teknikAnaliz,
-          güvenlikDeğerlendirmesi: firstDamage.güvenlikDeğerlendirmesi,
-          onarımTahmini: firstDamage.onarımTahmini,
-          aiSağlayıcı: firstDamage.aiSağlayıcı,
-          model: firstDamage.model,
-          güven: firstDamage.güven,
-          analizZamanı: firstDamage.analizZamanı
-        };
-      }
+      console.log('[AI] combineAIResults - Birleştirilmiş sonuç:', {
+        totalHasarAlanları: allHasarAlanları.length,
+        hasGenelDeğerlendirme: !!firstDamageResult.genelDeğerlendirme,
+        hasTeknikAnaliz: !!firstDamageResult.teknikAnaliz,
+        hasGüvenlikDeğerlendirmesi: !!firstDamageResult.güvenlikDeğerlendirmesi,
+        hasOnarımTahmini: !!firstDamageResult.onarımTahmini
+      });
+      
+      return {
+        hasarAlanları: allHasarAlanları,
+        genelDeğerlendirme: firstDamageResult.genelDeğerlendirme, // Root seviyesinde
+        teknikAnaliz: firstDamageResult.teknikAnaliz, // Root seviyesinde
+        güvenlikDeğerlendirmesi: firstDamageResult.güvenlikDeğerlendirmesi, // Root seviyesinde
+        onarımTahmini: firstDamageResult.onarımTahmini, // Root seviyesinde
+        aiSağlayıcı: firstDamageResult.aiSağlayıcı || 'OpenAI',
+        model: firstDamageResult.model || 'GPT-4 Vision',
+        güven: firstDamageResult.güven || 95,
+        analizZamanı: firstDamageResult.analizZamanı || new Date().toISOString()
+      };
     }
 
+    console.log('[AI] combineAIResults: genelDeğerlendirme bulunamadı');
     return null;
   }
 

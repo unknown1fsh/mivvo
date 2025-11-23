@@ -335,6 +335,31 @@ export class ValueEstimationController {
       const valueResult = await ValueEstimationService.estimateValue(vehicleInfo, imagePaths)
 
       console.log('✅ Değer tahmini tamamlandı')
+      
+      // Debug: AI sonucunu detaylı logla
+      console.log('📊 Value Estimation - AI Sonucu Detayları:', {
+        hasValueResult: !!valueResult,
+        valueResultKeys: valueResult ? Object.keys(valueResult) : [],
+        hasEstimatedValue: !!(valueResult?.estimatedValue),
+        hasMarketAnalysis: !!(valueResult?.marketAnalysis),
+        hasVehicleCondition: !!(valueResult?.vehicleCondition),
+        hasPriceBreakdown: !!(valueResult?.priceBreakdown),
+        estimatedValue: valueResult?.estimatedValue,
+        confidence: valueResult?.confidence
+      });
+      
+      // Veri validasyonu
+      if (!valueResult || Object.keys(valueResult).length === 0) {
+        console.error('❌ Value Estimation - AI analizi boş sonuç döndü');
+        throw new Error('AI analizi boş sonuç döndü');
+      }
+      
+      if (!valueResult.estimatedValue || !valueResult.marketAnalysis) {
+        console.warn('⚠️ Value Estimation - Eksik veri alanları:', {
+          hasEstimatedValue: !!valueResult.estimatedValue,
+          hasMarketAnalysis: !!valueResult.marketAnalysis
+        });
+      }
 
       // Raporu güncelle
       await prisma.vehicleReport.update({
@@ -344,6 +369,12 @@ export class ValueEstimationController {
           aiAnalysisData: valueResult as any
         }
       })
+      
+      console.log('💾 Value Estimation - Rapor veritabanına kaydedildi:', {
+        reportId: parseInt(reportId),
+        hasAiAnalysisData: true,
+        dataKeys: Object.keys(valueResult)
+      });
 
       res.json({
         success: true,
