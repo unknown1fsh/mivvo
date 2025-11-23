@@ -54,7 +54,7 @@ export async function generatePDFReport(options: PDFReportOptions): Promise<Buff
     });
 
     const chunks: Buffer[] = [];
-    doc.on('data', (chunk) => chunks.push(chunk));
+    doc.on('data', (chunk: Buffer) => chunks.push(chunk));
 
     // PDF içeriği oluştur
     await generatePDFContent(doc, report, { includeImages, includeCharts });
@@ -70,7 +70,7 @@ export async function generatePDFReport(options: PDFReportOptions): Promise<Buff
         resolve(pdfBuffer);
       });
 
-      doc.on('error', (error) => {
+      doc.on('error', (error: Error) => {
         logError('PDF oluşturma hatası', error);
         reject(error);
       });
@@ -85,7 +85,7 @@ export async function generatePDFReport(options: PDFReportOptions): Promise<Buff
  * PDF içeriği oluştur
  */
 async function generatePDFContent(
-  doc: PDFKit.PDFDocument,
+  doc: PDFDocument,
   report: any,
   options: { includeImages: boolean; includeCharts: boolean }
 ): Promise<void> {

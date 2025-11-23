@@ -30,11 +30,14 @@ process.env.DATABASE_URL = process.env.DATABASE_URL || process.env.TEST_DATABASE
 // };
 
 // Global test timeout
+// @ts-ignore - Test dosyası, build'den exclude edilmiş
 if (typeof jest !== 'undefined') {
+  // @ts-ignore
   jest.setTimeout(30000);
 }
 
 // Cleanup after all tests
+// @ts-ignore - Test dosyası, build'den exclude edilmiş
 afterAll(async () => {
   // Close database connections if needed
   // This will be handled by individual test files

@@ -4,6 +4,7 @@
  * SuperTest için request helper'ları
  */
 
+// @ts-ignore - Test dosyası, build'den exclude edilmiş
 import request from 'supertest';
 
 /**
