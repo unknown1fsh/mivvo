@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
   PlusIcon, 
@@ -52,6 +53,7 @@ interface UserStats {
 
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [reports, setReports] = useState<VehicleReport[]>([])
   const [stats, setStats] = useState<UserStats>({
     totalReports: 0,
@@ -72,6 +74,48 @@ export default function DashboardPage() {
     // Gerçek API'den veri çek
     fetchDashboardData()
     fetchPricingPackages()
+  }, [])
+
+  // Query parameter'dan refresh trigger'ını dinle
+  useEffect(() => {
+    const refresh = searchParams?.get('refresh')
+    if (refresh === 'true') {
+      console.log('🔄 Dashboard - Refresh triggered from query parameter')
+      fetchDashboardData()
+      fetchPricingPackages()
+      // URL'den refresh parametresini kaldır
+      router.replace('/dashboard', { scroll: false })
+    }
+  }, [searchParams, router])
+
+  // Window focus event'i ile verileri yenile
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('🔄 Dashboard - Window focused, refreshing data')
+      fetchDashboardData()
+      fetchPricingPackages()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
+
+  // Visibility change event'i ile verileri yenile (tab değiştiğinde)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('🔄 Dashboard - Page visible, refreshing data')
+        fetchDashboardData()
+        fetchPricingPackages()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   // Global error handler for uncaught promise rejections

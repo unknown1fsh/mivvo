@@ -96,7 +96,7 @@ export default function PurchasePage() {
       toast.success(paymentMethod === 'bank' ? 'Havale/EFT talimatınız alındı. Finans ekibimiz en kısa sürede sizinle iletişime geçecek.' : 'Ödeme işlemi başlatıldı!')
 
       if (paymentMethod === 'bank') {
-        router.push('/dashboard')
+        router.push('/dashboard?refresh=true')
         return
       }
       
@@ -112,7 +112,7 @@ export default function PurchasePage() {
               status: 'success'
             })
             toast.success('Ödeme başarılı! Kredileriniz hesabınıza yüklendi.')
-            router.push('/dashboard')
+            router.push('/dashboard?refresh=true')
           } catch (verifyError) {
             console.error('Payment verification error:', verifyError)
             toast.error('Ödeme doğrulanamadı')
