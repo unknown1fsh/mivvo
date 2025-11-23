@@ -262,10 +262,10 @@ export const analysisAPI = {
     },
     
     analyze: (reportId: string) =>
-      api.post(`/api/damage-analysis/${reportId}/analyze`, {}, { timeout: 300000 }),
+      api.post(`/api/damage-analysis/${reportId}/analyze`, {}, { timeout: 600000 }),
     
     getReport: (reportId: string) =>
-      api.get(`/api/damage-analysis/${reportId}`),
+      api.get(`/api/damage-analysis/${reportId}`, { timeout: 120000 }),
   },
   
   // Paint Analysis
@@ -285,10 +285,10 @@ export const analysisAPI = {
     },
     
     analyze: (reportId: string) =>
-      api.post(`/api/paint-analysis/${reportId}/analyze`, {}, { timeout: 300000 }),
+      api.post(`/api/paint-analysis/${reportId}/analyze`, {}, { timeout: 600000 }),
     
     getReport: (reportId: string) =>
-      api.get(`/api/paint-analysis/${reportId}`),
+      api.get(`/api/paint-analysis/${reportId}`, { timeout: 120000 }),
   },
   
   // Audio Analysis
@@ -306,7 +306,7 @@ export const analysisAPI = {
     },
     
     getReport: (reportId: string) =>
-      api.get(`/api/engine-sound-analysis/${reportId}`),
+      api.get(`/api/engine-sound-analysis/${reportId}`, { timeout: 120000 }),
     
     getHistory: () =>
       api.get('/api/engine-sound-analysis/history'),
@@ -332,10 +332,10 @@ export const analysisAPI = {
     },
     
     analyze: (reportId: string) =>
-      api.post(`/api/value-estimation/${reportId}/analyze`, {}, { timeout: 300000 }),
+      api.post(`/api/value-estimation/${reportId}/analyze`, {}, { timeout: 600000 }),
     
     getReport: (reportId: string) =>
-      api.get(`/api/value-estimation/${reportId}`),
+      api.get(`/api/value-estimation/${reportId}`, { timeout: 120000 }),
   },
   
   // Comprehensive Expertise
@@ -369,7 +369,7 @@ export const analysisAPI = {
       api.post(`/api/comprehensive-expertise/${reportId}/analyze`, {}, { timeout: 600000 }),
     
     getReport: (reportId: string) =>
-      api.get(`/api/comprehensive-expertise/${reportId}`),
+      api.get(`/api/comprehensive-expertise/${reportId}`, { timeout: 120000 }),
   },
 }
 
