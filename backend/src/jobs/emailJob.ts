@@ -28,7 +28,7 @@ export interface EmailJobData {
 /**
  * Email Job ekle
  */
-export async function addEmailJob(data: EmailJobData): Promise<string> {
+export async function addEmailJob(data: EmailJobData): Promise<string | null> {
   return addJob(EMAIL_QUEUE, 'send-email', data, {
     priority: 1,
     jobId: `email-${data.type}-${Date.now()}`,
@@ -39,7 +39,7 @@ export async function addEmailJob(data: EmailJobData): Promise<string> {
  * Email Worker'ı başlat
  */
 export function startEmailWorker(): void {
-  createWorker<EmailJobData>(EMAIL_QUEUE, async (job) => {
+  const worker = createWorker<EmailJobData>(EMAIL_QUEUE, async (job) => {
     const { type, to, subject, html, text, token, userName, reportId, customData } = job.data;
 
     logInfo('Email job başlatıldı', { type, to });
@@ -119,6 +119,10 @@ export function startEmailWorker(): void {
     }
   });
 
-  logInfo('Email worker başlatıldı', { queueName: EMAIL_QUEUE });
+  if (worker) {
+    logInfo('Email worker başlatıldı', { queueName: EMAIL_QUEUE });
+  } else {
+    logError('Email worker başlatılamadı: Redis bağlantısı yok', new Error('Worker is null'));
+  }
 }
 

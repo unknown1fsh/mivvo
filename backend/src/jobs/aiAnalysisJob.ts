@@ -23,7 +23,7 @@ export interface AIAnalysisJobData {
   analysisType: 'damage' | 'paint' | 'engine-sound' | 'comprehensive';
 }
 
-export async function addAIAnalysisJob(data: AIAnalysisJobData): Promise<string> {
+export async function addAIAnalysisJob(data: AIAnalysisJobData): Promise<string | null> {
   return addJob(AI_ANALYSIS_QUEUE, 'analyze', data, {
     priority: 1,
     jobId: `ai-analysis-${data.reportId}`,
@@ -34,7 +34,7 @@ export async function addAIAnalysisJob(data: AIAnalysisJobData): Promise<string>
  * AI Analiz Worker'ı başlat
  */
 export function startAIAnalysisWorker(): void {
-  createWorker<AIAnalysisJobData>(AI_ANALYSIS_QUEUE, async (job) => {
+  const worker = createWorker<AIAnalysisJobData>(AI_ANALYSIS_QUEUE, async (job) => {
     const { reportId, imagePath, vehicleInfo, analysisType } = job.data;
     const jobStartTime = Date.now(); // Job başlangıç zamanı
 
@@ -108,6 +108,10 @@ export function startAIAnalysisWorker(): void {
     }
   });
 
-  logInfo('AI analiz worker başlatıldı', { queueName: AI_ANALYSIS_QUEUE });
+  if (worker) {
+    logInfo('AI analiz worker başlatıldı', { queueName: AI_ANALYSIS_QUEUE });
+  } else {
+    logError('AI analiz worker başlatılamadı: Redis bağlantısı yok', new Error('Worker is null'));
+  }
 }
 

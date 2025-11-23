@@ -123,7 +123,21 @@ const envSchema = z.object({
 
   // Optional configurations
   GEMINI_API_KEY: z.string().optional(),
-  REDIS_URL: z.string().url().optional(),
+  REDIS_URL: z.string()
+    .refine(
+      (url) => {
+        if (!url) return true; // Optional, boşsa geçerli
+        // Redis URL formatını kontrol et (redis://, rediss://, veya geçerli bir URL)
+        return url.startsWith('redis://') || 
+               url.startsWith('rediss://') || 
+               /^https?:\/\//.test(url) ||
+               url.includes('://');
+      },
+      {
+        message: 'REDIS_URL must be a valid Redis connection string (redis:// or rediss://)',
+      }
+    )
+    .optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().optional(),
   SMTP_USER: z.string().optional(),

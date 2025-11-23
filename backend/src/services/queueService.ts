@@ -16,36 +16,66 @@ let redisConnection: Redis | null = null;
 /**
  * Redis bağlantısı oluştur
  */
-function getRedisConnection(): Redis {
+function getRedisConnection(): Redis | null {
   if (redisConnection) {
     return redisConnection;
   }
 
   const env = getEnv();
   const redisUrl = env.REDIS_URL || process.env.REDIS_URL;
+  const isProduction = process.env.NODE_ENV === 'production';
 
   if (redisUrl) {
     redisConnection = new Redis(redisUrl, {
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
+      retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+      reconnectOnError: (err) => {
+        const targetError = 'READONLY';
+        if (err.message.includes(targetError)) {
+          return true;
+        }
+        return false;
+      },
     });
-  } else {
-    // Local Redis (development)
+
+    redisConnection.on('error', (err) => {
+      logError('Redis connection error', err);
+    });
+
+    redisConnection.on('connect', () => {
+      logInfo('Redis connected');
+    });
+  } else if (!isProduction) {
+    // Sadece development ortamında localhost Redis kullan
+    logInfo('REDIS_URL not found, using local Redis (localhost:6379)');
     redisConnection = new Redis({
       host: 'localhost',
       port: 6379,
       maxRetriesPerRequest: null,
       enableReadyCheck: false,
     });
+
+    redisConnection.on('error', (err) => {
+      logError('Redis connection error', err);
+    });
+
+    redisConnection.on('connect', () => {
+      logInfo('Redis connected to localhost');
+    });
+  } else {
+    // Production ortamında Redis URL yoksa, null döndür
+    logError('Redis URL not found in production environment. Queue service will be disabled.', new Error('REDIS_URL is required in production'));
+    console.warn('⚠️  REDIS_URL is not set in production. Queue workers will not start.');
+    console.warn('💡 To fix this in Railway:');
+    console.warn('   1. Add a Redis service to your Railway project');
+    console.warn('   2. Railway will automatically set REDIS_URL environment variable');
+    console.warn('   3. Redeploy your service');
+    return null;
   }
-
-  redisConnection.on('error', (err) => {
-    logError('Redis connection error', err);
-  });
-
-  redisConnection.on('connect', () => {
-    logInfo('Redis connected');
-  });
 
   return redisConnection;
 }
@@ -60,12 +90,18 @@ const queueEvents: Map<string, QueueEvents> = new Map();
 /**
  * Queue oluştur veya mevcut olanı döndür
  */
-export function getQueue(queueName: string): Queue {
+export function getQueue(queueName: string): Queue | null {
+  const connection = getRedisConnection();
+  
+  if (!connection) {
+    logError(`Cannot create queue ${queueName}: Redis connection not available`, new Error('Redis connection is null'));
+    return null;
+  }
+
   if (queues.has(queueName)) {
     return queues.get(queueName)!;
   }
 
-  const connection = getRedisConnection();
   const queue = new Queue(queueName, {
     connection,
     defaultJobOptions: {
@@ -94,12 +130,18 @@ export function getQueue(queueName: string): Queue {
 export function createWorker<T = any>(
   queueName: string,
   processor: (job: { data: T }) => Promise<any>
-): Worker {
+): Worker | null {
+  const connection = getRedisConnection();
+  
+  if (!connection) {
+    logError(`Cannot create worker for queue ${queueName}: Redis connection not available`, new Error('Redis connection is null'));
+    return null;
+  }
+
   if (workers.has(queueName)) {
     return workers.get(queueName)!;
   }
 
-  const connection = getRedisConnection();
   const worker = new Worker(
     queueName,
     async (job) => {
@@ -150,12 +192,18 @@ export function createWorker<T = any>(
 /**
  * Queue Events oluştur (monitoring için)
  */
-export function getQueueEvents(queueName: string): QueueEvents {
+export function getQueueEvents(queueName: string): QueueEvents | null {
+  const connection = getRedisConnection();
+  
+  if (!connection) {
+    logError(`Cannot create queue events for ${queueName}: Redis connection not available`, new Error('Redis connection is null'));
+    return null;
+  }
+
   if (queueEvents.has(queueName)) {
     return queueEvents.get(queueName)!;
   }
 
-  const connection = getRedisConnection();
   const events = new QueueEvents(queueName, { connection });
   queueEvents.set(queueName, events);
   return events;
@@ -173,8 +221,14 @@ export async function addJob<T = any>(
     delay?: number;
     jobId?: string;
   }
-): Promise<string> {
+): Promise<string | null> {
   const queue = getQueue(queueName);
+  
+  if (!queue) {
+    logError(`Cannot add job to queue ${queueName}: Redis connection not available`, new Error('Queue is null'));
+    return null;
+  }
+
   const job = await queue.add(jobName, data, {
     priority: options?.priority,
     delay: options?.delay,
@@ -235,8 +289,14 @@ export async function getQueueStats(queueName: string): Promise<{
   completed: number;
   failed: number;
   delayed: number;
-}> {
+} | null> {
   const queue = getQueue(queueName);
+  
+  if (!queue) {
+    logError(`Cannot get stats for queue ${queueName}: Redis connection not available`, new Error('Queue is null'));
+    return null;
+  }
+
   const [waiting, active, completed, failed, delayed] = await Promise.all([
     queue.getWaitingCount(),
     queue.getActiveCount(),
