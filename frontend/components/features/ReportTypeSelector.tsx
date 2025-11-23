@@ -1,11 +1,15 @@
 // Rapor türü seçici bileşeni
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { ReportType } from '@/types/report'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 import { StaggerContainer, StaggerItem } from '@/components/motion'
+import { userAPI } from '@/lib/api'
+import toast from 'react-hot-toast'
 
 interface ReportTypeSelectorProps {
   reportTypes: ReportType[]
@@ -13,6 +17,45 @@ interface ReportTypeSelectorProps {
 }
 
 export const ReportTypeSelector = ({ reportTypes, onSelect }: ReportTypeSelectorProps) => {
+  const router = useRouter()
+  const [userBalance, setUserBalance] = useState<number | null>(null)
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true)
+
+  useEffect(() => {
+    fetchUserBalance()
+  }, [])
+
+  const fetchUserBalance = async () => {
+    try {
+      setIsLoadingBalance(true)
+      const response = await userAPI.getCredits()
+      if (response?.data?.success && response?.data?.data?.balance !== undefined) {
+        setUserBalance(response.data.data.balance)
+      } else if (response?.data?.balance !== undefined) {
+        setUserBalance(response.data.balance)
+      }
+    } catch (error) {
+      console.error('Kredi bakiyesi yüklenemedi:', error)
+      // Hata durumunda null olarak bırak, böylece tüm kartlar aktif görünür
+    } finally {
+      setIsLoadingBalance(false)
+    }
+  }
+
+  const hasEnoughCredits = (price: number): boolean => {
+    if (userBalance === null) return true // Yüklenirken varsayılan olarak aktif
+    return userBalance >= price
+  }
+
+  const handleCardClick = (reportType: ReportType) => {
+    if (!hasEnoughCredits(reportType.price)) {
+      toast.error(`Yetersiz bakiye! Bu rapor için ${reportType.price}₺ gereklidir. Mevcut bakiyeniz: ${userBalance}₺`)
+      router.push('/dashboard/purchase')
+      return
+    }
+    onSelect(reportType)
+  }
+
   return (
     <div className="space-y-8">
       <div className="text-center">
@@ -21,21 +64,23 @@ export const ReportTypeSelector = ({ reportTypes, onSelect }: ReportTypeSelector
       </div>
 
       <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {reportTypes.map((reportType) => (
+        {reportTypes.map((reportType) => {
+          const isDisabled = !hasEnoughCredits(reportType.price)
+          return (
           <StaggerItem key={reportType.id}>
             <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="cursor-pointer"
-              onClick={() => onSelect(reportType)}
+              whileHover={!isDisabled ? { scale: 1.02 } : {}}
+              whileTap={!isDisabled ? { scale: 0.98 } : {}}
+              className={isDisabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"}
+              onClick={() => handleCardClick(reportType)}
             >
               <Card 
                 variant={reportType.popular ? 'elevated' : 'default'}
                 className={`relative overflow-visible ${
-                  reportType.popular ? 'ring-2 ring-blue-500' : ''
-                }`}
+                  reportType.popular && !isDisabled ? 'ring-2 ring-blue-500' : ''
+                } ${isDisabled ? 'bg-gray-100 grayscale' : ''}`}
               >
-                {reportType.popular && (
+                {reportType.popular && !isDisabled && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
                     <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1 rounded-full text-sm font-medium shadow-lg">
                       En Popüler
@@ -43,7 +88,16 @@ export const ReportTypeSelector = ({ reportTypes, onSelect }: ReportTypeSelector
                   </div>
                 )}
                 
-                <div className="text-center">
+                {isDisabled && (
+                  <div className="absolute top-4 right-4 z-10">
+                    <div className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-lg">
+                      <LockClosedIcon className="w-4 h-4" />
+                      Kilitli
+                    </div>
+                  </div>
+                )}
+                
+                <div className={`text-center ${isDisabled ? 'relative' : ''}`}>
                   <div className="text-4xl mb-4">{reportType.icon}</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{reportType.name}</h3>
                   <p className="text-gray-600 mb-4">{reportType.description}</p>
@@ -54,20 +108,42 @@ export const ReportTypeSelector = ({ reportTypes, onSelect }: ReportTypeSelector
                   <ul className="text-sm text-gray-600 space-y-1 mb-6">
                     {reportType.features.map((feature, idx) => (
                       <li key={idx} className="flex items-center justify-center">
-                        <CheckCircleIcon className="w-4 h-4 text-green-500 mr-2" />
-                        {feature}
+                        <CheckCircleIcon className={`w-4 h-4 mr-2 ${isDisabled ? 'text-gray-400' : 'text-green-500'}`} />
+                        <span className={isDisabled ? 'text-gray-400' : ''}>{feature}</span>
                       </li>
                     ))}
                   </ul>
                   
-                  <Button className="w-full">
-                    Seç
+                  {isDisabled && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs text-red-700 font-semibold mb-1">
+                        Yetersiz Bakiye
+                      </p>
+                      <p className="text-xs text-red-600">
+                        Gerekli: {reportType.price}₺ • Mevcut: {userBalance || 0}₺
+                      </p>
+                    </div>
+                  )}
+                  
+                  <Button 
+                    className={`w-full ${isDisabled ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                    disabled={isDisabled}
+                  >
+                    {isDisabled ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <LockClosedIcon className="w-4 h-4" />
+                        Yetersiz Bakiye
+                      </span>
+                    ) : (
+                      'Seç'
+                    )}
                   </Button>
                 </div>
               </Card>
             </motion.div>
           </StaggerItem>
-        ))}
+          )
+        })}
       </StaggerContainer>
     </div>
   )

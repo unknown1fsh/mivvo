@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   SparklesIcon,
@@ -22,10 +22,13 @@ import {
   BoltIcon,
   HeartIcon,
   GlobeAltIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  LockClosedIcon
 } from '@heroicons/react/24/outline'
 import { useRouter } from 'next/navigation'
 import { FadeInUp, StaggerContainer, StaggerItem } from '@/components/motion'
+import { userAPI } from '@/lib/api'
+import toast from 'react-hot-toast'
 
 interface AnalysisType {
   id: string
@@ -299,9 +302,43 @@ const popularityConfig = {
 export default function AnalysisTypesPage() {
   const [selectedType, setSelectedType] = useState<string | null>(null)
   const [hoveredType, setHoveredType] = useState<string | null>(null)
+  const [userBalance, setUserBalance] = useState<number | null>(null)
+  const [isLoadingBalance, setIsLoadingBalance] = useState(true)
   const router = useRouter()
 
+  useEffect(() => {
+    fetchUserBalance()
+  }, [])
+
+  const fetchUserBalance = async () => {
+    try {
+      setIsLoadingBalance(true)
+      const response = await userAPI.getCredits()
+      if (response?.data?.success && response?.data?.data?.balance !== undefined) {
+        setUserBalance(response.data.data.balance)
+      } else if (response?.data?.balance !== undefined) {
+        setUserBalance(response.data.balance)
+      }
+    } catch (error) {
+      console.error('Kredi bakiyesi yüklenemedi:', error)
+      // Hata durumunda null olarak bırak
+    } finally {
+      setIsLoadingBalance(false)
+    }
+  }
+
+  const hasEnoughCredits = (price: number): boolean => {
+    if (userBalance === null) return true // Yüklenirken varsayılan olarak aktif
+    return userBalance >= price
+  }
+
   const handleSelect = (type: AnalysisType) => {
+    if (!hasEnoughCredits(type.price)) {
+      toast.error(`Yetersiz bakiye! Bu rapor için ${type.price}₺ gereklidir. Mevcut bakiyeniz: ${userBalance}₺`)
+      router.push('/dashboard/purchase')
+      return
+    }
+
     setSelectedType(type.id)
     // Analiz türüne göre yönlendirme
     switch (type.id) {
@@ -387,17 +424,23 @@ export default function AnalysisTypesPage() {
         </motion.div>
 
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {analysisTypes.map((type, index) => (
+          {analysisTypes.map((type, index) => {
+            const isDisabled = !hasEnoughCredits(type.price)
+            return (
             <StaggerItem key={type.id} delay={index * 0.1}>
               <motion.div
-                className={`relative group cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-2xl ${
-                  selectedType === type.id ? 'ring-4 ring-blue-500 ring-opacity-50' : ''
+                className={`relative group transform transition-all duration-300 ${
+                  isDisabled 
+                    ? 'cursor-not-allowed opacity-60 grayscale' 
+                    : 'cursor-pointer hover:scale-105 hover:shadow-2xl'
+                } ${
+                  selectedType === type.id && !isDisabled ? 'ring-4 ring-blue-500 ring-opacity-50' : ''
                 }`}
-                onHoverStart={() => setHoveredType(type.id)}
+                onHoverStart={() => !isDisabled && setHoveredType(type.id)}
                 onHoverEnd={() => setHoveredType(null)}
                 onClick={() => handleSelect(type)}
-                whileHover={{ y: -8 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={!isDisabled ? { y: -8 } : {}}
+                whileTap={!isDisabled ? { scale: 0.98 } : {}}
               >
                 {/* Card */}
                 <div className={`relative overflow-hidden rounded-3xl ${type.gradient} p-8 h-full`}>
@@ -406,15 +449,27 @@ export default function AnalysisTypesPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
                   </div>
 
+                  {/* Lock Badge - Yetersiz Bakiye */}
+                  {isDisabled && (
+                    <div className="absolute top-4 right-4 z-20">
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-500 text-white flex items-center gap-1 shadow-lg">
+                        <LockClosedIcon className="w-4 h-4" />
+                        Kilitli
+                      </span>
+                    </div>
+                  )}
+
                   {/* Popularity Badge */}
-                  <div className="absolute top-4 right-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${popularityConfig[type.popularity].color}`}>
-                      {popularityConfig[type.popularity].label}
-                    </span>
-                  </div>
+                  {!isDisabled && (
+                    <div className="absolute top-4 right-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${popularityConfig[type.popularity].color}`}>
+                        {popularityConfig[type.popularity].label}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Discount Badge */}
-                  {type.discount && (
+                  {type.discount && !isDisabled && (
                     <div className="absolute top-4 left-4">
                       <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white">
                         %{type.discount} İndirim
@@ -500,14 +555,42 @@ export default function AnalysisTypesPage() {
                     </div>
                   </div>
 
+                  {/* Yetersiz Bakiye Uyarısı */}
+                  {isDisabled && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p className="text-xs text-red-700 font-semibold mb-1">
+                        Yetersiz Bakiye
+                      </p>
+                      <p className="text-xs text-red-600">
+                        Gerekli: ₺{type.price} • Mevcut: ₺{userBalance || 0}
+                      </p>
+                    </div>
+                  )}
+
                   {/* CTA Button */}
                   <motion.button
-                    className={`w-full py-4 px-6 rounded-2xl bg-gradient-to-r ${type.color} text-white font-semibold flex items-center justify-center group-hover:shadow-lg transition-all duration-300`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className={`w-full py-4 px-6 rounded-2xl ${
+                      isDisabled 
+                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                        : `bg-gradient-to-r ${type.color} text-white`
+                    } font-semibold flex items-center justify-center transition-all duration-300 ${
+                      !isDisabled ? 'group-hover:shadow-lg' : ''
+                    }`}
+                    disabled={isDisabled}
+                    whileHover={!isDisabled ? { scale: 1.02 } : {}}
+                    whileTap={!isDisabled ? { scale: 0.98 } : {}}
                   >
-                    <span>Analizi Başlat</span>
-                    <ArrowRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    {isDisabled ? (
+                      <span className="flex items-center gap-2">
+                        <LockClosedIcon className="w-5 h-5" />
+                        Yetersiz Bakiye
+                      </span>
+                    ) : (
+                      <>
+                        <span>Analizi Başlat</span>
+                        <ArrowRightIcon className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
                   </motion.button>
 
                   {/* Hover Overlay */}
@@ -524,7 +607,8 @@ export default function AnalysisTypesPage() {
                 </div>
               </motion.div>
             </StaggerItem>
-          ))}
+          )
+          })}
         </StaggerContainer>
 
         {/* Bottom CTA */}
