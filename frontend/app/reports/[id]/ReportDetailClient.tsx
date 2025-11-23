@@ -673,7 +673,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
               <>
                 {/* Debug: DamageReport'a giden veriyi logla */}
                 {(() => {
-                  const damageReportData = report.aiAnalysisData as DamageAnalysisResult
+                  const damageReportData = report.aiAnalysisData as any
                   console.log('🎯 ReportDetailClient - DamageReport Data:', {
                     hasAiAnalysisData: !!report.aiAnalysisData,
                     aiAnalysisDataKeys: report.aiAnalysisData ? Object.keys(report.aiAnalysisData) : [],
@@ -681,7 +681,7 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
                     hasarAlanlarıLength: damageReportData?.hasarAlanları?.length || 0,
                     hasGenelDeğerlendirme: !!(damageReportData?.genelDeğerlendirme),
                     genelDeğerlendirmeKeys: damageReportData?.genelDeğerlendirme ? Object.keys(damageReportData.genelDeğerlendirme) : [],
-                    overallScore: damageReportData?.genelDeğerlendirme?.satışDeğeri || damageReportData?.overallScore,
+                    overallScore: damageReportData?.genelDeğerlendirme?.satışDeğeri || (damageReportData as any)?.overallScore || 0,
                     vehicleInfo: report.vehicleInfo
                   })
                   return null
