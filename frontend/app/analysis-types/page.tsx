@@ -359,22 +359,22 @@ export default function AnalysisTypesPage() {
     }
 
     setSelectedType(type.id)
-    // Analiz türüne göre yönlendirme
+    // Analiz türüne göre yönlendirme - Unified flow kullan
     switch (type.id) {
       case 'paint-analysis':
-        router.push('/vehicle/paint-analysis')
+        router.push('/vehicle/new-report?type=paint-analysis')
         break
       case 'damage-analysis':
-        router.push('/vehicle/damage-analysis')
+        router.push('/vehicle/new-report?type=damage-analysis')
         break
       case 'engine-sound-analysis':
-        router.push('/vehicle/engine-sound-analysis')
+        router.push('/vehicle/new-report?type=engine-sound-analysis')
         break
       case 'value-estimation':
-        router.push('/vehicle/value-estimation')
+        router.push('/vehicle/new-report?type=value-estimation')
         break
       case 'comprehensive-expertise':
-        router.push('/vehicle/comprehensive-expertise')
+        router.push('/vehicle/new-report?type=comprehensive-expertise')
         break
       default:
         break

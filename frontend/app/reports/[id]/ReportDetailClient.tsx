@@ -14,7 +14,9 @@ import { FadeInUp } from '@/components/motion'
 import jsPDF from 'jspdf'
 import { analysisAPI } from '@/lib/api'
 import api from '@/lib/api'
+import toast from 'react-hot-toast'
 import { ReportLoading } from '@/components/ui/ReportLoading'
+import { Skeleton } from '@/components/ui/LoadingComponents'
 import { 
   DamageAnalysisResult, 
   PaintAnalysisResult, 
@@ -533,35 +535,62 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
     setIsGeneratingPDF(true)
     
     try {
-      const pdf = new jsPDF()
+      // Rapor tipine göre doğru endpoint'i belirle
+      const reportType = report.reportType || 'DAMAGE_ASSESSMENT'
+      let endpoint = ''
       
-      // PDF başlığı
-      pdf.setFontSize(20)
-      pdf.text('Mivvo Expertiz Raporu', 20, 20)
-      
-      // Araç bilgileri
-      pdf.setFontSize(14)
-      pdf.text(`${report.vehicleInfo.brand} ${report.vehicleInfo.model} ${report.vehicleInfo.year}`, 20, 40)
-      pdf.text(`Plaka: ${report.vehicleInfo.plate}`, 20, 50)
-      pdf.text(`VIN: ${report.vehicleInfo.vin}`, 20, 60)
-      pdf.text(`Kilometre: ${report.vehicleInfo.mileage.toLocaleString()} km`, 20, 70)
-      
-      // Genel puan
-      pdf.setFontSize(16)
-      pdf.text(`Genel Puan: ${report.overallScore}/100`, 20, 90)
-      
-      // Piyasa değeri
-      if (report.marketValue?.estimatedValue) {
-        pdf.text(`Tahmini Değer: ${report.marketValue.estimatedValue.toLocaleString()}₺`, 20, 110)
+      switch (reportType) {
+        case 'DAMAGE_ASSESSMENT':
+        case 'DAMAGE_DETECTION':
+          endpoint = `/api/damage-analysis/${reportId}/pdf`
+          break
+        case 'PAINT_ANALYSIS':
+          endpoint = `/api/paint-analysis/${reportId}/pdf`
+          break
+        case 'ENGINE_SOUND_ANALYSIS':
+        case 'AUDIO_ANALYSIS':
+          endpoint = `/api/engine-sound-analysis/${reportId}/pdf`
+          break
+        case 'VALUE_ESTIMATION':
+          endpoint = `/api/value-estimation/${reportId}/pdf`
+          break
+        case 'COMPREHENSIVE_EXPERTISE':
+        case 'FULL_REPORT':
+          endpoint = `/api/comprehensive-expertise/${reportId}/pdf`
+          break
+        default:
+          endpoint = `/api/reports/${reportId}/pdf`
       }
       
-      // Öneri
-      pdf.setFontSize(12)
-      pdf.text(`Genel Değerlendirme: ${report.summary.overallRecommendation}`, 20, 130)
+      // Backend'den PDF indir - api client'ı kullan
+      // API base URL'i dinamik olarak al
+      const apiBaseUrl = typeof window !== 'undefined' 
+        ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
+        : ''
+      const response = await fetch(`${apiBaseUrl}${endpoint}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+        },
+      })
       
-      pdf.save(`mivvo-expertiz-raporu-${report.vehicleInfo.plate}.pdf`)
+      if (!response.ok) {
+        throw new Error('PDF indirilemedi')
+      }
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `mivvo-expertiz-raporu-${report.vehicleInfo?.plate || reportId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      
+      toast.success('PDF başarıyla indirildi!')
     } catch (error) {
       console.error('PDF oluşturma hatası:', error)
+      toast.error('PDF indirilemedi. Lütfen tekrar deneyin.')
     } finally {
       setIsGeneratingPDF(false)
     }

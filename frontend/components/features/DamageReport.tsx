@@ -20,6 +20,7 @@ import {
   CheckBadgeIcon
 } from '@heroicons/react/24/outline'
 import { DamageAnalysisResult } from '@/types/damageAnalysis'
+import { DamageImageAnnotation } from './DamageImageAnnotation'
 
 interface DamageReportProps {
   data: DamageAnalysisResult
@@ -204,15 +205,26 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
             Yüklenen Fotoğraflar
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {vehicleImages.map((img, index) => (
-              <div key={img.id || index} className="relative group">
-                <img
-                  src={img.imageUrl}
-                  alt={`Araç fotoğrafı ${index + 1}`}
-                  className="w-full h-48 object-cover rounded-lg border border-gray-200"
-                />
-              </div>
-            ))}
+            {vehicleImages.map((img, index) => {
+              // Bu resme ait hasar alanlarını bul
+              const imageDamages = isDetailedAnalysis 
+                ? (data.hasarAlanları || []).filter((d: any) => 
+                    d.bölge === img.bölge || 
+                    d.location === img.location ||
+                    !d.bölge // Eğer bölge bilgisi yoksa tüm hasarları göster
+                  )
+                : []
+              
+              return (
+                <div key={img.id || index} className="relative">
+                  <DamageImageAnnotation
+                    imageUrl={img.imageUrl}
+                    damageAreas={imageDamages}
+                    className="w-full"
+                  />
+                </div>
+              )
+            })}
           </div>
         </motion.div>
       )}

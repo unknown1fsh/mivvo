@@ -111,9 +111,27 @@ export const useDamageAnalysis = () => {
     } catch (error: any) {
       console.error('Damage analysis error:', error)
       const message = error?.response?.data?.message || error?.message || 'Hasar analizi sırasında bir hata oluştu'
+      const statusCode = error?.response?.status
       
+      // Yetersiz kredi durumu - direkt satın alma sayfasına yönlendir
+      if (statusCode === 402 || message.includes('Yetersiz kredi') || message.includes('yetersiz bakiye') || message.includes('insufficient')) {
+        toast.error(`💳 ${message}`, { 
+          id: toastId, 
+          duration: 5000,
+          action: {
+            label: 'Kredi Satın Al',
+            onClick: () => {
+              window.location.href = '/dashboard/purchase'
+            }
+          }
+        })
+        // Otomatik yönlendirme
+        setTimeout(() => {
+          window.location.href = '/dashboard/purchase'
+        }, 2000)
+      }
       // Servis yoğunluğu mesajını özel olarak göster
-      if (message.includes('servis yoğunluğu') || message.includes('yoğun ilgi')) {
+      else if (message.includes('servis yoğunluğu') || message.includes('yoğun ilgi')) {
         toast.error('🚨 ' + message, { 
           id: toastId, 
           duration: 8000,

@@ -588,7 +588,7 @@ export default function DashboardPage() {
               </div>
               
               <div>
-                <Link href="/vehicle/upload-images" className="btn btn-secondary btn-lg flex items-center justify-center">
+                <Link href="/vehicle/new-report" className="btn btn-secondary btn-lg flex items-center justify-center">
                   <CameraIcon className="w-5 h-5 mr-2" />
                   Resim Yükle
                 </Link>

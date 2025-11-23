@@ -145,4 +145,20 @@ router.post('/:reportId/analyze', DamageAnalysisController.performAnalysis);
  */
 router.get('/:reportId', DamageAnalysisController.getReport);
 
+/**
+ * GET /damage-analysis/:reportId/pdf
+ * 
+ * Hasar analizi raporunu PDF formatında indir.
+ * 
+ * Params:
+ * - reportId: Report ID
+ * 
+ * Güvenlik:
+ * - Sahiplik kontrolü (userId match)
+ * 
+ * Response:
+ * - PDF dosyası (application/pdf)
+ */
+router.get('/:reportId/pdf', DamageAnalysisController.downloadPDF);
+
 export default router;

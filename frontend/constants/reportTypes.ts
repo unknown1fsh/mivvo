@@ -188,11 +188,3 @@ export const getStepsForReportType = (reportTypeId: string): Step[] => {
   }
 }
 
-/**
- * Default Steps (Varsayılan Adımlar)
- * 
- * Geriye uyumluluk için varsayılan adımlar.
- * 
- * @deprecated Bunun yerine getStepsForReportType() kullanın
- */
-export const STEPS = PAINT_ANALYSIS_STEPS

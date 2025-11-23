@@ -12,7 +12,8 @@ import {
   ShieldCheckIcon,
   ArrowPathIcon,
   HomeIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  CreditCardIcon
 } from '@heroicons/react/24/outline'
 import { Card } from './Card'
 import { Button } from './Button'
@@ -75,8 +76,8 @@ const errorConfig = {
     icon: ShieldCheckIcon,
     iconBg: 'bg-orange-100',
     iconColor: 'text-orange-600',
-    title: 'Yetersiz Kredi',
-    message: 'Bu analiz için yeterli krediniz bulunmamaktadır. Lütfen kredi satın alınız.',
+    title: 'Yetersiz Kredi Bakiyesi',
+    message: `Bu analiz için yeterli krediniz bulunmamaktadır. Mevcut bakiyeniz: ${remainingCredit || 0}₺. Lütfen kredi satın alarak devam edin.`,
     badge: '💳 Kredi Gerekli',
     badgeBg: 'bg-blue-100',
     badgeText: 'text-blue-800'
@@ -127,7 +128,10 @@ export function ReportError({
   const config = errorConfig[type] || errorConfig.generic
   const Icon = config.icon
   const displayTitle = title || config.title
-  const displayMessage = message || config.message
+  // Yetersiz kredi durumunda remainingCredit bilgisini mesaja ekle
+  const displayMessage = type === 'insufficient_credit' && remainingCredit !== undefined
+    ? `${config.message} Mevcut bakiyeniz: ${remainingCredit}₺.`
+    : (message || config.message)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 flex items-center justify-center p-4">
@@ -183,8 +187,22 @@ export function ReportError({
 
         {/* Actions */}
         <div className="p-6 bg-gray-50 space-y-3">
+          {/* Kredi Satın Alma Butonu - Yetersiz Kredi Durumunda */}
+          {type === 'insufficient_credit' && (
+            <Link href="/dashboard/purchase">
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full flex items-center justify-center"
+              >
+                <CreditCardIcon className="w-5 h-5 mr-2" />
+                Kredi Satın Al
+              </Button>
+            </Link>
+          )}
+
           {/* Retry Button */}
-          {onRetry && (
+          {onRetry && type !== 'insufficient_credit' && (
             <Button
               variant="primary"
               size="lg"

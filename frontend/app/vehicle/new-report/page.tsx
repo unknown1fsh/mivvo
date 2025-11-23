@@ -30,7 +30,7 @@ import PaintAnalysisLoading from '@/components/features/PaintAnalysisLoading'
 import { ReportLoading } from '@/components/ui/ReportLoading'
 
 // Constants
-import { REPORT_TYPES, STEPS, getStepsForReportType } from '@/constants'
+import { REPORT_TYPES, getStepsForReportType, PAINT_ANALYSIS_STEPS } from '@/constants'
 
 // Hooks
 import { useFormSteps } from '@/hooks/useFormSteps'
@@ -71,7 +71,7 @@ function NewReportPageContent() {
   // Dinamik adımları hesapla
   const currentSteps = selectedReportType 
     ? getStepsForReportType(selectedReportType.id) 
-    : STEPS
+    : PAINT_ANALYSIS_STEPS
   
   const { currentStep, nextStep, prevStep, progress } = useFormSteps(currentSteps)
   const fileUploadProps = useFileUpload()
@@ -135,6 +135,40 @@ function NewReportPageContent() {
       }
     }
   }, [])
+
+  // URL'den type parametresini oku ve report type'ı otomatik seç
+  useEffect(() => {
+    const typeParam = searchParams.get('type')
+    if (typeParam && !selectedReportType) {
+      // URL'deki type formatını REPORT_TYPES formatına çevir
+      const typeMap: Record<string, string> = {
+        'paint-analysis': 'PAINT_ANALYSIS',
+        'damage-analysis': 'DAMAGE_ANALYSIS',
+        'engine-sound-analysis': 'ENGINE_SOUND_ANALYSIS',
+        'value-estimation': 'VALUE_ESTIMATION',
+        'comprehensive-expertise': 'COMPREHENSIVE_EXPERTISE'
+      }
+      
+      const reportTypeId = typeMap[typeParam]
+      if (reportTypeId) {
+        const reportType = REPORT_TYPES.find(rt => rt.id === reportTypeId)
+        if (reportType) {
+          setSelectedReportType(reportType)
+        }
+      }
+    }
+  }, [searchParams, selectedReportType])
+
+  // Report type seçildiğinde otomatik olarak bir sonraki adıma geç
+  useEffect(() => {
+    if (selectedReportType && currentStep === 1) {
+      // İlk adım (report type seçimi) tamamlandı, araç bilgisi formuna geç
+      const timer = setTimeout(() => {
+        nextStep()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [selectedReportType, currentStep])
 
   // Araç Garajı yükle
   useEffect(() => {

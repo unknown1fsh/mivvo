@@ -144,8 +144,26 @@ export const usePaintAnalysis = () => {
         errorMessage = error.message
       }
       
+      const statusCode = error?.response?.status
+      
+      // Yetersiz kredi durumu - direkt satın alma sayfasına yönlendir
+      if (statusCode === 402 || errorMessage.includes('Yetersiz kredi') || errorMessage.includes('yetersiz bakiye') || errorMessage.includes('insufficient')) {
+        toast.error(`💳 ${errorMessage}`, { 
+          duration: 5000,
+          action: {
+            label: 'Kredi Satın Al',
+            onClick: () => {
+              window.location.href = '/dashboard/purchase'
+            }
+          }
+        })
+        // Otomatik yönlendirme
+        setTimeout(() => {
+          window.location.href = '/dashboard/purchase'
+        }, 2000)
+      }
       // Kredi iadesi mesajını özel olarak göster
-      if (errorMessage.includes('iade') || error.response?.data?.creditRefunded) {
+      else if (errorMessage.includes('iade') || error.response?.data?.creditRefunded) {
         toast.success('💳 ' + errorMessage, { duration: 5000 })
       } else {
         toast.error(errorMessage)
