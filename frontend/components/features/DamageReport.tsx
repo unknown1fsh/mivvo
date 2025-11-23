@@ -84,12 +84,103 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
     );
   }
 
-  // AI'dan gelen verinin zorunlu alanlarını kontrol et
-  const hasGenelDeğerlendirme = !!(data.genelDeğerlendirme);
-  const hasHasarAlanları = Array.isArray(data.hasarAlanları);
-  
-  // Zorunlu alanlar eksikse belirgin hata mesajı göster
-  if (!hasGenelDeğerlendirme || !hasHasarAlanları) {
+  // SIKI VALİDASYON: AI'dan gelen veriyi kontrol et - eksik field varsa hata göster
+  if (!data.genelDeğerlendirme) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ExclamationTriangleIcon className="w-10 h-10 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              AI Analiz Verisi Eksik
+            </h2>
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 text-left">
+              <p className="text-red-800 font-medium mb-2">
+                ⚠️ Genel Değerlendirme Bilgisi Alınamadı
+              </p>
+              <p className="text-red-700 text-sm">
+                AI analiz sonucu eksik. Genel değerlendirme bilgisi alınamadı. Lütfen tekrar deneyin.
+              </p>
+            </div>
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
+              <p className="text-green-800 font-medium mb-2">
+                ✅ Krediniz İade Edilmiş Olmalı
+              </p>
+              <p className="text-green-700 text-sm">
+                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Sayfayı Yenile
+              </button>
+              <a
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                Dashboard&apos;a Dön
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!Array.isArray(data.hasarAlanları)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ExclamationTriangleIcon className="w-10 h-10 text-red-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              AI Analiz Verisi Eksik
+            </h2>
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6 text-left">
+              <p className="text-red-800 font-medium mb-2">
+                ⚠️ Hasar Alanları Bilgisi Alınamadı
+              </p>
+              <p className="text-red-700 text-sm">
+                AI analiz sonucu eksik. Hasar alanları bilgisi alınamadı. Lütfen tekrar deneyin.
+              </p>
+            </div>
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
+              <p className="text-green-800 font-medium mb-2">
+                ✅ Krediniz İade Edilmiş Olmalı
+              </p>
+              <p className="text-green-700 text-sm">
+                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              >
+                Sayfayı Yenile
+              </button>
+              <a
+                href="/dashboard"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                Dashboard&apos;a Dön
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Veri yoksa veya tamamen boşsa hata göster
+  if (!data || Object.keys(data).length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8">
@@ -206,10 +297,10 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {vehicleImages.map((img, index) => {
-              // Tüm hasar alanlarını göster (resim-hasar eşleştirmesi için bölge bilgisi gerekli ama şu an yok)
-              const imageDamages = isDetailedAnalysis 
-                ? (data.hasarAlanları || [])
-                : []
+                     // Tüm hasar alanlarını göster (resim-hasar eşleştirmesi için bölge bilgisi gerekli ama şu an yok)
+                     const imageDamages = isDetailedAnalysis
+                       ? (data.hasarAlanları || [])
+                       : []
               
               return (
                 <div key={img.id || index} className="relative">
@@ -308,7 +399,7 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
           <h4 className="font-medium text-gray-900 mb-2">Analiz Özeti</h4>
           <p className="text-sm text-gray-600">
             {isDetailedAnalysis ? 
-              data.genelDeğerlendirme?.detaylıAnaliz || 'Detaylı analiz bilgisi mevcut değil.' :
+                     data.genelDeğerlendirme?.detaylıAnaliz || 'Detaylı analiz bilgisi mevcut değil.' :
               (data as any).summary ?
                 `Toplam ${(data as any).summary.totalDamages || 0} hasar tespit edildi. ${(data as any).summary.criticalDamages || 0} kritik hasar bulunuyor. Tahmini onarım maliyeti ${((data as any).summary.estimatedRepairCost || 0).toLocaleString()}₺.` :
                 'Detaylı analiz bilgisi mevcut değil.'
@@ -372,7 +463,7 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
           <div className="space-y-4">
             {isDetailedAnalysis ? (
               // AI'dan gelen detaylı hasar alanları
-              data.hasarAlanları?.map((hasar, index) => (
+                   data.hasarAlanları?.map((hasar, index) => (
                 <div key={index} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-medium text-gray-900">{hasar.tür || 'Hasar'}</h4>

@@ -785,40 +785,61 @@ export class DamageAnalysisService {
     
     // AI'dan gelen detaylı analiz mevcut - veriyi döndür
     console.log('[AI] ✅ AI analiz sonucu başarıyla birleştirildi');
+    
+    // AI'dan gelen veriyi kontrol et - eksik field varsa hata fırlat
+    if (!combinedAnalysis.hasarAlanları) {
+      throw new Error('AI analiz sonucu eksik. Hasar alanları bilgisi alınamadı.');
+    }
+    if (!combinedAnalysis.genelDeğerlendirme) {
+      throw new Error('AI analiz sonucu eksik. Genel değerlendirme bilgisi alınamadı.');
+    }
+    if (!combinedAnalysis.aiSağlayıcı) {
+      throw new Error('AI analiz sonucu eksik. AI sağlayıcı bilgisi alınamadı.');
+    }
+    if (!combinedAnalysis.model) {
+      throw new Error('AI analiz sonucu eksik. AI model bilgisi alınamadı.');
+    }
+    if (combinedAnalysis.güven === undefined || combinedAnalysis.güven === null) {
+      throw new Error('AI analiz sonucu eksik. Güven seviyesi bilgisi alınamadı.');
+    }
+    if (!combinedAnalysis.analizZamanı) {
+      throw new Error('AI analiz sonucu eksik. Analiz zamanı bilgisi alınamadı.');
+    }
+    
     return {
-      // AI'dan gelen detaylı veri - SADECE ham veri, minimum veri yapısı YOK
-      hasarAlanları: combinedAnalysis.hasarAlanları || [],
+      // AI'dan gelen detaylı veri - SADECE AI'dan gelen gerçek veri
+      hasarAlanları: combinedAnalysis.hasarAlanları,
       genelDeğerlendirme: combinedAnalysis.genelDeğerlendirme,
       teknikAnaliz: combinedAnalysis.teknikAnaliz,
       güvenlikDeğerlendirmesi: combinedAnalysis.güvenlikDeğerlendirmesi,
       onarımTahmini: combinedAnalysis.onarımTahmini,
-      aiSağlayıcı: combinedAnalysis.aiSağlayıcı || 'OpenAI',
-      model: combinedAnalysis.model || 'GPT-4 Vision',
-      güven: combinedAnalysis.güven || 95,
-      analizZamanı: combinedAnalysis.analizZamanı || new Date().toISOString(),
+      aiSağlayıcı: combinedAnalysis.aiSağlayıcı,
+      model: combinedAnalysis.model,
+      güven: combinedAnalysis.güven,
+      analizZamanı: combinedAnalysis.analizZamanı,
       
       // Ek hesaplanmış değerler (AI'dan gelen veriye dayalı)
       overallScore: this.calculateOverallScore(combinedAnalysis.genelDeğerlendirme),
-      damageSeverity: combinedAnalysis.genelDeğerlendirme?.hasarSeviyesi || 'bilinmiyor',
+      damageSeverity: combinedAnalysis.genelDeğerlendirme.hasarSeviyesi,
       totalDamages,
       criticalDamages,
-      estimatedRepairCost: combinedAnalysis.genelDeğerlendirme?.toplamOnarımMaliyeti || 0,
+      estimatedRepairCost: combinedAnalysis.genelDeğerlendirme.toplamOnarımMaliyeti,
       analysisResults,
       summary: {
         totalDamages,
         criticalDamages,
-        estimatedRepairCost: combinedAnalysis.genelDeğerlendirme?.toplamOnarımMaliyeti || 0,
-        insuranceImpact: combinedAnalysis.genelDeğerlendirme?.sigortaDurumu || 'değerlendiriliyor',
-        strengths: combinedAnalysis.genelDeğerlendirme?.güçlüYönler || [],
-        weaknesses: combinedAnalysis.genelDeğerlendirme?.zayıfYönler || [],
-        recommendations: combinedAnalysis.genelDeğerlendirme?.öneriler || [],
-        safetyConcerns: combinedAnalysis.genelDeğerlendirme?.güvenlikEndişeleri || [],
-        marketValueImpact: combinedAnalysis.genelDeğerlendirme?.değerKaybı || 0
+        estimatedRepairCost: combinedAnalysis.genelDeğerlendirme.toplamOnarımMaliyeti,
+        insuranceImpact: combinedAnalysis.genelDeğerlendirme.sigortaDurumu,
+        strengths: combinedAnalysis.genelDeğerlendirme.güçlüYönler,
+        weaknesses: combinedAnalysis.genelDeğerlendirme.zayıfYönler,
+        recommendations: combinedAnalysis.genelDeğerlendirme.öneriler,
+        safetyConcerns: combinedAnalysis.genelDeğerlendirme.güvenlikEndişeleri,
+        marketValueImpact: combinedAnalysis.genelDeğerlendirme.değerKaybı
       },
       technicalDetails: {
         analysisMethod: 'OpenAI Vision API Analizi',
-        aiModel: combinedAnalysis.model || 'GPT-4 Vision',
-        confidence: combinedAnalysis.güven || 95,
+        aiModel: combinedAnalysis.model,
+        confidence: combinedAnalysis.güven,
         processingTime: '3-5 saniye',
         imageQuality: 'Yüksek (1024x1024)',
         imagesAnalyzed: imageCount
@@ -893,14 +914,34 @@ export class DamageAnalysisService {
     
     return {
       hasarAlanları: allHasarAlanları,
-      genelDeğerlendirme: firstDamageResult.genelDeğerlendirme, // Root seviyesinde
-      teknikAnaliz: firstDamageResult.teknikAnaliz, // Root seviyesinde
-      güvenlikDeğerlendirmesi: firstDamageResult.güvenlikDeğerlendirmesi, // Root seviyesinde
-      onarımTahmini: firstDamageResult.onarımTahmini, // Root seviyesinde
-      aiSağlayıcı: firstDamageResult.aiSağlayıcı || 'OpenAI',
-      model: firstDamageResult.model || 'GPT-4 Vision',
-      güven: firstDamageResult.güven || 95,
-      analizZamanı: firstDamageResult.analizZamanı || new Date().toISOString()
+      genelDeğerlendirme: firstDamageResult.genelDeğerlendirme,
+      teknikAnaliz: firstDamageResult.teknikAnaliz,
+      güvenlikDeğerlendirmesi: firstDamageResult.güvenlikDeğerlendirmesi,
+      onarımTahmini: firstDamageResult.onarımTahmini,
+      aiSağlayıcı: (() => {
+        if (!firstDamageResult.aiSağlayıcı) {
+          throw new Error('AI analiz sonucu eksik. AI sağlayıcı bilgisi alınamadı.');
+        }
+        return firstDamageResult.aiSağlayıcı;
+      })(),
+      model: (() => {
+        if (!firstDamageResult.model) {
+          throw new Error('AI analiz sonucu eksik. AI model bilgisi alınamadı.');
+        }
+        return firstDamageResult.model;
+      })(),
+      güven: (() => {
+        if (firstDamageResult.güven === undefined || firstDamageResult.güven === null) {
+          throw new Error('AI analiz sonucu eksik. Güven seviyesi bilgisi alınamadı.');
+        }
+        return firstDamageResult.güven;
+      })(),
+      analizZamanı: (() => {
+        if (!firstDamageResult.analizZamanı) {
+          throw new Error('AI analiz sonucu eksik. Analiz zamanı bilgisi alınamadı.');
+        }
+        return firstDamageResult.analizZamanı;
+      })()
     };
   }
 

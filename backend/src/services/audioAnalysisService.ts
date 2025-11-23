@@ -249,7 +249,7 @@ export class AudioAnalysisService {
       const parsed = this.extractJsonFromText(text)
       
       // SIKI VALİDASYON: Zorunlu alanları kontrol et
-      if (!parsed.overallScore) {
+      if (!parsed.overallScore && parsed.overallScore !== 0) {
         throw new Error('AI analiz sonucu eksik. Genel puan bilgisi alınamadı.')
       }
 
@@ -257,8 +257,12 @@ export class AudioAnalysisService {
         throw new Error('AI analiz sonucu eksik. Motor sağlığı bilgisi alınamadı.')
       }
 
-      if (!parsed.rpmAnalysis) {
+      if (!parsed.rpmAnalysis && !parsed.rpm_analysis) {
         throw new Error('AI analiz sonucu eksik. RPM analizi bilgisi alınamadı.')
+      }
+
+      if (!parsed.soundQuality && !parsed.sound_quality) {
+        throw new Error('AI analiz sonucu eksik. Ses kalitesi bilgisi alınamadı.')
       }
 
       console.log('[AI] ✅ GERÇEK AI motor analizi tamamlandı (Whisper + GPT-4)')
@@ -722,4 +726,5 @@ Lütfen motor sesini analiz et ve yukarıdaki formatta JSON döndür.`
       throw new Error(`Motor ses analizi başarısız: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`)
     }
   }
+
 }

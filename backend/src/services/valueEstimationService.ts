@@ -596,15 +596,15 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     const parsed = this.extractJsonPayload(text)
     
     // SIKI VALİDASYON: Zorunlu alanları kontrol et
-    if (!parsed.estimatedValue) {
+    if (!parsed.estimatedValue && parsed.estimatedValue !== 0) {
       throw new Error('AI analiz sonucu eksik. Tahmini değer bilgisi alınamadı.')
     }
 
-    if (!parsed.marketAnalysis) {
+    if (!parsed.marketAnalysis && !parsed.market_analysis) {
       throw new Error('AI analiz sonucu eksik. Piyasa analizi bilgisi alınamadı.')
     }
 
-    if (!parsed.vehicleCondition) {
+    if (!parsed.vehicleCondition && !parsed.vehicle_condition) {
       throw new Error('AI analiz sonucu eksik. Araç durumu bilgisi alınamadı.')
     }
 
@@ -634,4 +634,5 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
       throw new Error('OpenAI değer tahmini başarısız oldu.')
     }
   }
+
 }

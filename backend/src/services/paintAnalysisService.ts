@@ -618,17 +618,9 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
         throw new Error('AI analiz sonucu eksik. Yüzey analizi bilgisi alınamadı.')
       }
 
-      // SIKI VALİDASYON: Zorunlu alanları kontrol et
-      if (!parsed.boyaKalitesi) {
-        throw new Error('AI analiz sonucu eksik. Boya kalitesi bilgisi alınamadı.')
-      }
-
-      if (!parsed.renkAnalizi) {
-        throw new Error('AI analiz sonucu eksik. Renk analizi bilgisi alınamadı.')
-      }
-
-      if (!parsed.yüzeyAnalizi) {
-        throw new Error('AI analiz sonucu eksik. Yüzey analizi bilgisi alınamadı.')
+      // Güven seviyesi kontrolü
+      if (parsed.güvenSeviyesi === undefined || parsed.güvenSeviyesi === null) {
+        throw new Error('AI analiz sonucu eksik. Güven seviyesi bilgisi alınamadı.')
       }
 
       // Add metadata
@@ -636,7 +628,7 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
         ...parsed,
         aiSağlayıcı: 'OpenAI',
         model: OPENAI_MODEL,
-        güvenSeviyesi: parsed.güvenSeviyesi || 95,
+        güvenSeviyesi: parsed.güvenSeviyesi,
         analizZamanDamgası: new Date().toISOString()
       }
 
@@ -749,4 +741,5 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
       throw new Error('OpenAI boya analizi başarısız oldu.')
     }
   }
+
 }

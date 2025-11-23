@@ -518,13 +518,7 @@ export const getEngineSoundAnalysisResult = asyncHandler(async (req: AuthRequest
           plate: report.vehiclePlate,
           vin: 'Belirtilmemiş'
         },
-        overallScore: (report.aiAnalysisData as any)?.overallScore || 0,
-        engineHealth: (report.aiAnalysisData as any)?.engineHealth || 'Bilinmiyor',
-        rpmAnalysis: (report.aiAnalysisData as any)?.rpmAnalysis || {},
-        frequencyAnalysis: (report.aiAnalysisData as any)?.frequencyAnalysis || {},
-        detectedIssues: (report.aiAnalysisData as any)?.detectedIssues || [],
-        performanceMetrics: (report.aiAnalysisData as any)?.performanceMetrics || {},
-        recommendations: (report.aiAnalysisData as any)?.recommendations || [],
+        ...(report.aiAnalysisData || {}),
         status: report.status,
         createdAt: report.createdAt,
         audioFiles: (report as any).vehicleAudios?.map((audio: any) => ({

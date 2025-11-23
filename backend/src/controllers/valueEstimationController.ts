@@ -385,12 +385,12 @@ export class ValueEstimationController {
       }
       
       // SIKI VALİDASYON: Zorunlu alanlar kontrolü
-      if (!valueResult.estimatedValue) {
+      if (!valueResult.estimatedValue && valueResult.estimatedValue !== 0) {
         console.error('❌ Value Estimation - estimatedValue eksik')
         throw new Error('AI analiz sonucu eksik. Tahmini değer bilgisi alınamadı.')
       }
 
-      if (!valueResult.marketAnalysis) {
+      if (!valueResult.marketAnalysis && !valueResult.market_analysis) {
         console.error('❌ Value Estimation - marketAnalysis eksik')
         throw new Error('AI analiz sonucu eksik. Piyasa analizi bilgisi alınamadı.')
       }
@@ -407,14 +407,14 @@ export class ValueEstimationController {
       console.log('💾 Value Estimation - Rapor veritabanına kaydedildi:', {
         reportId: parseInt(reportId),
         hasAiAnalysisData: true,
-        dataKeys: Object.keys(valueResult)
+        dataKeys: Object.keys(normalizedValueResult)
       });
 
       res.json({
         success: true,
         data: {
           reportId,
-          analysisResult: valueResult,
+          analysisResult: normalizedValueResult,
           message: 'OpenAI ile değer tahmini tamamlandı'
         }
       })
@@ -523,7 +523,10 @@ export class ValueEstimationController {
 
       res.json({
         success: true,
-        data: report
+        data: {
+          ...report,
+          aiAnalysisData: report.aiAnalysisData || {}
+        }
       })
 
     } catch (error) {
