@@ -48,6 +48,9 @@ import { AuthRequest } from '../middleware/auth'
 import { ComprehensiveExpertiseService } from '../services/comprehensiveExpertiseService'
 import { refundCreditForFailedAnalysis } from '../utils/creditRefund'
 import { ERROR_MESSAGES } from '../constants/ErrorMessages'
+import { CREDIT_PRICING } from '../constants/CreditPricing'
+import { InsufficientCreditsException } from '../exceptions/BusinessExceptions'
+import { BaseException } from '../exceptions/BaseException'
 import multer from 'multer'
 
 const prisma = new PrismaClient()
@@ -178,6 +181,21 @@ export class ComprehensiveExpertiseController {
         return
       }
 
+      // Bakiye kontrolü (Test modunda atlanır)
+      const isTestMode = process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true'
+      if (!isTestMode) {
+        const requiredAmount = CREDIT_PRICING.COMPREHENSIVE_EXPERTISE
+        const userCredits = await prisma.userCredits.findUnique({
+          where: { userId }
+        })
+
+        if (!userCredits || userCredits.balance.toNumber() < requiredAmount) {
+          throw new InsufficientCreditsException(
+            `Yetersiz kredi. Gerekli: ${requiredAmount} TL, Mevcut: ${userCredits?.balance.toNumber() || 0} TL`
+          )
+        }
+      }
+
       // Rapor oluştur
       const report = await prisma.vehicleReport.create({
         data: {
@@ -188,7 +206,7 @@ export class ComprehensiveExpertiseController {
           vehicleYear: vehicleInfo.year || new Date().getFullYear(),
           reportType: 'FULL_REPORT' as any,
           status: 'PROCESSING',
-          totalCost: 85,
+          totalCost: CREDIT_PRICING.COMPREHENSIVE_EXPERTISE,
           aiAnalysisData: {}
         }
       })
@@ -203,6 +221,17 @@ export class ComprehensiveExpertiseController {
       })
 
     } catch (error) {
+      // BaseException (InsufficientCreditsException vb.) kontrolü
+      if (error instanceof BaseException) {
+        res.status(error.statusCode).json({
+          success: false,
+          error: error.name,
+          message: error.message,
+          statusCode: error.statusCode
+        })
+        return
+      }
+
       console.error('❌ Tam expertiz başlatma hatası:', error)
       res.status(500).json({
         success: false,
