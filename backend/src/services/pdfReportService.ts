@@ -85,7 +85,7 @@ export async function generatePDFReport(options: PDFReportOptions): Promise<Buff
  * PDF içeriği oluştur
  */
 async function generatePDFContent(
-  doc: PDFDocument,
+  doc: InstanceType<typeof PDFDocument>,
   report: any,
   options: { includeImages: boolean; includeCharts: boolean }
 ): Promise<void> {
