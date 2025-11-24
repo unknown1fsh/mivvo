@@ -308,7 +308,26 @@ export class DamageAnalysisService {
   ): Promise<AnalysisResultResponse> {
     console.log('🤖 DamageAnalysisService.performAnalysis çağrıldı:', { userId, reportId });
 
+    let analysisSuccess = false;
+    let creditRefunded = false;
+
     try {
+      // OpenAI bağlantı testi
+      const { testOpenAIConnection } = await import('../utils/openAIMonitor');
+      const connectionTest = await testOpenAIConnection();
+      
+      console.log('🔍 OpenAI Bağlantı Testi:', {
+        success: connectionTest.success,
+        reachable: connectionTest.reachable,
+        apiKeyValid: connectionTest.apiKeyValid,
+        errorType: connectionTest.errorType
+      });
+
+      if (!connectionTest.success || !connectionTest.reachable) {
+        console.error('❌ OpenAI\'a ulaşılamıyor!', connectionTest);
+        throw new Error(`OpenAI bağlantı hatası: ${connectionTest.error || 'Bağlantı kurulamadı'}`);
+      }
+
       // 1. Rapor ve resimleri getir
       const report = await reportRepository.findByIdWithDetails(reportId);
 
@@ -345,6 +364,8 @@ export class DamageAnalysisService {
 
       console.log('🎉 Hasar analizi tamamlandı');
 
+      analysisSuccess = true;
+
       return {
         reportId,
         status: 'COMPLETED',
@@ -362,25 +383,26 @@ export class DamageAnalysisService {
       console.error('❌ Hasar analizi başarısız:', error);
       
       // Analiz başarısız oldu - Krediyi iade et (GARANTİLİ)
-      let creditRefunded = false;
       let refundError: any = null;
       
-      try {
-        const serviceCost = CREDIT_PRICING.DAMAGE_ANALYSIS;
-        
-        await refundCreditForFailedAnalysis(
-          userId,
-          reportId,
-          serviceCost,
-          'Hasar analizi AI servisi başarısız - Kredi otomatik iade edildi'
-        );
-        
-        creditRefunded = true;
-        console.log(`✅ Kredi iade edildi: ${serviceCost} TL`);
-      } catch (refundErr) {
-        refundError = refundErr;
-        console.error('❌ Kredi iade hatası:', refundErr);
-        // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
+      if (!creditRefunded) {
+        try {
+          const serviceCost = CREDIT_PRICING.DAMAGE_ANALYSIS;
+          
+          await refundCreditForFailedAnalysis(
+            userId,
+            reportId,
+            serviceCost,
+            `Hasar analizi AI servisi başarısız - ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+          );
+          
+          creditRefunded = true;
+          console.log(`✅ Kredi iade edildi: ${serviceCost} TL`);
+        } catch (refundErr) {
+          refundError = refundErr;
+          console.error('❌ Kredi iade hatası:', refundErr);
+          // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
+        }
       }
       
       // Raporu MUTLAKA FAILED olarak işaretle (kredi iade başarılı olsa da olmasa da)
@@ -388,8 +410,8 @@ export class DamageAnalysisService {
         await reportRepository.update(reportId, {
           status: 'FAILED',
           expertNotes: creditRefunded 
-            ? 'Hasar analizi başarısız oldu. AI servisinden veri alınamadı. Kredi otomatik iade edildi.'
-            : 'Hasar analizi başarısız oldu. AI servisinden veri alınamadı. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.'
+            ? `Hasar analizi başarısız oldu. AI servisinden veri alınamadı. Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}. Kredi otomatik iade edildi.`
+            : `Hasar analizi başarısız oldu. AI servisinden veri alınamadı. Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.`
         });
         console.log('✅ Rapor FAILED durumuna geçirildi');
       } catch (updateError) {
@@ -403,6 +425,26 @@ export class DamageAnalysisService {
         : 'AI analizi tamamlanamadı. Kredi iade işlemi sırasında bir sorun oluştu. Lütfen destek ile iletişime geçin.';
       
       throw new Error(errorMessage);
+    } finally {
+      // Finally bloğu: Analiz başarısız olduysa ve kredi iade edilmediyse tekrar dene
+      if (!analysisSuccess && !creditRefunded) {
+        try {
+          console.log('⚠️ Finally bloğu: Kredi iade kontrolü yapılıyor...');
+          const serviceCost = CREDIT_PRICING.DAMAGE_ANALYSIS;
+          
+          await refundCreditForFailedAnalysis(
+            userId,
+            reportId,
+            serviceCost,
+            'Hasar analizi başarısız - Finally bloğu kredi iade'
+          );
+          
+          creditRefunded = true;
+          console.log('✅ Finally bloğu: Kredi iade edildi');
+        } catch (finallyRefundErr) {
+          console.error('❌ Finally bloğu: Kredi iade hatası:', finallyRefundErr);
+        }
+      }
     }
   }
 

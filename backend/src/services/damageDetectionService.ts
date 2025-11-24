@@ -148,11 +148,18 @@ export class DamageDetectionService {
     if (this.isInitialized) return
 
     try {
+      const openaiApiKey = process.env.OPENAI_API_KEY
+      if (!openaiApiKey) {
+        throw new Error('OpenAI API key bulunamadı')
+      }
+      
       this.openaiClient = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY
+        apiKey: openaiApiKey,
+        timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
+        maxRetries: 3 // Maksimum 3 deneme (retry mekanizması)
       })
       this.isInitialized = true
-      console.log('[AI] DamageDetectionService başlatıldı')
+      console.log('[AI] DamageDetectionService başlatıldı (timeout: 120s, maxRetries: 3)')
     } catch (error) {
       console.error('[AI] DamageDetectionService başlatılamadı:', error)
       throw new Error('OpenAI API key bulunamadı')

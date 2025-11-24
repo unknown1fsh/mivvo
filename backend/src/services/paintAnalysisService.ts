@@ -293,8 +293,12 @@ export class PaintAnalysisService {
       })
       
       if (openaiApiKey) {
-        this.openaiClient = new OpenAI({ apiKey: openaiApiKey })
-        console.log('[AI] ✅ OpenAI Boya Analizi servisi hazırlandı')
+        this.openaiClient = new OpenAI({ 
+          apiKey: openaiApiKey,
+          timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
+          maxRetries: 3 // Maksimum 3 deneme (retry mekanizması)
+        })
+        console.log('[AI] ✅ OpenAI Boya Analizi servisi hazırlandı (timeout: 120s, maxRetries: 3)')
       } else {
         console.error('[AI] ❌ OPENAI_API_KEY tanımlı değil!')
         throw new Error('OpenAI API key bulunamadı')
@@ -510,7 +514,7 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
    * 
    * @private
    */
-  private static async analyzePaintWithOpenAI(imagePath: string, vehicleInfo?: any): Promise<PaintAnalysisResult> {
+  private static async analyzePaintWithOpenAI(imagePath: string, vehicleInfo?: any, reportId?: number, userId?: number): Promise<PaintAnalysisResult> {
     if (!this.openaiClient) {
       throw new Error('OpenAI istemcisi kullanılabilir değil')
     }
@@ -544,26 +548,50 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
         imageSize: imageBase64?.length
       })
 
-      // OpenAI Vision API çağrısı
-      const response = await AIHelpers.callVision(() =>
-        this.openaiClient!.chat.completions.create({
-          model: OPENAI_MODEL,
-          temperature: 0.1, // Düşük temperature = tutarlı sonuçlar
-          messages: [
-            {
-              role: 'system',
-              content: 'Sen deneyimli bir otomotiv boya uzmanısın. Yüksek kaliteli görüntüleri analiz ederek detaylı boya analizi yaparsın. Çıktıyı geçerli JSON olarak üret. Tüm metinler Türkçe olmalı.'
-            },
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: prompt },
-                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
-              ]
-            }
-          ]
-        })
+      // OpenAI Vision API çağrısı - Monitoring ile
+      const { wrapOpenAIRequest } = await import('../utils/openAIMonitor')
+      const requiredFields = ['boyaKalitesi', 'renkAnalizi', 'yüzeyAnalizi']
+      
+      console.log('📡 OpenAI Request Gönderiliyor:', {
+        reportId,
+        userId,
+        model: OPENAI_MODEL,
+        hasImage: !!imageBase64,
+        imageSize: imageBase64?.length
+      })
+      
+      const response = await wrapOpenAIRequest(
+        'paint-analysis',
+        OPENAI_MODEL,
+        () => AIHelpers.callVision(() =>
+          this.openaiClient!.chat.completions.create({
+            model: OPENAI_MODEL,
+            temperature: 0.1, // Düşük temperature = tutarlı sonuçlar
+            messages: [
+              {
+                role: 'system',
+                content: 'Sen deneyimli bir otomotiv boya uzmanısın. Yüksek kaliteli görüntüleri analiz ederek detaylı boya analizi yaparsın. Çıktıyı geçerli JSON olarak üret. Tüm metinler Türkçe olmalı.'
+              },
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: prompt },
+                  { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+                ]
+              }
+            ]
+          })
+        ),
+        reportId,
+        userId,
+        requiredFields
       )
+      
+      console.log('📥 OpenAI Response Alındı:', {
+        hasResponse: !!response,
+        hasChoices: !!response.choices,
+        choicesLength: response.choices?.length
+      })
 
       logDebug('OpenAI API response received', {
         hasChoices: !!response.choices,
@@ -688,7 +716,7 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
    * console.log(result.paintCondition); // 'good'
    * console.log(result.paintQuality.overallScore); // 85
    */
-  static async analyzePaint(imagePath: string, vehicleInfo?: any): Promise<PaintAnalysisResult> {
+  static async analyzePaint(imagePath: string, vehicleInfo?: any, reportId?: number, userId?: number): Promise<PaintAnalysisResult> {
     await this.initialize()
 
     try {
@@ -712,7 +740,7 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
       console.log('[AI] OpenAI ile boya analizi başlatılıyor...')
       
       // OpenAI analizi
-      const result = await this.analyzePaintWithOpenAI(imagePath, vehicleInfo)
+      const result = await this.analyzePaintWithOpenAI(imagePath, vehicleInfo, reportId, userId)
       
       console.log('[AI] OpenAI boya analizi başarılı!')
       

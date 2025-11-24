@@ -108,9 +108,9 @@ export class ValueEstimationService {
         this.openaiClient = new OpenAI({ 
           apiKey: openaiApiKey,
           timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
-          maxRetries: 2 // Maksimum 2 deneme (retry mekanizması)
+          maxRetries: 3 // Maksimum 3 deneme (retry mekanizması)
         })
-        console.log('[AI] OpenAI Değer Tahmini servisi hazırlandı (timeout: 120s, maxRetries: 2)')
+        console.log('[AI] OpenAI Değer Tahmini servisi hazırlandı (timeout: 120s, maxRetries: 3)')
       } else {
         throw new Error('OpenAI API key bulunamadı')
       }

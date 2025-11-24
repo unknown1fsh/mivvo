@@ -330,10 +330,55 @@ export class PaintAnalysisController {
    * POST /api/paint-analysis/123/analyze
    */
   static async performAnalysis(req: AuthRequest, res: Response): Promise<void> {
-    try {
-      const userId = req.user?.id
-      const { reportId } = req.params
+    const userId = req.user?.id
+    const { reportId } = req.params
+    let creditRefunded = false
+    let analysisSuccess = false
 
+    // OpenAI bağlantı testi
+    const { testOpenAIConnection } = await import('../utils/openAIMonitor')
+    const connectionTest = await testOpenAIConnection()
+    
+    console.log('🔍 OpenAI Bağlantı Testi:', {
+      success: connectionTest.success,
+      reachable: connectionTest.reachable,
+      apiKeyValid: connectionTest.apiKeyValid,
+      errorType: connectionTest.errorType,
+      error: connectionTest.error
+    })
+
+    if (!connectionTest.success || !connectionTest.reachable) {
+      console.error('❌ OpenAI\'a ulaşılamıyor!', connectionTest)
+      // Bağlantı yoksa direkt kredi iade et
+      try {
+        if (userId) {
+          await refundCreditForFailedAnalysis(
+            userId,
+            parseInt(reportId),
+            CREDIT_PRICING.PAINT_ANALYSIS,
+            `OpenAI bağlantı hatası: ${connectionTest.error || 'Bağlantı kurulamadı'}`
+          )
+          creditRefunded = true
+        }
+      } catch (refundErr) {
+        console.error('❌ Kredi iade hatası (bağlantı testi):', refundErr)
+      }
+
+      res.status(500).json({
+        success: false,
+        message: `OpenAI servisine ulaşılamıyor: ${connectionTest.error || 'Bağlantı hatası'}`,
+        creditRefunded,
+        refundedAmount: creditRefunded ? CREDIT_PRICING.PAINT_ANALYSIS : undefined,
+        connectionTest: {
+          reachable: connectionTest.reachable,
+          apiKeyValid: connectionTest.apiKeyValid,
+          errorType: connectionTest.errorType
+        }
+      })
+      return
+    }
+
+    try {
       if (!userId) {
         res.status(401).json({ success: false, message: 'Yetkilendirme gerekli' })
         return
@@ -399,7 +444,7 @@ export class PaintAnalysisController {
             console.log('🤖 PaintAnalysisService.analyzePaint çağrılıyor...')
           }
 
-          paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl, vehicleInfo)
+          paintResult = await PaintAnalysisService.analyzePaint(images[0].imageUrl, vehicleInfo, parseInt(reportId), userId)
           
           // Başarılı oldu, döngüden çık
           break
@@ -465,6 +510,8 @@ export class PaintAnalysisController {
         dataKeys: Object.keys(paintResult)
       });
 
+      analysisSuccess = true
+
       res.json({
         success: true,
         data: {
@@ -478,38 +525,50 @@ export class PaintAnalysisController {
     } catch (error) {
       console.error('❌ Boya analizi hatası:', error)
       
+      // Hata detaylarını logla
+      const errorDetails = {
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        errorMessage: error instanceof Error ? error.message : 'Bilinmeyen hata',
+        errorStack: error instanceof Error ? error.stack : undefined,
+        reportId: parseInt(reportId),
+        userId
+      }
+      console.error('❌ Hata Detayları:', errorDetails)
+      
       // Analiz başarısız oldu - Krediyi iade et (GARANTİLİ)
-      let creditRefunded = false
       let refundError: any = null
       
-      try {
-        const userId = req.user!.id
-        const serviceCost = CREDIT_PRICING.PAINT_ANALYSIS
-        
-        await refundCreditForFailedAnalysis(
-          userId,
-          parseInt(req.params.reportId),
-          serviceCost,
-          'Boya analizi AI servisi başarısız - Kredi otomatik iade edildi'
-        )
-        
-        creditRefunded = true
-        console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
-      } catch (refundErr) {
-        refundError = refundErr
-        console.error('❌ Kredi iade hatası:', refundErr)
-        // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
+      if (!creditRefunded) {
+        try {
+          if (userId) {
+            const serviceCost = CREDIT_PRICING.PAINT_ANALYSIS
+            
+            await refundCreditForFailedAnalysis(
+              userId,
+              parseInt(reportId),
+              serviceCost,
+              `Boya analizi AI servisi başarısız - ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`
+            )
+            
+            creditRefunded = true
+            console.log(`✅ Kredi iade edildi: ${serviceCost} TL`)
+          }
+        } catch (refundErr) {
+          refundError = refundErr
+          console.error('❌ Kredi iade hatası:', refundErr)
+          // Kredi iade hatası olsa bile raporu FAILED olarak işaretle
+        }
       }
       
       // Raporu MUTLAKA FAILED olarak işaretle (kredi iade başarılı olsa da olmasa da)
       try {
         await prisma.vehicleReport.update({
-          where: { id: parseInt(req.params.reportId) },
+          where: { id: parseInt(reportId) },
           data: {
             status: 'FAILED',
             expertNotes: creditRefunded 
-              ? 'Boya analizi başarısız oldu. AI servisinden veri alınamadı. Kredi otomatik iade edildi.'
-              : 'Boya analizi başarısız oldu. AI servisinden veri alınamadı. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.'
+              ? `Boya analizi başarısız oldu. AI servisinden veri alınamadı. Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}. Kredi otomatik iade edildi.`
+              : `Boya analizi başarısız oldu. AI servisinden veri alınamadı. Hata: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}. Kredi iade işlemi başarısız oldu - lütfen destek ile iletişime geçin.`
           }
         })
         console.log('✅ Rapor FAILED durumuna geçirildi')
@@ -528,8 +587,32 @@ export class PaintAnalysisController {
         message: errorMessage,
         creditRefunded,
         refundedAmount: creditRefunded ? CREDIT_PRICING.PAINT_ANALYSIS : undefined,
-        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
+        error: error instanceof Error ? error.message : 'Bilinmeyen hata',
+        errorDetails: {
+          errorType: error instanceof Error ? error.name : 'Unknown',
+          connectionTest: {
+            reachable: connectionTest.reachable,
+            apiKeyValid: connectionTest.apiKeyValid
+          }
+        }
       })
+    } finally {
+      // Finally bloğu: Analiz başarısız olduysa ve kredi iade edilmediyse tekrar dene
+      if (!analysisSuccess && !creditRefunded && userId) {
+        try {
+          console.log('⚠️ Finally bloğu: Kredi iade kontrolü yapılıyor...')
+          await refundCreditForFailedAnalysis(
+            userId,
+            parseInt(reportId),
+            CREDIT_PRICING.PAINT_ANALYSIS,
+            'Boya analizi başarısız - Finally bloğu kredi iade'
+          )
+          creditRefunded = true
+          console.log('✅ Finally bloğu: Kredi iade edildi')
+        } catch (finallyRefundErr) {
+          console.error('❌ Finally bloğu: Kredi iade hatası:', finallyRefundErr)
+        }
+      }
     }
   }
 

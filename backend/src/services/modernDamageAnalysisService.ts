@@ -97,10 +97,10 @@ export class ModernDamageAnalysisService {
       this.openaiClient = new OpenAI({
         apiKey: OPENAI_API_KEY,
         timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
-        maxRetries: 2 // Maksimum 2 deneme (retry mekanizması)
+        maxRetries: 3 // Maksimum 3 deneme (retry mekanizması)
       })
       this.isInitialized = true
-      console.log('🚀 ModernDamageAnalysisService initialized successfully (timeout: 120s, maxRetries: 2)')
+      console.log('🚀 ModernDamageAnalysisService initialized successfully (timeout: 120s, maxRetries: 3)')
     } catch (error) {
       console.error('❌ Failed to initialize ModernDamageAnalysisService:', error)
       throw new Error('OpenAI API key not found or invalid')
