@@ -518,7 +518,7 @@ export const getEngineSoundAnalysisResult = asyncHandler(async (req: AuthRequest
           plate: report.vehiclePlate,
           vin: 'Belirtilmemiş'
         },
-        ...(report.aiAnalysisData || {}),
+        ...(report.aiAnalysisData && typeof report.aiAnalysisData === 'object' ? report.aiAnalysisData : {}),
         status: report.status,
         createdAt: report.createdAt,
         audioFiles: (report as any).vehicleAudios?.map((audio: any) => ({

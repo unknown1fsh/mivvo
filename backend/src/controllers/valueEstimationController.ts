@@ -407,14 +407,14 @@ export class ValueEstimationController {
       console.log('💾 Value Estimation - Rapor veritabanına kaydedildi:', {
         reportId: parseInt(reportId),
         hasAiAnalysisData: true,
-        dataKeys: Object.keys(normalizedValueResult)
+        dataKeys: Object.keys(valueResult)
       });
 
       res.json({
         success: true,
         data: {
           reportId,
-          analysisResult: normalizedValueResult,
+          analysisResult: valueResult,
           message: 'OpenAI ile değer tahmini tamamlandı'
         }
       })
