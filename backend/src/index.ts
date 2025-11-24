@@ -83,6 +83,13 @@ if (!isTest()) {
     legacyHeaders: false,
     skipSuccessfulRequests: false,
     skipFailedRequests: false,
+    skip: (req) => {
+      // Admin route'ları için rate limiting'i bypass et
+      if (req.path.startsWith('/api/admin')) {
+        return true;
+      }
+      return false;
+    },
     keyGenerator: (req) => {
       // X-Forwarded-For header'ını kullan (production deployments için)
       return req.ip || req.connection.remoteAddress || 'unknown';
@@ -107,17 +114,22 @@ const corsOptions = {
       // Railway internal requests için origin undefined olabilir (sadece internal)
       if (!origin) {
         // Internal Railway requests - sadece Railway internal network'ten geliyorsa izin ver
+        console.log('✅ CORS: Internal request (no origin) - allowed');
         callback(null, true);
         return;
       }
+      
+      // Debug: Origin'i logla
+      console.log(`🔍 CORS check: origin="${origin}", allowedDomains=${JSON.stringify(allowedDomains)}`);
       
       // Origin'in tam olarak eşleşmesi gerekiyor (substring değil)
       const isAllowed = allowedDomains.includes(origin);
       
       if (isAllowed) {
+        console.log(`✅ CORS: Origin allowed - ${origin}`);
         callback(null, true);
       } else {
-        console.warn(`⚠️ CORS blocked origin: ${origin}`);
+        console.warn(`⚠️ CORS blocked origin: ${origin} (not in allowed list)`);
         callback(new Error('CORS policy violation: Origin not allowed'));
       }
     } else {
