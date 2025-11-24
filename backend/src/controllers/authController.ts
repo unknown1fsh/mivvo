@@ -123,6 +123,9 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     
     const { email, password, firstName, lastName, phone } = req.body;
 
+    // Email'i normalize et (lowercase + trim)
+    const normalizedEmail = email?.toLowerCase().trim();
+
     // Environment variables kontrolü
     console.log('🔍 Environment check:', {
       JWT_SECRET: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
@@ -130,13 +133,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS || '12'
     });
 
-    // Email benzersizlik kontrolü
+    // Email benzersizlik kontrolü (normalize edilmiş email ile)
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
-      console.log('❌ Email zaten kullanımda:', email);
+      console.log('❌ Email zaten kullanımda:', normalizedEmail);
       res.status(400).json({
         success: false,
         message: 'Bu email adresi zaten kullanılıyor.',
@@ -153,7 +156,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     console.log('👤 Kullanıcı oluşturuluyor...');
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         passwordHash,
         firstName,
         lastName,
@@ -253,14 +256,19 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     
-    // Production'da minimal logging
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔐 Backend login başlatıldı:', { email, hasPassword: !!password });
-    }
+    // Production'da da email loglama (şifre yok)
+    console.log('🔐 Login denemesi:', { 
+      email: email?.toLowerCase(), 
+      emailLength: email?.length,
+      hasPassword: !!password 
+    });
+
+    // Email'i lowercase yap (normalizeEmail zaten yapıyor ama ekstra güvenlik)
+    const normalizedEmail = email?.toLowerCase().trim();
 
     // Kullanıcı bulma - sadece gerekli alanları seç
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         email: true,
@@ -272,8 +280,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     });
 
-    // Kullanıcı ve aktiflik kontrolü
-    if (!user || !user.isActive) {
+    // Debug: Kullanıcı bulundu mu?
+    if (!user) {
+      console.log('❌ Login başarısız: Kullanıcı bulunamadı', { 
+        searchedEmail: normalizedEmail 
+      });
+      res.status(401).json({
+        success: false,
+        message: 'Geçersiz email veya şifre.',
+      });
+      return;
+    }
+
+    // Debug: Kullanıcı aktif mi?
+    if (!user.isActive) {
+      console.log('❌ Login başarısız: Kullanıcı aktif değil', { 
+        userId: user.id,
+        email: user.email 
+      });
       res.status(401).json({
         success: false,
         message: 'Geçersiz email veya şifre.',
@@ -285,6 +309,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     
     if (!isPasswordValid) {
+      console.log('❌ Login başarısız: Şifre yanlış', { 
+        userId: user.id,
+        email: user.email 
+      });
       res.status(401).json({
         success: false,
         message: 'Geçersiz email veya şifre.',
@@ -307,10 +335,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       },
     };
 
-    // Production'da minimal logging
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ Login başarılı:', { userEmail: user.email });
-    }
+    // Production'da da başarılı login logla
+    console.log('✅ Login başarılı:', { 
+      userId: user.id,
+      userEmail: user.email,
+      role: user.role 
+    });
 
     res.json(responseData);
   } catch (error) {
