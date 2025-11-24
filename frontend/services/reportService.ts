@@ -260,8 +260,12 @@ class ReportService {
         // Rapor tipi belirtilmemişse, önce raporu getir
         try {
           const report = await this.getReport(reportId)
-          if (report && report.reportType) {
-            return this.downloadReportPDF(reportId, report.reportType)
+          if (report) {
+            // Backend'den gelen raporlarda reportType olabilir
+            const reportType = (report as any).reportType || report.type
+            if (reportType) {
+              return this.downloadReportPDF(reportId, reportType)
+            }
           }
         } catch (err) {
           console.warn('Rapor tipi tespit edilemedi, genel endpoint kullanılıyor:', err)

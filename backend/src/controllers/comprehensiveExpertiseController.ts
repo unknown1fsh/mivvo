@@ -45,6 +45,7 @@
 import { Request, Response } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { AuthRequest } from '../middleware/auth'
+import { asyncHandler } from '../middleware/errorHandler'
 import { ComprehensiveExpertiseService } from '../services/comprehensiveExpertiseService'
 import { refundCreditForFailedAnalysis } from '../utils/creditRefund'
 import { ERROR_MESSAGES } from '../constants/ErrorMessages'
