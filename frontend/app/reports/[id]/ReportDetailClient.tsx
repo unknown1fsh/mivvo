@@ -11,7 +11,6 @@ import {
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp } from '@/components/motion'
-import jsPDF from 'jspdf'
 import { analysisAPI } from '@/lib/api'
 import api from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -535,62 +534,29 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
     setIsGeneratingPDF(true)
     
     try {
-      // Rapor tipine göre doğru endpoint'i belirle
-      const reportType = report.reportType || 'DAMAGE_ASSESSMENT'
-      let endpoint = ''
+      // Merkezi PDF servisini kullan
+      const { reportService } = await import('@/services/reportService')
+      const blob = await reportService.downloadReportPDF(reportId, report?.reportType)
       
-      switch (reportType) {
-        case 'DAMAGE_ASSESSMENT':
-        case 'DAMAGE_DETECTION':
-          endpoint = `/api/damage-analysis/${reportId}/pdf`
-          break
-        case 'PAINT_ANALYSIS':
-          endpoint = `/api/paint-analysis/${reportId}/pdf`
-          break
-        case 'ENGINE_SOUND_ANALYSIS':
-        case 'AUDIO_ANALYSIS':
-          endpoint = `/api/engine-sound-analysis/${reportId}/pdf`
-          break
-        case 'VALUE_ESTIMATION':
-          endpoint = `/api/value-estimation/${reportId}/pdf`
-          break
-        case 'COMPREHENSIVE_EXPERTISE':
-        case 'FULL_REPORT':
-          endpoint = `/api/comprehensive-expertise/${reportId}/pdf`
-          break
-        default:
-          endpoint = `/api/reports/${reportId}/pdf`
-      }
-      
-      // Backend'den PDF indir - api client'ı kullan
-      // API base URL'i dinamik olarak al
-      const apiBaseUrl = typeof window !== 'undefined' 
-        ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
-        : ''
-      const response = await fetch(`${apiBaseUrl}${endpoint}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      })
-      
-      if (!response.ok) {
+      if (!blob) {
         throw new Error('PDF indirilemedi')
       }
       
-      const blob = await response.blob()
+      // PDF'i indir
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `mivvo-expertiz-raporu-${report.vehicleInfo?.plate || reportId}.pdf`
+      a.download = `mivvo-expertiz-raporu-${report?.vehicleInfo?.plate || reportId}.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
       
       toast.success('PDF başarıyla indirildi!')
-    } catch (error) {
+    } catch (error: any) {
       console.error('PDF oluşturma hatası:', error)
-      toast.error('PDF indirilemedi. Lütfen tekrar deneyin.')
+      const errorMessage = error?.message || 'PDF indirilemedi. Lütfen tekrar deneyin.'
+      toast.error(errorMessage)
     } finally {
       setIsGeneratingPDF(false)
     }

@@ -606,6 +606,36 @@ export class PaintAnalysisController {
       })
     }
   }
+
+  /**
+   * GET /api/paint-analysis/:reportId/pdf
+   * Boya analizi raporunu PDF formatında indir
+   */
+  static downloadPDF = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user!.id;
+    const reportId = parseInt(req.params.reportId);
+
+    try {
+      const { generatePDFReport } = require('../services/pdfReportService');
+      const pdfBuffer = await generatePDFReport({
+        reportId,
+        userId,
+        includeImages: true,
+        includeCharts: true,
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="mivvo-boya-analizi-${reportId}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length.toString());
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('PDF oluşturma hatası:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'PDF rapor oluşturulamadı'
+      });
+    }
+  });
 }
 
 /**

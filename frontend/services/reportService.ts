@@ -203,39 +203,102 @@ class ReportService {
    * Download Report PDF (Rapor PDF İndir)
    * 
    * Raporu PDF formatında indirir.
-   * 
-   * TODO: Backend'de PDF generation eklenmeli
+   * Rapor tipine göre doğru endpoint'i kullanır.
    * 
    * @param reportId - Rapor ID
+   * @param reportType - Rapor tipi (opsiyonel, otomatik tespit edilir)
    * 
    * @returns Blob (PDF dosyası) veya null
    */
-  async downloadReportPDF(reportId: string): Promise<Blob | null> {
+  async downloadReportPDF(reportId: string, reportType?: string): Promise<Blob | null> {
     try {
       const token = typeof window !== 'undefined' 
         ? localStorage.getItem('auth_token') 
         : null
 
-      const headers: Record<string, string> = {}
-      if (token) {
-        headers.Authorization = `Bearer ${token}`
+      if (!token) {
+        throw new Error('Yetkilendirme gerekli')
       }
 
-      const response = await fetch(`${process.env.NODE_ENV === 'production' 
-        ? process.env.NEXT_PUBLIC_API_URL || 'https://mivvo-production.up.railway.app'
-        : 'http://localhost:3001'}/api/reports/${reportId}/pdf`, {
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`
+      }
+
+      // API base URL
+      const apiBaseUrl = typeof window !== 'undefined' 
+        ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
+        : 'http://localhost:3001'
+
+      // Rapor tipine göre endpoint belirle
+      let endpoint = ''
+      
+      if (reportType) {
+        switch (reportType) {
+          case 'DAMAGE_ASSESSMENT':
+          case 'DAMAGE_DETECTION':
+          case 'DAMAGE_ANALYSIS':
+            endpoint = `/api/damage-analysis/${reportId}/pdf`
+            break
+          case 'PAINT_ANALYSIS':
+            endpoint = `/api/paint-analysis/${reportId}/pdf`
+            break
+          case 'ENGINE_SOUND_ANALYSIS':
+          case 'AUDIO_ANALYSIS':
+            endpoint = `/api/engine-sound-analysis/${reportId}/pdf`
+            break
+          case 'VALUE_ESTIMATION':
+            endpoint = `/api/value-estimation/${reportId}/pdf`
+            break
+          case 'COMPREHENSIVE_EXPERTISE':
+          case 'FULL_REPORT':
+            endpoint = `/api/comprehensive-expertise/${reportId}/pdf`
+            break
+          default:
+            endpoint = `/api/reports/${reportId}/pdf`
+        }
+      } else {
+        // Rapor tipi belirtilmemişse, önce raporu getir
+        try {
+          const report = await this.getReport(reportId)
+          if (report && report.reportType) {
+            return this.downloadReportPDF(reportId, report.reportType)
+          }
+        } catch (err) {
+          console.warn('Rapor tipi tespit edilemedi, genel endpoint kullanılıyor:', err)
+        }
+        endpoint = `/api/reports/${reportId}/pdf`
+      }
+
+      const response = await fetch(`${apiBaseUrl}${endpoint}`, {
         method: 'GET',
         headers,
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        const errorText = await response.text()
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        
+        try {
+          const errorJson = JSON.parse(errorText)
+          errorMessage = errorJson.message || errorMessage
+        } catch {
+          // JSON parse edilemezse text'i kullan
+        }
+        
+        throw new Error(errorMessage)
       }
 
-      return await response.blob()
+      const blob = await response.blob()
+      
+      // PDF kontrolü
+      if (blob.type !== 'application/pdf' && blob.size > 0) {
+        console.warn('Beklenmeyen dosya tipi:', blob.type)
+      }
+
+      return blob
     } catch (error) {
       console.error('Report PDF download error:', error)
-      return null
+      throw error // Hata fırlat ki component'te handle edilebilsin
     }
   }
 

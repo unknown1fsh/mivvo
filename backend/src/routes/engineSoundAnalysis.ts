@@ -36,6 +36,7 @@ import {
   getEngineSoundAnalysisHistory,
   downloadEngineSoundAnalysisReport,
   checkEngineSoundAnalysisStatus,
+  downloadPDF,
   audioUpload
 } from '../controllers/engineSoundAnalysisController';
 import { authenticate } from '../middleware/auth';
@@ -175,6 +176,22 @@ router.get('/:reportId', getEngineSoundAnalysisResult);
  * - Dosya adı: motor-sesi-analizi-{reportId}.json
  */
 router.get('/:reportId/download', downloadEngineSoundAnalysisReport);
+
+/**
+ * GET /engine-sound-analysis/:reportId/pdf
+ * 
+ * Motor sesi analiz raporunu PDF formatında indir.
+ * 
+ * Params:
+ * - reportId: Report ID
+ * 
+ * Güvenlik:
+ * - Sahiplik kontrolü (userId match)
+ * 
+ * Response:
+ * - PDF dosyası (application/pdf)
+ */
+router.get('/:reportId/pdf', downloadPDF);
 
 /**
  * GET /engine-sound-analysis/:reportId/status

@@ -147,4 +147,20 @@ router.post('/:reportId/analyze', PaintAnalysisController.performAnalysis)
  */
 router.get('/:reportId', PaintAnalysisController.getReport)
 
+/**
+ * GET /paint-analysis/:reportId/pdf
+ * 
+ * Boya analizi raporunu PDF formatında indir.
+ * 
+ * Params:
+ * - reportId: Report ID
+ * 
+ * Güvenlik:
+ * - Sahiplik kontrolü (userId match)
+ * 
+ * Response:
+ * - PDF dosyası (application/pdf)
+ */
+router.get('/:reportId/pdf', PaintAnalysisController.downloadPDF)
+
 export default router

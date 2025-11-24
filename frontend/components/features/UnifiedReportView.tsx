@@ -24,8 +24,7 @@ import { AudioReport } from './AudioReport';
 import { ValueReport } from './ValueReport';
 import { ComprehensiveReport } from './ComprehensiveReport';
 
-// PDF ve utility'leri import et
-import { generatePDFFromElement, downloadPDF, createSimplePDF, PDFReportData } from '@/lib/generatePDF';
+// Utility'leri import et
 import { useProgressMessage } from '@/hooks/useReportPolling';
 
 // Tip tanımları
@@ -130,39 +129,45 @@ export function UnifiedReportView({
 
   // PDF indirme fonksiyonu
   const handleDownloadPDF = async () => {
-    if (!reportRef.current) {
-      toast.error('Rapor yüklenemedi');
-      return;
-    }
-
     setIsGeneratingPDF(true);
     
     try {
-      // PDF data hazırla
-      const pdfData: PDFReportData = {
-        title: getReportInfo(reportData.type).title,
-        vehicleInfo: reportData.vehicleInfo,
-        reportType: reportData.type,
-        analysisData: reportData.data,
-        images: reportData.images || [],
-        charts: reportData.charts || [],
-        createdAt: reportData.createdAt,
-        reportId: reportData.id
+      // Merkezi PDF servisini kullan
+      const { reportService } = await import('@/services/reportService');
+      
+      // Rapor tipini backend formatına çevir
+      const reportTypeMap: Record<ReportType, string> = {
+        'damage': 'DAMAGE_ASSESSMENT',
+        'paint': 'PAINT_ANALYSIS',
+        'audio': 'ENGINE_SOUND_ANALYSIS',
+        'value': 'VALUE_ESTIMATION',
+        'comprehensive': 'COMPREHENSIVE_EXPERTISE'
       };
       
-      // PDF oluştur
-      const pdf = createSimplePDF(pdfData);
+      const backendReportType = reportTypeMap[reportData.type] || 'DAMAGE_ASSESSMENT';
+      const blob = await reportService.downloadReportPDF(reportData.id, backendReportType);
       
-      // Dosya adı
+      if (!blob) {
+        throw new Error('PDF indirilemedi');
+      }
+      
+      // PDF'i indir
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
       const filename = `${getReportInfo(reportData.type).title}-${reportData.vehicleInfo.plate}-${new Date(reportData.createdAt).toLocaleDateString('tr-TR')}.pdf`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       
-      // İndir
-      downloadPDF(pdf, filename);
       toast.success('Rapor başarıyla indirildi!');
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('PDF indirme hatası:', error);
-      toast.error('PDF indirilemedi. Lütfen tekrar deneyin.');
+      const errorMessage = error?.message || 'PDF indirilemedi. Lütfen tekrar deneyin.';
+      toast.error(errorMessage);
     } finally {
       setIsGeneratingPDF(false);
     }

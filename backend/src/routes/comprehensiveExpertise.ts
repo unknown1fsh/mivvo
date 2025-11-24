@@ -197,4 +197,20 @@ router.post('/:reportId/analyze', ComprehensiveExpertiseController.performAnalys
  */
 router.get('/:reportId', ComprehensiveExpertiseController.getReport)
 
+/**
+ * GET /comprehensive-expertise/:reportId/pdf
+ * 
+ * Kapsamlı ekspertiz raporunu PDF formatında indir.
+ * 
+ * Params:
+ * - reportId: Report ID
+ * 
+ * Güvenlik:
+ * - Sahiplik kontrolü (userId match)
+ * 
+ * Response:
+ * - PDF dosyası (application/pdf)
+ */
+router.get('/:reportId/pdf', ComprehensiveExpertiseController.downloadPDF)
+
 export default router

@@ -484,16 +484,15 @@ export const downloadReport = async (req: AuthRequest, res: Response): Promise<v
       includeCharts: true,
     });
 
-    // PDF response
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="mivvo-expertiz-raporu-${report.id}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length.toString());
     res.send(pdfBuffer);
-  } catch (error) {
+  } catch (error: any) {
     console.error('PDF oluşturma hatası:', error);
     res.status(500).json({
       success: false,
-      message: 'PDF rapor oluşturulamadı',
+      message: error.message || 'PDF rapor oluşturulamadı',
     });
   }
 };

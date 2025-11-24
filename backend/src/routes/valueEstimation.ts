@@ -147,4 +147,20 @@ router.post('/:reportId/analyze', ValueEstimationController.performAnalysis)
  */
 router.get('/:reportId', ValueEstimationController.getReport)
 
+/**
+ * GET /value-estimation/:reportId/pdf
+ * 
+ * Değer tahmini raporunu PDF formatında indir.
+ * 
+ * Params:
+ * - reportId: Report ID
+ * 
+ * Güvenlik:
+ * - Sahiplik kontrolü (userId match)
+ * 
+ * Response:
+ * - PDF dosyası (application/pdf)
+ */
+router.get('/:reportId/pdf', ValueEstimationController.downloadPDF)
+
 export default router

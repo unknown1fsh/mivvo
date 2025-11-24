@@ -97,7 +97,6 @@ export class DamageAnalysisController {
     const reportId = parseInt(req.params.reportId);
 
     try {
-      // PDF servisini kullan
       const { generatePDFReport } = require('../services/pdfReportService');
       const pdfBuffer = await generatePDFReport({
         reportId,
@@ -106,7 +105,6 @@ export class DamageAnalysisController {
         includeCharts: true,
       });
 
-      // PDF response
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="mivvo-hasar-analizi-${reportId}.pdf"`);
       res.setHeader('Content-Length', pdfBuffer.length.toString());

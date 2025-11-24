@@ -633,6 +633,49 @@ export const downloadEngineSoundAnalysisReport = asyncHandler(async (req: AuthRe
 });
 
 /**
+ * Motor Sesi Analiz Raporunu PDF Olarak İndir
+ * 
+ * Raporu PDF formatında indirir.
+ * 
+ * @route   GET /api/engine-sound-analysis/:reportId/pdf
+ * @access  Private
+ * 
+ * @param req.params.reportId - Rapor ID
+ * 
+ * @returns 200 - PDF dosyası
+ * @returns 404 - Rapor bulunamadı
+ * @returns 500 - PDF oluşturma hatası
+ * 
+ * @example
+ * GET /api/engine-sound-analysis/123/pdf
+ */
+export const downloadPDF = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const reportId = parseInt(req.params.reportId);
+
+  try {
+    const { generatePDFReport } = require('../services/pdfReportService');
+    const pdfBuffer = await generatePDFReport({
+      reportId,
+      userId,
+      includeImages: true,
+      includeCharts: true,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="mivvo-motor-sesi-analizi-${reportId}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length.toString());
+    res.send(pdfBuffer);
+  } catch (error: any) {
+    console.error('PDF oluşturma hatası:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'PDF rapor oluşturulamadı'
+    });
+  }
+});
+
+/**
  * Motor Sesi Analiz Durumu Kontrolü
  * 
  * Analiz işleminin durumunu sorgular.
