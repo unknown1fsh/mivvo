@@ -35,6 +35,8 @@ interface VehicleReport {
   engineSoundAnalysis?: any
   valueEstimation?: any
   comprehensiveExpertise?: any
+  failedReason?: string | null
+  refundStatus?: string | null
   createdAt: string
   updatedAt: string
 }

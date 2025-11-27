@@ -79,12 +79,12 @@ async function getRedisConnection(): Promise<Redis | null> {
   }
 }
 
-function buildBaseOptions(): Redis.RedisOptions {
+function buildBaseOptions(): any {
   return {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     lazyConnect: true,
-    retryStrategy: (times) => Math.min(times * 50, 2000),
+    retryStrategy: (times: number) => Math.min(times * 50, 2000),
     connectTimeout: REDIS_CONNECTION_TIMEOUT_MS,
     password: redisPassword,
   };

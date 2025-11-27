@@ -214,6 +214,10 @@ export interface RefundCreditsPayload {
   reason?: string
 }
 
+export interface RefundReportPayload {
+  reason?: string
+}
+
 export interface SuspendUserPayload {
   reason?: string
 }

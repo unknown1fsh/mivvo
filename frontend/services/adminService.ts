@@ -643,6 +643,7 @@ export default {
   addUserCredits,
   resetUserCredits,
   refundUserCredits,
+  refundReportCredits,
   
   // User Status
   suspendUser,
