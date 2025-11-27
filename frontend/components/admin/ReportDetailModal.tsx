@@ -19,6 +19,7 @@ import {
   Clock
 } from 'lucide-react'
 import { formatDate } from '@/utils/dateUtils'
+import { RefundReportPayload } from '@/types/admin'
 import adminService from '@/services/adminService'
 import toast from 'react-hot-toast'
 
@@ -57,11 +58,14 @@ interface ReportDetail {
     audioPath: string
     uploadDate: string
   }>
+  failedReason?: string
+  refundStatus?: string
 }
 
 export default function ReportDetailModal({ reportId, isOpen, onClose }: ReportDetailModalProps) {
   const [report, setReport] = useState<ReportDetail | null>(null)
   const [loading, setLoading] = useState(false)
+  const [isRefunding, setIsRefunding] = useState(false)
 
   const fetchReportDetail = async () => {
     if (!reportId) return
@@ -80,6 +84,23 @@ export default function ReportDetailModal({ reportId, isOpen, onClose }: ReportD
       toast.error('Rapor detayları yüklenirken hata oluştu')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleManualRefund = async () => {
+    if (!report) return
+
+    try {
+      setIsRefunding(true)
+      const payload: RefundReportPayload = { reason: 'Admin manuel iade' }
+      await adminService.refundReportCredits(report.id, payload)
+      toast.success('Kredi iadesi başarıyla gerçekleştirildi')
+      fetchReportDetail()
+    } catch (error) {
+      console.error('Manual refund error:', error)
+      toast.error('Kredi iadesi sırasında hata oluştu')
+    } finally {
+      setIsRefunding(false)
     }
   }
 
@@ -105,6 +126,20 @@ export default function ReportDetailModal({ reportId, isOpen, onClose }: ReportD
         return <Badge variant="warning">⏳ İşleniyor</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
+    }
+  }
+
+  const shouldShowManualRefund = report?.status?.toLowerCase?.() === 'failed' && report?.refundStatus !== 'REFUNDED'
+  const getRefundStatusLabel = (status?: string) => {
+    switch (status) {
+      case 'REFUNDED':
+        return 'Kredi iadesi tamamlandı'
+      case 'FAILED':
+        return 'Kredi iadesi başarısız'
+      case 'PENDING':
+        return 'Kredi iade bekleniyor'
+      default:
+        return 'Kredi iade durumu kaydedilmedi'
     }
   }
 
@@ -194,6 +229,26 @@ export default function ReportDetailModal({ reportId, isOpen, onClose }: ReportD
                 </div>
               </CardContent>
             </Card>
+
+            {report.failedReason && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <p className="font-semibold">AI analizi tamamlanamadı</p>
+                <p className="mt-1">{report.failedReason}</p>
+                <p className="mt-1 text-xs text-red-600">{getRefundStatusLabel(report.refundStatus)}</p>
+                {shouldShowManualRefund && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleManualRefund}
+                      disabled={isRefunding}
+                    >
+                      {isRefunding ? 'İade hazırlanıyor...' : 'Kredi iadesi yap'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Kullanıcı Bilgileri */}
             <Card>

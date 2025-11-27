@@ -7,6 +7,8 @@ export interface ReportStatus {
   status: 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'PENDING';
   progress?: number;
   error?: string;
+  failedReason?: string;
+  refundStatus?: string;
   data?: any;
 }
 
@@ -25,6 +27,8 @@ export interface UseReportPollingReturn {
   error: string | null;
   isLoading: boolean;
   data: any;
+  refundStatus: string | null;
+  failedReason: string | null;
   retry: () => void;
   stopPolling: () => void;
 }
@@ -42,6 +46,8 @@ export const useReportPolling = ({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const [refundStatus, setRefundStatus] = useState<string | null>(null);
+  const [failedReason, setFailedReason] = useState<string | null>(null);
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -106,6 +112,8 @@ export const useReportPolling = ({
       setProgress(reportStatus.progress || 0);
       setError(reportStatus.error || null);
       setData(reportStatus.data || null);
+      setRefundStatus(reportStatus.refundStatus || null);
+      setFailedReason(reportStatus.failedReason || null);
 
       // Durum değişikliklerini işle
       switch (reportStatus.status) {
@@ -147,6 +155,8 @@ export const useReportPolling = ({
       setError(errorMessage);
       setIsLoading(false);
       stopPolling();
+        setRefundStatus(null);
+        setFailedReason(null);
       
       if (onError) {
         onError(errorMessage);
@@ -162,6 +172,8 @@ export const useReportPolling = ({
     setError(null);
     setProgress(0);
     setIsLoading(true);
+    setRefundStatus(null);
+    setFailedReason(null);
     startTimeRef.current = Date.now();
     
     // Mevcut polling'i temizle
@@ -232,7 +244,9 @@ export const useReportPolling = ({
     isLoading,
     data,
     retry,
-    stopPolling
+    stopPolling,
+    refundStatus,
+    failedReason,
   };
 };
 

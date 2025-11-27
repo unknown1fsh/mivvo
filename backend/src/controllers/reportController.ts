@@ -154,6 +154,9 @@ export const getReportStatus = async (req: any, res: Response): Promise<void> =>
           resultData: true,
         },
       },
+      failedReason: true,
+      refundStatus: true,
+      creditTransactionId: true,
     },
   });
 
@@ -203,6 +206,9 @@ export const getReportStatus = async (req: any, res: Response): Promise<void> =>
     progress,
     error: report.status === 'FAILED' ? 'Rapor oluşturulamadı' : null,
     data: report.status === 'COMPLETED' ? report.aiAnalysisResults?.[0]?.resultData : null,
+    failedReason: report.failedReason || null,
+    refundStatus: report.refundStatus || 'NONE',
+    creditTransactionId: report.creditTransactionId || null,
   };
 
   res.json(statusData);

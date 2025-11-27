@@ -38,8 +38,8 @@ export async function addEmailJob(data: EmailJobData): Promise<string | null> {
 /**
  * Email Worker'ı başlat
  */
-export function startEmailWorker(): void {
-  const worker = createWorker<EmailJobData>(EMAIL_QUEUE, async (job) => {
+export async function startEmailWorker(): Promise<void> {
+  const worker = await createWorker<EmailJobData>(EMAIL_QUEUE, async (job) => {
     const { type, to, subject, html, text, token, userName, reportId, customData } = job.data;
 
     logInfo('Email job başlatıldı', { type, to });

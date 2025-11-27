@@ -54,6 +54,8 @@ export interface ReportResponse {
   data?: Report
   error?: string
   reportId?: string
+  message?: string
+  refundStatus?: string
 }
 
 /**
@@ -96,7 +98,9 @@ class ReportService {
       success: response.success,
       data: response.data,
       error: response.error,
-      reportId: response.data?.id
+      reportId: response.data?.id,
+      message: response.message,
+      refundStatus: (response as any).refundStatus,
     }
   }
 

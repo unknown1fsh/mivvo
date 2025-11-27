@@ -120,6 +120,19 @@ export default function ReportDetailPage() {
 
   const statusBadge = getStatusBadge(report.status)
   const StatusIcon = statusBadge.icon
+  const isFailedReport = report.status?.toLowerCase?.() === 'failed'
+  const getRefundStatusText = (status?: string) => {
+    switch (status) {
+      case 'REFUNDED':
+        return 'Kredi iadesi tamamlandı'
+      case 'FAILED':
+        return 'Kredi iadesi başarısız'
+      case 'PENDING':
+        return 'İade bekleniyor'
+      default:
+        return 'İade durumu kaydedilmedi'
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -145,6 +158,14 @@ export default function ReportDetailPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isFailedReport && report.failedReason && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <p className="font-semibold">AI analizi tamamlanamadı.</p>
+            <p className="mt-1">{report.failedReason}</p>
+            <p className="mt-1 text-xs text-red-600">{getRefundStatusText(report.refundStatus)}</p>
+            <p className="text-xs text-gray-500">Rapor ID: #{report.id}</p>
+          </div>
+        )}
         {/* Araç Bilgileri */}
         <div className="bg-white rounded-lg shadow mb-6">
           <div className="px-6 py-4 border-b border-gray-200">

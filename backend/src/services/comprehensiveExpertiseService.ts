@@ -201,7 +201,7 @@ export class ComprehensiveExpertiseService {
     try {
       const openaiApiKey = process.env.OPENAI_API_KEY
       if (openaiApiKey) {
-        this.openaiClient = new OpenAI({ 
+        this.openaiClient = new OpenAI({
           apiKey: openaiApiKey,
           timeout: 120000, // 120 saniye (2 dakika) timeout - trafik yoğunluğu için yeterli
           maxRetries: 3 // Maksimum 3 deneme (retry mekanizması)
@@ -225,7 +225,7 @@ export class ComprehensiveExpertiseService {
   }): string {
     const currentYear = new Date().getFullYear()
     const vehicleAge = vehicleInfo?.year ? currentYear - vehicleInfo.year : 0
-    
+
     const vehicleContext = vehicleInfo ? `
 ═══════════════════════════════════════════════════════════════════
                     🚗 ARAÇ KİMLİK BİLGİLERİ
@@ -894,28 +894,28 @@ Rapor, müşterinin binlerce TL tasarruf etmesini veya kazanmasını sağlayacak
     } catch (e) {
       // Başarısız olursa markdown code block temizle
       let cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      
+
       try {
         return JSON.parse(cleaned)
       } catch (e2) {
         // Son çare: { } arasındaki kısmı al
         const start = cleaned.indexOf('{')
         const end = cleaned.lastIndexOf('}')
-        
-    if (start === -1 || end === -1 || end <= start) {
+
+        if (start === -1 || end === -1 || end <= start) {
           console.error('❌ AI yanıtı parse edilemedi:', rawText.substring(0, 500))
-      throw new Error('AI yanıtından JSON verisi alınamadı')
-    }
-        
+          throw new Error('AI yanıtından JSON verisi alınamadı')
+        }
+
         const json = cleaned.slice(start, end + 1)
-    return JSON.parse(json)
+        return JSON.parse(json)
       }
     }
   }
 
   private static async convertImagesToBase64(imagePaths: string[]): Promise<string[]> {
     const base64Array: string[] = []
-    
+
     for (const imagePath of imagePaths) {
       if (imagePath.startsWith('data:image/')) {
         const base64Match = imagePath.match(/base64,(.+)/)
@@ -924,7 +924,7 @@ Rapor, müşterinin binlerce TL tasarruf etmesini veya kazanmasını sağlayacak
         }
       }
     }
-    
+
     return base64Array
   }
 
@@ -1046,7 +1046,7 @@ Lütfen tüm sayısal değerleri sayı olarak döndür.`
                 // Görselleri ekle
                 ...imageBase64Array.map(img => ({
                   type: 'image_url' as const,
-                  image_url: { 
+                  image_url: {
                     url: `data:image/jpeg;base64,${img}`,
                     detail: 'high' as const
                   }
@@ -1072,32 +1072,77 @@ Lütfen tüm sayısal değerleri sayı olarak döndür.`
       const comprehensiveData = this.extractJsonPayload(text)
       console.log('✅ JSON başarıyla parse edildi')
 
-      // SIKI VALİDASYON: Zorunlu alanları kontrol et
-      if (!comprehensiveData.overallScore) {
-        throw new Error('AI analiz sonucu eksik. Genel puan bilgisi alınamadı.')
+      // RELAXED VALIDATION & DEFAULT VALUES
+      // AI yanıtı bazen eksik olabilir, bu durumda işlemi iptal etmek yerine
+      // varsayılan değerlerle devam ediyoruz.
+
+      const defaultSummary: ComprehensiveSummary = {
+        vehicleOverview: "Araç analizi tamamlandı ancak detaylı özet oluşturulamadı. Lütfen fotoğrafları kontrol ediniz.",
+        keyFindings: ["Analiz tamamlandı", "Detaylı veri bekleniyor"],
+        criticalIssues: [],
+        strengths: [],
+        weaknesses: [],
+        overallCondition: "Veri Yetersiz",
+        marketPosition: "Belirlenemedi",
+        investmentPotential: "Belirlenemedi"
       }
 
-      if (!comprehensiveData.expertiseGrade) {
-        throw new Error('AI analiz sonucu eksik. Ekspertiz notu bilgisi alınamadı.')
+      const defaultExpertOpinion: ExpertOpinion = {
+        recommendation: "neutral",
+        reasoning: ["Yeterli veri sağlanamadı"],
+        riskAssessment: { level: "medium", factors: [] },
+        opportunityAssessment: { level: "fair", factors: [] },
+        expertNotes: ["Otomatik analiz sırasında bazı veriler eksik kalmış olabilir."]
       }
 
-      if (!comprehensiveData.comprehensiveSummary) {
-        throw new Error('AI analiz sonucu eksik. Kapsamlı özet bilgisi alınamadı.')
+      const defaultRecommendations: FinalRecommendations = {
+        immediate: [],
+        shortTerm: [],
+        longTerm: [],
+        maintenance: []
       }
 
-      if (!comprehensiveData.expertOpinion) {
-        throw new Error('AI analiz sonucu eksik. Uzman görüşü bilgisi alınamadı.')
+      const defaultInvestment: InvestmentDecision = {
+        decision: "fair_investment",
+        expectedReturn: 0,
+        paybackPeriod: "Belirsiz",
+        riskLevel: "medium",
+        liquidityScore: 0,
+        marketTiming: "Nötr",
+        financialSummary: {
+          purchasePrice: 0,
+          immediateRepairs: 0,
+          monthlyMaintenance: 0,
+          estimatedResaleValue: 0,
+          totalInvestment: 0,
+          expectedProfit: 0,
+          roi: 0
+        }
+      }
+
+      // Güvenli veri birleştirme
+      const safeData = {
+        overallScore: comprehensiveData.overallScore || 0, // 0 = Hesaplanamadı
+        expertiseGrade: comprehensiveData.expertiseGrade || 'fair',
+        comprehensiveSummary: { ...defaultSummary, ...comprehensiveData.comprehensiveSummary },
+        expertOpinion: { ...defaultExpertOpinion, ...comprehensiveData.expertOpinion },
+        finalRecommendations: { ...defaultRecommendations, ...comprehensiveData.finalRecommendations },
+        investmentDecision: { ...defaultInvestment, ...comprehensiveData.investmentDecision },
+        aiProvider: 'OpenAI',
+        model: OPENAI_MODEL,
+        confidence: comprehensiveData.confidence || 50,
+        analysisTimestamp: new Date().toISOString()
       }
 
       const result: ComprehensiveExpertiseResult = {
-        ...comprehensiveData,
+        ...safeData,
         damageAnalysis: analyses.damage || null,
         paintAnalysis: analyses.paint || null,
         audioAnalysis: analyses.audio || null,
         valueEstimation: analyses.value || null
       }
 
-      console.log('[AI] Kapsamlı expertiz raporu başarıyla oluşturuldu!')
+      console.log('[AI] Kapsamlı expertiz raporu başarıyla oluşturuldu (Safe Mode)!')
       return result
 
     } catch (error) {

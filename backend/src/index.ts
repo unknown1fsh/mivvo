@@ -1,9 +1,9 @@
+import './bootstrapEnv';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import path from 'path';
 
 // Import routes
@@ -34,9 +34,6 @@ import { notFound } from './middleware/notFound';
 import { requestLogger } from './middleware/requestLogger';
 import { databaseLoggerMiddleware } from './middleware/databaseLogger';
 import { getPrismaClient, disconnectPrisma } from './utils/prisma';
-
-// Load environment variables
-dotenv.config();
 
 // Validate environment variables FIRST (must be called before any other imports that use env vars)
 import { validateEnv, isProduction, isTest } from './utils/envValidation';
@@ -302,15 +299,18 @@ if (process.env.NODE_ENV === 'production') {
 
 // Queue Workers başlat
 if (process.env.NODE_ENV !== 'test') {
-  try {
-    const { startAIAnalysisWorker } = require('./jobs/aiAnalysisJob');
-    const { startEmailWorker } = require('./jobs/emailJob');
-    startAIAnalysisWorker();
-    startEmailWorker();
-    console.log('✅ Queue workers başlatıldı (AI Analysis, Email)');
-  } catch (error) {
-    console.warn('⚠️ Queue workers başlatılamadı (Redis bağlantısı yok olabilir):', error instanceof Error ? error.message : error);
-  }
+  const startQueueWorkers = async () => {
+    try {
+      const { startAIAnalysisWorker } = require('./jobs/aiAnalysisJob');
+      const { startEmailWorker } = require('./jobs/emailJob');
+      await Promise.all([startAIAnalysisWorker(), startEmailWorker()]);
+      console.log('✅ Queue workers başlatıldı (AI Analysis, Email)');
+    } catch (error) {
+      console.warn('⚠️ Queue workers başlatılamadı (Redis bağlantısı yok olabilir):', error instanceof Error ? error.message : error);
+    }
+  };
+
+  void startQueueWorkers();
 }
 
 // Start server (only if not in test environment)

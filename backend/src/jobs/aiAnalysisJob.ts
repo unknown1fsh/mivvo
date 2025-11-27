@@ -33,8 +33,8 @@ export async function addAIAnalysisJob(data: AIAnalysisJobData): Promise<string 
 /**
  * AI Analiz Worker'ı başlat
  */
-export function startAIAnalysisWorker(): void {
-  const worker = createWorker<AIAnalysisJobData>(AI_ANALYSIS_QUEUE, async (job) => {
+export async function startAIAnalysisWorker(): Promise<void> {
+  const worker = await createWorker<AIAnalysisJobData>(AI_ANALYSIS_QUEUE, async (job) => {
     const { reportId, imagePath, vehicleInfo, analysisType } = job.data;
     const jobStartTime = Date.now(); // Job başlangıç zamanı
 

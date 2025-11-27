@@ -43,6 +43,7 @@ import { Request, Response } from 'express';
 import { getPrismaClient } from '../utils/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { AnalysisReportService } from '../services/analysisReportService';
 
 const prisma = getPrismaClient();
 
@@ -91,7 +92,7 @@ const prisma = getPrismaClient();
  *   "mileage": 50000
  * }
  */
-export const createReport = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createReport = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
   const {
     reportType,
     vehiclePlate,
@@ -100,79 +101,43 @@ export const createReport = async (req: AuthRequest, res: Response): Promise<voi
     vehicleYear,
     vehicleColor,
     mileage,
+    imagePath,
+    audioPath,
+    notes,
   } = req.body;
 
-  // Servis fiyatlandırmasını getir
-  const servicePricing = await prisma.servicePricing.findFirst({
-    where: {
-      serviceType: reportType,
-      isActive: true,
-    },
+  const result = await AnalysisReportService.createReport({
+    userId: req.user!.id,
+    reportType,
+    vehiclePlate,
+    vehicleBrand,
+    vehicleModel,
+    vehicleYear,
+    vehicleColor,
+    mileage,
+    imagePath,
+    audioPath,
+    notes,
   });
 
-  if (!servicePricing) {
-    res.status(400).json({
-      success: false,
-      message: 'Geçersiz rapor türü.',
+  if (result.success && result.report) {
+    res.status(201).json({
+      success: true,
+      message: result.message,
+      reportId: result.reportId,
+      refundStatus: result.refundStatus ?? 'NONE',
+      data: { report: result.report },
     });
     return;
   }
 
-  // Kullanıcı kredi kontrolü
-  const userCredits = await prisma.userCredits.findUnique({
-    where: { userId: req.user!.id },
+  res.status(200).json({
+    success: false,
+    message: result.message,
+    reportId: result.reportId,
+    refundStatus: result.refundStatus,
   });
-
-  if (!userCredits || userCredits.balance < servicePricing.basePrice) {
-    res.status(400).json({
-      success: false,
-      message: 'Yetersiz kredi bakiyesi.',
-    });
-    return;
-  }
-
-  // Rapor oluştur
-  const report = await prisma.vehicleReport.create({
-    data: {
-      userId: req.user!.id,
-      reportType,
-      vehiclePlate,
-      vehicleBrand,
-      vehicleModel,
-      vehicleYear,
-      vehicleColor,
-      mileage,
-      totalCost: servicePricing.basePrice,
-      status: 'PENDING',
-    },
-  });
-
-  // Kredi düş
-  await prisma.userCredits.update({
-    where: { userId: req.user!.id },
-    data: {
-      balance: userCredits.balance.sub(servicePricing.basePrice),
-      totalUsed: userCredits.totalUsed.add(servicePricing.basePrice),
-    },
-  });
-
-  // CreditTransaction kaydı (audit trail)
-  await prisma.creditTransaction.create({
-    data: {
-      userId: req.user!.id,
-      transactionType: 'USAGE',
-      amount: servicePricing.basePrice,
-      description: `${servicePricing.serviceName} raporu`,
-      referenceId: `report_${report.id}`,
-    },
-  });
-
-  res.status(201).json({
-    success: true,
-    message: 'Rapor başarıyla oluşturuldu.',
-    data: { report },
-  });
-};
+});
 
 /**
  * Araç Raporlarını Listele

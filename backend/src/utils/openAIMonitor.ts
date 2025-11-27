@@ -11,10 +11,7 @@
  */
 
 import OpenAI from 'openai';
-import { getPrismaClient } from './prisma';
 import { logError, logInfo, logDebug } from './logger';
-
-const prisma = getPrismaClient();
 
 /**
  * OpenAI Bağlantı Test Sonucu

@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
+import {
   DocumentTextIcon,
   ExclamationTriangleIcon,
   ArrowLeftIcon,
   ArrowDownTrayIcon,
   SparklesIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  CheckBadgeIcon,
+  ClockIcon,
+  ShareIcon
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { FadeInUp } from '@/components/motion'
@@ -16,12 +19,12 @@ import api from '@/lib/api'
 import toast from 'react-hot-toast'
 import { ReportLoading } from '@/components/ui/ReportLoading'
 import { Skeleton } from '@/components/ui/LoadingComponents'
-import { 
-  DamageAnalysisResult, 
-  PaintAnalysisResult, 
-  AudioAnalysisResult, 
-  ValueEstimationResult, 
-  ComprehensiveExpertiseResult 
+import {
+  DamageAnalysisResult,
+  PaintAnalysisResult,
+  AudioAnalysisResult,
+  ValueEstimationResult,
+  ComprehensiveExpertiseResult
 } from '@/types'
 import { DamageReport } from '@/components/features/DamageReport'
 import { PaintReport } from '@/components/features/PaintReport'
@@ -41,26 +44,17 @@ function getAnalysisTypeFromReportType(reportType: string): 'damage' | 'paint' |
     'COMPREHENSIVE_EXPERTISE': 'comprehensive',
     'FULL_REPORT': 'comprehensive',
   }
-  
+
   return typeMap[reportType] || 'comprehensive'
 }
 
-// ===== RAPOR TÜRÜNE ÖZGÜ NORMALIZE FONKSİYONLARI =====
+// ... (Normalize functions kept same as before for stability) ...
+// NOTE: In a real refactor, these should be moved to a utility file.
+// For now, I'm including them to ensure the file works standalone.
 
-/**
- * Hasar Analizi Raporu Normalize Fonksiyonu
- * Backend'den gelen hasar analizi verisini DamageReport component'inin beklediği formata çevirir
- */
 function normalizeDamageReportData(apiData: any) {
   const reportData = apiData.report || apiData
   const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
-  
-  console.log('🔍 normalizeDamageReportData:', {
-    hasAiAnalysisData: !!aiAnalysisData,
-    hasHasarAlanları: !!(aiAnalysisData?.hasarAlanları),
-    hasGenelDeğerlendirme: !!(aiAnalysisData?.genelDeğerlendirme)
-  })
-  
   return {
     id: reportData?.id || apiData?.id,
     vehicleInfo: {
@@ -87,20 +81,9 @@ function normalizeDamageReportData(apiData: any) {
   }
 }
 
-/**
- * Boya Analizi Raporu Normalize Fonksiyonu
- * Backend'den gelen boya analizi verisini PaintReport component'inin beklediği formata çevirir
- */
 function normalizePaintReportData(apiData: any) {
   const reportData = apiData.report || apiData
   const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
-  
-  console.log('🎨 normalizePaintReportData:', {
-    hasAiAnalysisData: !!aiAnalysisData,
-    hasBoyaKalitesi: !!(aiAnalysisData?.boyaKalitesi),
-    hasRenkAnalizi: !!(aiAnalysisData?.renkAnalizi)
-  })
-  
   return {
     id: reportData?.id || apiData?.id,
     vehicleInfo: {
@@ -122,27 +105,14 @@ function normalizePaintReportData(apiData: any) {
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.boyaKalitesi?.genelPuan || aiAnalysisData?.overallScore || 0,
     expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
-    // PaintReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
   }
 }
 
-/**
- * Motor Ses Analizi Raporu Normalize Fonksiyonu
- * Backend'den gelen ses analizi verisini AudioReport component'inin beklediği formata çevirir
- */
 function normalizeAudioReportData(apiData: any) {
   const reportData = apiData.report || apiData
   const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
-  
-  console.log('🔊 normalizeAudioReportData:', {
-    hasAiAnalysisData: !!aiAnalysisData,
-    hasRpmAnalysis: !!(aiAnalysisData?.rpmAnalysis),
-    hasSoundQuality: !!(aiAnalysisData?.soundQuality),
-    hasDetectedIssues: !!(aiAnalysisData?.detectedIssues)
-  })
-  
   return {
     id: reportData?.id || apiData?.id,
     vehicleInfo: {
@@ -164,26 +134,14 @@ function normalizeAudioReportData(apiData: any) {
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || 0,
     expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
-    // AudioReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
   }
 }
 
-/**
- * Değer Tahmini Raporu Normalize Fonksiyonu
- * Backend'den gelen değer tahmini verisini ValueReport component'inin beklediği formata çevirir
- */
 function normalizeValueReportData(apiData: any) {
   const reportData = apiData.report || apiData
   const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
-  
-  console.log('💰 normalizeValueReportData:', {
-    hasAiAnalysisData: !!aiAnalysisData,
-    hasEstimatedValue: !!(aiAnalysisData?.estimatedValue),
-    hasMarketAnalysis: !!(aiAnalysisData?.marketAnalysis)
-  })
-  
   return {
     id: reportData?.id || apiData?.id,
     vehicleInfo: {
@@ -203,12 +161,10 @@ function normalizeValueReportData(apiData: any) {
     status: reportData?.status || apiData?.status || 'COMPLETED',
     createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
-    overallScore: 0, // Value report'ta overallScore yok, estimatedValue kullanılır
+    overallScore: 0,
     expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
-    // ValueReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || [],
-    // Değer tahmini için özel field'lar
     marketValue: {
       estimatedValue: aiAnalysisData?.estimatedValue || 0,
       marketRange: aiAnalysisData?.marketAnalysis?.priceRange || { min: 0, max: 0, average: 0 },
@@ -218,21 +174,9 @@ function normalizeValueReportData(apiData: any) {
   }
 }
 
-/**
- * Tam Ekspertiz Raporu Normalize Fonksiyonu
- * Backend'den gelen kapsamlı ekspertiz verisini ComprehensiveReport component'inin beklediği formata çevirir
- */
 function normalizeComprehensiveReportData(apiData: any) {
   const reportData = apiData.report || apiData
   const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
-  
-  console.log('📋 normalizeComprehensiveReportData:', {
-    hasAiAnalysisData: !!aiAnalysisData,
-    hasOverallScore: !!(aiAnalysisData?.overallScore),
-    hasExpertiseGrade: !!(aiAnalysisData?.expertiseGrade),
-    hasComprehensiveSummary: !!(aiAnalysisData?.comprehensiveSummary)
-  })
-  
   return {
     id: reportData?.id || apiData?.id,
     vehicleInfo: {
@@ -254,47 +198,21 @@ function normalizeComprehensiveReportData(apiData: any) {
     totalCost: reportData?.totalCost || apiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || 0,
     expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
-    // ComprehensiveReport component'i direkt aiAnalysisData bekliyor
     aiAnalysisData: aiAnalysisData,
     vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
   }
 }
 
-/**
- * Ana Normalize Fonksiyonu
- * Rapor tipine göre doğru normalize fonksiyonunu çağırır
- */
 function normalizeReportData(apiData: any, analysisType: string) {
-  console.log('🔍 normalizeReportData - Ham veri:', {
-    analysisType,
-    hasApiData: !!apiData,
-    apiDataKeys: apiData ? Object.keys(apiData) : [],
-    vehiclePlate: apiData?.vehiclePlate || apiData?.report?.vehiclePlate
-  })
-  
-  // Rapor tipine göre doğru normalize fonksiyonunu çağır
   switch (analysisType) {
-    case 'damage':
-      return normalizeDamageReportData(apiData)
-    
-    case 'paint':
-      return normalizePaintReportData(apiData)
-    
-    case 'engine':
-      return normalizeAudioReportData(apiData)
-    
-    case 'value':
-      return normalizeValueReportData(apiData)
-    
-    case 'comprehensive':
-      return normalizeComprehensiveReportData(apiData)
-    
+    case 'damage': return normalizeDamageReportData(apiData)
+    case 'paint': return normalizePaintReportData(apiData)
+    case 'engine': return normalizeAudioReportData(apiData)
+    case 'value': return normalizeValueReportData(apiData)
+    case 'comprehensive': return normalizeComprehensiveReportData(apiData)
     default:
-      // Fallback: Generic normalize (eski yöntem)
-      console.warn(`⚠️ Bilinmeyen rapor tipi: ${analysisType}, generic normalize kullanılıyor`)
       const reportData = apiData.report || apiData
       const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
-      
       return {
         id: reportData?.id || apiData?.id,
         vehicleInfo: {
@@ -322,7 +240,6 @@ function normalizeReportData(apiData: any, analysisType: string) {
   }
 }
 
-
 export function ReportDetailClient({ reportId }: { reportId: string }) {
   const [report, setReport] = useState<any>(null)
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
@@ -335,74 +252,38 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
       try {
         setLoading(true)
         setError(null)
-        
-        // Önce rapor tipini öğrenmek için user reports endpoint'inden raporu bul
+
         const reportsResponse = await api.get('/api/user/reports')
-        
+
         if (!reportsResponse.data?.success) {
           throw new Error('Raporlar alınamadı')
         }
-        
+
         const reports = reportsResponse.data.data?.reports || []
         const reportData = reports.find((r: any) => r.id.toString() === reportId.toString())
-        
+
         if (!reportData) {
           throw new Error('Rapor bulunamadı')
         }
-        
-        // ReportType'a göre analiz tipini belirle
+
         const detectedAnalysisType = getAnalysisTypeFromReportType(reportData.reportType)
         setAnalysisType(detectedAnalysisType)
-        
-        // Doğru endpoint'e istek at
+
         let response
         switch (detectedAnalysisType) {
-          case 'damage':
-            response = await analysisAPI.damageAnalysis.getReport(reportId)
-            break
-          case 'paint':
-            response = await analysisAPI.paintAnalysis.getReport(reportId)
-            break
-          case 'engine':
-            response = await analysisAPI.audioAnalysis.getReport(reportId)
-            break
-          case 'value':
-            response = await analysisAPI.valueEstimation.getReport(reportId)
-            break
-          case 'comprehensive':
-            response = await analysisAPI.comprehensiveExpertise.getReport(reportId)
-            break
-          default:
-            throw new Error('Geçersiz analiz tipi')
+          case 'damage': response = await analysisAPI.damageAnalysis.getReport(reportId); break
+          case 'paint': response = await analysisAPI.paintAnalysis.getReport(reportId); break
+          case 'engine': response = await analysisAPI.audioAnalysis.getReport(reportId); break
+          case 'value': response = await analysisAPI.valueEstimation.getReport(reportId); break
+          case 'comprehensive': response = await analysisAPI.comprehensiveExpertise.getReport(reportId); break
+          default: throw new Error('Geçersiz analiz tipi')
         }
-        
+
         if (!response || !response.data) {
           throw new Error('Rapor verisi alınamadı')
         }
-        
-        // Debug: Backend'den gelen ham veriyi logla
-        console.log('📥 ReportDetailClient - Backend Response:', {
-          hasResponse: !!response,
-          hasData: !!response.data,
-          responseKeys: response?.data ? Object.keys(response.data) : [],
-          responseDataStructure: response?.data ? JSON.stringify(response.data, null, 2).substring(0, 1000) + '...' : 'No data',
-          hasAiAnalysisData: !!(response?.data?.aiAnalysisData),
-          aiAnalysisDataType: response?.data?.aiAnalysisData ? typeof response.data.aiAnalysisData : 'undefined',
-          vehiclePlate: response?.data?.vehiclePlate,
-          reportId: response?.data?.id
-        })
-        
+
         const normalizedData = normalizeReportData(response.data, detectedAnalysisType)
-        
-        // Debug: Normalize edilmiş veriyi logla
-        console.log('✅ ReportDetailClient - Normalized Data:', {
-          hasNormalizedData: !!normalizedData,
-          hasAiAnalysisData: !!normalizedData?.aiAnalysisData,
-          aiAnalysisDataKeys: normalizedData?.aiAnalysisData ? Object.keys(normalizedData.aiAnalysisData) : [],
-          overallScore: normalizedData?.overallScore,
-          vehicleInfo: normalizedData?.vehicleInfo
-        })
-        
         setReport(normalizedData)
       } catch (err: any) {
         console.error('Rapor yükleme hatası:', err)
@@ -417,6 +298,30 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
       fetchReport()
     }
   }, [reportId])
+
+  const generatePDF = async () => {
+    setIsGeneratingPDF(true)
+    try {
+      const { reportService } = await import('@/services/reportService')
+      const blob = await reportService.downloadReportPDF(reportId, report?.reportType)
+      if (!blob) throw new Error('PDF indirilemedi')
+
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `mivvo-expertiz-raporu-${report?.vehicleInfo?.plate || reportId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('PDF başarıyla indirildi!')
+    } catch (error: any) {
+      console.error('PDF oluşturma hatası:', error)
+      toast.error(error?.message || 'PDF indirilemedi. Lütfen tekrar deneyin.')
+    } finally {
+      setIsGeneratingPDF(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -436,16 +341,16 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ExclamationTriangleIcon className="w-8 h-8 text-red-600" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-red-100">
+          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ExclamationTriangleIcon className="w-10 h-10 text-red-500" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Hata Oluştu</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Link 
-            href="/dashboard" 
-            className="btn btn-primary bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium"
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Hata Oluştu</h2>
+          <p className="text-gray-600 mb-8">{error}</p>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-gray-800 to-gray-900 text-white rounded-xl font-medium hover:from-gray-900 hover:to-black transition-all shadow-lg hover:shadow-xl"
           >
             Dashboard&apos;a Dön
           </Link>
@@ -454,72 +359,49 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
     )
   }
 
-  if (!report) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <DocumentTextIcon className="w-8 h-8 text-gray-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Rapor Bulunamadı</h2>
-          <p className="text-gray-600 mb-4">Bu rapor mevcut değil veya erişim yetkiniz yok.</p>
-          <Link 
-            href="/dashboard" 
-            className="btn btn-primary bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium"
-          >
-            Dashboard&apos;a Dön
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  if (!report) return null
 
-  // Rapor FAILED durumundaysa belirgin hata mesajı göster
+  // FAILED state
   if (report.status === 'FAILED') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8">
+        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl border border-red-100 p-8">
           <div className="text-center">
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ExclamationTriangleIcon className="w-10 h-10 text-red-600" />
+            <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ExclamationTriangleIcon className="w-10 h-10 text-red-500" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              AI Analizi Tamamlanamadı
-            </h2>
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
-              <p className="text-gray-800 font-medium mb-2">
-                ⚠️ Analiz sırasında bir sorun oluştu
-              </p>
-              <p className="text-gray-600 text-sm">
-                AI servisinden veri alınamadı. Bu durum genellikle geçici bir sorundur ve servis yoğunluğundan kaynaklanabilir.
-              </p>
-            </div>
-            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
-              <p className="text-green-800 font-medium mb-2">
-                ✅ Krediniz Otomatik İade Edildi
-              </p>
-              <p className="text-green-700 text-sm">
-                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir. 
-                Herhangi bir ücret ödememiş oldunuz.
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">Analiz Tamamlanamadı</h2>
+
+            <div className="bg-red-50 rounded-xl p-6 mb-8 text-left border border-red-100">
+              <h3 className="font-semibold text-red-900 mb-2 flex items-center">
+                <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
+                Sorun Detayı
+              </h3>
+              <p className="text-red-700">
+                AI servisinden beklenen yanıt alınamadı. Bu durum genellikle geçici bir bağlantı sorunundan kaynaklanır.
               </p>
             </div>
-            {report.expertNotes && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left">
-                <p className="text-gray-700 text-sm">
-                  <strong>Teknik Detay:</strong> {report.expertNotes}
-                </p>
-              </div>
-            )}
+
+            <div className="bg-green-50 rounded-xl p-6 mb-8 text-left border border-green-100">
+              <h3 className="font-semibold text-green-900 mb-2 flex items-center">
+                <CheckBadgeIcon className="w-5 h-5 mr-2" />
+                Kredi İadesi Yapıldı
+              </h3>
+              <p className="text-green-700">
+                Kullanılan kredi hesabınıza otomatik olarak iade edilmiştir. Ücret yansıtılmamıştır.
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="px-8 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
               >
                 Dashboard&apos;a Dön
               </Link>
               <button
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl"
               >
                 Tekrar Dene
               </button>
@@ -530,265 +412,155 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
     )
   }
 
-  const generatePDF = async () => {
-    setIsGeneratingPDF(true)
-    
-    try {
-      // Merkezi PDF servisini kullan
-      const { reportService } = await import('@/services/reportService')
-      const blob = await reportService.downloadReportPDF(reportId, report?.reportType)
-      
-      if (!blob) {
-        throw new Error('PDF indirilemedi')
-      }
-      
-      // PDF'i indir
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `mivvo-expertiz-raporu-${report?.vehicleInfo?.plate || reportId}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      
-      toast.success('PDF başarıyla indirildi!')
-    } catch (error: any) {
-      console.error('PDF oluşturma hatası:', error)
-      const errorMessage = error?.message || 'PDF indirilemedi. Lütfen tekrar deneyin.'
-      toast.error(errorMessage)
-    } finally {
-      setIsGeneratingPDF(false)
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-gray-50 pb-12">
+      {/* Premium Gradient Header */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/dashboard" 
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-              >
+          {/* Navbar */}
+          <div className="flex items-center justify-between h-20 border-b border-white/10">
+            <Link
+              href="/dashboard"
+              className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors group"
+            >
+              <div className="p-2 bg-white/5 rounded-lg group-hover:bg-white/10 transition-colors">
                 <ArrowLeftIcon className="w-5 h-5" />
-                <span>Geri Dön</span>
-              </Link>
-              
-              <div className="h-6 w-px bg-gray-300" />
-              
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                  <SparklesIcon className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold gradient-text">Mivvo Expertiz</span>
               </div>
+              <span className="font-medium">Dashboard</span>
+            </Link>
+
+            <div className="flex items-center space-x-2">
+              <SparklesIcon className="w-6 h-6 text-purple-400" />
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/80">
+                Mivvo Expertiz
+              </span>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <button
                 onClick={generatePDF}
                 disabled={isGeneratingPDF}
-                className="btn btn-primary bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium flex items-center space-x-2 disabled:opacity-50"
+                className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm transition-all disabled:opacity-50 border border-white/10"
               >
                 {isGeneratingPDF ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <ArrowDownTrayIcon className="w-4 h-4" />
+                  <ArrowDownTrayIcon className="w-5 h-5" />
                 )}
-                <span>{isGeneratingPDF ? 'PDF Oluşturuluyor...' : 'PDF İndir'}</span>
+                <span className="font-medium">PDF İndir</span>
               </button>
+            </div>
+          </div>
+
+          {/* Hero Content */}
+          <div className="py-12">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center space-x-3 mb-4">
+                  <span className="px-3 py-1 bg-purple-500/20 text-purple-200 border border-purple-500/30 rounded-full text-sm font-medium backdrop-blur-sm">
+                    {report.reportType === 'comprehensive' ? 'Kapsamlı Ekspertiz' :
+                      report.reportType === 'damage' ? 'Hasar Analizi' :
+                        report.reportType === 'paint' ? 'Boya Analizi' :
+                          report.reportType === 'engine' ? 'Motor Ses Analizi' :
+                            report.reportType === 'value' ? 'Değer Tahmini' : 'Ekspertiz Raporu'}
+                  </span>
+                  <span className="px-3 py-1 bg-green-500/20 text-green-200 border border-green-500/30 rounded-full text-sm font-medium backdrop-blur-sm flex items-center">
+                    <CheckBadgeIcon className="w-4 h-4 mr-1" />
+                    Tamamlandı
+                  </span>
+                </div>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">
+                  {report.vehicleInfo.brand} {report.vehicleInfo.model}
+                </h1>
+                <div className="flex items-center text-white/60 space-x-4 text-lg">
+                  <span>{report.vehicleInfo.year}</span>
+                  <span>•</span>
+                  <span>{report.vehicleInfo.plate}</span>
+                  <span>•</span>
+                  <span>{report.vehicleInfo.mileage.toLocaleString()} km</span>
+                </div>
+              </div>
+
+              {/* Quick Stats Card */}
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-6 min-w-[300px]">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-white/60">Rapor Tarihi</span>
+                  <span className="text-white font-medium">
+                    {new Date(report.createdAt).toLocaleDateString('tr-TR', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60">Rapor ID</span>
+                  <span className="font-mono text-white/80 bg-black/20 px-2 py-1 rounded text-sm">
+                    #{report.id}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content Area */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-10">
         <FadeInUp>
-          {/* Vehicle Info Card */}
-          <div className="card p-6 mb-8 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  {report.vehicleInfo.brand} {report.vehicleInfo.model}
-                </h2>
-                <p className="text-gray-600">{report.vehicleInfo.year}</p>
-                <p className="text-sm text-gray-500">{report.reportType}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Plaka</p>
-                <p className="font-semibold text-gray-900">{report.vehicleInfo.plate}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Kilometre</p>
-                <p className="font-semibold text-gray-900">{report.vehicleInfo.mileage.toLocaleString()} km</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-500 mb-1">Durum</p>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  report.status === 'completed' 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {report.status === 'completed' ? 'Tamamlandı' : 'İşleniyor'}
-                </span>
-              </div>
+          {analysisType === 'damage' && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <DamageReport
+                data={report.aiAnalysisData as DamageAnalysisResult}
+                vehicleInfo={report.vehicleInfo}
+                vehicleImages={report.vehicleImages || []}
+                showActions={true}
+              />
             </div>
-          </div>
+          )}
 
-          {/* Overall Score */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-            <div className="lg:col-span-2">
-              <div className="card p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Genel Değerlendirme</h3>
-                
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="text-4xl font-bold text-gray-900">{report.overallScore}</div>
-                  <div>
-                    <div className="text-sm text-gray-500">Genel Puan</div>
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${report.overallScore}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section Scores */}
-                {report.sections && typeof report.sections === 'object' && Object.keys(report.sections).length > 0 && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {Object.entries(report.sections).map(([key, section]) => {
-                      const sectionData = section as any
-                      return (
-                      <div key={key} className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-700">
-                            {key}
-                          </span>
-                          <span className="text-sm font-bold text-gray-900">{sectionData?.score || 0}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${sectionData?.score || 0}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )})}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Market Value */}
-            {report.marketValue && (
-              <div className="card p-6 bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <CurrencyDollarIcon className="w-5 h-5 text-green-600 mr-2" />
-                  Piyasa Değeri
-                </h3>
-                
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600 mb-2">
-                    {report.marketValue?.estimatedValue?.toLocaleString() || '0'}₺
-                  </div>
-                  {report.marketValue?.marketRange && (
-                    <div className="text-sm text-gray-600 mb-4">
-                      {report.marketValue.marketRange.min?.toLocaleString() || '0'}₺ - {report.marketValue.marketRange.max?.toLocaleString() || '0'}₺
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2 text-sm">
-                    {report.marketValue?.depreciation !== undefined && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Değer Kaybı:</span>
-                        <span className="font-medium">{report.marketValue.depreciation}%</span>
-                      </div>
-                    )}
-                    {report.marketValue?.comparison && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Piyasa Durumu:</span>
-                        <span className="font-medium text-green-600">{report.marketValue.comparison}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Analysis Report Content */}
-          <div className="card p-6">
-            {analysisType === 'damage' && (
-              <>
-                {/* Debug: DamageReport'a giden veriyi logla */}
-                {(() => {
-                  const damageReportData = report.aiAnalysisData as any
-                  console.log('🎯 ReportDetailClient - DamageReport Data:', {
-                    hasAiAnalysisData: !!report.aiAnalysisData,
-                    aiAnalysisDataKeys: report.aiAnalysisData ? Object.keys(report.aiAnalysisData) : [],
-                    hasHasarAlanları: !!(damageReportData?.hasarAlanları),
-                    hasarAlanlarıLength: damageReportData?.hasarAlanları?.length || 0,
-                    hasGenelDeğerlendirme: !!(damageReportData?.genelDeğerlendirme),
-                    genelDeğerlendirmeKeys: damageReportData?.genelDeğerlendirme ? Object.keys(damageReportData.genelDeğerlendirme) : [],
-                    overallScore: damageReportData?.genelDeğerlendirme?.satışDeğeri || (damageReportData as any)?.overallScore || 0,
-                    vehicleInfo: report.vehicleInfo
-                  })
-                  return null
-                })()}
-                <DamageReport
-                  data={report.aiAnalysisData as DamageAnalysisResult}
-                  vehicleInfo={report.vehicleInfo}
-                  vehicleImages={report.vehicleImages || []}
-                  showActions={true}
-                />
-              </>
-            )}
-            
-            {analysisType === 'paint' && (
-              <PaintReport 
+          {analysisType === 'paint' && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <PaintReport
                 report={report.aiAnalysisData as any}
                 vehicleInfo={report.vehicleInfo}
                 vehicleImages={report.vehicleImages || []}
                 onGeneratePDF={generatePDF}
                 isGeneratingPDF={isGeneratingPDF}
               />
-            )}
-            
-            {analysisType === 'engine' && (
-              <AudioReport 
+            </div>
+          )}
+
+          {analysisType === 'engine' && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <AudioReport
                 data={report.aiAnalysisData as AudioAnalysisResult}
                 vehicleInfo={report.vehicleInfo}
                 vehicleImages={report.vehicleImages || []}
                 showActions={true}
               />
-            )}
-            
-            {analysisType === 'value' && (
-              <ValueReport 
+            </div>
+          )}
+
+          {analysisType === 'value' && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <ValueReport
                 data={report.aiAnalysisData as ValueEstimationResult}
                 vehicleInfo={report.vehicleInfo}
                 vehicleImages={report.vehicleImages || []}
                 showActions={true}
               />
-            )}
-            
-            {analysisType === 'comprehensive' && (
-              <ComprehensiveReport 
-                data={report.aiAnalysisData as ComprehensiveExpertiseResult}
-                vehicleInfo={report.vehicleInfo}
-                vehicleImages={report.vehicleImages || []}
-                showActions={true}
-              />
-            )}
-          </div>
+            </div>
+          )}
+
+          {analysisType === 'comprehensive' && (
+            <ComprehensiveReport
+              data={report.aiAnalysisData as ComprehensiveExpertiseResult}
+              vehicleInfo={report.vehicleInfo}
+              vehicleImages={report.vehicleImages || []}
+              showActions={true}
+            />
+          )}
         </FadeInUp>
       </div>
     </div>

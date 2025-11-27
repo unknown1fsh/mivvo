@@ -10,89 +10,176 @@ import Redis from 'ioredis';
 import { getEnv } from '../utils/envValidation';
 import { logError, logInfo } from '../utils/logger';
 
-// Redis connection
-let redisConnection: Redis | null = null;
+const REDIS_CONNECTION_MAX_ATTEMPTS = parsePositiveInt(process.env.REDIS_CONNECTION_MAX_ATTEMPTS, 3);
+const REDIS_CONNECTION_RETRY_DELAY_MS = parsePositiveInt(process.env.REDIS_CONNECTION_RETRY_DELAY_MS, 500);
+const REDIS_CONNECTION_TIMEOUT_MS = parsePositiveInt(process.env.REDIS_CONNECTION_TIMEOUT_MS, 4000);
+const LOCAL_REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+const LOCAL_REDIS_PORT = parsePositiveInt(process.env.REDIS_PORT, 6379);
+const redisPassword = process.env.REDIS_PASSWORD?.trim() || undefined;
 
-/**
- * Redis bağlantısı oluştur
- */
-function getRedisConnection(): Redis | null {
+let redisConnection: Redis | null = null;
+let redisConnectionPromise: Promise<Redis | null> | null = null;
+let redisUnavailable = false;
+
+const queues: Map<string, Queue> = new Map();
+const workers: Map<string, Worker> = new Map();
+const queueEvents: Map<string, QueueEvents> = new Map();
+
+async function getRedisConnection(): Promise<Redis | null> {
+  if (redisUnavailable) {
+    return null;
+  }
+
   if (redisConnection) {
     return redisConnection;
   }
 
-  const env = getEnv();
-  const redisUrl = env.REDIS_URL || process.env.REDIS_URL;
-  const isProduction = process.env.NODE_ENV === 'production';
+  if (redisConnectionPromise) {
+    return redisConnectionPromise;
+  }
 
-  if (redisUrl) {
-    redisConnection = new Redis(redisUrl, {
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-      retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-      reconnectOnError: (err) => {
-        const targetError = 'READONLY';
-        if (err.message.includes(targetError)) {
-          return true;
-        }
-        return false;
-      },
-    });
+  redisConnectionPromise = (async () => {
+    const env = getEnv();
+    const redisUrl = env.REDIS_URL || process.env.REDIS_URL;
+    const isProduction = process.env.NODE_ENV === 'production';
 
-    redisConnection.on('error', (err) => {
-      logError('Redis connection error', err);
-    });
+    if (redisUrl) {
+      return connectWithRetries(() => buildUrlClient(redisUrl), 'Redis URL');
+    }
 
-    redisConnection.on('connect', () => {
-      logInfo('Redis connected');
-    });
-  } else if (!isProduction) {
-    // Sadece development ortamında localhost Redis kullan
-    logInfo('REDIS_URL not found, using local Redis (localhost:6379)');
-    redisConnection = new Redis({
-      host: 'localhost',
-      port: 6379,
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-    });
+    if (!isProduction) {
+      logInfo('REDIS_URL not found, attempting local Redis (localhost:6379)');
+      return connectWithRetries(buildLocalClient, 'local Redis');
+    }
 
-    redisConnection.on('error', (err) => {
-      logError('Redis connection error', err);
-    });
-
-    redisConnection.on('connect', () => {
-      logInfo('Redis connected to localhost');
-    });
-  } else {
-    // Production ortamında Redis URL yoksa, null döndür
-    logError('Redis URL not found in production environment. Queue service will be disabled.', new Error('REDIS_URL is required in production'));
+    const err = new Error('REDIS_URL is required in production');
+    logError('Redis URL not found in production environment. Queue service will be disabled.', err);
     console.warn('⚠️  REDIS_URL is not set in production. Queue workers will not start.');
     console.warn('💡 To fix this in Railway:');
     console.warn('   1. Add a Redis service to your Railway project');
     console.warn('   2. Railway will automatically set REDIS_URL environment variable');
     console.warn('   3. Redeploy your service');
     return null;
-  }
+  })();
 
-  return redisConnection;
+  try {
+    const connection = await redisConnectionPromise;
+    redisConnectionPromise = null;
+    if (!connection) {
+      redisUnavailable = true;
+      return null;
+    }
+    redisConnection = connection;
+    return connection;
+  } catch (error) {
+    redisUnavailable = true;
+    redisConnectionPromise = null;
+    logError('Redis initialization failed', error);
+    return null;
+  }
 }
 
-/**
- * Queue instance'ları
- */
-const queues: Map<string, Queue> = new Map();
-const workers: Map<string, Worker> = new Map();
-const queueEvents: Map<string, QueueEvents> = new Map();
+function buildBaseOptions(): Redis.RedisOptions {
+  return {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    lazyConnect: true,
+    retryStrategy: (times) => Math.min(times * 50, 2000),
+    connectTimeout: REDIS_CONNECTION_TIMEOUT_MS,
+    password: redisPassword,
+  };
+}
+
+function buildUrlClient(redisUrl: string): Redis {
+  return new Redis(redisUrl, {
+    ...buildBaseOptions(),
+  });
+}
+
+function buildLocalClient(): Redis {
+  return new Redis({
+    ...buildBaseOptions(),
+    host: LOCAL_REDIS_HOST,
+    port: LOCAL_REDIS_PORT,
+  });
+}
+
+async function connectWithRetries(factory: () => Redis, label: string): Promise<Redis> {
+  for (let attempt = 1; attempt <= REDIS_CONNECTION_MAX_ATTEMPTS; attempt++) {
+    const client = factory();
+
+    try {
+      await withTimeout(client.connect(), REDIS_CONNECTION_TIMEOUT_MS, `${label} connect`);
+      await withTimeout(client.ping(), REDIS_CONNECTION_TIMEOUT_MS, `${label} ping`);
+      registerRedisHandlers(client, label);
+      return client;
+    } catch (error) {
+      await safeDisconnect(client);
+      const err = error instanceof Error ? error : new Error('Unknown Redis error');
+      logError(`[Redis] ${label} connection attempt ${attempt} failed`, err);
+
+      if (attempt === REDIS_CONNECTION_MAX_ATTEMPTS) {
+        throw err;
+      }
+
+      await delay(REDIS_CONNECTION_RETRY_DELAY_MS);
+    }
+  }
+
+  throw new Error(`[Redis] ${label} connection retries exhausted`);
+}
+
+function registerRedisHandlers(connection: Redis, label: string): void {
+  connection.on('error', (err) => {
+    logError(`Redis connection error (${label})`, err);
+  });
+
+  connection.on('connect', () => {
+    logInfo(`Redis connected (${label})`);
+  });
+}
+
+async function safeDisconnect(connection: Redis): Promise<void> {
+  try {
+    await connection.quit();
+  } catch {
+    connection.disconnect();
+  }
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, reason: string): Promise<T> {
+  let timeoutId: NodeJS.Timeout | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${reason} timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return parsed;
+  }
+  return fallback;
+}
 
 /**
  * Queue oluştur veya mevcut olanı döndür
  */
-export function getQueue(queueName: string): Queue | null {
-  const connection = getRedisConnection();
-  
+export async function getQueue(queueName: string): Promise<Queue | null> {
+  const connection = await getRedisConnection();
+
   if (!connection) {
     logError(`Cannot create queue ${queueName}: Redis connection not available`, new Error('Redis connection is null'));
     return null;
@@ -111,11 +198,11 @@ export function getQueue(queueName: string): Queue | null {
         delay: 2000,
       },
       removeOnComplete: {
-        age: 24 * 3600, // 24 saat
+        age: 24 * 3600,
         count: 1000,
       },
       removeOnFail: {
-        age: 7 * 24 * 3600, // 7 gün
+        age: 7 * 24 * 3600,
       },
     },
   });
@@ -127,12 +214,12 @@ export function getQueue(queueName: string): Queue | null {
 /**
  * Worker oluştur
  */
-export function createWorker<T = any>(
+export async function createWorker<T = any>(
   queueName: string,
   processor: (job: { data: T }) => Promise<any>
-): Worker | null {
-  const connection = getRedisConnection();
-  
+): Promise<Worker | null> {
+  const connection = await getRedisConnection();
+
   if (!connection) {
     logError(`Cannot create worker for queue ${queueName}: Redis connection not available`, new Error('Redis connection is null'));
     return null;
@@ -142,59 +229,64 @@ export function createWorker<T = any>(
     return workers.get(queueName)!;
   }
 
-  const worker = new Worker(
-    queueName,
-    async (job) => {
-      logInfo(`Processing job ${job.id} in queue ${queueName}`, {
-        jobId: job.id,
-        queueName,
-        data: job.data,
-      });
-
-      try {
-        const result = await processor(job);
-        logInfo(`Job ${job.id} completed successfully`, {
-          jobId: job.id,
-          queueName,
-        });
-        return result;
-      } catch (error) {
-        logError(`Job ${job.id} failed`, error, {
+  try {
+    const worker = new Worker(
+      queueName,
+      async (job) => {
+        logInfo(`Processing job ${job.id} in queue ${queueName}`, {
           jobId: job.id,
           queueName,
           data: job.data,
         });
-        throw error;
-      }
-    },
-    {
-      connection,
-      concurrency: 5, // Aynı anda 5 job işle
-      limiter: {
-        max: 10,
-        duration: 1000, // Saniyede maksimum 10 job
+
+        try {
+          const result = await processor(job);
+          logInfo(`Job ${job.id} completed successfully`, {
+            jobId: job.id,
+            queueName,
+          });
+          return result;
+        } catch (error) {
+          logError(`Job ${job.id} failed`, error, {
+            jobId: job.id,
+            queueName,
+            data: job.data,
+          });
+          throw error;
+        }
       },
-    }
-  );
+      {
+        connection,
+        concurrency: 5,
+        limiter: {
+          max: 10,
+          duration: 1000,
+        },
+      }
+    );
 
-  worker.on('completed', (job) => {
-    logInfo(`Job ${job.id} completed`, { jobId: job.id, queueName });
-  });
+    worker.on('completed', (job) => {
+      logInfo(`Job ${job.id} completed`, { jobId: job.id, queueName });
+    });
 
-  worker.on('failed', (job, err) => {
-    logError(`Job ${job?.id} failed`, err, { jobId: job?.id, queueName });
-  });
+    worker.on('failed', (job, err) => {
+      logError(`Job ${job?.id} failed`, err, { jobId: job?.id, queueName });
+    });
 
-  workers.set(queueName, worker);
-  return worker;
+    workers.set(queueName, worker);
+    return worker;
+  } catch (error) {
+    logError(`Worker for queue ${queueName} could not be created`, error);
+    return null;
+  }
 }
 
 /**
  * Queue Events oluştur (monitoring için)
  */
-export function getQueueEvents(queueName: string): QueueEvents | null {
-  const connection = getRedisConnection();
-  
+export async function getQueueEvents(queueName: string): Promise<QueueEvents | null> {
+  const connection = await getRedisConnection();
+
   if (!connection) {
     logError(`Cannot create queue events for ${queueName}: Redis connection not available`, new Error('Redis connection is null'));
     return null;
@@ -222,8 +314,8 @@ export async function addJob<T = any>(
     jobId?: string;
   }
 ): Promise<string | null> {
-  const queue = getQueue(queueName);
-  
+  const queue = await getQueue(queueName);
+
   if (!queue) {
     logError(`Cannot add job to queue ${queueName}: Redis connection not available`, new Error('Queue is null'));
     return null;
@@ -290,8 +382,8 @@ export async function getQueueStats(queueName: string): Promise<{
   failed: number;
   delayed: number;
 } | null> {
-  const queue = getQueue(queueName);
-  
+  const queue = await getQueue(queueName);
+
   if (!queue) {
     logError(`Cannot get stats for queue ${queueName}: Redis connection not available`, new Error('Queue is null'));
     return null;

@@ -83,6 +83,10 @@ model VehicleReport {
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   vehicleGarage     VehicleGarage?     @relation(fields: [vehicleGarageId], references: [id])
 
+  failedReason        String?            @map("failed_reason")
+  creditTransactionId Int?               @map("credit_transaction_id")
+  refundStatus        ReportRefundStatus @default(NONE) @map("refund_status")
+
   @@map("vehicle_reports")
 }
 
@@ -358,6 +362,13 @@ enum ReportStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+enum ReportRefundStatus {
+  NONE
+  REFUNDED
+  FAILED
+  PENDING
 }
 
 enum ImageType {

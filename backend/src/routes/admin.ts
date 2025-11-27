@@ -70,6 +70,7 @@ import {
   getReportMonitoring,
   getReportDetail,
   getReportsBreakdown,
+  refundReportCredits,
 } from '../controllers/adminController';
 
 const router = Router();
@@ -298,6 +299,13 @@ router.get('/reports/:id', asyncHandler(getReportById));
  * - Hatalı raporları düzeltmek için
  */
 router.put('/reports/:id/status', asyncHandler(updateReportStatus));
+
+/**
+ * POST /admin/reports/:id/refund
+ * 
+ * Rapor kredisi iadesi.
+ */
+router.post('/reports/:id/refund', asyncHandler(refundReportCredits));
 
 // ===== SYSTEM MANAGEMENT ROUTES (SİSTEM YÖNETİMİ) =====
 

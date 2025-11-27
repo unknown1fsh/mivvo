@@ -43,6 +43,7 @@ import { Prisma } from '@prisma/client';
 import { getPrismaClient } from '../utils/prisma';
 import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../middleware/errorHandler';
+import { refundCredits, addCredits } from '../utils/creditManager';
 
 const prisma = getPrismaClient();
 
@@ -1808,8 +1809,8 @@ export const getReportDetail = asyncHandler(async (req: AuthRequest, res: Respon
           createdAt: true
         }
       },
-      vehicleImages: true,
-      vehicleAudios: true
+    vehicleImages: true,
+    vehicleAudios: true
     }
   });
   
@@ -1824,6 +1825,81 @@ export const getReportDetail = asyncHandler(async (req: AuthRequest, res: Respon
   res.json({
     success: true,
     data: report
+  });
+});
+
+/**
+ * Rapor İçin Kredi İadesi
+ *
+ * @route   POST /api/admin/reports/:id/refund
+ * @access  Private/Admin
+ *
+ * @param req.params.id - Report ID
+ * @param req.body.reason - İade sebebi
+ */
+export const refundReportCredits = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { reason = 'Admin manuel iade' } = req.body;
+
+  const reportId = parseInt(id, 10);
+  if (isNaN(reportId)) {
+    res.status(400).json({ success: false, message: 'Geçersiz rapor ID' });
+    return;
+  }
+
+  const report = await prisma.vehicleReport.findUnique({
+    where: { id: reportId },
+    include: {
+      user: true
+    }
+  });
+
+  if (!report) {
+    res.status(404).json({ success: false, message: 'Rapor bulunamadı' });
+    return;
+  }
+
+  if (!report.creditTransactionId) {
+    res.status(400).json({ success: false, message: 'Bu rapor için kredi rezervasyonu bulunamadı.' });
+    return;
+  }
+
+  const transaction = await prisma.creditTransaction.findUnique({
+    where: { id: report.creditTransactionId }
+  });
+
+  if (!transaction) {
+    res.status(404).json({ success: false, message: 'İlgili kredi transaction bilgisi bulunamadı.' });
+    return;
+  }
+
+  try {
+    if (transaction.status === 'PENDING') {
+      await refundCredits(transaction.id, reason);
+    } else if (transaction.status === 'COMPLETED') {
+      await addCredits(report.userId, Number(transaction.amount), `Rapor ${report.id} manuel iade`, `report_${report.id}`);
+    }
+  } catch (error) {
+    console.error('Manual refund error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Kredi iadesi sırasında hata oluştu.',
+    });
+    return;
+  }
+
+  const updatedReport = await prisma.vehicleReport.update({
+    where: { id: reportId },
+    data: {
+      refundStatus: 'REFUNDED',
+      failedReason: reason,
+    },
+  });
+
+  res.json({
+    success: true,
+    message: 'Kredi iadesi başarıyla gerçekleştirildi.',
+    data: { report: updatedReport },
   });
 });
 

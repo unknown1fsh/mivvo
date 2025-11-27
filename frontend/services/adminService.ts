@@ -130,6 +130,7 @@ import {
   SuspendUserPayload,
   HardDeleteUserPayload,
   UpdateUserPayload,
+  RefundReportPayload,
 } from '@/types/admin'
 
 // ===== KULLANICI YÖNETİMİ =====
@@ -312,6 +313,20 @@ export const updateReportStatus = async (
 ): Promise<any> => {
   const response = await adminApiClient.put(
     `/api/admin/reports/${reportId}/status`,
+    payload
+  )
+  return response
+}
+
+/**
+ * Rapor kredisi iadesi (manual)
+ */
+export const refundReportCredits = async (
+  reportId: number,
+  payload: RefundReportPayload
+): Promise<any> => {
+  const response = await adminApiClient.post(
+    `/api/admin/reports/${reportId}/refund`,
     payload
   )
   return response
