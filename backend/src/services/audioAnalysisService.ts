@@ -38,6 +38,7 @@ import fs from 'fs/promises'
 import crypto from 'crypto'
 import path from 'path'
 import { AIHelpers } from '../utils/aiRateLimiter'
+import { parseAIResponse, checkMissingFields } from '../utils/jsonParser'
 
 // ===== TİP TANIMLARI =====
 
@@ -227,11 +228,14 @@ export class AudioAnalysisService {
       
       const response = await this.openaiClient!.chat.completions.create({
         model: 'gpt-4o',
-        temperature: 0.1,
+        temperature: 0.3,
+        max_tokens: 2500,
+        top_p: 0.9,
+        response_format: { type: 'json_object' },
         messages: [
           {
             role: 'system',
-            content: 'Sen uzman bir motor mühendisisin. Motor ses transkripsiyonuna ve metadata\'ya bakarak detaylı analiz yaparsın. Çıktı geçerli JSON olmalı, tamamen Türkçe.'
+            content: 'Motor ses analizi uzmanısın. Ses transkripsiyonuna göre analiz yaparsın. SADECE geçerli JSON döndür, tamamen Türkçe.'
           },
           {
             role: 'user',
@@ -246,23 +250,15 @@ export class AudioAnalysisService {
       }
 
       // JSON parse et
-      const parsed = this.extractJsonFromText(text)
+      const parsed = parseAIResponse(text)
       
-      // SIKI VALİDASYON: Zorunlu alanları kontrol et
-      if (!parsed.overallScore && parsed.overallScore !== 0) {
-        throw new Error('AI analiz sonucu eksik. Genel puan bilgisi alınamadı.')
-      }
-
-      if (!parsed.engineHealth) {
-        throw new Error('AI analiz sonucu eksik. Motor sağlığı bilgisi alınamadı.')
-      }
-
-      if (!parsed.rpmAnalysis && !parsed.rpm_analysis) {
-        throw new Error('AI analiz sonucu eksik. RPM analizi bilgisi alınamadı.')
-      }
-
-      if (!parsed.soundQuality && !parsed.sound_quality) {
-        throw new Error('AI analiz sonucu eksik. Ses kalitesi bilgisi alınamadı.')
+      // Field validation
+      const requiredFields = ['overallScore', 'engineHealth', 'rpmAnalysis', 'soundQuality']
+      const missingFields = checkMissingFields(parsed, requiredFields)
+      
+      if (missingFields.length > 0) {
+        console.error('[AI] ❌ Eksik field\'lar:', missingFields)
+        throw new Error(`AI yanıtında eksik field'lar: ${missingFields.join(', ')}`)
       }
 
       console.log('[AI] ✅ GERÇEK AI motor analizi tamamlandı (Whisper + GPT-4)')

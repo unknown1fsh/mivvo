@@ -43,6 +43,7 @@ import crypto from 'crypto'
 import sharp from 'sharp'
 import fs from 'fs/promises'
 import { DamageDetectionService, DamageDetectionResult } from './damageDetectionService'
+import { parseAIResponse, checkMissingFields } from '../utils/jsonParser'
 
 // ===== TİP TANIMLARI =====
 
@@ -148,7 +149,54 @@ export class ValueEstimationService {
     const currentYear = new Date().getFullYear()
     const vehicleAge = currentYear - (vehicleInfo.year || currentYear)
     
-    return `Sen Türkiye'nin en deneyimli otomotiv değerleme uzmanısın. 30+ yıllık deneyimin var. Türkiye ikinci el araç piyasasını mükemmel biliyorsun.
+    return `Araç değer tahmini uzmanısın. ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year})
+
+GÖREV: Türkiye 2025 piyasasına göre değer tahmini yap ve JSON formatını doldur.
+
+KURALLAR:
+1. SADECE JSON döndür
+2. Türkiye fiyatları kullan (TL)
+3. ${hasImages ? 'Görselleri analiz et' : 'Genel piyasa verisi kullan'}
+4. ${damageInfo ? `HASAR VAR: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL düş, Hasar seviyesi: ${damageInfo.genelDeğerlendirme.hasarSeviyesi}` : 'Hasar yok'}
+
+ARAÇ BİLGİSİ:
+- Yaş: ${vehicleAge} yıl
+- Tahmini KM: ${vehicleAge * 15000} km
+
+ÖRNEK FİYATLAR (2025):
+- 2024 Toyota Corolla: 1.100.000-1.250.000 TL
+- 2023 Toyota Corolla: 950.000-1.050.000 TL
+- 2022 Toyota Corolla: 850.000-950.000 TL
+- 2021 Toyota Corolla: 750.000-850.000 TL
+- 2020 Toyota Corolla: 650.000-750.000 TL
+
+{
+  "estimatedValue": 750000,
+  "marketAnalysis": {
+    "priceRange": {"min": 700000, "max": 800000, "average": 750000},
+    "marketTrend": "Yükseliş trendinde",
+    "demandLevel": "Yüksek talep",
+    "supplyLevel": "Orta arz"
+  },
+  "vehicleCondition": {
+    "overallCondition": "İyi",
+    "mileageImpact": 5,
+    "ageImpact": 15,
+    "damageImpact": ${damageInfo ? Math.min(30, damageInfo.hasarAlanları.length * 5) : 0},
+    "maintenanceHistory": "Düzenli"
+  },
+  "finalAssessment": {
+    "recommendedPrice": 750000,
+    "quickSalePrice": 720000,
+    "maxPrice": 800000,
+    "investmentValue": "İyi yatırım",
+    "negotiationMargin": 5
+  },
+  "aiSağlayıcı": "OpenAI",
+  "model": "gpt-4o",
+  "güven": 90,
+  "analizZamanı": "${new Date().toISOString()}"
+}`
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
@@ -584,7 +632,10 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
 
     const response = await this.openaiClient!.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.2,
+      temperature: 0.3,
+      max_tokens: 2500,
+      top_p: 0.9,
+      response_format: { type: 'json_object' },
       messages
     })
 
@@ -593,21 +644,18 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
       throw new Error('OpenAI yanıtı boş geldi')
     }
 
-    const parsed = this.extractJsonPayload(text)
+    // JSON parse ve validation
+    const parsed = parseAIResponse(text)
     
-    // SIKI VALİDASYON: Zorunlu alanları kontrol et
-    if (!parsed.estimatedValue && parsed.estimatedValue !== 0) {
-      throw new Error('AI analiz sonucu eksik. Tahmini değer bilgisi alınamadı.')
+    const requiredFields = ['estimatedValue', 'marketAnalysis', 'vehicleCondition', 'finalAssessment']
+    const missingFields = checkMissingFields(parsed, requiredFields)
+    
+    if (missingFields.length > 0) {
+      console.error('[AI] ❌ Eksik field\'lar:', missingFields)
+      throw new Error(`AI yanıtında eksik field'lar: ${missingFields.join(', ')}`)
     }
 
-    if (!parsed.marketAnalysis && !parsed.market_analysis) {
-      throw new Error('AI analiz sonucu eksik. Piyasa analizi bilgisi alınamadı.')
-    }
-
-    if (!parsed.vehicleCondition && !parsed.vehicle_condition) {
-      throw new Error('AI analiz sonucu eksik. Araç durumu bilgisi alınamadı.')
-    }
-
+    console.log('[AI] ✅ Değer tahmini validation başarılı')
     return parsed as ValueEstimationResult
   }
 

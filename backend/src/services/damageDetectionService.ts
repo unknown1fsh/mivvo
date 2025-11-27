@@ -9,6 +9,7 @@ import OpenAI from 'openai'
 import fs from 'fs/promises'
 import { access } from 'fs/promises'
 import { AIHelpers } from '../utils/aiRateLimiter'
+import { parseAIResponse, checkMissingFields } from '../utils/jsonParser'
 
 const OPENAI_MODEL = 'gpt-4o'
 
@@ -167,249 +168,92 @@ export class DamageDetectionService {
   }
 
   private static buildPrompt(vehicleInfo?: any): string {
-    const vehicleContext = vehicleInfo ? `
-ARAÇ BİLGİLERİ:
-- Marka: ${vehicleInfo.make || 'Bilinmiyor'}
-- Model: ${vehicleInfo.model || 'Bilinmiyor'}
-- Yıl: ${vehicleInfo.year || 'Bilinmiyor'}
-- Plaka: ${vehicleInfo.plate || 'Bilinmiyor'}
+    const vehicleContext = vehicleInfo ? `Araç: ${vehicleInfo.make || ''} ${vehicleInfo.model || ''} (${vehicleInfo.year || ''})` : ''
 
-Bu araç bilgilerini göz önünde bulundurarak hasar analizi yap.` : ''
+    return `Araç hasar analizi uzmanısın. ${vehicleContext}
 
-    return `Sen uzman bir araç expertiz ustasısın. Görseli analiz et ve SADECE GEÇERLİ JSON formatında yanıt ver. Hiçbir ek açıklama, markdown veya metin ekleme.
+GÖREV: Görseli analiz et, hasarları tespit et ve aşağıdaki JSON formatını TAMAMEN doldur.
 
-🎯 KRITIK: Yanıtın SADECE JSON olmalı, başka hiçbir şey olmamalı!
+ÖNEMLİ KURALLAR:
+1. SADECE JSON döndür (açıklama, markdown, ek metin YOK)
+2. TÜM field'ları doldur (boş bırakma)
+3. hasarAlanları en az 1 eleman içermeli
+4. Maliyet tahmini Türkiye 2025 fiyatlarına göre (TL)
+5. Türkçe field isimleri kullan
 
-${vehicleContext}
-
-📋 EXPERTİZ USTASI ANALİZ KURALLARI:
-
-1. **ARAÇ ÖZETİ**: Model, yakıt tipi, darbenin yönü ve şiddeti
-2. **GÖRSEL HASAR ANALİZİ**: Tablo formatında bölge, durum, muhtemel parça/işlem
-3. **TEKNİK DURUM**: Yapısal deformasyon, şasi hasarı, monokok bütünlük analizi
-4. **TÜRKİYE 2025 MALİYET HESAPLAMA**: Detaylı tamir maliyeti tablosu
-5. **SİGORTA & PİYASA DEĞERLENDİRMESİ**: Kasko değeri, pert durumu, piyasa etkisi
-6. **USTA YORUMU**: Profesyonel görüş ve öneriler
-7. **KARAR ÖZETİ**: Hasar tipi, tamir bedeli, pert olasılığı, güvenlik, satış değeri
-
-💰 TÜRKİYE 2025 GÜNCEL MALİYETLER:
-- Arka panel + çamurluk kesme-kaynak: 40.000 TL
-- Tavan değişimi: 35.000 TL
-- Sol arka kapı: 15.000 TL
-- Bagaj kapağı + tampon + iç sac: 30.000 TL
-- Boya (arka + sol taraf): 25.000 TL
-- Batarya muhafaza + bağlantılar: 50.000 TL
-- Şasi düzeltme hattı + ölçü: 20.000 TL
-- İç döşeme + cam + işçilik: 15.000 TL
-- Çamurluk değişimi + boya: 15.000-25.000 TL
-- Far grubu değişimi: 8.000-15.000 TL
-- Tampon değişimi + boya: 10.000-18.000 TL
-- Kaput düzeltme + boya: 12.000-20.000 TL
-- Kapı düzeltme + boya: 8.000-15.000 TL
-- Cam değişimi: 3.000-8.000 TL
-- Ayna değişimi: 2.000-5.000 TL
-- Jant değişimi: 3.000-8.000 TL
-
-🔍 ÇIKTI FORMATI (Sadece geçerli JSON döndür, TAMAMEN TÜRKÇE FIELD İSİMLERİ):
-
-⚠️ ÖNEMLİ: Aşağıdaki tüm field'ları MUTLAKA dahil et:
-- araçÖzeti (zorunlu)
-- görselHasarAnalizi (zorunlu) 
-- teknikDurum (zorunlu)
-- türkiye2025TamirMaliyeti (zorunlu)
-- sigortaPiyasaDeğerlendirmesi (zorunlu)
-- ustaYorumu (zorunlu)
-- kararÖzeti (zorunlu)
-- hasarAlanları (zorunlu - en az 1 hasar alanı)
+HASAR TİPLERİ: çizik, göçük, pas, oksidasyon, çatlak, kırılma, boya_hasarı, yapısal_hasar
+ŞİDDET SEVİYELERİ: minimal, düşük, orta, yüksek, kritik
 
 {
-  "araçÖzeti": {
-    "model": "Toyota Corolla Hybrid (2020-2022)",
-    "yakıt": "Hibrit",
-    "darbeninYönü": "Arka-sol tavan hattına kadar uzanan ezilme",
-    "darbeninŞiddeti": "arka-yan çökme seviyesinde",
-    "genelDurum": "tamir edilir sınıfından çıkmış, yapı deformasyonu yaşamış"
-  },
-  "görselHasarAnalizi": [
-    {
-      "bölge": "Arka Tampon & Bagaj Kapağı",
-      "durum": "Tamamen ezilmiş, iç travers görünüyor",
-      "muhtemelParça": "Yeni tampon, bagaj kapağı, iç sac"
-    },
-    {
-      "bölge": "Arka Sol Çamurluk & Arka Panel",
-      "durum": "Yapısal deformasyon var (şasi uzantısı kırılmış)",
-      "muhtemelParça": "Kesme-kaynakla panel değişimi gerekir"
-    }
-  ],
-  "teknikDurum": {
-    "yapısalDeformasyon": true,
-    "şasiHasarı": true,
-    "monokokBütünlük": "bozulmuş",
-    "açıklama": "Bu araçta arka şasi uzantısı + tavan hattı + batarya bölmesi hasar aldığı için, bu monokok taşıyıcı yapı deformasyonu demektir. Bu tür hasarlarda orijinal fabrika ölçü noktasına dönmek mümkün değildir.",
-    "ekspertizSonucu": "Ağır hasarlı / ekonomik tamir dışı (pert)"
-  },
-  "türkiye2025TamirMaliyeti": {
-    "toplamMaliyet": 300000,
-    "gerçekçiToplam": 350000,
-    "maliyetKırılımı": [
-      {
-        "işlem": "Arka panel + çamurluk kesme-kaynak",
-        "maliyet": 40000
-      },
-      {
-        "işlem": "Tavan değişimi",
-        "maliyet": 35000
-      },
-      {
-        "işlem": "Sol arka kapı",
-        "maliyet": 15000
-      },
-      {
-        "işlem": "Bagaj kapağı + tampon + iç sac",
-        "maliyet": 30000
-      },
-      {
-        "işlem": "Boya (arka + sol taraf)",
-        "maliyet": 25000
-      },
-      {
-        "işlem": "Batarya muhafaza + bağlantılar",
-        "maliyet": 50000
-      },
-      {
-        "işlem": "Şasi düzeltme hattı + ölçü",
-        "maliyet": 20000
-      },
-      {
-        "işlem": "İç döşeme + cam + işçilik",
-        "maliyet": 15000
-      }
-    ]
-  },
-  "sigortaPiyasaDeğerlendirmesi": {
-    "kaskoDeğeri": 1100000,
-    "hasarOranı": 35,
-    "pertSatışDeğeri": 400000,
-    "sigortaKararı": "pert",
-    "onarımSonrasıPiyasaDeğeri": 550000,
-    "değerKaybı": 50
-  },
-  "ustaYorumu": {
-    "genelDeğerlendirme": "Bu araç 'arka taşıyıcı + tavan hattı + batarya bölgesi' hasarı almış. Yani bu artık 'parça değişimiyle düzelir' değil, 'karoser kesilip yeniden puntalanır' düzeyinde bir iş. O da hem maliyetli, hem güvenlik açısından tehlikeli olur.",
-    "sonuç": "Ekonomik tamir dışı (PERT)",
-    "açıklama": "Bu araç, sigorta şirketi tarafından ihaleye çıkarılmış olmalı."
-  },
-  "kararÖzeti": {
-    "hasarTipi": "Arka yapı deformasyonu + tavan çökmesi",
-    "tahminiTamirBedeli": 300000,
-    "pertOlasılığı": 100,
-    "onarımSonrasıGüvenlik": "Düşük (tavan + şasi deformasyonu)",
-    "satışaDeğerMi": "Yalnızca 'parça / donanım söküm' için"
-  },
-  "hasarAlanları": [
-    {
-      "id": "hasar-1",
-      "x": 150,
-      "y": 200,
-      "genişlik": 120,
-      "yükseklik": 80,
-      "tür": "yapısal_deformasyon",
-      "şiddet": "kritik",
-      "güven": 95,
-      "açıklama": "Arka sol tavan hattına kadar uzanan ezilme. Yapısal bütünlük bozulmuş.",
-      "bölge": "arka",
-      "onarımMaliyeti": 35000,
-      "etkilenenParçalar": ["Tavan", "Arka Panel", "Şasi Uzantısı"],
-      "onarımÖnceliği": "acil",
-      "güvenlikEtkisi": "yüksek",
-      "onarımYöntemi": "Tavan komple değişimi + şasi düzeltme",
-      "tahminiOnarımSüresi": 15,
-      "garantiEtkisi": true,
-      "sigortaKapsamı": "pert"
-    }
-  ],
+  "hasarAlanları": [{
+    "id": "hasar-1",
+    "x": 100, "y": 150, "genişlik": 80, "yükseklik": 60,
+    "tür": "çizik",
+    "şiddet": "düşük",
+    "güven": 90,
+    "açıklama": "Ön tampon sağ tarafta 15cm çizik",
+    "bölge": "ön",
+    "onarımMaliyeti": 5000,
+    "etkilenenParçalar": ["Tampon"],
+    "onarımÖnceliği": "orta",
+    "güvenlikEtkisi": "yok",
+    "onarımYöntemi": "Boya rötuşu",
+    "tahminiOnarımSüresi": 2,
+    "garantiEtkisi": false,
+    "sigortaKapsamı": "tam"
+  }],
   "genelDeğerlendirme": {
-    "hasarSeviyesi": "kritik",
-    "toplamOnarımMaliyeti": 300000,
-    "sigortaDurumu": "pert",
-    "piyasaDeğeriEtkisi": 50,
-    "detaylıAnaliz": "Araçta arka-sol tarafta kritik seviyede yapısal deformasyon tespit edildi. Tavan çökmesi, şasi uzantısı kırılması ve batarya bölgesi hasarı mevcut. Bu tür hasarlar ekonomik tamir sınırlarını aşar.",
-    "araçDurumu": "pert",
-    "satışDeğeri": 40,
-    "değerKaybı": 60,
-    "güçlüYönler": ["Motor bölgesi hasarsız", "Ön taraf temiz"],
-    "zayıfYönler": ["Yapısal deformasyon", "Tavan çökmesi", "Şasi hasarı"],
-    "öneriler": ["Sigorta şirketini bilgilendir", "Pert kararı al", "İhale sürecini başlat"],
-    "güvenlikEndişeleri": ["Yapısal bütünlük bozulmuş", "Güvenlik sistemleri risk altında"]
+    "hasarSeviyesi": "iyi",
+    "toplamOnarımMaliyeti": 5000,
+    "sigortaDurumu": "onarılabilir",
+    "piyasaDeğeriEtkisi": 5,
+    "detaylıAnaliz": "Araçta hafif hasar tespit edildi",
+    "araçDurumu": "hafif_hasar",
+    "satışDeğeri": 95,
+    "değerKaybı": 5,
+    "güçlüYönler": ["Genel durum iyi"],
+    "zayıfYönler": ["Tampon çizik"],
+    "öneriler": ["Boya tamir edilebilir"],
+    "güvenlikEndişeleri": []
   },
   "teknikAnaliz": {
-    "yapısalBütünlük": "kritik_hasar",
-    "güvenlikSistemleri": "risk_altında",
-    "mekanikSistemler": "inceleme_gerekli",
-    "elektrikSistemleri": "risk_altında",
-    "gövdeHizalaması": "kritik_sapma",
-    "şasiHasarı": true,
+    "yapısalBütünlük": "sağlam",
+    "güvenlikSistemleri": "fonksiyonel",
+    "mekanikSistemler": "çalışır",
+    "elektrikSistemleri": "fonksiyonel",
+    "gövdeHizalaması": "mükemmel",
+    "şasiHasarı": false,
     "havaYastığıAçılması": false,
     "emniyetKemeri": "fonksiyonel",
-    "notlar": "Yapısal deformasyon nedeniyle güvenlik sistemleri etkilenmiş olabilir."
+    "notlar": "Genel durum iyi"
   },
   "güvenlikDeğerlendirmesi": {
-    "yolDurumu": "tehlikeli",
-    "kritikSorunlar": ["Yapısal deformasyon", "Tavan çökmesi", "Şasi hasarı"],
-    "güvenlikÖnerileri": ["Aracı kullanmayı bırak", "Sigorta şirketini bilgilendir", "Pert sürecini başlat"],
-    "incelemeGerekli": true,
-    "acilAksiyonlar": ["Sigorta bildirimi", "Pert kararı", "İhale süreci"],
-    "uzunVadeliEndişeler": ["Yapısal bütünlük kaybı", "Güvenlik riski", "Değer kaybı"]
+    "yolDurumu": "güvenli",
+    "kritikSorunlar": [],
+    "güvenlikÖnerileri": ["Düzenli bakım"],
+    "incelemeGerekli": false,
+    "acilAksiyonlar": [],
+    "uzunVadeliEndişeler": []
   },
   "onarımTahmini": {
-    "toplamMaliyet": 300000,
-    "işçilikMaliyeti": 120000,
-    "parçaMaliyeti": 150000,
-    "boyaMaliyeti": 25000,
-    "ekMaliyetler": 5000,
-    "maliyetKırılımı": [
-      {
-        "parça": "Tavan Değişimi",
-        "açıklama": "Komple tavan değişimi + şasi düzeltme",
-        "maliyet": 35000
-      },
-      {
-        "parça": "Arka Panel",
-        "açıklama": "Kesme-kaynakla panel değişimi",
-        "maliyet": 40000
-      }
-    ],
-    "zamanÇizelgesi": [
-      {
-        "faz": "Hazırlık",
-        "süre": 3,
-        "açıklama": "Sökme ve hazırlık işlemleri"
-      },
-      {
-        "faz": "Onarım",
-        "süre": 15,
-        "açıklama": "Ana onarım işlemleri"
-      }
-    ],
-    "garantiKapsamı": "Pert durumunda garanti geçersiz",
-    "önerilenServis": "Sigorta şirketi yetkili servisi",
-    "acilOnarımGerekli": true
+    "toplamMaliyet": 5000,
+    "işçilikMaliyeti": 2000,
+    "parçaMaliyeti": 0,
+    "boyaMaliyeti": 3000,
+    "ekMaliyetler": 0,
+    "maliyetKırılımı": [{"parça": "Tampon Boyası", "açıklama": "Boya rötuşu", "maliyet": 3000}],
+    "zamanÇizelgesi": [{"faz": "Boya", "süre": 2, "açıklama": "Tampon boyama"}],
+    "garantiKapsamı": "Var",
+    "önerilenServis": "Yetkili servis",
+    "acilOnarımGerekli": false
   },
   "aiSağlayıcı": "OpenAI",
-  "model": "gpt-4-vision-preview",
-  "güven": 95,
-  "analizZamanı": "${new Date().toISOString()}"
+  "model": "gpt-4o",
+  "güven": 90,
+  "analizZamanı": "2025-11-27T10:00:00Z"
 }
 
-⚠️ KRİTİK KURALLAR:
-- RAPOR TAMAMEN TÜRKÇE - HİÇBİR İNGİLİZCE YOK!
-- SADECE HASAR TESPİTİ - Boya kalitesi veya renk analizi yapma!
-- Fiyatlar GERÇEK Türkiye 2025 piyasa değerleri olmalı
-- Detaylı Türkçe açıklamalar yap (minimum 2-3 cümle)
-- Tüm sayısal değerleri NUMBER olarak ver (string DEĞİL!)
-- Sadece geçerli JSON döndür
-- Uzman seviyesinde analiz yap - ChatGPT gibi detaylı ve profesyonel`
+TÜM field'ları doldur. Türkiye fiyatları kullan (çizik: 3-8bin, göçük: 8-20bin, panel: 15-40bin TL).`
   }
 
   private static async convertImageToBase64(imagePath: string): Promise<string> {
@@ -490,12 +334,14 @@ ${vehicleContext}
     const response = await AIHelpers.callVision(() => 
       this.openaiClient!.chat.completions.create({
         model: OPENAI_MODEL,
-        temperature: 0.1,
+        temperature: 0.3, // Tutarlı JSON için optimize edildi
+        max_tokens: 2500, // Yeterli yanıt uzunluğu
+        top_p: 0.9, // Çeşitlilik azalt, tutarlılık arttır
         response_format: { type: 'json_object' }, // ZORUNLU: GPT-4o için JSON format
         messages: [
           {
             role: 'system',
-            content: 'Sen deneyimli bir otomotiv eksperisin. Yüksek kaliteli görüntüleri analiz ederek detaylı hasar tespiti yaparsın. Çıktını SADECE geçerli JSON olarak üret, başka hiçbir metin ekleme.'
+            content: 'Araç hasar analizi uzmanısın. Görselleri analiz edip detaylı JSON rapor üretirsin. SADECE geçerli JSON döndür.'
           },
           {
             role: 'user',
@@ -522,17 +368,35 @@ ${vehicleContext}
 
     console.log('[AI] OpenAI raw response (first 500 chars):', text.substring(0, 500))
 
+    // JSON parse ve validation
     let parsed: any
     try {
-      parsed = this.extractJsonPayload(text)
+      parsed = parseAIResponse(text)
       console.log('[AI] ✅ JSON parse başarılı')
+      
+      // Zorunlu field'ları kontrol et
+      const requiredFields = ['hasarAlanları', 'genelDeğerlendirme', 'teknikAnaliz', 'güvenlikDeğerlendirmesi', 'onarımTahmini']
+      const missingFields = checkMissingFields(parsed, requiredFields)
+      
+      if (missingFields.length > 0) {
+        console.error('[AI] ❌ Eksik field\'lar:', missingFields)
+        throw new Error(`AI yanıtında eksik field'lar: ${missingFields.join(', ')}`)
+      }
+      
+      // hasarAlanları array kontrolü
+      if (!Array.isArray(parsed.hasarAlanları) || parsed.hasarAlanları.length === 0) {
+        console.error('[AI] ❌ hasarAlanları array değil veya boş')
+        throw new Error('AI yanıtında hasarAlanları eksik veya geçersiz')
+      }
+      
+      console.log('[AI] ✅ Validation başarılı - Tüm field\'lar mevcut')
     } catch (parseError) {
-      console.error('[AI] ❌ JSON parse hatası:', parseError)
+      console.error('[AI] ❌ JSON parse/validation hatası:', parseError)
       console.error('[AI] Full response:', text)
       throw parseError
     }
     
-    // AI'dan gelen veriyi doğrudan döndür (fallback yok)
+    // AI'dan gelen veriyi doğrudan döndür
     return {
       ...parsed,
       aiSağlayıcı: 'OpenAI',

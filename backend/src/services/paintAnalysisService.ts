@@ -36,6 +36,7 @@ import fs from 'fs/promises'
 import crypto from 'crypto'
 import { AIHelpers } from '../utils/aiRateLimiter'
 import { logAiAnalysis, logError, logInfo, logDebug, createTimer } from '../utils/logger'
+import { parseAIResponse, checkMissingFields } from '../utils/jsonParser'
 
 // ===== TİP TANIMLARI =====
 
@@ -410,63 +411,65 @@ export class PaintAnalysisService {
    * @private
    */
   private static buildPrompt(vehicleInfo?: any): string {
-    const vehicleContext = vehicleInfo 
-      ? `Araç Bilgileri: ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}) - Plaka: ${vehicleInfo.plate}`
-      : 'Araç bilgileri belirtilmemiş'
+    const vehicleContext = vehicleInfo ? `Araç: ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year})` : ''
 
-    return `Sen uzman bir araç boya analiz ustasısın. Görseli analiz et ve MUTLAKA GEÇERLİ JSON formatında yanıt ver. Hiçbir ek açıklama, markdown veya metin ekleme.
+    return `Boya analizi uzmanısın. ${vehicleContext}
 
-${vehicleContext}
+GÖREV: Görseli analiz et, boya durumunu tespit et ve JSON formatını doldur.
 
-Görseli analiz et ve aşağıdaki JSON formatında yanıt ver:
+KURALLAR:
+1. SADECE JSON döndür (açıklama yok)
+2. TÜM field'ları doldur
+3. Türkiye fiyatları kullan (boya: 3-15bin TL)
+4. Türkçe field isimleri
 
 {
-  "araçÖzeti": {
-    "marka": "string",
-    "model": "string", 
-    "yıl": "number",
-    "plaka": "string"
+  "boyaKalitesi": {
+    "genelPuan": 85,
+    "parlaklık": 90,
+    "düzgünlük": 80,
+    "renkUyumu": 85,
+    "kalite": "iyi"
+  },
+  "renkAnalizi": {
+    "anaRenk": "Beyaz",
+    "renkKodu": "Arktik Beyaz",
+    "fabrikaRengi": true,
+    "solmaVar": false,
+    "renkFarkıVar": false
+  },
+  "yüzeyAnalizi": {
+    "çizikSayısı": 2,
+    "göçükVar": false,
+    "pasVar": false,
+    "oksidasyonVar": false,
+    "portakalKabuğu": false,
+    "genelDurum": "iyi"
   },
   "boyaDurumu": {
-    "genelDurum": "mükemmel|iyi|orta|kötü",
-    "hasarVar": true|false,
-    "çizikVar": true|false,
-    "çukurVar": true|false,
-    "pasVar": true|false,
-    "boyaKalınlığı": "normal|kalın|ince"
+    "orijinalMi": true,
+    "boyalıPaneller": [],
+    "boyaKalınlığı": "normal",
+    "genelDurum": "iyi"
   },
-  "boyaKalitesi": {
-    "genelSkor": 0-100,
-    "parlaklık": 0-100,
-    "düzgünlük": 0-100,
-    "renkEşleşmesi": 0-100,
-    "kalite": "mükemmel|iyi|orta|kötü"
+  "genelDeğerlendirme": {
+    "durum": "iyi",
+    "puan": 85,
+    "öneriler": ["Rutin bakım"],
+    "güçlüYönler": ["Orijinal boya"],
+    "zayıfYönler": ["Hafif çizikler"]
   },
-  "hasarAlanları": [
-    {
-      "bölge": "ön|arka|sol|sağ|tavan|kaput|bagaj",
-      "tür": "çizik|çukur|pas|boyaKaybı|çatlak",
-      "şiddet": "hafif|orta|ağır",
-      "boyut": "küçük|orta|büyük",
-      "açıklama": "string",
-      "onarımMaliyeti": 0-10000,
-      "etkilenenParçalar": ["string"],
-      "güven": 0-100
-    }
-  ],
-  "genelDeğerlendirme": "string",
-  "teknikAnaliz": "string",
-  "güvenlikDeğerlendirmesi": "string",
   "onarımTahmini": {
-    "toplamMaliyet": 0-10000,
-    "süre": "string",
-    "öncelik": "düşük|orta|yüksek"
+    "toplamMaliyet": 5000,
+    "maliyetKırılımı": [{"işlem": "Rötuş", "maliyet": 5000}],
+    "süre": 2,
+    "acil": false
   },
-  "güven": 0-100,
-  "analizZamanı": "ISO string"
-}
-
-KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde araç yoksa bile JSON formatında yanıt ver!`
+  "aiSağlayıcı": "OpenAI",
+  "model": "gpt-4o",
+  "güven": 90,
+  "analizZamanı": "2025-11-27T10:00:00Z"
+}`
   }
 
   /**
@@ -566,17 +569,20 @@ KRİTİK: Sadece JSON yanıt ver, başka hiçbir metin ekleme! Eğer görselde a
         () => AIHelpers.callVision(() =>
           this.openaiClient!.chat.completions.create({
             model: OPENAI_MODEL,
-            temperature: 0.1, // Düşük temperature = tutarlı sonuçlar
+            temperature: 0.3,
+            max_tokens: 2500,
+            top_p: 0.9,
+            response_format: { type: 'json_object' },
             messages: [
               {
                 role: 'system',
-                content: 'Sen deneyimli bir otomotiv boya uzmanısın. Yüksek kaliteli görüntüleri analiz ederek detaylı boya analizi yaparsın. Çıktıyı geçerli JSON olarak üret. Tüm metinler Türkçe olmalı.'
+                content: 'Boya analizi uzmanısın. Görselleri analiz edip JSON rapor üretirsin. SADECE geçerli JSON döndür.'
               },
               {
                 role: 'user',
                 content: [
                   { type: 'text', text: prompt },
-                  { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+                  { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: 'high' } }
                 ]
               }
             ]

@@ -42,6 +42,7 @@ import { AIService, PaintAnalysisResult } from './aiService'
 import { AudioAnalysisService, AudioAnalysisResult } from './audioAnalysisService'
 import { ValueEstimationService, ValueEstimationResult } from './valueEstimationService'
 import { AIHelpers } from '../utils/aiRateLimiter'
+import { parseAIResponse, checkMissingFields } from '../utils/jsonParser'
 
 // ===== TİP TANIMLARI =====
 
@@ -226,22 +227,63 @@ export class ComprehensiveExpertiseService {
     const currentYear = new Date().getFullYear()
     const vehicleAge = vehicleInfo?.year ? currentYear - vehicleInfo.year : 0
 
-    const vehicleContext = vehicleInfo ? `
-═══════════════════════════════════════════════════════════════════
-                    🚗 ARAÇ KİMLİK BİLGİLERİ
-═══════════════════════════════════════════════════════════════════
+    return `Kapsamlı expertiz uzmanısın. ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year}, ${vehicleAge} yıl)
 
-TEMEL BİLGİLER:
-├─ Marka/Model    : ${vehicleInfo.make || 'Belirtilmemiş'} ${vehicleInfo.model || 'Belirtilmemiş'}
-├─ Model Yılı     : ${vehicleInfo.year || currentYear}
-├─ Araç Yaşı      : ${vehicleAge} yıl
-├─ Plaka          : ${vehicleInfo.plate || 'Belirtilmemiş'}
-└─ Analiz Tarihi  : ${new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })}
+GÖREV: Tüm alt analizleri birleştirip kapsamlı expertiz raporu oluştur. SADECE JSON döndür.
 
-Bu araç için KAPSAMLI, PROFESYONEL ve DETAYLI bir tam expertiz raporu hazırlayacaksın.
-` : ''
+ALT ANALİZ SONUÇLARI:
+${analyses.damage ? `
+HASAR ANALİZİ:
+- ${analyses.damage.hasarAlanları.length} adet hasar
+- Toplam maliyet: ${analyses.damage.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL
+- Seviye: ${analyses.damage.genelDeğerlendirme.hasarSeviyesi}
+- Durum: ${analyses.damage.genelDeğerlendirme.araçDurumu}
+` : 'Hasar analizi yok'}
+${analyses.paint ? `
+BOYA ANALİZİ:
+- Genel puan: ${analyses.paint.boyaKalitesi?.genelPuan || 0}/100
+- Kalite: ${analyses.paint.boyaKalitesi?.kalite || 'Bilinmiyor'}
+` : 'Boya analizi yok'}
+${analyses.audio ? `
+MOTOR SES ANALİZİ:
+- Motor sağlığı: ${analyses.audio.engineHealth}
+- Puan: ${analyses.audio.overallScore}/100
+- Tespit edilen sorun: ${analyses.audio.detectedIssues?.length || 0} adet
+` : 'Motor analizi yok'}
+${analyses.value ? `
+DEĞER TAHMİNİ:
+- Tahmini değer: ${analyses.value.estimatedValue?.toLocaleString('tr-TR') || 0} TL
+- Piyasa durumu: ${analyses.value.marketAnalysis?.marketTrend || 'Bilinmiyor'}
+` : 'Değer tahmini yok'}
 
-    return `Sen dünyaca ünlü bir otomotiv eksperisin. 30+ yıllık deneyimin var ve en karmaşık araç analizlerini yapabiliyorsun. YÜKSEK KALİTELİ görüntüler ve ses kayıtlarıyla KAPSAMLI tam ekspertiz raporu hazırlayacaksın.
+{
+  "overallScore": 85,
+  "riskLevel": "düşük",
+  "vehicleCondition": {
+    "general": "iyi",
+    "damageScore": 90,
+    "paintScore": 85,
+    "mechanicalScore": 80,
+    "valueScore": 85
+  },
+  "summary": "Genel durum iyi. ${analyses.damage && analyses.damage.hasarAlanları.length > 0 ? `${analyses.damage.hasarAlanları.length} adet hasar mevcut.` : 'Hasarsız.'} Yatırım değeri var.",
+  "recommendations": ["Rutin bakım yaptır", ${analyses.damage && analyses.damage.genelDeğerlendirme.toplamOnarımMaliyeti > 0 ? '"Hasar onarımı gerekli",' : ''} "Piyasa fiyatını takip et"],
+  "investmentDecision": {
+    "worthBuying": ${!analyses.damage || analyses.damage.genelDeğerlendirme.hasarSeviyesi === 'iyi' || analyses.damage.genelDeğerlendirme.hasarSeviyesi === 'orta'},
+    "reason": "${analyses.damage && analyses.damage.hasarAlanları.length > 5 ? 'Çok hasarlı, dikkatli olun' : 'İyi durum, uygun fiyat'}",
+    "negotiationAdvice": "${analyses.damage && analyses.damage.hasarAlanları.length > 0 ? '10-15%' : '5-8%'} pazarlık yapılabilir",
+    "estimatedROI": ${analyses.value ? 10 : 5}
+  },
+  "detailedAnalysis": {
+    "strengths": [${analyses.damage ? '"Motor hasarsız"' : ''}, "Genel durum iyi"],
+    "weaknesses": [${analyses.damage && analyses.damage.hasarAlanları.length > 0 ? '"Hasarlar mevcut"' : ''}],
+    "risks": [${analyses.damage && analyses.damage.genelDeğerlendirme.hasarSeviyesi === 'kritik' ? '"Yüksek hasar riski"' : '"Düşük risk"'}]
+  },
+  "aiSağlayıcı": "OpenAI",
+  "model": "gpt-4o",
+  "güven": 90,
+  "analizZamanı": "${new Date().toISOString()}"
+}`
 
 ${vehicleContext}
 
@@ -1032,12 +1074,14 @@ Lütfen tüm sayısal değerleri sayı olarak döndür.`
       const response = await AIHelpers.callVision(() =>
         this.openaiClient!.chat.completions.create({
           model: OPENAI_MODEL,
-          temperature: 0.1,
+          temperature: 0.3,
+          max_tokens: 2500,
+          top_p: 0.9,
           response_format: { type: "json_object" },
           messages: [
             {
               role: 'system',
-              content: 'Sen deneyimli bir otomotiv eksperisin. Yüksek kaliteli verilerle detaylı tam ekspertiz raporu hazırlarsın. Çıktıyı SADECE geçerli JSON formatında üret. Markdown code block kullanma. Tüm metinler Türkçe olmalı.'
+              content: 'Kapsamlı expertiz uzmanısın. Tüm analizleri birleştirip JSON rapor üretirsin. SADECE geçerli JSON döndür, Türkçe.'
             },
             {
               role: 'user',
@@ -1067,10 +1111,18 @@ Lütfen tüm sayısal değerleri sayı olarak döndür.`
       console.log('📄 İlk 200 karakter:', text.substring(0, 200))
       console.log('[AI] ✅ Görsel analizi tamamlandı')
 
-      // Error handling kaldırıldı - AI her durumda tam rapor yazmalı
-
-      const comprehensiveData = this.extractJsonPayload(text)
-      console.log('✅ JSON başarıyla parse edildi')
+      // JSON parse ve validation
+      const comprehensiveData = parseAIResponse(text)
+      
+      const requiredFields = ['overallScore', 'vehicleCondition', 'summary']
+      const missingFields = checkMissingFields(comprehensiveData, requiredFields)
+      
+      if (missingFields.length > 0) {
+        console.error('[AI] ❌ Eksik field\'lar:', missingFields)
+        throw new Error(`AI yanıtında eksik field'lar: ${missingFields.join(', ')}`)
+      }
+      
+      console.log('✅ JSON başarıyla parse edildi ve validation tamamlandı')
 
       // RELAXED VALIDATION & DEFAULT VALUES
       // AI yanıtı bazen eksik olabilir, bu durumda işlemi iptal etmek yerine
