@@ -21,7 +21,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { DamageAnalysisResult } from '@/types/damageAnalysis'
 import { DamageImageAnnotation } from './DamageImageAnnotation'
-import { DamagePieChart, DamageCostChart, DamageSeverityGauge } from '@/components/ui/DamageChart'
 
 interface DamageReportProps {
   data: DamageAnalysisResult
