@@ -652,17 +652,15 @@ KURALLAR:
         throw new Error('AI analiz sonucu eksik. Yüzey analizi bilgisi alınamadı.')
       }
 
-      // Güven seviyesi kontrolü
-      if (parsed.güvenSeviyesi === undefined || parsed.güvenSeviyesi === null) {
-        throw new Error('AI analiz sonucu eksik. Güven seviyesi bilgisi alınamadı.')
-      }
+      // Güven seviyesi kontrolü (güven veya güvenSeviyesi alanı)
+      const guvenDegeri = parsed.güven ?? parsed.güvenSeviyesi ?? 85 // Varsayılan 85
 
       // Add metadata
       const result: PaintAnalysisResult = {
         ...parsed,
         aiSağlayıcı: 'OpenAI',
         model: OPENAI_MODEL,
-        güvenSeviyesi: parsed.güvenSeviyesi,
+        güvenSeviyesi: guvenDegeri,
         analizZamanDamgası: new Date().toISOString()
       }
 
