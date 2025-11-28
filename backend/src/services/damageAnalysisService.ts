@@ -687,59 +687,43 @@ export class DamageAnalysisService {
         }
       }
       
-      // Retry başarılı olduysa devam et
-      try {
-        // Debug: AI'dan gelen ham veriyi logla
-        console.log(`[AI] Resim ${i + 1} AI sonucu:`, {
-          hasDamageResult: !!damageResult,
-          damageResultKeys: damageResult ? Object.keys(damageResult) : [],
-          hasHasarAlanları: !!(damageResult?.hasarAlanları),
-          hasarAlanlarıLength: damageResult?.hasarAlanları?.length || 0,
-          hasGenelDeğerlendirme: !!(damageResult?.genelDeğerlendirme),
-          genelDeğerlendirmeKeys: damageResult?.genelDeğerlendirme ? Object.keys(damageResult.genelDeğerlendirme) : []
-        });
-        
-        // AI'dan gelen damageResult direkt DamageDetectionResult formatında
-        // Root seviyesinde: genelDeğerlendirme, teknikAnaliz, güvenlikDeğerlendirmesi, onarımTahmini, hasarAlanları vb.
-        // damageResult'u direkt kullan, hasar alanlarına ek field ekleme
-        
-        const damageAreas = damageResult?.hasarAlanları || [];
-        
-        // analysisResults array'ine damageResult'u direkt ekle
-        // combineAIResults fonksiyonu bu veriyi birleştirecek
-        analysisResults.push({
-          imageId: image.id,
-          imagePath: image.imageUrl,
-          damageResult: damageResult, // AI'dan gelen tam sonuç
-          damageAreas: damageAreas, // Sadece hasar alanları (fallback için)
-          totalDamageScore: this.calculateDamageScore(damageAreas)
-        });
-
-        console.log(`✅ Resim ${i + 1} analizi tamamlandı: ${damageAreas.length} hasar`);
-      } catch (error) {
-        logError(`Resim ${image.id} analiz hatası`, error, {
-          imageId: image.id,
-          imagePath: image.imagePath,
-          vehicleInfo,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          errorStack: error instanceof Error ? error.stack : undefined
-        });
-        console.error(`❌ Resim ${image.id} analiz hatası:`, error);
-        console.error('Error details:', {
-          name: error instanceof Error ? error.name : 'Unknown',
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined
-        });
-        // AI'dan veri gelmediğinde boş sonuç döndür, fallback veri üretme
-        analysisResults.push({
-          imageId: image.id,
-          imagePath: image.imageUrl,
-          damageAreas: [],
-          totalDamageScore: 0,
-          aiError: true,
-          errorMessage: 'AI servisi geçici olarak kullanılamıyor'
-        });
+      // AI analiz sonucunu işle - FALLBACK YOK, SADECE GERÇEK AI VERİSİ
+      // Debug: AI'dan gelen ham veriyi logla
+      console.log(`[AI] Resim ${i + 1} AI sonucu:`, {
+        hasDamageResult: !!damageResult,
+        damageResultKeys: damageResult ? Object.keys(damageResult) : [],
+        hasHasarAlanları: !!(damageResult?.hasarAlanları),
+        hasarAlanlarıLength: damageResult?.hasarAlanları?.length || 0,
+        hasGenelDeğerlendirme: !!(damageResult?.genelDeğerlendirme),
+        genelDeğerlendirmeKeys: damageResult?.genelDeğerlendirme ? Object.keys(damageResult.genelDeğerlendirme) : []
+      });
+      
+      // AI'dan gelen veri kontrolü - ZORUNLU ALAN KONTROLÜ
+      if (!damageResult) {
+        throw new Error(`Resim ${i + 1} için AI analiz sonucu alınamadı. AI servisi yanıt vermedi.`);
       }
+      
+      if (!damageResult.genelDeğerlendirme) {
+        throw new Error(`Resim ${i + 1} için AI analiz sonucu eksik. Genel değerlendirme bilgisi alınamadı.`);
+      }
+      
+      if (!Array.isArray(damageResult.hasarAlanları)) {
+        throw new Error(`Resim ${i + 1} için AI analiz sonucu eksik. Hasar alanları bilgisi alınamadı.`);
+      }
+      
+      const damageAreas = damageResult.hasarAlanları;
+      
+      // analysisResults array'ine damageResult'u direkt ekle
+      // combineAIResults fonksiyonu bu veriyi birleştirecek
+      analysisResults.push({
+        imageId: image.id,
+        imagePath: image.imageUrl,
+        damageResult: damageResult, // AI'dan gelen tam sonuç
+        damageAreas: damageAreas, // Sadece hasar alanları
+        totalDamageScore: this.calculateDamageScore(damageAreas)
+      });
+
+      console.log(`✅ Resim ${i + 1} analizi tamamlandı: ${damageAreas.length} hasar`);
     }
 
     return analysisResults;

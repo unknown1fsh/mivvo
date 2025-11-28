@@ -59,19 +59,20 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
             </div>
             <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
               <p className="text-green-800 font-medium mb-2">
-                ✅ Krediniz İade Edilmiş Olmalı
+                ✅ Krediniz Otomatik Olarak İade Edildi
               </p>
               <p className="text-green-700 text-sm">
-                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir.
+                AI analizi başarısız olduğu için kullandığınız kredi hesabınıza otomatik olarak iade edilmiştir. 
+                Bakiyenizi kontrol edebilirsiniz.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => window.location.reload()}
+              <a
+                href="/vehicle/new-report"
                 className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
-                Sayfayı Yenile
-              </button>
+                Yeni Analiz Başlat
+              </a>
               <a
                 href="/dashboard"
                 className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
@@ -102,24 +103,26 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
                 ⚠️ Genel Değerlendirme Bilgisi Alınamadı
               </p>
               <p className="text-red-700 text-sm">
-                AI analiz sonucu eksik. Genel değerlendirme bilgisi alınamadı. Lütfen tekrar deneyin.
+                AI servisinden genel değerlendirme bilgisi alınamadı. Bu durum geçici bir sorun olabilir.
+                Lütfen birkaç dakika sonra tekrar deneyin.
               </p>
             </div>
             <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
               <p className="text-green-800 font-medium mb-2">
-                ✅ Krediniz İade Edilmiş Olmalı
+                ✅ Krediniz Otomatik Olarak İade Edildi
               </p>
               <p className="text-green-700 text-sm">
-                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir.
+                AI analizi başarısız olduğu için kullandığınız kredi hesabınıza otomatik olarak iade edilmiştir. 
+                Bakiyenizi kontrol edebilirsiniz.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => window.location.reload()}
+              <a
+                href="/vehicle/new-report"
                 className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
-                Sayfayı Yenile
-              </button>
+                Yeni Analiz Başlat
+              </a>
               <a
                 href="/dashboard"
                 className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
@@ -149,24 +152,26 @@ export function DamageReport({ data, vehicleInfo, vehicleImages = [], showAction
                 ⚠️ Hasar Alanları Bilgisi Alınamadı
               </p>
               <p className="text-red-700 text-sm">
-                AI analiz sonucu eksik. Hasar alanları bilgisi alınamadı. Lütfen tekrar deneyin.
+                AI servisinden hasar alanları bilgisi alınamadı. Bu durum geçici bir sorun olabilir.
+                Lütfen birkaç dakika sonra tekrar deneyin.
               </p>
             </div>
             <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
               <p className="text-green-800 font-medium mb-2">
-                ✅ Krediniz İade Edilmiş Olmalı
+                ✅ Krediniz Otomatik Olarak İade Edildi
               </p>
               <p className="text-green-700 text-sm">
-                Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir.
+                AI analizi başarısız olduğu için kullandığınız kredi hesabınıza otomatik olarak iade edilmiştir. 
+                Bakiyenizi kontrol edebilirsiniz.
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => window.location.reload()}
+              <a
+                href="/vehicle/new-report"
                 className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
               >
-                Sayfayı Yenile
-              </button>
+                Yeni Analiz Başlat
+              </a>
               <a
                 href="/dashboard"
                 className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"

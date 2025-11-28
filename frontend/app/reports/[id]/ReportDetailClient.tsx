@@ -53,118 +53,126 @@ function getAnalysisTypeFromReportType(reportType: string): 'damage' | 'paint' |
 // For now, I'm including them to ensure the file works standalone.
 
 function normalizeDamageReportData(apiData: any) {
-  const reportData = apiData.report || apiData
-  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  // Backend ResponseHelper formatını handle et: { success: true, data: actualReport }
+  const actualApiData = apiData?.data || apiData
+  const reportData = actualApiData.report || actualApiData
+  const aiAnalysisData = reportData?.aiAnalysisData || actualApiData?.aiAnalysisData || {}
   return {
-    id: reportData?.id || apiData?.id,
+    id: reportData?.id || actualApiData?.id,
     vehicleInfo: {
-      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
-      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
-      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
-      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
-      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
-      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
-      mileage: reportData?.mileage || apiData?.mileage || 0,
-      fuelType: reportData?.fuelType || apiData?.fuelType || '',
-      transmission: reportData?.transmission || apiData?.transmission || '',
-      engine: reportData?.engine || apiData?.engine || '',
-      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+      plate: reportData?.vehiclePlate || actualApiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || actualApiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || actualApiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || actualApiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || actualApiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || actualApiData?.vehicleColor || '',
+      mileage: reportData?.mileage || actualApiData?.mileage || 0,
+      fuelType: reportData?.fuelType || actualApiData?.fuelType || '',
+      transmission: reportData?.transmission || actualApiData?.transmission || '',
+      engine: reportData?.engine || actualApiData?.engine || '',
+      bodyType: reportData?.bodyType || actualApiData?.bodyType || '',
     },
     reportType: reportData?.reportType || 'damage',
-    status: reportData?.status || apiData?.status || 'COMPLETED',
-    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
-    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    status: reportData?.status || actualApiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || actualApiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || actualApiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || aiAnalysisData?.genelDeğerlendirme?.satışDeğeri || 0,
-    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
+    expertNotes: reportData?.expertNotes || actualApiData?.expertNotes || null,
     aiAnalysisData: aiAnalysisData,
-    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+    vehicleImages: reportData?.vehicleImages || actualApiData?.vehicleImages || []
   }
 }
 
 function normalizePaintReportData(apiData: any) {
-  const reportData = apiData.report || apiData
-  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  // Backend ResponseHelper formatını handle et: { success: true, data: actualReport }
+  const actualApiData = apiData?.data || apiData
+  const reportData = actualApiData.report || actualApiData
+  const aiAnalysisData = reportData?.aiAnalysisData || actualApiData?.aiAnalysisData || {}
   return {
-    id: reportData?.id || apiData?.id,
+    id: reportData?.id || actualApiData?.id,
     vehicleInfo: {
-      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
-      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
-      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
-      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
-      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
-      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
-      mileage: reportData?.mileage || apiData?.mileage || 0,
-      fuelType: reportData?.fuelType || apiData?.fuelType || '',
-      transmission: reportData?.transmission || apiData?.transmission || '',
-      engine: reportData?.engine || apiData?.engine || '',
-      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+      plate: reportData?.vehiclePlate || actualApiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || actualApiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || actualApiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || actualApiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || actualApiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || actualApiData?.vehicleColor || '',
+      mileage: reportData?.mileage || actualApiData?.mileage || 0,
+      fuelType: reportData?.fuelType || actualApiData?.fuelType || '',
+      transmission: reportData?.transmission || actualApiData?.transmission || '',
+      engine: reportData?.engine || actualApiData?.engine || '',
+      bodyType: reportData?.bodyType || actualApiData?.bodyType || '',
     },
     reportType: reportData?.reportType || 'paint',
-    status: reportData?.status || apiData?.status || 'COMPLETED',
-    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
-    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    status: reportData?.status || actualApiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || actualApiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || actualApiData?.totalCost || 0,
     overallScore: aiAnalysisData?.boyaKalitesi?.genelPuan || aiAnalysisData?.overallScore || 0,
-    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
+    expertNotes: reportData?.expertNotes || actualApiData?.expertNotes || null,
     aiAnalysisData: aiAnalysisData,
-    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+    vehicleImages: reportData?.vehicleImages || actualApiData?.vehicleImages || []
   }
 }
 
 function normalizeAudioReportData(apiData: any) {
-  const reportData = apiData.report || apiData
-  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  // Backend ResponseHelper formatını handle et: { success: true, data: actualReport }
+  const actualApiData = apiData?.data || apiData
+  const reportData = actualApiData.report || actualApiData
+  const aiAnalysisData = reportData?.aiAnalysisData || actualApiData?.aiAnalysisData || {}
   return {
-    id: reportData?.id || apiData?.id,
+    id: reportData?.id || actualApiData?.id,
     vehicleInfo: {
-      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
-      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
-      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
-      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
-      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
-      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
-      mileage: reportData?.mileage || apiData?.mileage || 0,
-      fuelType: reportData?.fuelType || apiData?.fuelType || '',
-      transmission: reportData?.transmission || apiData?.transmission || '',
-      engine: reportData?.engine || apiData?.engine || '',
-      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+      plate: reportData?.vehiclePlate || actualApiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || actualApiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || actualApiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || actualApiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || actualApiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || actualApiData?.vehicleColor || '',
+      mileage: reportData?.mileage || actualApiData?.mileage || 0,
+      fuelType: reportData?.fuelType || actualApiData?.fuelType || '',
+      transmission: reportData?.transmission || actualApiData?.transmission || '',
+      engine: reportData?.engine || actualApiData?.engine || '',
+      bodyType: reportData?.bodyType || actualApiData?.bodyType || '',
     },
     reportType: reportData?.reportType || 'engine',
-    status: reportData?.status || apiData?.status || 'COMPLETED',
-    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
-    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    status: reportData?.status || actualApiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || actualApiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || actualApiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || 0,
-    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
+    expertNotes: reportData?.expertNotes || actualApiData?.expertNotes || null,
     aiAnalysisData: aiAnalysisData,
-    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+    vehicleImages: reportData?.vehicleImages || actualApiData?.vehicleImages || []
   }
 }
 
 function normalizeValueReportData(apiData: any) {
-  const reportData = apiData.report || apiData
-  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  // Backend ResponseHelper formatını handle et: { success: true, data: actualReport }
+  const actualApiData = apiData?.data || apiData
+  const reportData = actualApiData.report || actualApiData
+  const aiAnalysisData = reportData?.aiAnalysisData || actualApiData?.aiAnalysisData || {}
   return {
-    id: reportData?.id || apiData?.id,
+    id: reportData?.id || actualApiData?.id,
     vehicleInfo: {
-      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
-      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
-      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
-      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
-      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
-      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
-      mileage: reportData?.mileage || apiData?.mileage || 0,
-      fuelType: reportData?.fuelType || apiData?.fuelType || '',
-      transmission: reportData?.transmission || apiData?.transmission || '',
-      engine: reportData?.engine || apiData?.engine || '',
-      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+      plate: reportData?.vehiclePlate || actualApiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || actualApiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || actualApiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || actualApiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || actualApiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || actualApiData?.vehicleColor || '',
+      mileage: reportData?.mileage || actualApiData?.mileage || 0,
+      fuelType: reportData?.fuelType || actualApiData?.fuelType || '',
+      transmission: reportData?.transmission || actualApiData?.transmission || '',
+      engine: reportData?.engine || actualApiData?.engine || '',
+      bodyType: reportData?.bodyType || actualApiData?.bodyType || '',
     },
     reportType: reportData?.reportType || 'value',
-    status: reportData?.status || apiData?.status || 'COMPLETED',
-    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
-    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    status: reportData?.status || actualApiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || actualApiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || actualApiData?.totalCost || 0,
     overallScore: 0,
-    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
+    expertNotes: reportData?.expertNotes || actualApiData?.expertNotes || null,
     aiAnalysisData: aiAnalysisData,
-    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || [],
+    vehicleImages: reportData?.vehicleImages || actualApiData?.vehicleImages || [],
     marketValue: {
       estimatedValue: aiAnalysisData?.estimatedValue || 0,
       marketRange: aiAnalysisData?.marketAnalysis?.priceRange || { min: 0, max: 0, average: 0 },
@@ -175,31 +183,33 @@ function normalizeValueReportData(apiData: any) {
 }
 
 function normalizeComprehensiveReportData(apiData: any) {
-  const reportData = apiData.report || apiData
-  const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+  // Backend ResponseHelper formatını handle et: { success: true, data: actualReport }
+  const actualApiData = apiData?.data || apiData
+  const reportData = actualApiData.report || actualApiData
+  const aiAnalysisData = reportData?.aiAnalysisData || actualApiData?.aiAnalysisData || {}
   return {
-    id: reportData?.id || apiData?.id,
+    id: reportData?.id || actualApiData?.id,
     vehicleInfo: {
-      plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
-      brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
-      model: reportData?.vehicleModel || apiData?.vehicleModel || '',
-      year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
-      vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
-      color: reportData?.vehicleColor || apiData?.vehicleColor || '',
-      mileage: reportData?.mileage || apiData?.mileage || 0,
-      fuelType: reportData?.fuelType || apiData?.fuelType || '',
-      transmission: reportData?.transmission || apiData?.transmission || '',
-      engine: reportData?.engine || apiData?.engine || '',
-      bodyType: reportData?.bodyType || apiData?.bodyType || '',
+      plate: reportData?.vehiclePlate || actualApiData?.vehiclePlate || '',
+      brand: reportData?.vehicleBrand || actualApiData?.vehicleBrand || '',
+      model: reportData?.vehicleModel || actualApiData?.vehicleModel || '',
+      year: reportData?.vehicleYear || actualApiData?.vehicleYear || 0,
+      vin: reportData?.vehicleVin || actualApiData?.vehicleVin || '',
+      color: reportData?.vehicleColor || actualApiData?.vehicleColor || '',
+      mileage: reportData?.mileage || actualApiData?.mileage || 0,
+      fuelType: reportData?.fuelType || actualApiData?.fuelType || '',
+      transmission: reportData?.transmission || actualApiData?.transmission || '',
+      engine: reportData?.engine || actualApiData?.engine || '',
+      bodyType: reportData?.bodyType || actualApiData?.bodyType || '',
     },
     reportType: reportData?.reportType || 'comprehensive',
-    status: reportData?.status || apiData?.status || 'COMPLETED',
-    createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
-    totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+    status: reportData?.status || actualApiData?.status || 'COMPLETED',
+    createdAt: reportData?.createdAt || actualApiData?.createdAt || new Date().toISOString(),
+    totalCost: reportData?.totalCost || actualApiData?.totalCost || 0,
     overallScore: aiAnalysisData?.overallScore || 0,
-    expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
+    expertNotes: reportData?.expertNotes || actualApiData?.expertNotes || null,
     aiAnalysisData: aiAnalysisData,
-    vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+    vehicleImages: reportData?.vehicleImages || actualApiData?.vehicleImages || []
   }
 }
 
@@ -211,31 +221,33 @@ function normalizeReportData(apiData: any, analysisType: string) {
     case 'value': return normalizeValueReportData(apiData)
     case 'comprehensive': return normalizeComprehensiveReportData(apiData)
     default:
-      const reportData = apiData.report || apiData
-      const aiAnalysisData = reportData?.aiAnalysisData || apiData?.aiAnalysisData || {}
+      // Backend ResponseHelper formatını handle et: { success: true, data: actualReport }
+      const actualApiData = apiData?.data || apiData
+      const reportData = actualApiData.report || actualApiData
+      const aiAnalysisData = reportData?.aiAnalysisData || actualApiData?.aiAnalysisData || {}
       return {
-        id: reportData?.id || apiData?.id,
+        id: reportData?.id || actualApiData?.id,
         vehicleInfo: {
-          plate: reportData?.vehiclePlate || apiData?.vehiclePlate || '',
-          brand: reportData?.vehicleBrand || apiData?.vehicleBrand || '',
-          model: reportData?.vehicleModel || apiData?.vehicleModel || '',
-          year: reportData?.vehicleYear || apiData?.vehicleYear || 0,
-          vin: reportData?.vehicleVin || apiData?.vehicleVin || '',
-          color: reportData?.vehicleColor || apiData?.vehicleColor || '',
-          mileage: reportData?.mileage || apiData?.mileage || 0,
-          fuelType: reportData?.fuelType || apiData?.fuelType || '',
-          transmission: reportData?.transmission || apiData?.transmission || '',
-          engine: reportData?.engine || apiData?.engine || '',
-          bodyType: reportData?.bodyType || apiData?.bodyType || '',
+          plate: reportData?.vehiclePlate || actualApiData?.vehiclePlate || '',
+          brand: reportData?.vehicleBrand || actualApiData?.vehicleBrand || '',
+          model: reportData?.vehicleModel || actualApiData?.vehicleModel || '',
+          year: reportData?.vehicleYear || actualApiData?.vehicleYear || 0,
+          vin: reportData?.vehicleVin || actualApiData?.vehicleVin || '',
+          color: reportData?.vehicleColor || actualApiData?.vehicleColor || '',
+          mileage: reportData?.mileage || actualApiData?.mileage || 0,
+          fuelType: reportData?.fuelType || actualApiData?.fuelType || '',
+          transmission: reportData?.transmission || actualApiData?.transmission || '',
+          engine: reportData?.engine || actualApiData?.engine || '',
+          bodyType: reportData?.bodyType || actualApiData?.bodyType || '',
         },
         reportType: reportData?.reportType || analysisType,
-        status: reportData?.status || apiData?.status || 'COMPLETED',
-        createdAt: reportData?.createdAt || apiData?.createdAt || new Date().toISOString(),
-        totalCost: reportData?.totalCost || apiData?.totalCost || 0,
+        status: reportData?.status || actualApiData?.status || 'COMPLETED',
+        createdAt: reportData?.createdAt || actualApiData?.createdAt || new Date().toISOString(),
+        totalCost: reportData?.totalCost || actualApiData?.totalCost || 0,
         overallScore: aiAnalysisData?.overallScore || 0,
-        expertNotes: reportData?.expertNotes || apiData?.expertNotes || null,
+        expertNotes: reportData?.expertNotes || actualApiData?.expertNotes || null,
         aiAnalysisData: aiAnalysisData,
-        vehicleImages: reportData?.vehicleImages || apiData?.vehicleImages || []
+        vehicleImages: reportData?.vehicleImages || actualApiData?.vehicleImages || []
       }
   }
 }
@@ -283,7 +295,20 @@ export function ReportDetailClient({ reportId }: { reportId: string }) {
           throw new Error('Rapor verisi alınamadı')
         }
 
-        const normalizedData = normalizeReportData(response.data, detectedAnalysisType)
+        // Backend ResponseHelper formatını handle et: { success: true, data: actualReport }
+        // Axios response.data = { success, data }, gerçek rapor response.data.data içinde
+        const actualData = response.data?.data || response.data
+        
+        // Debug: API response yapısını logla
+        console.log('🔍 ReportDetailClient - API Response:', {
+          hasResponseData: !!response.data,
+          hasNestedData: !!response.data?.data,
+          actualDataKeys: actualData ? Object.keys(actualData) : [],
+          hasAiAnalysisData: !!actualData?.aiAnalysisData,
+          aiAnalysisDataKeys: actualData?.aiAnalysisData ? Object.keys(actualData.aiAnalysisData) : []
+        })
+
+        const normalizedData = normalizeReportData(actualData, detectedAnalysisType)
         setReport(normalizedData)
       } catch (err: any) {
         console.error('Rapor yükleme hatası:', err)
