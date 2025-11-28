@@ -79,7 +79,7 @@ export function ValueReport({ data, vehicleInfo, vehicleImages = [], showActions
                 href="/dashboard"
                 className="px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Dashboard'a Dön
+                Dashboard Sayfasına Dön
               </a>
             </div>
           </div>
