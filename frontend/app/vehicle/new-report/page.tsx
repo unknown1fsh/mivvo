@@ -455,105 +455,89 @@ function NewReportPageContent() {
       {!authLoading && isAuthenticated && (
         <>
           {/* Rapor Türüne Göre Loading Ekranları */}
-          
-          {/* Boya Analizi Loading */}
-          {isPaintAnalyzing && selectedReportType?.id === 'PAINT_ANALYSIS' && (
-            <PaintAnalysisLoading 
-              vehicleInfo={selectedVehicle ? {
-                make: selectedVehicle.brand,
-                model: selectedVehicle.model,
-                year: selectedVehicle.year,
-                plate: selectedVehicle.plate
-              } : {
-                make: watch('vehicleBrand'),
-                model: watch('vehicleModel'),
-                year: watch('vehicleYear'),
-                plate: watch('vehiclePlate')
-              }}
-              progress={paintProgress}
-            />
-          )}
-
-          {/* Hasar Analizi Loading */}
-          {isDamageAnalyzing && selectedReportType?.id === 'DAMAGE_ANALYSIS' && (
-            <ReportLoading
-              type="damage"
-              vehicleInfo={selectedVehicle ? {
-                make: selectedVehicle.brand,
-                model: selectedVehicle.model,
-                year: selectedVehicle.year,
-                plate: selectedVehicle.plate
-              } : {
-                make: watch('vehicleBrand'),
-                model: watch('vehicleModel'),
-                year: watch('vehicleYear'),
-                plate: watch('vehiclePlate')
-              }}
-              progress={75}
-              estimatedTime="30-45 saniye"
-            />
-          )}
-
-          {/* Motor Ses Analizi Loading */}
-          {audioRecordingProps.isAnalyzing && selectedReportType?.id === 'ENGINE_SOUND_ANALYSIS' && (
-            <ReportLoading
-              type="engine"
-              vehicleInfo={selectedVehicle ? {
-                make: selectedVehicle.brand,
-                model: selectedVehicle.model,
-                year: selectedVehicle.year,
-                plate: selectedVehicle.plate
-              } : {
-                make: watch('vehicleBrand'),
-                model: watch('vehicleModel'),
-                year: watch('vehicleYear'),
-                plate: watch('vehiclePlate')
-              }}
-              progress={80}
-              estimatedTime="45-60 saniye"
-            />
-          )}
-
-          {/* Değer Tahmini Loading */}
-          {isValueAnalyzing && selectedReportType?.id === 'VALUE_ESTIMATION' && (
-            <ReportLoading
-              type="value"
-              vehicleInfo={selectedVehicle ? {
-                make: selectedVehicle.brand,
-                model: selectedVehicle.model,
-                year: selectedVehicle.year,
-                plate: selectedVehicle.plate
-              } : {
-                make: watch('vehicleBrand'),
-                model: watch('vehicleModel'),
-                year: watch('vehicleYear'),
-                plate: watch('vehiclePlate')
-              }}
-              progress={80}
-              estimatedTime="45-60 saniye"
-            />
-          )}
-
-          {/* Tam Ekspertiz Loading */}
-          {isComprehensiveAnalyzing && selectedReportType?.id === 'FULL_REPORT' && (
-            <ReportLoading
-              type="comprehensive"
-              vehicleInfo={selectedVehicle ? {
-                make: selectedVehicle.brand,
-                model: selectedVehicle.model,
-                year: selectedVehicle.year,
-                plate: selectedVehicle.plate
-              } : {
-                make: watch('vehicleBrand'),
-                model: watch('vehicleModel'),
-                year: watch('vehicleYear'),
-                plate: watch('vehiclePlate')
-              }}
-              progress={85}
-              estimatedTime="2-3 dakika"
-              currentStep={{ step: 2, total: 4, name: 'AI Analizi Yapılıyor' }}
-            />
-          )}
+          {(() => {
+            // VehicleInfo'yu bir kez hesapla - tüm loading ekranları için kullanılacak
+            const loadingVehicleInfo = selectedVehicle ? {
+              make: selectedVehicle.brand,
+              model: selectedVehicle.model,
+              year: selectedVehicle.year,
+              plate: selectedVehicle.plate
+            } : {
+              make: watch('vehicleBrand'),
+              model: watch('vehicleModel'),
+              year: watch('vehicleYear'),
+              plate: watch('vehiclePlate')
+            };
+            
+            // Loading ekranı yapılandırması
+            const loadingConfig: Record<string, { 
+              type: 'paint' | 'damage' | 'engine' | 'value' | 'comprehensive',
+              isActive: boolean, 
+              progress: number, 
+              estimatedTime: string,
+              currentStep?: { step: number, total: number, name: string }
+            }> = {
+              'PAINT_ANALYSIS': { 
+                type: 'paint', 
+                isActive: isPaintAnalyzing, 
+                progress: paintProgress, 
+                estimatedTime: '30-45 saniye' 
+              },
+              'DAMAGE_ANALYSIS': { 
+                type: 'damage', 
+                isActive: isDamageAnalyzing, 
+                progress: 75, 
+                estimatedTime: '30-45 saniye' 
+              },
+              'ENGINE_SOUND_ANALYSIS': { 
+                type: 'engine', 
+                isActive: audioRecordingProps.isAnalyzing, 
+                progress: 80, 
+                estimatedTime: '45-60 saniye' 
+              },
+              'VALUE_ESTIMATION': { 
+                type: 'value', 
+                isActive: isValueAnalyzing, 
+                progress: 80, 
+                estimatedTime: '45-60 saniye' 
+              },
+              'FULL_REPORT': { 
+                type: 'comprehensive', 
+                isActive: isComprehensiveAnalyzing, 
+                progress: 85, 
+                estimatedTime: '2-3 dakika',
+                currentStep: { step: 2, total: 4, name: 'AI Analizi Yapılıyor' }
+              },
+            };
+            
+            const activeConfig = selectedReportType?.id ? loadingConfig[selectedReportType.id] : null;
+            
+            // Aktif loading ekranını render et
+            if (activeConfig?.isActive) {
+              // Boya analizi için özel loading componenti
+              if (selectedReportType?.id === 'PAINT_ANALYSIS') {
+                return (
+                  <PaintAnalysisLoading 
+                    vehicleInfo={loadingVehicleInfo}
+                    progress={activeConfig.progress}
+                  />
+                );
+              }
+              
+              // Diğer analizler için genel loading componenti
+              return (
+                <ReportLoading
+                  type={activeConfig.type}
+                  vehicleInfo={loadingVehicleInfo}
+                  progress={activeConfig.progress}
+                  estimatedTime={activeConfig.estimatedTime}
+                  currentStep={activeConfig.currentStep}
+                />
+              );
+            }
+            
+            return null;
+          })()}
 
           {/* Normal İçerik - Hiçbir analiz yapılmıyorsa göster */}
           {!isGeneratingReport && (
