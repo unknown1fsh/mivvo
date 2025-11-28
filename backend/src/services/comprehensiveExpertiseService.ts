@@ -241,8 +241,8 @@ HASAR ANALİZİ:
 ` : 'Hasar analizi yok'}
 ${analyses.paint ? `
 BOYA ANALİZİ:
-- Genel puan: ${analyses.paint.boyaKalitesi?.genelPuan || 0}/100
-- Kalite: ${analyses.paint.boyaKalitesi?.kalite || 'Bilinmiyor'}
+- Genel puan: ${analyses.paint.overallScore || 0}/100
+- Kalite: ${analyses.paint.paintCondition || 'Bilinmiyor'}
 ` : 'Boya analizi yok'}
 ${analyses.audio ? `
 MOTOR SES ANALİZİ:
@@ -283,9 +283,7 @@ DEĞER TAHMİNİ:
   "model": "gpt-4o",
   "güven": 90,
   "analizZamanı": "${new Date().toISOString()}"
-}`
-
-${vehicleContext}
+}
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
@@ -395,8 +393,6 @@ ${analyses.value ? `
    - YÜKSEK KALİTE VERİLER ile çok detaylı piyasa analizi
    - Her biri için min, max (TL) ve detaylı note ver
    - Türkiye 2025 güncel piyasa fiyatlarını kullan
-
-${vehicleContext}
 
 📊 Mevcut AI Analiz Sonuçları:
 ${analyses.damage ? `\n✓ Hasar Tespiti: ${analyses.damage.hasarAlanları?.length || 0} hasar bulundu` : ''}

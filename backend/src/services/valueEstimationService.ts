@@ -38,6 +38,7 @@
  * - Cache mekanizması
  */
 
+
 import OpenAI from 'openai'
 import crypto from 'crypto'
 import sharp from 'sharp'
@@ -196,7 +197,7 @@ ARAÇ BİLGİSİ:
   "model": "gpt-4o",
   "güven": 90,
   "analizZamanı": "${new Date().toISOString()}"
-}`
+}
 
 🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
 
@@ -661,17 +662,21 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
 
   static async estimateValue(vehicleInfo: any, imagePaths?: string[]): Promise<ValueEstimationResult> {
     await this.initialize()
-
+    
     const cacheKey = crypto.createHash('md5').update(JSON.stringify({ vehicleInfo, hasImages: !!imagePaths })).digest('hex')
     const cached = this.cache.get(cacheKey)
+    
     if (cached) {
       console.log('[AI] Değer tahmini cache üzerinden döndürüldü')
       return cached
     }
-
+    
+    console.log('[AI] estimateValue metodu çağrıldı')
+    
     try {
       console.log('[AI] OpenAI ile değer tahmini başlatılıyor...')
       console.log('[AI] Resim sayısı:', imagePaths?.length || 0)
+      
       const result = await this.estimateValueWithOpenAI(vehicleInfo, imagePaths)
       console.log('[AI] OpenAI değer tahmini başarılı!')
       
@@ -682,5 +687,5 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
       throw new Error('OpenAI değer tahmini başarısız oldu.')
     }
   }
-
 }
+
