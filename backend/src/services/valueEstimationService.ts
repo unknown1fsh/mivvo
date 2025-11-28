@@ -133,437 +133,206 @@ export class ValueEstimationService {
   /**
    * Görseli Base64'e Çevirir
    * 
-   * @param imagePath - Görsel dosya path'i veya base64 data URL
+   * Desteklenen formatlar:
+   * - data:image/... (zaten base64)
+   * - /uploads/... (relative URL - local dosya)
+   * - C:\... veya /home/... (absolute path)
+   * - https://... (remote URL - fetch ile)
+   * 
+   * @param imagePath - Görsel dosya path'i, URL veya base64 data URL
    * @returns Base64 encoded görsel
    * 
    * @private
    */
   private static async convertImageToBase64(imagePath: string): Promise<string> {
+    console.log('[AI] 🖼️ Görsel dönüştürülüyor:', imagePath.substring(0, 100))
+    
+    // Zaten base64 ise direkt döndür
     if (imagePath.startsWith('data:image')) {
+      console.log('[AI] ✅ Görsel zaten base64 formatında')
       return imagePath.split(',')[1]
     }
-    const buffer = await fs.readFile(imagePath)
-    return buffer.toString('base64')
+    
+    // Remote URL ise fetch ile al
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      console.log('[AI] 🌐 Remote URL\'den görsel indiriliyor...')
+      const response = await fetch(imagePath)
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      console.log('[AI] ✅ Remote görsel indirildi, boyut:', buffer.length)
+      return buffer.toString('base64')
+    }
+    
+    // Relative URL ise (/uploads/...) local path'e çevir
+    if (imagePath.startsWith('/uploads/')) {
+      const localPath = `${process.cwd()}${imagePath}`
+      console.log('[AI] 📁 Relative URL -> Local path:', localPath)
+      try {
+        const buffer = await fs.readFile(localPath)
+        console.log('[AI] ✅ Local dosya okundu, boyut:', buffer.length)
+        return buffer.toString('base64')
+      } catch (err) {
+        console.error('[AI] ❌ Local dosya okunamadı:', localPath)
+        throw new Error(`Görsel dosyası bulunamadı: ${imagePath}`)
+      }
+    }
+    
+    // Absolute path ise direkt oku
+    console.log('[AI] 📁 Absolute path okunuyor:', imagePath)
+    try {
+      const buffer = await fs.readFile(imagePath)
+      console.log('[AI] ✅ Dosya okundu, boyut:', buffer.length)
+      return buffer.toString('base64')
+    } catch (err) {
+      console.error('[AI] ❌ Dosya okunamadı:', imagePath)
+      throw new Error(`Görsel dosyası bulunamadı: ${imagePath}`)
+    }
   }
 
   private static buildPrompt(vehicleInfo: any, hasImages: boolean, damageInfo?: DamageDetectionResult): string {
     const currentYear = new Date().getFullYear()
     const vehicleAge = currentYear - (vehicleInfo.year || currentYear)
+    const estimatedKm = vehicleAge * 15000
     
-    return `Araç değer tahmini uzmanısın. ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year})
+    return `Sen 20 yıllık deneyime sahip profesyonel bir ARAÇ DEĞERLEME UZMANISISN.
 
-GÖREV: Türkiye 2025 piyasasına göre değer tahmini yap ve JSON formatını doldur.
-
-KURALLAR:
-1. SADECE JSON döndür
-2. Türkiye fiyatları kullan (TL)
-3. ${hasImages ? 'Görselleri analiz et' : 'Genel piyasa verisi kullan'}
-4. ${damageInfo ? `HASAR VAR: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL düş, Hasar seviyesi: ${damageInfo.genelDeğerlendirme.hasarSeviyesi}` : 'Hasar yok'}
-
-ARAÇ BİLGİSİ:
-- Yaş: ${vehicleAge} yıl
-- Tahmini KM: ${vehicleAge * 15000} km
-
-ÖRNEK FİYATLAR (2025):
-- 2024 Toyota Corolla: 1.100.000-1.250.000 TL
-- 2023 Toyota Corolla: 950.000-1.050.000 TL
-- 2022 Toyota Corolla: 850.000-950.000 TL
-- 2021 Toyota Corolla: 750.000-850.000 TL
-- 2020 Toyota Corolla: 650.000-750.000 TL
-
-{
-  "estimatedValue": 750000,
-  "marketAnalysis": {
-    "priceRange": {"min": 700000, "max": 800000, "average": 750000},
-    "marketTrend": "Yükseliş trendinde",
-    "demandLevel": "Yüksek talep",
-    "supplyLevel": "Orta arz"
-  },
-  "vehicleCondition": {
-    "overallCondition": "İyi",
-    "mileageImpact": 5,
-    "ageImpact": 15,
-    "damageImpact": ${damageInfo ? Math.min(30, damageInfo.hasarAlanları.length * 5) : 0},
-    "maintenanceHistory": "Düzenli"
-  },
-  "finalAssessment": {
-    "recommendedPrice": 750000,
-    "quickSalePrice": 720000,
-    "maxPrice": 800000,
-    "investmentValue": "İyi yatırım",
-    "negotiationMargin": 5
-  },
-  "aiSağlayıcı": "OpenAI",
-  "model": "gpt-4o",
-  "güven": 90,
-  "analizZamanı": "${new Date().toISOString()}"
-}
-
-🎯 ÖNEMLİ: RAPOR TAMAMEN TÜRKÇE OLMALI - HİÇBİR İNGİLİZCE KELİME YOK!
-
-💰 PROFESYONEL ARAÇ DEĞER TAHMİNİ RAPORU
-
-📋 ARAÇ BİLGİLERİ:
+🚗 ARAÇ BİLGİLERİ:
 - Marka: ${vehicleInfo.make || 'Belirtilmemiş'}
 - Model: ${vehicleInfo.model || 'Belirtilmemiş'}
-- Yıl: ${vehicleInfo.year || currentYear}
-- Yaş: ${vehicleAge} yıl
+- Model Yılı: ${vehicleInfo.year || currentYear}
+- Araç Yaşı: ${vehicleAge} yıl
+- Tahmini KM: ${estimatedKm.toLocaleString('tr-TR')} km
 - Plaka: ${vehicleInfo.plate || 'Belirtilmemiş'}
 
+🎯 GÖREV: ${hasImages ? 'FOTOĞRAFLARI DİKKATLİCE İNCELE ve' : ''} bu aracın Türkiye 2025 piyasa değerini belirle.
+
 ${hasImages ? `
-📸 ARAÇ GÖRSELLERİ MEVCUT:
-Lütfen fotoğrafları DİKKATLİCE incele:
-- Dış görünüm ve boya durumu
-- Kaporta hasarları veya çizikler
-- Lastik ve jant durumu
-- İç mekan temizliği
-- Genel bakım durumu
-- Modifikasyonlar
-Bu gözlemlerini değerlendirmene dahil et!
+📸 FOTOĞRAF ANALİZİ TALİMATLARI:
+Fotoğrafları DİKKATLİCE incele ve şunları tespit et:
+1. BOYA DURUMU: Çizikler, solmalar, rötuş izleri, renk farklılıkları
+2. KAPORTA DURUMU: Göçükler, ezikler, onarım izleri
+3. GENEL GÖRÜNÜM: Temizlik, bakım durumu, yaşına göre durum
+4. LASTIK/JANT: Lastik durumu, jant hasarları
+5. CAM/FARU: Çatlak, kırık, sararmış farlar
+6. İÇ MEKAN (varsa): Döşeme durumu, aşınma, temizlik
+
+⚠️ ÖNEMLİ: Gördüğün her kusuru "görselAnaliz" bölümünde raporla!
 ` : ''}
 
 ${damageInfo ? `
-🔧 TESPİT EDİLEN HASAR BİLGİLERİ:
-⚠️ ÖNEMLİ: Bu araçta yapay zeka ile tespit edilmiş hasarlar mevcut!
-
-Hasar Sayısı: ${damageInfo.hasarAlanları.length}
-Toplam Tamir Maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL
-Hasar Seviyesi: ${damageInfo.genelDeğerlendirme.hasarSeviyesi}
-Araç Durumu: ${damageInfo.genelDeğerlendirme.araçDurumu}
-Güvenlik Durumu: ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu}
-Yapısal Bütünlük: ${damageInfo.teknikAnaliz.yapısalBütünlük}
-
-Detaylı Hasarlar:
-${damageInfo.hasarAlanları.map((damage, i) => `
-${i + 1}. ${damage.tür} - ${damage.bölge} bölgesi
-   - Şiddet: ${damage.şiddet}
-   - Tamir Maliyeti: ${damage.onarımMaliyeti.toLocaleString('tr-TR')} TL
-   - Güvenlik Etkisi: ${damage.güvenlikEtkisi}
-   - Öncelik: ${damage.onarımÖnceliği}
-   - Açıklama: ${damage.açıklama}`).join('')}
-
-🚨 KRİTİK: Bu hasar bilgileri değer tahminini ÖNEMLİ ÖLÇÜDE ETKİLEMELİ:
-- Toplam tamir maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL → Bu tutarı fiyattan DÜŞ
-- Hasar geçmişi nedeniyle ek %${Math.min(damageInfo.hasarAlanları.length * 5, 25)} değer kaybı uygula
-- Kritik hasarlar için ekstra %10-15 değer kaybı
-- Yapısal hasar varsa (${damageInfo.teknikAnaliz.şasiHasarı ? 'EVET' : 'Hayır'}): ${damageInfo.teknikAnaliz.şasiHasarı ? 'EK %20-30 DEĞER KAYBI!' : 'Ekstra düşüş yok'}
-- Güvenlik riski ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? 'VAR - EK %15 DÜŞÜŞ' : damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'koşullu' ? 'ORTA - EK %8 DÜŞÜŞ' : 'YOK'}
-- Piyasa değer etkisi: ${damageInfo.genelDeğerlendirme.piyasaDeğeriEtkisi}%
-- Hasarlı araçlar piyasada %30-50 daha zor satılır, talebi çok düşüktür
-- Alıcılar hasarlı araçlar için çok daha düşük fiyat teklif eder
+🔧 ÖNCEKİ HASAR TESPİTİ:
+- Hasar Sayısı: ${damageInfo.hasarAlanları.length}
+- Tamir Maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL
+- Hasar Seviyesi: ${damageInfo.genelDeğerlendirme.hasarSeviyesi}
+- Bu hasarları değer hesabında DÜŞ!
 ` : ''}
 
-💰 TÜRKİYE 2025 PİYASA ANALİZİ:
+💰 TÜRKİYE 2025 PİYASA REFERANSlari:
+- 2024 Model Araçlar: Sıfır fiyatın %85-90'ı
+- 2023 Model: Sıfır fiyatın %75-80'i  
+- 2022 Model: Sıfır fiyatın %65-70'i
+- 2021 Model: Sıfır fiyatın %55-60'ı
+- 2020 ve öncesi: Her yıl için %8-10 ek düşüş
 
-**FİYAT HESAPLAMA KURALLARI:**
-1. ${vehicleInfo.year || currentYear} model ${vehicleInfo.make} ${vehicleInfo.model} için güncel piyasa fiyatını araştır
-2. Araç yaşı: ${vehicleAge} yıl → Her yıl için %10-12 değer kaybı
-3. Ortalama kilometre: ${vehicleAge * 15000} km (yılda 15.000 km)
-4. Türkiye ekonomik durumu: Enflasyon ve döviz kuru etkisi
-5. ${hasImages ? 'Fotoğraflardaki araç durumunu değerlendir' : 'Genel piyasa ortalamasını kullan'}
+📤 SADECE JSON DÖNDÜR (açıklama YOK):
 
-**GERÇEK ÖRNEK FİYATLAR (2025):**
-- 2024 Toyota Corolla: 1.100.000 - 1.250.000 TL
-- 2023 Toyota Corolla: 950.000 - 1.050.000 TL
-- 2022 Toyota Corolla: 850.000 - 950.000 TL
-- 2021 Toyota Corolla: 750.000 - 850.000 TL
-- 2020 Toyota Corolla: 650.000 - 750.000 TL
-- 2019 Toyota Corolla: 550.000 - 650.000 TL
-
-Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.model} için uygun fiyat belirle!
-
-🔍 ÇIKTI FORMATI (Sadece geçerli JSON, TAMAMEN TÜRKÇE):
 {
-  "estimatedValue": 685000,
-  "marketAnalysis": {
-    "currentMarketValue": 685000,
-    "marketTrend": "Yükseliş trendinde - Son 6 ayda %8 değer artışı görüldü",
-    "demandLevel": "Yüksek talep - Bu model çok aranıyor, günde 50+ kişi arıyor",
-    "supplyLevel": "Orta arz - Piyasada yeterli araç var ama talep daha fazla",
-    "priceRange": {
-      "min": 650000,
-      "max": 720000,
-      "average": 685000
+  "estimatedValue": {
+    "minValue": 580000,
+    "maxValue": 650000,
+    "recommendedValue": 615000,
+    "quickSaleValue": 570000,
+    "currency": "TRY"
+  },
+  "görselAnaliz": {
+    "yapıldıMı": ${hasImages},
+    "boyaDurumu": {
+      "genelDurum": "orta",
+      "puan": 65,
+      "tespitler": ["Sol ön çamurluğda rötuş izi", "Kaputunda hafif çizikler"],
+      "boyaDeğerEtkisi": -15000
     },
-    "regionalVariation": "İstanbul ve Ankara'da fiyatlar %5-8 daha yüksek. İzmir'de ortalama seviyede.",
-    "seasonalImpact": "Bahar aylarında (Mart-Mayıs) talep %15 artar, fiyatlar yükselir",
-    "marketInsights": [
-      "Bu model segment lideri - En çok satan araçlardan",
-      "Benzer araçlar ortalama 12-18 günde satılıyor",
-      "Yakıt ekonomisi sayesinde talep çok yüksek",
-      "Yedek parça bulunabilirliği kolay ve ucuz",
-      "Bahar aylarında fiyatlar %10-15 daha iyi olacak"
-    ]
-  },
-  "vehicleCondition": {
-    "overallCondition": ${damageInfo ? `"${damageInfo.genelDeğerlendirme.araçDurumu === 'hasarlı' ? 'Hasarlı araç - Ciddi onarım gerekli' : damageInfo.genelDeğerlendirme.araçDurumu === 'ağır_hasar' ? 'Kötü durumda - Kapsamlı tamir lazım' : damageInfo.genelDeğerlendirme.araçDurumu === 'hafif_hasar' ? 'Orta durumda - Bazı hasarlar var' : 'İyi durumda'}"` : '"İyi durumda - Bakımlı araç"'},
-    "conditionScore": ${damageInfo ? Math.max(20, 85 - (damageInfo.hasarAlanları.length * 8) - (damageInfo.teknikAnaliz.şasiHasarı ? 25 : 0)) : 82},
-    "mileageImpact": "Ortalama kilometre - Değer kaybı normal seviyede",
-    "ageImpact": "${vehicleAge} yıllık araç - Yaşına göre ${damageInfo ? 'hasarlı' : 'iyi'} durumda",
-    "maintenanceImpact": ${damageInfo ? '"Hasarlar mevcut - Değer kaybı var"' : '"Düzenli bakım yapılmış - Artı değer sağlıyor"'},
-    "accidentHistory": ${damageInfo ? true : false},
-    "ownershipHistory": "2 el - ${damageInfo ? 'Hasar geçmişi olan' : 'İdeal el sayısı'}",
-    "serviceRecords": true,
-    "modifications": [],
-    "conditionNotes": [
-      ${damageInfo ? `"⚠️ HASAR TESPİT EDİLDİ: ${damageInfo.hasarAlanları.length} adet hasar mevcut",
-      "Tamir maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL",
-      "Yapısal durum: ${damageInfo.teknikAnaliz.yapısalBütünlük}",
-      "Güvenlik: ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu}",
-      ${damageInfo.teknikAnaliz.şasiHasarı ? '"🚨 Yapısal hasar mevcut - Ciddi sorun",' : ''}
-      ${damageInfo.güvenlikDeğerlendirmesi.kritikSorunlar.length > 0 ? `"Kritik sorunlar: ${damageInfo.güvenlikDeğerlendirmesi.kritikSorunlar.join(', ')}"` : ''}` : `${hasImages ? '"Fotoğraflarda araç temiz ve bakımlı görünüyor",' : ''}
-      "Genel durum yaşına göre çok iyi",
-      "Orijinal parçalar kullanılmış",
-      "Düzenli servis bakımları yapılmış"`}
-    ]
-  },
-  "priceBreakdown": {
-    "baseValue": 750000,
-    "mileageAdjustment": -35000,
-    "conditionAdjustment": ${damageInfo ? -Math.abs(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti) : 15000},
-    "featuresAdjustment": 8000,
-    "marketAdjustment": -25000,
-    "regionalAdjustment": -15000,
-    "seasonalAdjustment": -13000,
-    ${damageInfo ? `"damageRepairCost": -${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti},` : ''}
-    ${damageInfo ? `"damageHistoryPenalty": -${Math.min(damageInfo.hasarAlanları.length * 5000, 50000)},` : ''}
-    ${damageInfo && damageInfo.teknikAnaliz.şasiHasarı ? '"structuralDamagePenalty": -80000,' : ''}
-    ${damageInfo && damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? '"safetyRiskPenalty": -40000,' : ''}
-    "finalValue": ${damageInfo ? 'HASAR NEDENİYLE HESAPLA' : 685000},
-    "breakdown": [
-      {
-        "factor": "Temel Değer (Sıfır Araç Fiyatı Bazlı)",
-        "impact": 750000,
-        "description": "2025 yılı sıfır araç fiyatı ve model yılı bazında hesaplama"
-      },
-      {
-        "factor": "Kilometre Etkisi",
-        "impact": -35000,
-        "description": "Tahmini ${vehicleAge * 15000} km için değer kaybı (-%4.7)"
-      },
-      ${damageInfo ? `{
-        "factor": "⚠️ HASAR TAMİR MALİYETİ",
-        "impact": -${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti},
-        "description": "${damageInfo.hasarAlanları.length} adet hasar tespit edildi - Tamir maliyeti düşülmeli"
-      },
-      {
-        "factor": "⚠️ HASAR GEÇMİŞİ CEZASI",
-        "impact": -${Math.min(damageInfo.hasarAlanları.length * 5000, 50000)},
-        "description": "Hasarlı araç geçmişi - Piyasa değeri düşüşü (-%${Math.min(damageInfo.hasarAlanları.length * 3, 15)})"
-      },` : `{
-        "factor": "Genel Durum ve Bakım",
-        "impact": 15000,
-        "description": "İyi bakım, temiz araç, düzenli servis (+%2.2)"
-      },`}
-      ${damageInfo && damageInfo.teknikAnaliz.şasiHasarı ? `{
-        "factor": "🚨 YAPISAL HASAR CEZASI",
-        "impact": -80000,
-        "description": "Şase/yapısal hasar mevcut - Ciddi değer kaybı (-%20)"
-      },` : ''}
-      ${damageInfo && damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? `{
-        "factor": "🚨 GÜVENLİK RİSKİ CEZASI",
-        "impact": -40000,
-        "description": "Araç sürüş güvenliği riskli - Ek değer düşüşü (-%12)"
-      },` : ''}
-      {
-        "factor": "Ekstra Özellikler",
-        "impact": 8000,
-        "description": "Sunroof, deri döşeme, navigasyon gibi ekstralar"
-      },
-      {
-        "factor": "Piyasa Durumu",
-        "impact": -25000,
-        "description": "Mevcut arz-talep dengesi ve ekonomik durum"
-      },
-      {
-        "factor": "Bölgesel Fark",
-        "impact": -15000,
-        "description": "Şehir ve bölge bazlı fiyat farkı"
-      },
-      {
-        "factor": "Mevsimsel Etki",
-        "impact": -13000,
-        "description": "Kış ayları - Bahar aylarında bu fark kapanır"
-      }
-    ]
-  },
-  "marketPosition": {
-    "percentile": 68,
-    "competitivePosition": "Piyasa ortalamasının üzerinde - İyi konumda",
-    "pricingStrategy": "Piyasa ortalamasının %5-8 üzerinde fiyatlandırma yapılabilir. Pazarlık payı bırakın.",
-    "marketAdvantages": [
-      ${damageInfo ? '' : '"✅ Düzenli bakım geçmişi - Alıcılar için güven verici",'}
-      ${damageInfo ? '' : '"✅ Düşük kilometre - Yaşına göre az kullanılmış",'}
-      ${damageInfo ? '' : '"✅ Hasar kaydı yok - Temiz geçmiş",'}
-      ${damageInfo ? '' : '"✅ Popüler renk - Kolay satılır",'}
-      "✅ Yakıt ekonomisi mükemmel - Düşük işletme maliyeti"
-      ${damageInfo ? '' : hasImages ? ',"✅ Fotoğraflarda araç çok iyi görünüyor"' : ''}
-    ],
-    "marketDisadvantages": [
-      ${damageInfo ? `"🚨 HASAR GEÇMİŞİ VAR - Alıcılar çok temkinli olacak",
-      "🚨 TAMİR MALİYETİ YÜKSEK - ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL",
-      ${damageInfo.teknikAnaliz.şasiHasarı ? '"🚨 YAPISAL HASAR - Çok zor satılır, büyük değer kaybı",' : ''}
-      ${damageInfo.güvenlikDeğerlendirmesi.yolDurumu === 'güvensiz' ? '"🚨 GÜVENLİK RİSKİ - Alıcılar kaçınacak",' : ''}
-      "⚠️ Hasarlı araçlar %50-70 daha yavaş satılır",
-      "⚠️ Alıcılar hasarlı araçlar için çok düşük fiyat teklif eder",` : ''}
-      "⚠️ 2. el piyasada bol bulunuyor - Rekabet var",
-      "⚠️ Yeni model çıktı - Eski model talebi azalabilir",
-      "⚠️ Kış ayları - Satış süresi uzayabilir"
-    ],
-    "targetBuyers": [
-      "👨‍👩‍👧‍👦 Aile kullanıcıları - Güvenli ve ekonomik araç arayanlar",
-      "🎓 İlk araç alacaklar - Güvenilir marka tercih edenler",
-      "💼 Şehir içi kullanım - Yakıt ekonomisi önemli olanlar",
-      "🔧 Düşük bakım maliyeti arayanlar"
-    ]
-  },
-  "investmentAnalysis": {
-    "investmentGrade": ${damageInfo ? '"Kötü Yatırım (D)"' : '"İyi Yatırım (B+)"'},
-    "appreciationPotential": ${damageInfo ? '"Negatif - Değer kaybı devam edecek"' : '"Yıllık %2-3 değer artışı (enflasyon altında)"'},
-    "depreciationRate": ${damageInfo ? `"Yıllık %25-35 değer kaybı - Hasarlı araç riski yüksek"` : '"Yıllık %10-12 değer kaybı (sektör ortalaması %15)"'},
-    "holdingCostPerMonth": ${damageInfo ? `"Aylık ${4500 + Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti / 12)} TL (sigorta, vergi, bakım + tamir)"` : '"Aylık 4.500 TL (sigorta, vergi, bakım)"'},
-    "liquidityScore": ${damageInfo ? Math.max(20, 88 - (damageInfo.hasarAlanları.length * 10)) : 88},
-    "riskLevel": ${damageInfo ? '"Yüksek risk - Hasarlı araç"' : '"Düşük risk - Güvenli yatırım"'},
-    "investmentHorizon": ${damageInfo ? '"Tamir sonrası hemen satış önerilir - Değer hızla kaybediyor"' : '"1-2 yıl içinde satış önerilir - Değer kaybı yavaşlıyor"'},
-    "investmentNotes": [
-      ${damageInfo ? `"🚨 HASAR MEVCUT - Yatırım riski çok yüksek",
-      "⚠️ Tamir maliyeti: ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti.toLocaleString('tr-TR')} TL",
-      "📉 Likidite düşük - Satış çok zor, 60-90 gün sürebilir",
-      "💸 Alıcılar hasarlı araçlar için %30-50 düşük fiyat teklif eder",
-      ${damageInfo.teknikAnaliz.şasiHasarı ? '"🚨 Yapısal hasar - Satış neredeyse imkansız",' : ''}
-      "⏰ Her geçen gün değer daha da kaybediyor"` : `"💰 Değer kaybı yavaşlıyor - İyi tutma süresi",
-      "🚀 Likidite çok yüksek - 15-20 günde satılır",
-      "🔧 Bakım maliyetleri düşük - Ekonomik araç",
-      "📈 Piyasa talebi stabil - Güvenli yatırım",
-      "⏰ 2 yıl sonra değer kaybı hızlanacak"`}
-    ]
-  },
-  "recommendations": {
-    "sellingPrice": {
-      "min": 665000,
-      "optimal": 695000,
-      "max": 720000
+    "kaportaDurumu": {
+      "genelDurum": "iyi",
+      "puan": 75,
+      "tespitler": ["Sağ kapıda hafif ezik"],
+      "kaportaDeğerEtkisi": -8000
     },
-    "buyingPrice": {
-      "min": 640000,
-      "optimal": 670000,
-      "max": 690000
+    "lastikJant": {
+      "durum": "orta",
+      "tespitler": ["Lastikler %50 ömürlü"],
+      "değerEtkisi": -3000
     },
-    "negotiationTips": [
-      ${damageInfo ? `"🚨 Hasarları MUTLAKA açıkla - Gizlersen yasal sorun olur",
-      "📋 Tamir faturalarını göster - Yapılan onarımları belgele",
-      "⚠️ Gerçekçi fiyat belirle - Hasarlı araçlar %30-50 daha ucuz",
-      "🔧 Önce tamiri yaptır, sonra sat - Daha iyi fiyat alırsın",
-      "� Sabırlı ol - Hasarlı araç satışı 3-4 ay sürebilir",
-      "📸 Tamir öncesi/sonrası fotoğraf çek - Şeffaflık güven verir"` : `"�📋 Bakım kayıtlarını mutlaka göster - Değeri %5-8 artırır",
-      "🚫 Hasar kaydı olmadığını belgele - Güven verir",
-      "🔧 Orijinal parça kullanımını vurgula - Artı değer",
-      "📅 Bahar aylarını bekle - Fiyatlar %10-15 daha iyi",
-      "📸 Profesyonel fotoğraf çektir - Satış süresini %30 kısaltır",
-      "💬 Sabırlı ol - Acele satışta %10-15 kaybedersin"`}
-    ],
-    "timingAdvice": [
-      "🌸 Mart-Mayıs arası satış için IDEAL - En yüksek talep dönemi",
-      "☀️ Yaz tatili öncesi (Haziran) talep artar - İyi fiyat alırsın",
-      "❄️ Kış aylarından kaçın - Satış süresi 2-3 kat uzar",
-      "🎄 Yıl sonu kampanyalarından ÖNCE sat - Sıfır araç kampanyaları talebi düşürür",
-      "📊 Piyasayı takip et - Döviz artışında fiyatlar yükselir"
-    ],
-    "improvementSuggestions": [
-      ${damageInfo ? `{
-        "action": "🚨 ÖNCELİK 1: Tüm hasarları onar",
-        "cost": ${damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti},
-        "valueIncrease": ${Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti * 0.6)},
-        "description": "Hasarlar giderilmeden satış çok zor - En az %60'ını geri alırsın"
-      },
-      ${damageInfo.teknikAnaliz.şasiHasarı ? `{
-        "action": "🚨 Yapısal onarım YAP",
-        "cost": ${Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti * 0.5)},
-        "valueIncrease": ${Math.floor(damageInfo.genelDeğerlendirme.toplamOnarımMaliyeti * 0.4)},
-        "description": "Yapısal hasar olan araçlar neredeyse satılmaz"
-      },` : ''}
-      {
-        "action": "📋 Ekspertiz raporu al",
-        "cost": 1500,
-        "valueIncrease": 15000,
-        "description": "Profesyonel ekspertiz alıcıya güven verir"
-      },` : `{
-        "action": "🧼 Detaylı iç-dış temizlik, pasta-cila, motor temizliği",
-        "cost": 2500,
-        "valueIncrease": 10000,
-        "description": "Araç çok daha iyi görünür, alıcı güveni artar"
-      },`}
-      {
-        "action": "🎨 Küçük boya rötuşları ve çizik giderme",
-        "cost": 1800,
-        "valueIncrease": 6000,
-        "description": "Görsel kusurlar giderilir, profesyonel görünüm"
-      },
-      {
-        "action": "🚗 Lastik değişimi (gerekirse - 4 adet)",
-        "cost": 8000,
-        "valueIncrease": 12000,
-        "description": "Yeni lastikler güven verir ve pazarlık gücü sağlar"
-      },
-      {
-        "action": "🔧 Küçük mekanik bakımlar (fren, yağ, filtre)",
-        "cost": 3000,
-        "valueIncrease": 8000,
-        "description": "Araç sorunsuz çalışır, test sürüşü mükemmel olur"
-      }
+    "içMekan": {
+      "durum": "iyi",
+      "tespitler": ["Sürücü koltuğunda hafif aşınma"],
+      "değerEtkisi": -2000
+    },
+    "genelİzlenim": "Yaşına göre orta durumda, bazı kozmetik sorunlar mevcut",
+    "toplamGörselEtki": -28000
+  },
+  "değerHesaplama": {
+    "sıfırAraçFiyatı": 1200000,
+    "modelYılıDüşüşü": -480000,
+    "kmEtkisi": -45000,
+    "boyaDurumuEtkisi": -15000,
+    "kaportaEtkisi": -8000,
+    "genelDurumEtkisi": -10000,
+    "piyasaDurumu": -27000,
+    "hesaplananDeğer": 615000
+  },
+  "piyasaAnalizi": {
+    "ortalamaFiyat": 620000,
+    "fiyatAralığı": {"min": 580000, "max": 660000},
+    "piyasaTrendi": "Stabil",
+    "talepDurumu": "Orta",
+    "arzDurumu": "Yüksek",
+    "satışSüresiTahmini": "25-35 gün"
+  },
+  "araçDurumÖzeti": {
+    "genelPuan": 68,
+    "boyaPuan": 65,
+    "kaportaPuan": 75,
+    "mekanikTahmin": 70,
+    "durumAçıklaması": "Yaşına göre ortalama durumda, boya rötuşları ve hafif ezikler mevcut"
+  },
+  "öneriler": {
+    "satışİçin": {
+      "önerilenfiyat": 615000,
+      "minimumFiyat": 580000,
+      "pazarlıkPayı": "5-8%"
+    },
+    "alımİçin": {
+      "maksimumÖde": 600000,
+      "hedefFiyat": 575000
+    },
+    "iyileştirmeler": [
+      {"işlem": "Pasta-cila", "maliyet": 2000, "değerArtışı": 8000},
+      {"işlem": "Hafif boya rötuş", "maliyet": 3000, "değerArtışı": 10000}
     ]
   },
-  "comparableVehicles": [
-    {
-      "make": "${vehicleInfo.make}",
-      "model": "${vehicleInfo.model}",
-      "year": ${vehicleInfo.year || currentYear},
-      "mileage": ${vehicleAge * 14000},
-      "price": 695000,
-      "condition": "Çok İyi",
-      "location": "İstanbul",
-      "daysOnMarket": 14,
-      "similarity": 95
-    },
-    {
-      "make": "${vehicleInfo.make}",
-      "model": "${vehicleInfo.model}",
-      "year": ${vehicleInfo.year || currentYear},
-      "mileage": ${vehicleAge * 16000},
-      "price": 675000,
-      "condition": "İyi",
-      "location": "Ankara",
-      "daysOnMarket": 21,
-      "similarity": 90
-    },
-    {
-      "make": "${vehicleInfo.make}",
-      "model": "${vehicleInfo.model}",
-      "year": ${vehicleInfo.year || currentYear},
-      "mileage": ${vehicleAge * 18000},
-      "price": 655000,
-      "condition": "Orta",
-      "location": "İzmir",
-      "daysOnMarket": 28,
-      "similarity": 85
-    }
-  ],
+  "sonuçÖzeti": {
+    "tahminiDeğer": 615000,
+    "güvenSeviyesi": ${hasImages ? 85 : 70},
+    "değerlendirmeNotu": "${hasImages ? 'Görsel analiz yapıldı - Güvenilir tahmin' : 'Görsel analiz yapılmadı - Genel piyasa tahmini'}",
+    "önemliNotlar": [
+      "${hasImages ? 'Boya ve kaporta durumu fotoğraflardan değerlendirildi' : 'Görsel olmadan genel piyasa ortalaması kullanıldı'}",
+      "Detaylı ekspertiz önerilir",
+      "Fiyat pazarlık payı içermektedir"
+    ]
+  },
   "aiProvider": "OpenAI",
-  "model": "OpenAI",
-  "confidence": 94,
+  "model": "gpt-4o",
   "analysisTimestamp": "${new Date().toISOString()}"
 }
 
 ⚠️ KRİTİK KURALLAR:
-- RAPOR TAMAMEN TÜRKÇE - HİÇBİR İNGİLİZCE YOK!
-- SADECE ARAÇ DEĞER TAHMİNİ - Hasar tespiti veya boya analizi yapma!
-- Fiyatlar GERÇEK Türkiye 2025 piyasa değerleri olmalı
-- ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.model} için UYGUN fiyat belirle
-- Detaylı Türkçe açıklamalar yap (minimum 2-3 cümle)
-- ${hasImages ? 'Fotoğraflardaki araç durumunu DEĞERLENDİR ve yorumla' : 'Genel piyasa verilerine göre değerle'}
-- Tüm sayısal değerleri NUMBER olarak ver (string DEĞİL!)
-- Sadece geçerli JSON döndür
-- Piyasa analizi, değer hesaplama ve yatırım önerileri odaklı analiz yap`
+1. SADECE yukarıdaki JSON yapısını döndür - başka metin YOK
+2. ${hasImages ? 'Fotoğrafları ANALİZ ET - gördüğün her kusuru raporla' : 'Genel piyasa ortalaması kullan'}
+3. Tüm fiyatlar TL cinsinden GERÇEK Türkiye 2025 fiyatları
+4. görselAnaliz.yapıldıMı = ${hasImages}
+5. ${vehicleInfo.make} ${vehicleInfo.model} ${vehicleInfo.year} için DOĞRU piyasa değeri hesapla
+6. Tüm sayısal değerler NUMBER olmalı (string DEĞİL)`
   }
 
   private static extractJsonPayload(rawText: string): any {
@@ -648,15 +417,38 @@ Bu örneklere göre ${vehicleInfo.year} model ${vehicleInfo.make} ${vehicleInfo.
     // JSON parse ve validation
     const parsed = parseAIResponse(text)
     
-    const requiredFields = ['estimatedValue', 'marketAnalysis', 'vehicleCondition', 'finalAssessment']
-    const missingFields = checkMissingFields(parsed, requiredFields)
+    // ❌ MOCK VERİ YOK - SADECE AI VERİSİ KULLANILACAK
+    // Eksik alan varsa HATA FIRLAT - fallback yok!
     
-    if (missingFields.length > 0) {
-      console.error('[AI] ❌ Eksik field\'lar:', missingFields)
-      throw new Error(`AI yanıtında eksik field'lar: ${missingFields.join(', ')}`)
+    console.log('[AI] 📊 Parse edilen veri anahtarları:', Object.keys(parsed))
+    
+    // ZORUNLU ALAN: estimatedValue
+    if (!parsed.estimatedValue) {
+      console.error('[AI] ❌ HATA: estimatedValue alanı AI yanıtında YOK!')
+      throw new Error('AI_INCOMPLETE_RESPONSE: Tahmini değer bilgisi alınamadı. Lütfen tekrar deneyin.')
+    }
+    
+    // ZORUNLU ALAN: görselAnaliz (eğer görsel varsa)
+    if (hasImages && (!parsed.görselAnaliz || parsed.görselAnaliz.yapıldıMı === false)) {
+      console.error('[AI] ❌ HATA: Görsel yüklendi ama görselAnaliz yapılmadı!')
+      throw new Error('AI_VISUAL_ANALYSIS_FAILED: Görsel analizi yapılamadı. Lütfen tekrar deneyin.')
+    }
+    
+    // ZORUNLU ALAN: değerHesaplama veya piyasaAnalizi
+    if (!parsed.değerHesaplama && !parsed.piyasaAnalizi) {
+      console.error('[AI] ❌ HATA: Değer hesaplama veya piyasa analizi eksik!')
+      throw new Error('AI_INCOMPLETE_RESPONSE: Değer analizi eksik. Lütfen tekrar deneyin.')
+    }
+    
+    // Görsel analizi yapıldıysa logla
+    if (hasImages && parsed.görselAnaliz?.yapıldıMı) {
+      console.log('[AI] ✅ Görsel analiz BAŞARILI:')
+      console.log('   - Boya Durumu:', parsed.görselAnaliz.boyaDurumu?.genelDurum)
+      console.log('   - Kaporta Durumu:', parsed.görselAnaliz.kaportaDurumu?.genelDurum)
+      console.log('   - Toplam Görsel Etki:', parsed.görselAnaliz.toplamGörselEtki)
     }
 
-    console.log('[AI] ✅ Değer tahmini validation başarılı')
+    console.log('[AI] ✅ Değer tahmini validation başarılı - GERÇEK AI VERİSİ')
     return parsed as ValueEstimationResult
   }
 

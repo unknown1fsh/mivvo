@@ -582,15 +582,18 @@ function drawPaintAnalysis(
     doc.moveDown(1);
   }
 
-  // Boya durumu
-  const boyaDurumu = turkishToAscii(data.boyaDurumu || 'Belirtilmemis');
+  // Boya durumu - boyaDurumu artık nesne olabilir
+  const boyaDurumuObj = data.boyaDurumu || {};
+  const boyaDurumuText = typeof boyaDurumuObj === 'string' 
+    ? boyaDurumuObj 
+    : (boyaDurumuObj.genelDurum || 'Belirtilmemis');
   doc.font(fontBold)
      .fontSize(11)
      .fillColor(COLORS.black)
      .text('Boya Durumu: ', PAGE.margin, doc.y, { continued: true })
      .font(fontRegular)
      .fillColor(COLORS.primary)
-     .text(boyaDurumu);
+     .text(turkishToAscii(boyaDurumuText));
   
   doc.moveDown(0.5);
 

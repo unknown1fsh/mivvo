@@ -4,6 +4,7 @@
  * Clean Architecture - Service Layer (İş Mantığı Katmanı)
  * 
  * Bu servis, OpenAI Vision API kullanarak araç boyası analizi yapar.
+ * Updated: 2025-11-28 - BoyaDurumu interface güncellendi
  * 
  * Amaç:
  * - Boya kalitesi değerlendirmesi
@@ -41,23 +42,63 @@ import { parseAIResponse, checkMissingFields } from '../utils/jsonParser'
 // ===== TİP TANIMLARI =====
 
 /**
+ * Boya Durumu Interface
+ * 
+ * Boyanın genel durumu ve hasar bilgileri
+ */
+export interface BoyaDurumu {
+  orijinalMi: boolean                                             // Orijinal boya mı?
+  boyalıPaneller: string[]                                        // Boyalı paneller listesi
+  boyaKalınlığı: string | number                                  // Boya kalınlığı ("normal", "kalın", "ince" veya mikron)
+  genelDurum: 'mükemmel' | 'iyi' | 'orta' | 'kötü' | 'kritik'    // Genel durum
+  hasarVar: boolean                                               // Hasar var mı?
+  çizikVar: boolean                                               // Çizik var mı?
+  çukurVar: boolean                                               // Çukur var mı?
+  pasVar: boolean                                                 // Pas var mı?
+}
+
+/**
+ * Genel Değerlendirme Interface
+ */
+export interface GenelDeğerlendirme {
+  durum: 'mükemmel' | 'iyi' | 'orta' | 'kötü' | 'kritik'
+  puan: number
+  öneriler: string[]
+  güçlüYönler: string[]
+  zayıfYönler: string[]
+}
+
+/**
+ * Onarım Tahmini Interface
+ */
+export interface OnarımTahmini {
+  toplamMaliyet: number
+  maliyetKırılımı: Array<{ işlem: string; maliyet: number }>
+  süre: number
+  öncelik: 'yok' | 'düşük' | 'orta' | 'yüksek' | 'acil'
+  acil: boolean
+}
+
+/**
  * Boya Analizi Sonucu Interface
  * 
  * Tüm boya analizi sonuçlarını içerir
  */
 export interface PaintAnalysisResult {
-  boyaDurumu: 'mükemmel' | 'iyi' | 'orta' | 'kötü' | 'kritik'  // Boya durumu
-  boyaKalitesi: BoyaKalitesi                                     // Boya kalitesi
-  renkAnalizi: RenkAnalizi                                       // Renk analizi
-  yüzeyAnalizi: YüzeyAnalizi                                     // Yüzey analizi
-  boyaKusurları: BoyaKusurları                                   // Boya kusurları (sadece yüzey kusurları)
-  teknikDetaylar: TeknikDetaylar                                 // Teknik detaylar
-  öneriler: BoyaÖnerileri                                        // Öneriler
-  maliyetTahmini: MaliyetTahmini                                 // Maliyet tahmini
-  aiSağlayıcı: string                                            // AI sağlayıcı
-  model: string                                                  // AI model
-  güvenSeviyesi: number                                          // Güven seviyesi (0-100)
-  analizZamanDamgası: string                                     // Analiz zamanı (ISO)
+  boyaDurumu: BoyaDurumu                                          // Boya durumu (detaylı)
+  boyaKalitesi: BoyaKalitesi                                      // Boya kalitesi
+  renkAnalizi: RenkAnalizi                                        // Renk analizi
+  yüzeyAnalizi: YüzeyAnalizi                                      // Yüzey analizi
+  boyaKusurları: BoyaKusurları                                    // Boya kusurları (sadece yüzey kusurları)
+  genelDeğerlendirme?: GenelDeğerlendirme                         // Genel değerlendirme
+  onarımTahmini?: OnarımTahmini                                   // Onarım tahmini
+  teknikDetaylar?: TeknikDetaylar                                 // Teknik detaylar (opsiyonel)
+  öneriler?: BoyaÖnerileri                                        // Öneriler (opsiyonel)
+  maliyetTahmini?: MaliyetTahmini                                 // Maliyet tahmini (opsiyonel)
+  aiSağlayıcı: string                                             // AI sağlayıcı
+  model: string                                                   // AI model
+  güvenSeviyesi: number                                           // Güven seviyesi (0-100)
+  analizZamanDamgası: string                                      // Analiz zamanı (ISO)
 }
 
 /**
@@ -413,63 +454,162 @@ export class PaintAnalysisService {
   private static buildPrompt(vehicleInfo?: any): string {
     const vehicleContext = vehicleInfo ? `Araç: ${vehicleInfo.make} ${vehicleInfo.model} (${vehicleInfo.year})` : ''
 
-    return `Boya analizi uzmanısın. ${vehicleContext}
+    return `Sen profesyonel bir OTOMOTİV BOYA UZMANISIN. ${vehicleContext}
 
-GÖREV: Görseli analiz et, boya durumunu tespit et ve JSON formatını doldur.
+🎯 GÖREV: Gönderilen FOTOĞRAFI İNCELE ve SADECE BOYA DURUMUNU analiz et.
 
-KURALLAR:
-1. SADECE JSON döndür (açıklama yok)
-2. TÜM field'ları doldur
-3. Türkiye fiyatları kullan (boya: 3-15bin TL)
-4. Türkçe field isimleri
+⛔ YASAK KONULAR - BUNLARI YAPMA:
+- ❌ Göçük analizi YAPMA (bu hasar analizi konusu)
+- ❌ Tampon hasarı YAZMA (bu hasar analizi konusu)
+- ❌ Kaporta hasarı YAZMA (bu hasar analizi konusu)
+- ❌ Cam hasarı YAZMA (bu hasar analizi konusu)
+- ❌ Mekanik sorunlar YAZMA
+- ❌ "Tampon değişimi" gibi öneriler YAZMA
+
+✅ SADECE BOYA İLE İLGİLİ KONULAR:
+- ✅ Boya parlaklığı ve canlılığı
+- ✅ Boya çizikleri (sadece boyada olan yüzeysel çizikler)
+- ✅ Boya solması ve matlaşması
+- ✅ Renk uyumu ve tutarlılığı
+- ✅ Portakal kabuğu efekti
+- ✅ Boya akıntıları ve sarkmaları
+- ✅ Boya soyulması ve kabarcıklanması
+- ✅ Boya altı pas belirtileri
+- ✅ Rötuş boya izleri
+- ✅ Orijinal/değiştirilmiş boya tespiti
+- ✅ Pasta-cila ihtiyacı
+
+🔍 PUANLAMA KRİTERLERİ:
+- 90-100: Mükemmel - Fabrika çıkışı gibi parlak
+- 70-89: İyi - Hafif mat veya minimal çizik
+- 50-69: Orta - Belirgin solma veya çizikler
+- 30-49: Kötü - Ciddi boya sorunları
+- 0-29: Kritik - Tam boya yenileme gerekli
+
+💰 TÜRKİYE 2025 BOYA İŞLEM FİYATLARI:
+- Pasta-cila: 1.500 - 4.000 TL
+- Rötuş boya: 500 - 2.000 TL
+- Lokal boya düzeltme: 2.000 - 5.000 TL
+- Panel başı boya: 5.000 - 12.000 TL
+- Tam boya: 25.000 - 60.000 TL
+
+📤 ÇIKTI: Sadece aşağıdaki JSON formatında yanıt ver (başka metin YOK):
 
 {
   "boyaKalitesi": {
-    "genelPuan": 85,
-    "parlaklık": 90,
-    "düzgünlük": 80,
-    "renkUyumu": 85,
-    "kalite": "iyi"
+    "genelPuan": 75,
+    "genelSkor": 75,
+    "parlaklık": 70,
+    "parlaklıkSeviyesi": 70,
+    "düzgünlük": 65,
+    "pürüzsüzlük": 65,
+    "renkUyumu": 80,
+    "renkEşleşmesi": 80,
+    "kalite": "orta"
   },
   "renkAnalizi": {
     "anaRenk": "Beyaz",
     "renkKodu": "Arktik Beyaz",
+    "renkAdı": "Arktik Beyaz",
     "fabrikaRengi": true,
-    "solmaVar": false,
-    "renkFarkıVar": false
+    "solmaVar": true,
+    "renkFarkıVar": false,
+    "renkEşleşmesi": 80
   },
   "yüzeyAnalizi": {
-    "çizikSayısı": 2,
+    "çizikSayısı": 3,
     "göçükVar": false,
     "pasVar": false,
     "oksidasyonVar": false,
-    "portakalKabuğu": false,
-    "genelDurum": "iyi"
+    "portakalKabuğu": true,
+    "genelDurum": "orta",
+    "boyaKalınlığı": 120,
+    "yüzeyKusurları": [
+      {
+        "id": "boya-kusur-1",
+        "tür": "boya_çizik",
+        "şiddet": "orta",
+        "konum": "Sağ kapı",
+        "boyut": 10,
+        "açıklama": "Yüzeysel boya çiziği, pasta ile giderilebilir",
+        "onarılabilir": true,
+        "onarımMaliyeti": 1500
+      },
+      {
+        "id": "boya-kusur-2",
+        "tür": "solma",
+        "şiddet": "düşük",
+        "konum": "Tavan",
+        "boyut": 50,
+        "açıklama": "UV kaynaklı hafif boya solması",
+        "onarılabilir": true,
+        "onarımMaliyeti": 3000
+      }
+    ]
+  },
+  "boyaKusurları": {
+    "yüzeyKusurları": [
+      {
+        "id": "boya-kusur-1",
+        "tür": "boya_çizik",
+        "şiddet": "orta",
+        "konum": "Sağ kapı",
+        "boyut": 10,
+        "açıklama": "Yüzeysel boya çiziği, pasta ile giderilebilir",
+        "onarılabilir": true,
+        "onarımMaliyeti": 1500
+      }
+    ],
+    "renkSorunları": ["Hafif solma mevcut"],
+    "parlaklıkSorunları": ["Matlaşma var"],
+    "kalınlıkDeğişimleri": [],
+    "toplamKusurPuanı": 20
   },
   "boyaDurumu": {
     "orijinalMi": true,
     "boyalıPaneller": [],
     "boyaKalınlığı": "normal",
-    "genelDurum": "iyi"
+    "genelDurum": "orta",
+    "hasarVar": false,
+    "çizikVar": true,
+    "çukurVar": false,
+    "pasVar": false
   },
   "genelDeğerlendirme": {
-    "durum": "iyi",
-    "puan": 85,
-    "öneriler": ["Rutin bakım"],
-    "güçlüYönler": ["Orijinal boya"],
-    "zayıfYönler": ["Hafif çizikler"]
+    "durum": "orta",
+    "puan": 75,
+    "öneriler": ["Pasta-cila uygulaması", "Boya koruma filmi", "Düzenli yıkama"],
+    "güçlüYönler": ["Fabrika boyası", "Orijinal renk"],
+    "zayıfYönler": ["Hafif çizikler", "Matlaşma"]
   },
   "onarımTahmini": {
-    "toplamMaliyet": 5000,
-    "maliyetKırılımı": [{"işlem": "Rötuş", "maliyet": 5000}],
+    "toplamMaliyet": 4500,
+    "maliyetKırılımı": [
+      {"işlem": "Pasta-cila", "maliyet": 2500},
+      {"işlem": "Çizik rötuşu", "maliyet": 1500},
+      {"işlem": "Boya koruma", "maliyet": 500}
+    ],
     "süre": 2,
+    "öncelik": "düşük",
     "acil": false
   },
   "aiSağlayıcı": "OpenAI",
   "model": "gpt-4o",
-  "güven": 90,
-  "analizZamanı": "2025-11-27T10:00:00Z"
-}`
+  "güven": 85,
+  "güvenSeviyesi": 85,
+  "analizZamanı": "${new Date().toISOString()}"
+}
+
+⚠️ BOYA ANALİZİ KURALLARI:
+1. SADECE JSON döndür - açıklama, yorum, markdown YOK
+2. SADECE BOYA İLE İLGİLİ KONULAR YAZ
+3. Göçük, tampon, kaporta hasarı YAZMA - bunlar hasar analizi konusu
+4. Kusur türleri SADECE: boya_çizik, solma, matlaşma, portakal_kabuğu, akıntı, soyulma, kabarcık, pas_belirtisi, rötuş_izi
+5. Öneriler SADECE boya işlemleri: pasta-cila, rötuş, lokal boya, panel boya, koruma
+6. boyaDurumu.hasarVar = fiziksel hasar değil, boya hasarı demek (çizik, soyulma vs)
+7. Puanlar 0-100 arası sayı olmalı
+8. Maliyet TL cinsinden Türkiye 2025 BOYA fiyatları olmalı
+9. genelDurum ve kalite: "mükemmel", "iyi", "orta", "kötü", "kritik" değerlerinden biri`
   }
 
   /**
@@ -569,14 +709,24 @@ KURALLAR:
         () => AIHelpers.callVision(() =>
           this.openaiClient!.chat.completions.create({
             model: OPENAI_MODEL,
-            temperature: 0.3,
-            max_tokens: 2500,
+            temperature: 0.2,
+            max_tokens: 3500,
             top_p: 0.9,
             response_format: { type: 'json_object' },
             messages: [
               {
                 role: 'system',
-                content: 'Boya analizi uzmanısın. Görselleri analiz edip JSON rapor üretirsin. SADECE geçerli JSON döndür.'
+                content: `Sen 25 yıllık deneyime sahip profesyonel bir araç boya uzmanısın. 
+                
+GÖREVİN: Gönderilen araç fotoğrafını DİKKATLİCE incele ve boyanın durumunu analiz et.
+
+ÖNEMLİ KURALLAR:
+1. FOTOĞRAFI GERÇEKTEN ANALİZ ET - varsayım yapma!
+2. Gördüğün her çizik, solma, pas, soyulma, leke vb. kusuru raporla
+3. Her kusurun KONUMUNU ve ŞİDDETİNİ belirt
+4. Puanları GERÇEK duruma göre ver - iyi görünüyorsa yüksek, kötüyse düşük puan ver
+5. SADECE geçerli JSON döndür - başka metin ekleme
+6. Tüm metinler TÜRKÇE olmalı`
               },
               {
                 role: 'user',
@@ -652,6 +802,56 @@ KURALLAR:
         throw new Error('AI analiz sonucu eksik. Yüzey analizi bilgisi alınamadı.')
       }
 
+      // boyaDurumu alanını kontrol et ve varsayılan değerler ekle
+      if (!parsed.boyaDurumu) {
+        console.warn('⚠️ boyaDurumu alanı eksik, yüzeyAnalizi\'nden oluşturuluyor...')
+        parsed.boyaDurumu = {
+          orijinalMi: true,
+          boyalıPaneller: [],
+          boyaKalınlığı: parsed.yüzeyAnalizi?.boyaKalınlığı || 'normal',
+          genelDurum: parsed.yüzeyAnalizi?.genelDurum || parsed.boyaKalitesi?.kalite || 'orta',
+          hasarVar: (parsed.yüzeyAnalizi?.çizikSayısı > 0) || parsed.yüzeyAnalizi?.göçükVar || false,
+          çizikVar: (parsed.yüzeyAnalizi?.çizikSayısı > 0) || false,
+          çukurVar: parsed.yüzeyAnalizi?.göçükVar || false,
+          pasVar: parsed.yüzeyAnalizi?.pasVar || false
+        }
+      } else {
+        // boyaDurumu var ama eksik alanlar olabilir - tamamla
+        const hasÇizik = (parsed.yüzeyAnalizi?.çizikSayısı ?? 0) > 0
+        const hasGöçük = parsed.yüzeyAnalizi?.göçükVar === true
+        const hasPas = parsed.yüzeyAnalizi?.pasVar === true
+        parsed.boyaDurumu = {
+          orijinalMi: parsed.boyaDurumu.orijinalMi ?? true,
+          boyalıPaneller: parsed.boyaDurumu.boyalıPaneller || [],
+          boyaKalınlığı: parsed.boyaDurumu.boyaKalınlığı || parsed.yüzeyAnalizi?.boyaKalınlığı || 'normal',
+          genelDurum: parsed.boyaDurumu.genelDurum || parsed.yüzeyAnalizi?.genelDurum || parsed.boyaKalitesi?.kalite || 'orta',
+          hasarVar: parsed.boyaDurumu.hasarVar ?? (hasÇizik || hasGöçük),
+          çizikVar: parsed.boyaDurumu.çizikVar ?? hasÇizik,
+          çukurVar: parsed.boyaDurumu.çukurVar ?? hasGöçük,
+          pasVar: parsed.boyaDurumu.pasVar ?? hasPas
+        }
+      }
+
+      // boyaKusurları alanını kontrol et
+      if (!parsed.boyaKusurları) {
+        parsed.boyaKusurları = {
+          yüzeyKusurları: parsed.yüzeyAnalizi?.yüzeyKusurları || [],
+          renkSorunları: [],
+          parlaklıkSorunları: [],
+          kalınlıkDeğişimleri: [],
+          toplamKusurPuanı: 0
+        }
+      }
+
+      // onarımTahmini alanını kontrol et ve öncelik ekle
+      if (parsed.onarımTahmini && !parsed.onarımTahmini.öncelik) {
+        const maliyet = parsed.onarımTahmini.toplamMaliyet || 0
+        if (maliyet > 20000) parsed.onarımTahmini.öncelik = 'yüksek'
+        else if (maliyet > 5000) parsed.onarımTahmini.öncelik = 'orta'
+        else if (maliyet > 0) parsed.onarımTahmini.öncelik = 'düşük'
+        else parsed.onarımTahmini.öncelik = 'yok'
+      }
+
       // Güven seviyesi kontrolü (güven veya güvenSeviyesi alanı)
       const guvenDegeri = parsed.güven ?? parsed.güvenSeviyesi ?? 85 // Varsayılan 85
 
@@ -663,6 +863,15 @@ KURALLAR:
         güvenSeviyesi: guvenDegeri,
         analizZamanDamgası: new Date().toISOString()
       }
+      
+      console.log('📊 Boya analizi sonucu:', {
+        boyaKalitesiGenelPuan: result.boyaKalitesi?.genelPuan,
+        boyaDurumuGenelDurum: result.boyaDurumu?.genelDurum,
+        hasarVar: result.boyaDurumu?.hasarVar,
+        çizikVar: result.boyaDurumu?.çizikVar,
+        pasVar: result.boyaDurumu?.pasVar,
+        kusurSayısı: result.boyaKusurları?.yüzeyKusurları?.length || 0
+      })
 
       logAiAnalysis('PAINT_ANALYZE_SUCCESS', '', {
         resultKeys: Object.keys(result),

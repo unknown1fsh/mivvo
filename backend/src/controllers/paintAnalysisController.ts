@@ -32,7 +32,6 @@
  */
 
 import { Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
 import { AuthRequest } from '../middleware/auth'
 import { asyncHandler } from '../middleware/errorHandler'
 import { PaintAnalysisService } from '../services/paintAnalysisService'
@@ -41,9 +40,12 @@ import { ERROR_MESSAGES } from '../constants/ErrorMessages'
 import { CREDIT_PRICING } from '../constants/CreditPricing'
 import { InsufficientCreditsException } from '../exceptions/BusinessExceptions'
 import { BaseException } from '../exceptions/BaseException'
+import { getPrismaClient } from '../utils/prisma'
 import multer from 'multer'
+import sharp from 'sharp'
 
-const prisma = new PrismaClient()
+// Singleton PrismaClient kullan (connection pool optimizasyonu)
+const prisma = getPrismaClient()
 
 // ===== MULTER KONFİGÜRASYONU =====
 
@@ -197,6 +199,7 @@ export class PaintAnalysisController {
    * 2. Rapor sahiplik kontrolü
    * 3. Dosya varlık kontrolü
    * 4. Her dosya için:
+   *    - Sharp ile optimize et (boyut küçültme)
    *    - Base64 encode
    *    - VehicleImage kaydı oluştur (imageType: PAINT)
    * 
@@ -257,33 +260,67 @@ export class PaintAnalysisController {
         return
       }
 
-      // Her dosya için VehicleImage kaydı oluştur
-      const imageRecords = await Promise.all(
-        files.map(async (file, index) => {
-          console.log(`📸 Resim ${index + 1} işleniyor: ${file.originalname} (${file.size} bytes)`)
+      // Her dosya için sıralı işlem (paralel değil - DB connection sorununu önler)
+      const imageRecords = []
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index]
+        console.log(`📸 Resim ${index + 1} işleniyor: ${file.originalname} (${file.size} bytes)`)
+        
+        try {
+          // Sharp ile görsel optimize et (max 1200px genişlik, JPEG formatı, %80 kalite)
+          // Bu, base64 boyutunu önemli ölçüde düşürür ve DB write timeout'unu önler
+          const optimizedBuffer = await sharp(file.buffer)
+            .resize(1200, 1200, { 
+              fit: 'inside', 
+              withoutEnlargement: true 
+            })
+            .jpeg({ 
+              quality: 80,
+              progressive: true
+            })
+            .toBuffer()
           
-          // Base64 encode
-          const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`
+          const originalSize = file.size
+          const optimizedSize = optimizedBuffer.length
+          console.log(`🔧 Resim optimize edildi: ${originalSize} -> ${optimizedSize} bytes (${Math.round((1 - optimizedSize/originalSize) * 100)}% küçültme)`)
           
+          // Optimize edilmiş buffer'ı base64'e çevir
+          const base64Image = `data:image/jpeg;base64,${optimizedBuffer.toString('base64')}`
+          
+          // Veritabanına kaydet (sıralı - connection pool'u zorlamaz)
           const imageRecord = await prisma.vehicleImage.create({
             data: {
               reportId: parseInt(reportId),
               imageUrl: base64Image,
               imageType: 'PAINT',
-              fileSize: file.size
+              fileSize: optimizedSize
             }
           })
           
           console.log(`✅ Resim ${index + 1} veritabanına kaydedildi: ID ${imageRecord.id}`)
-          return imageRecord
+          imageRecords.push(imageRecord)
+          
+        } catch (imageError) {
+          console.error(`❌ Resim ${index + 1} işleme hatası:`, imageError)
+          // Tek bir resim başarısız olsa bile diğerlerine devam et
+          continue
+        }
+      }
+
+      // En az bir resim yüklendiyse başarılı say
+      if (imageRecords.length === 0) {
+        res.status(500).json({
+          success: false,
+          message: 'Hiçbir resim yüklenemedi. Lütfen tekrar deneyin.'
         })
-      )
+        return
+      }
 
       res.json({
         success: true,
         data: {
           images: imageRecords,
-          message: `${files.length} resim başarıyla yüklendi`
+          message: `${imageRecords.length} resim başarıyla yüklendi`
         }
       })
 
@@ -291,7 +328,8 @@ export class PaintAnalysisController {
       console.error('Resim yükleme hatası:', error)
       res.status(500).json({
         success: false,
-        message: 'Resimler yüklenemedi'
+        message: 'Resimler yüklenemedi',
+        error: error instanceof Error ? error.message : 'Bilinmeyen hata'
       })
     }
   }

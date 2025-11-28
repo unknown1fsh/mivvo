@@ -367,16 +367,18 @@ export class ValueEstimationController {
 
       console.log('✅ Değer tahmini tamamlandı')
       
-      // Debug: AI sonucunu detaylı logla
+      // Debug: AI sonucunu detaylı logla (Türkçe + İngilizce alan adları destekleniyor)
       console.log('📊 Value Estimation - AI Sonucu Detayları:', {
         hasValueResult: !!valueResult,
         valueResultKeys: valueResult ? Object.keys(valueResult) : [],
         hasEstimatedValue: !!(valueResult?.estimatedValue),
-        hasMarketAnalysis: !!(valueResult?.marketAnalysis),
-        hasVehicleCondition: !!(valueResult?.vehicleCondition),
-        hasPriceBreakdown: !!(valueResult?.priceBreakdown),
+        hasMarketAnalysis: !!(valueResult?.marketAnalysis || valueResult?.piyasaAnalizi),
+        hasVehicleCondition: !!(valueResult?.vehicleCondition || valueResult?.araçDurumÖzeti),
+        hasPriceBreakdown: !!(valueResult?.priceBreakdown || valueResult?.değerHesaplama),
+        hasGörselAnaliz: !!(valueResult?.görselAnaliz),
+        hasSonuçÖzeti: !!(valueResult?.sonuçÖzeti),
         estimatedValue: valueResult?.estimatedValue,
-        confidence: valueResult?.confidence
+        confidence: valueResult?.confidence || valueResult?.sonuçÖzeti?.güvenSeviyesi
       });
       
       // SIKI VALİDASYON: AI sonucu boş mu kontrol et
@@ -391,8 +393,9 @@ export class ValueEstimationController {
         throw new Error('AI analiz sonucu eksik. Tahmini değer bilgisi alınamadı.')
       }
 
-      if (!valueResult.marketAnalysis && !valueResult.market_analysis) {
-        console.error('❌ Value Estimation - marketAnalysis eksik')
+      // Piyasa analizi kontrolü (Türkçe veya İngilizce)
+      if (!valueResult.marketAnalysis && !valueResult.piyasaAnalizi) {
+        console.error('❌ Value Estimation - marketAnalysis/piyasaAnalizi eksik')
         throw new Error('AI analiz sonucu eksik. Piyasa analizi bilgisi alınamadı.')
       }
 
@@ -522,11 +525,50 @@ export class ValueEstimationController {
         return
       }
 
+      // AI analiz verisi kontrolü
+      const aiData = report.aiAnalysisData as any
+      
+      // Rapor FAILED ise kullanıcıya bildir
+      if (report.status === 'FAILED') {
+        res.status(400).json({
+          success: false,
+          message: 'Bu analiz başarısız olmuştur. Krediniz iade edilmiştir.',
+          analysisStatus: 'FAILED',
+          expertNotes: report.expertNotes,
+          data: report
+        })
+        return
+      }
+      
+      // AI verisi yoksa veya boşsa uyar
+      if (!aiData || Object.keys(aiData).length === 0) {
+        console.warn(`⚠️ Rapor ${reportId} için AI verisi bulunamadı`)
+        res.status(400).json({
+          success: false,
+          message: 'Bu rapor için AI analiz verisi bulunamadı. Analiz henüz tamamlanmamış olabilir.',
+          analysisStatus: report.status,
+          data: report
+        })
+        return
+      }
+      
+      // ZORUNLU ALAN kontrolü - estimatedValue
+      if (!aiData.estimatedValue) {
+        console.error(`❌ Rapor ${reportId} için estimatedValue eksik!`)
+        res.status(400).json({
+          success: false,
+          message: 'AI analiz verisi eksik veya hatalı. Lütfen analizi tekrar başlatın.',
+          analysisStatus: 'INCOMPLETE',
+          data: report
+        })
+        return
+      }
+      
       res.json({
         success: true,
         data: {
           ...report,
-          aiAnalysisData: report.aiAnalysisData || {}
+          aiAnalysisData: aiData
         }
       })
 

@@ -508,7 +508,12 @@ export class AIService {
    * @private
    */
   private static mapPaintCondition(condition: AdvancedPaintAnalysisResult['boyaDurumu'] | undefined): PaintAnalysisResult['paintCondition'] {
-    switch (condition) {
+    // BoyaDurumu nesnesi ise genelDurum alanını kullan
+    const durum = typeof condition === 'object' && condition !== null 
+      ? condition.genelDurum 
+      : condition
+    
+    switch (durum) {
       case 'mükemmel': return 'excellent'
       case 'iyi': return 'good'
       case 'orta': return 'fair'

@@ -1,14 +1,14 @@
 // Değer tahmini custom hook'u
 
 import { useState, useCallback } from 'react'
-import { VehicleInfo } from '@/types/vehicle'
+import { VehicleInfo, UploadedImage } from '@/types/vehicle'
 import toast from 'react-hot-toast'
 import api from '@/lib/api'
 
 export const useValueEstimation = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
-  const performAnalysis = useCallback(async (vehicleInfo: VehicleInfo, uploadedImagesCount: number) => {
+  const performAnalysis = useCallback(async (vehicleInfo: VehicleInfo, uploadedImages: UploadedImage[]) => {
     setIsAnalyzing(true)
     
     try {
@@ -32,31 +32,39 @@ export const useValueEstimation = () => {
       const reportId = startResponse.data.data.reportId
       console.log('✅ Değer tahmini başlatıldı, Report ID:', reportId)
 
-      // 2. Resimleri yükle (eğer varsa)
-      if (uploadedImagesCount > 0) {
+      // 2. Resimleri yükle (eğer varsa) - Direkt parametre olarak alınan resimler
+      if (uploadedImages && uploadedImages.length > 0) {
         toast.loading('Resimler yükleniyor...', { id: 'value-estimation' })
         
-        // Global resimlerden al
-        const savedImages = localStorage.getItem('globalVehicleImages')
-        if (savedImages) {
-          const images = JSON.parse(savedImages)
-          const formData = new FormData()
-          
-          for (const imageData of images) {
-            if (imageData.preview) {
+        const formData = new FormData()
+        let imageCount = 0
+        
+        for (const imageData of uploadedImages) {
+          if (imageData.preview) {
+            try {
               // Base64'ü blob'a çevir
               const response = await fetch(imageData.preview)
               const blob = await response.blob()
-              formData.append('images', blob, imageData.name)
+              formData.append('images', blob, imageData.name || `image_${imageCount}.jpg`)
+              imageCount++
+              console.log(`📸 Resim ${imageCount} FormData'ya eklendi:`, imageData.name)
+            } catch (err) {
+              console.error('❌ Resim dönüştürme hatası:', err)
             }
           }
+        }
 
-          await api.post(`/api/value-estimation/${reportId}/upload`, formData, {
+        if (imageCount > 0) {
+          console.log(`📤 ${imageCount} resim backend'e gönderiliyor...`)
+          const uploadResponse = await api.post(`/api/value-estimation/${reportId}/upload`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           })
-          
-          console.log('✅ Resimler yüklendi')
+          console.log('✅ Resimler yüklendi:', uploadResponse.data)
+        } else {
+          console.warn('⚠️ Yüklenecek geçerli resim bulunamadı')
         }
+      } else {
+        console.warn('⚠️ Resim yok - görsel analiz yapılmayacak')
       }
 
       // 3. AI analizi gerçekleştir

@@ -253,7 +253,8 @@ function NewReportPageContent() {
         results = await startDamageAnalysis(vehicleInfo, imagesForAnalysis)
       } else if (selectedReportType.id === 'VALUE_ESTIMATION') {
         console.log('[NewReport] Value estimation in progress...')
-        results = await performValueAnalysis(vehicleInfo, imageCount)
+        console.log('[NewReport] Sending images to value analysis:', imagesForAnalysis.length)
+        results = await performValueAnalysis(vehicleInfo, imagesForAnalysis)
       } else if (selectedReportType.id === 'FULL_REPORT') {
         console.log('[NewReport] Comprehensive expertise in progress...')
         results = await performComprehensiveAnalysis(vehicleInfo, imagesForAnalysis, audioRecordingProps.recordedAudios)

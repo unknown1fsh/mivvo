@@ -3,6 +3,7 @@
  * 
  * Değer tahmini raporu için özel render component'i
  * Backend ValueEstimationService'den gelen veriyi güzel bir şekilde gösterir
+ * Görsel analiz (boya, kaporta durumu) dahil
  */
 
 import { motion } from 'framer-motion'
@@ -17,12 +18,14 @@ import {
   ClockIcon,
   StarIcon,
   EyeIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  WrenchScrewdriverIcon,
+  PaintBrushIcon,
+  TruckIcon
 } from '@heroicons/react/24/outline'
-import { ValueEstimationResult, RiskLevel } from '@/types'
 
 interface ValueReportProps {
-  data: ValueEstimationResult
+  data: any
   vehicleInfo: {
     plate: string
     brand: string
@@ -34,29 +37,32 @@ interface ValueReportProps {
 }
 
 export function ValueReport({ data, vehicleInfo, vehicleImages = [], showActions = false }: ValueReportProps) {
-  // Veri kontrolü - AI analiz verisi eksikse hata göster
-  if (!data || !data.estimatedValue || !data.marketAnalysis || !data.vehicleCondition) {
+  // ❌ VERİ KONTROLÜ - Mock/Fallback veri OLMAYACAK!
+  
+  // Veri hiç yoksa
+  if (!data) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8">
+        <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg border-2 border-red-200 p-8">
           <div className="text-center">
             <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <ExclamationTriangleIcon className="w-10 h-10 text-red-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              AI Analiz Verisi Alınamadı
+              🚫 AI Analiz Verisi Alınamadı
             </h2>
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 text-left">
-              <p className="text-gray-800 font-medium mb-2">
-                ⚠️ AI Servisinden Veri Alınamadı
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 text-left">
+              <p className="text-red-800 font-medium mb-2">
+                Değer tahmini yapılamadı
               </p>
-              <p className="text-gray-600 text-sm">
-                Değer tahmini verileri eksik veya AI servisinden veri alınamadı. Bu durum genellikle geçici bir sorundur.
+              <p className="text-red-700 text-sm">
+                AI servisi yanıt vermedi veya görsel analizi gerçekleştirilemedi. 
+                Bu durum için krediniz otomatik olarak iade edilmiştir.
               </p>
             </div>
-            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6 text-left">
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-6 text-left">
               <p className="text-green-800 font-medium mb-2">
-                ✅ Krediniz Otomatik İade Edildi
+                ✅ Krediniz İade Edildi
               </p>
               <p className="text-green-700 text-sm">
                 Analiz başarısız olduğu için kullandığınız kredi otomatik olarak hesabınıza iade edilmiştir.
@@ -65,15 +71,15 @@ export function ValueReport({ data, vehicleInfo, vehicleImages = [], showActions
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
                 onClick={() => window.location.reload()}
-                className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Tekrar Dene
               </button>
               <a
                 href="/dashboard"
-                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors"
               >
-                Dashboard&apos;a Dön
+                Dashboard'a Dön
               </a>
             </div>
           </div>
@@ -81,45 +87,112 @@ export function ValueReport({ data, vehicleInfo, vehicleImages = [], showActions
       </div>
     )
   }
-
-  const getRiskColor = (risk: RiskLevel | 'unknown') => {
-    switch (risk) {
-      case 'low': return 'text-green-600 bg-green-100'
-      case 'medium': return 'text-yellow-600 bg-yellow-100'
-      case 'high': return 'text-red-600 bg-red-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
+  
+  // estimatedValue ZORUNLU - yoksa hata göster
+  if (!data.estimatedValue) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-white rounded-xl shadow-lg border-2 border-orange-200 p-8">
+          <div className="text-center">
+            <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <ExclamationTriangleIcon className="w-10 h-10 text-orange-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              ⚠️ Eksik Analiz Verisi
+            </h2>
+            <div className="bg-orange-50 border-l-4 border-orange-500 p-4 mb-6 text-left">
+              <p className="text-orange-800 font-medium mb-2">
+                Değer tahmini verisi eksik
+              </p>
+              <p className="text-orange-700 text-sm">
+                AI analizi tamamlandı ancak tahmini değer bilgisi alınamadı.
+                Lütfen analizi tekrar başlatın.
+              </p>
+            </div>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 text-left">
+              <p className="text-blue-800 font-medium mb-2">
+                💡 Ne Yapmalısınız?
+              </p>
+              <ul className="text-blue-700 text-sm list-disc list-inside space-y-1">
+                <li>Fotoğrafların net ve araç görüntüsünü içerdiğinden emin olun</li>
+                <li>Farklı açılardan birden fazla fotoğraf yükleyin</li>
+                <li>İnternet bağlantınızı kontrol edin</li>
+              </ul>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Tekrar Dene
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  const getRiskDescription = (risk: RiskLevel | 'unknown') => {
-    switch (risk) {
-      case 'low': return 'Düşük Risk'
-      case 'medium': return 'Orta Risk'
-      case 'high': return 'Yüksek Risk'
-      default: return 'Bilinmiyor'
-    }
+  // Değer verilerini çıkar (yeni ve eski format desteği)
+  const estimatedValue = data.estimatedValue?.recommendedValue || data.estimatedValue?.tahminiDeğer || 
+                         (typeof data.estimatedValue === 'number' ? data.estimatedValue : 0)
+  const minValue = data.estimatedValue?.minValue || data.piyasaAnalizi?.fiyatAralığı?.min || 0
+  const maxValue = data.estimatedValue?.maxValue || data.piyasaAnalizi?.fiyatAralığı?.max || 0
+  const quickSaleValue = data.estimatedValue?.quickSaleValue || Math.round(estimatedValue * 0.95)
+  const confidence = data.sonuçÖzeti?.güvenSeviyesi || data.confidence || 75
+
+  // Görsel analiz verisi
+  const görselAnaliz = data.görselAnaliz || {}
+  const boyaDurumu = görselAnaliz.boyaDurumu || {}
+  const kaportaDurumu = görselAnaliz.kaportaDurumu || {}
+  const lastikJant = görselAnaliz.lastikJant || {}
+  const içMekan = görselAnaliz.içMekan || {}
+
+  // Değer hesaplama
+  const değerHesaplama = data.değerHesaplama || {}
+
+  // Araç durum özeti
+  const araçDurum = data.araçDurumÖzeti || {}
+
+  // Piyasa analizi
+  const piyasaAnalizi = data.piyasaAnalizi || data.marketAnalysis || {}
+
+  // Öneriler
+  const öneriler = data.öneriler || data.recommendations || {}
+
+  // Puan rengi helper
+  const getPuanColor = (puan: number) => {
+    if (puan >= 80) return 'text-green-600 bg-green-100'
+    if (puan >= 60) return 'text-yellow-600 bg-yellow-100'
+    if (puan >= 40) return 'text-orange-600 bg-orange-100'
+    return 'text-red-600 bg-red-100'
+  }
+
+  const getPuanLabel = (puan: number) => {
+    if (puan >= 80) return 'Çok İyi'
+    if (puan >= 60) return 'İyi'
+    if (puan >= 40) return 'Orta'
+    return 'Kötü'
   }
 
   return (
-    <div className="space-y-8">
-      {/* Yüklenen Fotoğraflar - En Üstte */}
+    <div className="space-y-6">
+      {/* Yüklenen Fotoğraflar */}
       {vehicleImages && vehicleImages.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
         >
-          <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <EyeIcon className="w-6 h-6 text-blue-500 mr-2" />
-            Yüklenen Fotoğraflar
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <EyeIcon className="w-5 h-5 text-blue-500 mr-2" />
+            Analiz Edilen Fotoğraflar
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {vehicleImages.map((img, index) => (
-              <div key={img.id || index} className="relative group">
+              <div key={img.id || index} className="relative">
                 <img
                   src={img.imageUrl}
                   alt={`Araç fotoğrafı ${index + 1}`}
-                  className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                  className="w-full h-32 object-cover rounded-lg border border-gray-200"
                 />
               </div>
             ))}
@@ -127,558 +200,548 @@ export function ValueReport({ data, vehicleInfo, vehicleImages = [], showActions
         </motion.div>
       )}
 
-      {/* Genel Değerlendirme */}
-      <motion.div 
+      {/* Ana Değer Kartı */}
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+        className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg p-6 text-white"
       >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <ChartBarIcon className="w-6 h-6 text-green-500 mr-2" />
-          Genel Değerlendirme
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium opacity-90">Tahmini Piyasa Değeri</h3>
+          <div className="bg-white/20 rounded-full px-3 py-1 text-sm">
+            Güven: %{confidence}
+          </div>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-4xl font-bold text-green-600 mb-2">
-              {data.estimatedValue.toLocaleString()}₺
-            </div>
-            <div className="text-sm text-gray-500">Tahmini Değer</div>
-            <div className="text-xs text-gray-400 mt-1">
-              Güven: %{data.confidence}
-            </div>
+        <div className="text-center py-4">
+          <div className="text-5xl font-bold mb-2">
+            {estimatedValue.toLocaleString('tr-TR')}₺
           </div>
-          
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600 mb-2">
-              {data.marketAnalysis.priceRange.min.toLocaleString()}₺ - {data.marketAnalysis.priceRange.max.toLocaleString()}₺
-            </div>
-            <div className="text-sm text-gray-500">Piyasa Aralığı</div>
-            <div className="text-xs text-gray-400 mt-1">
-              Ortalama: {data.marketAnalysis.priceRange.average.toLocaleString()}₺
-            </div>
+          <div className="text-white/80 text-sm">
+            Önerilen satış fiyatı
           </div>
-          
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/20">
           <div className="text-center">
-            <div className={`text-2xl font-bold mb-2 ${getRiskColor((data.investmentAnalysis?.riskLevel || 'unknown') as any).split(' ')[0]}`}>
-              {getRiskDescription((data.investmentAnalysis?.riskLevel || 'unknown') as any)}
-            </div>
-            <div className="text-sm text-gray-500">Yatırım Riski</div>
-            <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mt-2 ${getRiskColor((data.investmentAnalysis?.riskLevel || 'unknown') as any)}`}>
-              {data.investmentAnalysis?.riskLevel || 'Bilinmiyor'}
-            </div>
+            <div className="text-2xl font-semibold">{minValue.toLocaleString('tr-TR')}₺</div>
+            <div className="text-xs text-white/70">Minimum</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-semibold">{maxValue.toLocaleString('tr-TR')}₺</div>
+            <div className="text-xs text-white/70">Maksimum</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-semibold">{quickSaleValue.toLocaleString('tr-TR')}₺</div>
+            <div className="text-xs text-white/70">Hızlı Satış</div>
           </div>
         </div>
       </motion.div>
 
-      {/* Pazar Analizi */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-      >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <ArrowTrendingUpIcon className="w-6 h-6 text-blue-500 mr-2" />
-          Pazar Analizi
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Pazar Durumu</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Güncel Pazar Değeri:</span>
-                <span className="font-medium">{data.marketAnalysis.currentMarketValue.toLocaleString()}₺</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Pazar Trendi:</span>
-                <span className="font-medium">{data.marketAnalysis.marketTrend}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Talep Seviyesi:</span>
-                <span className="font-medium">{data.marketAnalysis.demandLevel}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Arz Seviyesi:</span>
-                <span className="font-medium">{data.marketAnalysis.supplyLevel}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Pazar Faktörleri</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Bölgesel Fark:</span>
-                <span className="font-medium">{data.marketAnalysis.regionalVariation}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Mevsimsel Etki:</span>
-                <span className="font-medium">{data.marketAnalysis.seasonalImpact}</span>
-              </div>
-            </div>
-            
-            <div className="mt-4">
-              <h5 className="text-sm font-medium text-gray-700 mb-2">Pazar İçgörüleri</h5>
-              <ul className="space-y-1">
-                {data.marketAnalysis.marketInsights.map((insight, index) => (
-                  <li key={index} className="flex items-center text-sm text-gray-600">
-                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2" />
-                    {insight}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      {/* Görsel Analiz - Boya ve Kaporta */}
+      {görselAnaliz.yapıldıMı && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <PaintBrushIcon className="w-5 h-5 text-purple-500 mr-2" />
+            Görsel Analiz Sonuçları
+            <span className="ml-2 text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+              Fotoğraflardan Analiz Edildi
+            </span>
+          </h3>
 
-      {/* Araç Durumu */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-      >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <EyeIcon className="w-6 h-6 text-purple-500 mr-2" />
-          Araç Durumu
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Durum Değerlendirmesi</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Genel Durum:</span>
-                <span className="font-medium">{data.vehicleCondition.overallCondition}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Boya Durumu */}
+            <div className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-800">🎨 Boya Durumu</h4>
+                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getPuanColor(boyaDurumu.puan || 0)}`}>
+                  {boyaDurumu.puan || 0}/100
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Durum Skoru:</span>
-                <span className="font-medium">{data.vehicleCondition.conditionScore}/100</span>
+              <div className="text-sm text-gray-600 mb-2">
+                Durum: <span className="font-medium capitalize">{boyaDurumu.genelDurum || 'Bilinmiyor'}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Kilometre Etkisi:</span>
-                <span className="font-medium">{data.vehicleCondition.mileageImpact}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Yaş Etkisi:</span>
-                <span className="font-medium">{data.vehicleCondition.ageImpact}</span>
-              </div>
+              {boyaDurumu.tespitler && boyaDurumu.tespitler.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-xs text-gray-500 mb-1">Tespitler:</div>
+                  <ul className="space-y-1">
+                    {boyaDurumu.tespitler.map((tespit: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start">
+                        <span className="text-orange-500 mr-2">•</span>
+                        {tespit}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {boyaDurumu.boyaDeğerEtkisi && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <span className="text-sm text-gray-500">Değer Etkisi: </span>
+                  <span className={`font-semibold ${boyaDurumu.boyaDeğerEtkisi < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {boyaDurumu.boyaDeğerEtkisi.toLocaleString('tr-TR')}₺
+                  </span>
+                </div>
+              )}
             </div>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Geçmiş Bilgileri</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Kaza Geçmişi:</span>
-                <span className="font-medium">{data.vehicleCondition.accidentHistory ? 'Var' : 'Yok'}</span>
+
+            {/* Kaporta Durumu */}
+            <div className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-800">🚗 Kaporta Durumu</h4>
+                <span className={`px-2 py-1 rounded-full text-sm font-medium ${getPuanColor(kaportaDurumu.puan || 0)}`}>
+                  {kaportaDurumu.puan || 0}/100
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Sahiplik Geçmişi:</span>
-                <span className="font-medium">{data.vehicleCondition.ownershipHistory}</span>
+              <div className="text-sm text-gray-600 mb-2">
+                Durum: <span className="font-medium capitalize">{kaportaDurumu.genelDurum || 'Bilinmiyor'}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Servis Kayıtları:</span>
-                <span className="font-medium">{data.vehicleCondition.serviceRecords ? 'Mevcut' : 'Yok'}</span>
-              </div>
+              {kaportaDurumu.tespitler && kaportaDurumu.tespitler.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-xs text-gray-500 mb-1">Tespitler:</div>
+                  <ul className="space-y-1">
+                    {kaportaDurumu.tespitler.map((tespit: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start">
+                        <span className="text-orange-500 mr-2">•</span>
+                        {tespit}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {kaportaDurumu.kaportaDeğerEtkisi && (
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <span className="text-sm text-gray-500">Değer Etkisi: </span>
+                  <span className={`font-semibold ${kaportaDurumu.kaportaDeğerEtkisi < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {kaportaDurumu.kaportaDeğerEtkisi.toLocaleString('tr-TR')}₺
+                  </span>
+                </div>
+              )}
             </div>
-            
-            {data.vehicleCondition.modifications && data.vehicleCondition.modifications.length > 0 && (
-              <div className="mt-4">
-                <h5 className="text-sm font-medium text-gray-700 mb-2">Modifikasyonlar</h5>
+
+            {/* Lastik/Jant */}
+            <div className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-800">🛞 Lastik & Jant</h4>
+                <span className="text-sm font-medium text-gray-600 capitalize">
+                  {lastikJant.durum || 'Bilinmiyor'}
+                </span>
+              </div>
+              {lastikJant.tespitler && lastikJant.tespitler.length > 0 && (
                 <ul className="space-y-1">
-                  {data.vehicleCondition.modifications.map((mod, index) => (
-                    <li key={index} className="flex items-center text-sm text-gray-600">
-                      <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mr-2" />
-                      {mod}
+                  {lastikJant.tespitler.map((tespit: string, i: number) => (
+                    <li key={i} className="text-sm text-gray-700 flex items-start">
+                      <span className="text-blue-500 mr-2">•</span>
+                      {tespit}
                     </li>
                   ))}
                 </ul>
+              )}
+              {lastikJant.değerEtkisi && (
+                <div className="mt-2">
+                  <span className="text-sm text-gray-500">Değer Etkisi: </span>
+                  <span className={`font-semibold ${lastikJant.değerEtkisi < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {lastikJant.değerEtkisi.toLocaleString('tr-TR')}₺
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* İç Mekan */}
+            <div className="border border-gray-100 rounded-lg p-4 bg-gray-50">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-800">🪑 İç Mekan</h4>
+                <span className="text-sm font-medium text-gray-600 capitalize">
+                  {içMekan.durum || 'Bilinmiyor'}
+                </span>
+              </div>
+              {içMekan.tespitler && içMekan.tespitler.length > 0 && (
+                <ul className="space-y-1">
+                  {içMekan.tespitler.map((tespit: string, i: number) => (
+                    <li key={i} className="text-sm text-gray-700 flex items-start">
+                      <span className="text-blue-500 mr-2">•</span>
+                      {tespit}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {içMekan.değerEtkisi && (
+                <div className="mt-2">
+                  <span className="text-sm text-gray-500">Değer Etkisi: </span>
+                  <span className={`font-semibold ${içMekan.değerEtkisi < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {içMekan.değerEtkisi.toLocaleString('tr-TR')}₺
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Genel İzlenim */}
+          {görselAnaliz.genelİzlenim && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <div className="flex items-start">
+                <EyeIcon className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />
+                <div>
+                  <div className="font-medium text-blue-800 mb-1">Genel İzlenim</div>
+                  <p className="text-sm text-blue-700">{görselAnaliz.genelİzlenim}</p>
+                </div>
+              </div>
+              {görselAnaliz.toplamGörselEtki && (
+                <div className="mt-2 text-right">
+                  <span className="text-sm text-blue-600">Toplam Görsel Etki: </span>
+                  <span className={`font-bold ${görselAnaliz.toplamGörselEtki < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {görselAnaliz.toplamGörselEtki.toLocaleString('tr-TR')}₺
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Değer Hesaplama Kırılımı */}
+      {değerHesaplama.sıfırAraçFiyatı && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <ChartBarIcon className="w-5 h-5 text-green-500 mr-2" />
+            Değer Hesaplama Kırılımı
+          </h3>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <span className="text-gray-600">Sıfır Araç Referans Fiyatı</span>
+              <span className="font-semibold text-gray-900">
+                {değerHesaplama.sıfırAraçFiyatı?.toLocaleString('tr-TR')}₺
+              </span>
+            </div>
+            
+            {değerHesaplama.modelYılıDüşüşü && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Model Yılı Düşüşü</span>
+                <span className="font-semibold text-red-600">
+                  {değerHesaplama.modelYılıDüşüşü.toLocaleString('tr-TR')}₺
+                </span>
               </div>
             )}
-          </div>
-        </div>
-      </motion.div>
+            
+            {değerHesaplama.kmEtkisi && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Kilometre Etkisi</span>
+                <span className="font-semibold text-red-600">
+                  {değerHesaplama.kmEtkisi.toLocaleString('tr-TR')}₺
+                </span>
+              </div>
+            )}
+            
+            {değerHesaplama.boyaDurumuEtkisi && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Boya Durumu Etkisi</span>
+                <span className={`font-semibold ${değerHesaplama.boyaDurumuEtkisi < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {değerHesaplama.boyaDurumuEtkisi.toLocaleString('tr-TR')}₺
+                </span>
+              </div>
+            )}
+            
+            {değerHesaplama.kaportaEtkisi && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Kaporta Durumu Etkisi</span>
+                <span className={`font-semibold ${değerHesaplama.kaportaEtkisi < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {değerHesaplama.kaportaEtkisi.toLocaleString('tr-TR')}₺
+                </span>
+              </div>
+            )}
+            
+            {değerHesaplama.genelDurumEtkisi && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Genel Durum Etkisi</span>
+                <span className={`font-semibold ${değerHesaplama.genelDurumEtkisi < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {değerHesaplama.genelDurumEtkisi.toLocaleString('tr-TR')}₺
+                </span>
+              </div>
+            )}
+            
+            {değerHesaplama.piyasaDurumu && (
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-gray-600">Piyasa Durumu Etkisi</span>
+                <span className={`font-semibold ${değerHesaplama.piyasaDurumu < 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {değerHesaplama.piyasaDurumu.toLocaleString('tr-TR')}₺
+                </span>
+              </div>
+            )}
 
-      {/* Fiyat Kırılımı */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-      >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <CurrencyDollarIcon className="w-6 h-6 text-green-500 mr-2" />
-          Fiyat Kırılımı
-        </h3>
-        
-        <div className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Temel Değer:</span>
-                <span className="font-medium">{data.priceBreakdown.baseValue.toLocaleString()}₺</span>
+            <div className="flex justify-between items-center py-3 bg-emerald-50 rounded-lg px-4 mt-2">
+              <span className="font-semibold text-emerald-800">Hesaplanan Değer</span>
+              <span className="text-xl font-bold text-emerald-600">
+                {(değerHesaplama.hesaplananDeğer || estimatedValue).toLocaleString('tr-TR')}₺
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Araç Durum Özeti */}
+      {araçDurum.genelPuan && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <ShieldCheckIcon className="w-5 h-5 text-blue-500 mr-2" />
+            Araç Durum Özeti
+          </h3>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className={`text-3xl font-bold ${getPuanColor(araçDurum.genelPuan).split(' ')[0]}`}>
+                {araçDurum.genelPuan}
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Kilometre Ayarlaması:</span>
-                <span className={`font-medium ${data.priceBreakdown.mileageAdjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {data.priceBreakdown.mileageAdjustment >= 0 ? '+' : ''}{data.priceBreakdown.mileageAdjustment.toLocaleString()}₺
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Durum Ayarlaması:</span>
-                <span className={`font-medium ${data.priceBreakdown.conditionAdjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {data.priceBreakdown.conditionAdjustment >= 0 ? '+' : ''}{data.priceBreakdown.conditionAdjustment.toLocaleString()}₺
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Özellik Ayarlaması:</span>
-                <span className={`font-medium ${data.priceBreakdown.featuresAdjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {data.priceBreakdown.featuresAdjustment >= 0 ? '+' : ''}{data.priceBreakdown.featuresAdjustment.toLocaleString()}₺
-                </span>
+              <div className="text-sm text-gray-500 mt-1">Genel Puan</div>
+              <div className={`text-xs mt-1 px-2 py-0.5 rounded-full inline-block ${getPuanColor(araçDurum.genelPuan)}`}>
+                {getPuanLabel(araçDurum.genelPuan)}
               </div>
             </div>
             
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Pazar Ayarlaması:</span>
-                <span className={`font-medium ${data.priceBreakdown.marketAdjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {data.priceBreakdown.marketAdjustment >= 0 ? '+' : ''}{data.priceBreakdown.marketAdjustment.toLocaleString()}₺
-                </span>
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className={`text-3xl font-bold ${getPuanColor(araçDurum.boyaPuan || 0).split(' ')[0]}`}>
+                {araçDurum.boyaPuan || '-'}
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Bölgesel Ayarlama:</span>
-                <span className={`font-medium ${data.priceBreakdown.regionalAdjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {data.priceBreakdown.regionalAdjustment >= 0 ? '+' : ''}{data.priceBreakdown.regionalAdjustment.toLocaleString()}₺
-                </span>
+              <div className="text-sm text-gray-500 mt-1">Boya Puanı</div>
+            </div>
+            
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className={`text-3xl font-bold ${getPuanColor(araçDurum.kaportaPuan || 0).split(' ')[0]}`}>
+                {araçDurum.kaportaPuan || '-'}
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Mevsimsel Ayarlama:</span>
-                <span className={`font-medium ${data.priceBreakdown.seasonalAdjustment >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {data.priceBreakdown.seasonalAdjustment >= 0 ? '+' : ''}{data.priceBreakdown.seasonalAdjustment.toLocaleString()}₺
-                </span>
+              <div className="text-sm text-gray-500 mt-1">Kaporta Puanı</div>
+            </div>
+            
+            <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className={`text-3xl font-bold ${getPuanColor(araçDurum.mekanikTahmin || 0).split(' ')[0]}`}>
+                {araçDurum.mekanikTahmin || '-'}
               </div>
-              
-              {/* Hasar Maliyetleri */}
-              {data.priceBreakdown.damageRepairCost && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">⚠️ Hasar Tamir Maliyeti:</span>
-                  <span className="font-medium text-red-600">
-                    -{Math.abs(data.priceBreakdown.damageRepairCost).toLocaleString()}₺
-                  </span>
-                </div>
-              )}
-              
-              {data.priceBreakdown.damageHistoryPenalty && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">⚠️ Hasar Geçmişi Cezası:</span>
-                  <span className="font-medium text-red-600">
-                    -{Math.abs(data.priceBreakdown.damageHistoryPenalty).toLocaleString()}₺
-                  </span>
-                </div>
-              )}
-              
-              {data.priceBreakdown.structuralDamagePenalty && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">🚨 Yapısal Hasar Cezası:</span>
-                  <span className="font-medium text-red-600">
-                    -{Math.abs(data.priceBreakdown.structuralDamagePenalty).toLocaleString()}₺
-                  </span>
-                </div>
-              )}
-              
-              {data.priceBreakdown.safetyRiskPenalty && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">🚨 Güvenlik Riski Cezası:</span>
-                  <span className="font-medium text-red-600">
-                    -{Math.abs(data.priceBreakdown.safetyRiskPenalty).toLocaleString()}₺
-                  </span>
-                </div>
-              )}
+              <div className="text-sm text-gray-500 mt-1">Mekanik Tahmin</div>
             </div>
           </div>
-          
-          <div className="border-t pt-3">
-            <div className="flex items-center justify-between py-2 font-semibold">
-              <span className="text-lg text-gray-900">Final Değer</span>
-              <span className="text-xl text-green-600">{data.priceBreakdown.finalValue.toLocaleString()}₺</span>
-            </div>
-          </div>
-          
-          {/* Detaylı Fiyat Kırılımı */}
-          {data.priceBreakdown.breakdown && data.priceBreakdown.breakdown.length > 0 && (
-            <div className="mt-6">
-              <h4 className="font-medium text-gray-700 mb-3">Detaylı Fiyat Kırılımı</h4>
-              <div className="space-y-2">
-                {data.priceBreakdown.breakdown.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{item.factor}</div>
-                      <div className="text-sm text-gray-600">{item.description}</div>
-                    </div>
-                    <div className={`font-semibold ${item.impact >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {item.impact >= 0 ? '+' : ''}{item.impact.toLocaleString()}₺
-                    </div>
-                  </div>
-                ))}
-              </div>
+
+          {araçDurum.durumAçıklaması && (
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <p className="text-blue-800">{araçDurum.durumAçıklaması}</p>
             </div>
           )}
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
-      {/* Pazar Konumu */}
-      <motion.div 
+      {/* Piyasa Analizi */}
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
       >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <ArrowTrendingUpIcon className="w-6 h-6 text-indigo-500 mr-2" />
-          Pazar Konumu
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <ArrowTrendingUpIcon className="w-5 h-5 text-indigo-500 mr-2" />
+          Piyasa Analizi
         </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Konum Analizi</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Yüzdelik Dilim:</span>
-                <span className="font-medium">{data.marketPosition.percentile}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Rekabetçi Konum:</span>
-                <span className="font-medium">{data.marketPosition.competitivePosition}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Fiyatlandırma Stratejisi:</span>
-                <span className="font-medium">{data.marketPosition.pricingStrategy}</span>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Hedef Alıcılar</h4>
-            <ul className="space-y-1">
-              {data.marketPosition.targetBuyers.map((buyer, index) => (
-                <li key={index} className="flex items-center text-sm text-gray-600">
-                  <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full mr-2" />
-                  {buyer}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-green-700 mb-2">Pazar Avantajları</h4>
-            <ul className="space-y-1">
-              {data.marketPosition.marketAdvantages.map((advantage, index) => (
-                <li key={index} className="flex items-center text-sm text-gray-600">
-                  <CheckCircleIcon className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                  {advantage}
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-orange-700 mb-2">Pazar Dezavantajları</h4>
-            <ul className="space-y-1">
-              {data.marketPosition.marketDisadvantages.map((disadvantage, index) => (
-                <li key={index} className="flex items-center text-sm text-gray-600">
-                  <ExclamationTriangleIcon className="w-4 h-4 text-orange-500 mr-2 flex-shrink-0" />
-                  {disadvantage}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </motion.div>
 
-      {/* Yatırım Analizi */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-      >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <ShieldCheckIcon className="w-6 h-6 text-green-500 mr-2" />
-          Yatırım Analizi
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Yatırım Değerlendirmesi</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Yatırım Notu:</span>
-                <span className="font-medium">{data.investmentAnalysis?.investmentGrade || 'Bilinmiyor'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Değer Artış Potansiyeli:</span>
-                <span className="font-medium">{data.investmentAnalysis?.appreciationPotential || 'Bilinmiyor'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Değer Kaybı Oranı:</span>
-                <span className="font-medium">{data.investmentAnalysis?.depreciationRate || 'Bilinmiyor'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Likidite Skoru:</span>
-                <span className="font-medium">{data.investmentAnalysis?.liquidityScore || 'Bilinmiyor'}/100</span>
-              </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-500 mb-1">Ortalama Piyasa Fiyatı</div>
+            <div className="text-xl font-bold text-gray-900">
+              {(piyasaAnalizi.ortalamaFiyat || piyasaAnalizi.priceRange?.average || 0).toLocaleString('tr-TR')}₺
             </div>
           </div>
           
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Yatırım Detayları</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Aylık Maliyet:</span>
-                <span className="font-medium">{data.investmentAnalysis?.holdingCostPerMonth || 'Bilinmiyor'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Likidite Skoru:</span>
-                <span className="font-medium">{data.investmentAnalysis?.liquidityScore || 'Bilinmiyor'}/100</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Yatırım Süresi:</span>
-                <span className="font-medium">{data.investmentAnalysis?.investmentHorizon || 'Bilinmiyor'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Risk Seviyesi:</span>
-                <span className="font-medium">{data.investmentAnalysis?.riskLevel || 'Bilinmiyor'}</span>
-              </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-500 mb-1">Piyasa Trendi</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {piyasaAnalizi.piyasaTrendi || piyasaAnalizi.marketTrend || 'Bilinmiyor'}
             </div>
           </div>
-        </div>
-        
-        <div className="mt-6 bg-gray-50 rounded-lg p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-green-600 mb-1">
-                {data.recommendations?.sellingPrice?.optimal?.toLocaleString() || 'Bilinmiyor'}₺
-              </div>
-              <div className="text-sm text-gray-500">Önerilen Satış Fiyatı</div>
+          
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-500 mb-1">Talep Durumu</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {piyasaAnalizi.talepDurumu || piyasaAnalizi.demandLevel || 'Bilinmiyor'}
             </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600 mb-1">
-                {data.recommendations?.buyingPrice?.optimal?.toLocaleString() || 'Bilinmiyor'}₺
-              </div>
-              <div className="text-sm text-gray-500">Önerilen Alış Fiyatı</div>
+          </div>
+          
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-500 mb-1">Arz Durumu</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {piyasaAnalizi.arzDurumu || piyasaAnalizi.supplyLevel || 'Bilinmiyor'}
             </div>
-            <div>
-              <div className="text-2xl font-bold text-purple-600 mb-1">
-                {data.estimatedValue?.toLocaleString() || 'Bilinmiyor'}₺
-              </div>
-              <div className="text-sm text-gray-500">Tahmini Değer</div>
+          </div>
+          
+          <div className="p-4 bg-gray-50 rounded-lg col-span-2">
+            <div className="text-sm text-gray-500 mb-1">Tahmini Satış Süresi</div>
+            <div className="text-lg font-semibold text-gray-900">
+              {piyasaAnalizi.satışSüresiTahmini || '20-30 gün'}
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Öneriler */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
-      >
-        <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          <LightBulbIcon className="w-6 h-6 text-yellow-500 mr-2" />
-          Öneriler
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-green-700 mb-2">Satış Fiyatları</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Minimum:</span>
-                <span className="font-medium">{data.recommendations.sellingPrice.min.toLocaleString()}₺</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Optimal:</span>
-                <span className="font-medium text-green-600">{data.recommendations.sellingPrice.optimal.toLocaleString()}₺</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Maksimum:</span>
-                <span className="font-medium">{data.recommendations.sellingPrice.max.toLocaleString()}₺</span>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-blue-700 mb-2">Satın Alma Fiyatları</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Minimum:</span>
-                <span className="font-medium">{data.recommendations.buyingPrice.min.toLocaleString()}₺</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Optimal:</span>
-                <span className="font-medium text-blue-600">{data.recommendations.buyingPrice.optimal.toLocaleString()}₺</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Maksimum:</span>
-                <span className="font-medium">{data.recommendations.buyingPrice.max.toLocaleString()}₺</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Pazarlık İpuçları</h4>
-            <ul className="space-y-1">
-              {data.recommendations.negotiationTips.map((tip, index) => (
-                <li key={index} className="flex items-start text-sm text-gray-600">
-                  <LightBulbIcon className="w-4 h-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                  {tip}
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-medium text-gray-700 mb-2">Zamanlama Tavsiyeleri</h4>
-            <ul className="space-y-1">
-              {data.recommendations.timingAdvice.map((advice, index) => (
-                <li key={index} className="flex items-start text-sm text-gray-600">
-                  <ClockIcon className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" />
-                  {advice}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        
-        {data.recommendations.improvementSuggestions && data.recommendations.improvementSuggestions.length > 0 && (
-          <div className="mt-6">
-            <h4 className="font-medium text-gray-700 mb-2">İyileştirme Önerileri</h4>
-            <div className="space-y-3">
-              {data.recommendations.improvementSuggestions.map((suggestion, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <h5 className="font-medium text-gray-900">{suggestion.action}</h5>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-green-600">+{suggestion.valueIncrease.toLocaleString()}₺</div>
-                      <div className="text-xs text-gray-500">Maliyet: {suggestion.cost.toLocaleString()}₺</div>
-                    </div>
+      {/* Satış/Alım Önerileri */}
+      {öneriler && (öneriler.satışİçin || öneriler.alımİçin) && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <LightBulbIcon className="w-5 h-5 text-yellow-500 mr-2" />
+            Fiyat Önerileri
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Satış İçin */}
+            {öneriler.satışİçin && (
+              <div className="border border-green-200 rounded-lg p-4 bg-green-50">
+                <h4 className="font-semibold text-green-800 mb-3 flex items-center">
+                  <ArrowTrendingUpIcon className="w-4 h-4 mr-2" />
+                  Satış Fiyatı Önerisi
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Önerilen Fiyat:</span>
+                    <span className="font-bold text-green-800">
+                      {(öneriler.satışİçin.önerilenfiyat || öneriler.satışİçin.önerilen || 0).toLocaleString('tr-TR')}₺
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-600">{suggestion.description}</p>
+                  <div className="flex justify-between">
+                    <span className="text-green-700">Minimum Fiyat:</span>
+                    <span className="font-semibold text-green-700">
+                      {(öneriler.satışİçin.minimumFiyat || öneriler.satışİçin.min || 0).toLocaleString('tr-TR')}₺
+                    </span>
+                  </div>
+                  {öneriler.satışİçin.pazarlıkPayı && (
+                    <div className="flex justify-between">
+                      <span className="text-green-700">Pazarlık Payı:</span>
+                      <span className="font-semibold text-green-700">{öneriler.satışİçin.pazarlıkPayı}</span>
+                    </div>
+                  )}
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Alım İçin */}
+            {öneriler.alımİçin && (
+              <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                  <ArrowTrendingDownIcon className="w-4 h-4 mr-2" />
+                  Alım Fiyatı Önerisi
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Hedef Fiyat:</span>
+                    <span className="font-bold text-blue-800">
+                      {(öneriler.alımİçin.hedefFiyat || öneriler.alımİçin.hedef || 0).toLocaleString('tr-TR')}₺
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Maksimum Öde:</span>
+                    <span className="font-semibold text-blue-700">
+                      {(öneriler.alımİçin.maksimumÖde || öneriler.alımİçin.max || 0).toLocaleString('tr-TR')}₺
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* İyileştirme Önerileri */}
+      {öneriler.iyileştirmeler && öneriler.iyileştirmeler.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <WrenchScrewdriverIcon className="w-5 h-5 text-orange-500 mr-2" />
+            Değer Artırma Önerileri
+          </h3>
+
+          <div className="space-y-3">
+            {öneriler.iyileştirmeler.map((item: any, index: number) => (
+              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="flex-1">
+                  <div className="font-medium text-gray-800">{item.işlem}</div>
+                  <div className="text-sm text-gray-500">Maliyet: {item.maliyet?.toLocaleString('tr-TR')}₺</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-green-600 font-bold">+{item.değerArtışı?.toLocaleString('tr-TR')}₺</div>
+                  <div className="text-xs text-gray-400">Tahmini Artış</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Sonuç Özeti */}
+      {data.sonuçÖzeti && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl shadow-lg p-6 text-white"
+        >
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <CheckCircleIcon className="w-5 h-5 text-emerald-400 mr-2" />
+            Sonuç Özeti
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <div className="text-4xl font-bold text-emerald-400 mb-2">
+                {data.sonuçÖzeti.tahminiDeğer?.toLocaleString('tr-TR')}₺
+              </div>
+              <div className="text-gray-400">Tahmini Piyasa Değeri</div>
+              <div className="mt-2 text-sm text-gray-300">
+                Güven Seviyesi: %{data.sonuçÖzeti.güvenSeviyesi}
+              </div>
+            </div>
+            
+            <div>
+              {data.sonuçÖzeti.değerlendirmeNotu && (
+                <div className="mb-3">
+                  <div className="text-sm text-gray-400 mb-1">Değerlendirme</div>
+                  <div className="text-white">{data.sonuçÖzeti.değerlendirmeNotu}</div>
+                </div>
+              )}
+              
+              {data.sonuçÖzeti.önemliNotlar && data.sonuçÖzeti.önemliNotlar.length > 0 && (
+                <div>
+                  <div className="text-sm text-gray-400 mb-2">Önemli Notlar</div>
+                  <ul className="space-y-1">
+                    {data.sonuçÖzeti.önemliNotlar.map((not: string, i: number) => (
+                      <li key={i} className="text-sm text-gray-300 flex items-start">
+                        <span className="text-emerald-400 mr-2">•</span>
+                        {not}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
-        )}
-      </motion.div>
+        </motion.div>
+      )}
     </div>
   )
 }

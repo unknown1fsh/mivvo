@@ -62,40 +62,8 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting
-// Test ortamında rate limiting'i devre dışı bırak
-if (!isTest()) {
-  // Production'da daha sıkı rate limiting
-  const maxRequests = isProduction() 
-    ? Math.min(env.RATE_LIMIT_MAX_REQUESTS, 50) // Max 50 in production
-    : env.RATE_LIMIT_MAX_REQUESTS;
-  
-  const windowMs = env.RATE_LIMIT_WINDOW_MS;
-  
-  const limiter = rateLimit({
-    windowMs,
-    max: maxRequests,
-    message: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.',
-    standardHeaders: true,
-    legacyHeaders: false,
-    skipSuccessfulRequests: false,
-    skipFailedRequests: false,
-    skip: (req) => {
-      // Admin route'ları için rate limiting'i bypass et
-      if (req.path.startsWith('/api/admin')) {
-        return true;
-      }
-      return false;
-    },
-    keyGenerator: (req) => {
-      // X-Forwarded-For header'ını kullan (production deployments için)
-      return req.ip || req.connection.remoteAddress || 'unknown';
-    },
-  });
-  app.use(limiter);
-}
-
-// CORS configuration
+// CORS configuration - Rate limiter'dan ÖNCE olmalı (429 yanıtlarında CORS header'ları için)
+// Bu sayede rate limit aşıldığında bile CORS header'ları gönderilir
 const corsOptions = {
   origin: function (origin: string | undefined, callback: Function) {
     // Production ortamında sıkı origin kontrolü
@@ -151,6 +119,48 @@ const corsOptions = {
 app.options('*', cors(corsOptions));
 
 app.use(cors(corsOptions));
+
+// Rate limiting - CORS middleware'inden SONRA (429 yanıtlarında CORS header'ları gönderilsin)
+// Test ortamında rate limiting'i devre dışı bırak
+if (!isTest()) {
+  // Development'ta daha gevşek, Production'da sıkı rate limiting
+  const maxRequests = isProduction() 
+    ? Math.min(env.RATE_LIMIT_MAX_REQUESTS, 50) // Max 50 in production
+    : 500; // Development'ta 500 istek/15dk (React StrictMode duplicate render için)
+  
+  const windowMs = env.RATE_LIMIT_WINDOW_MS;
+  
+  console.log(`🚦 Rate limiting: ${maxRequests} requests per ${windowMs/1000}s`);
+  
+  const limiter = rateLimit({
+    windowMs,
+    max: maxRequests,
+    message: {
+      success: false,
+      error: 'Çok fazla istek gönderdiniz, lütfen daha sonra tekrar deneyin.'
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: false,
+    skipFailedRequests: false,
+    skip: (req) => {
+      // Admin route'ları için rate limiting'i bypass et
+      if (req.path.startsWith('/api/admin')) {
+        return true;
+      }
+      // Health check için bypass
+      if (req.path === '/health' || req.path === '/api/health') {
+        return true;
+      }
+      return false;
+    },
+    keyGenerator: (req) => {
+      // X-Forwarded-For header'ını kullan (production deployments için)
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    },
+  });
+  app.use(limiter);
+}
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

@@ -49,42 +49,56 @@ import { parseAIResponse, checkMissingFields } from '../utils/jsonParser'
  */
 export interface AudioAnalysisResult {
   overallScore: number                                                  // Genel puan (0-100)
-  engineHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical'   // Motor sağlığı
+  engineHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical' | string   // Motor sağlığı (Türkçe de olabilir)
   rpmAnalysis: {                                                        // RPM analizi
     idleRpm: number                                                     // Rölanti devri
     maxRpm: number                                                      // Maximum devir
     rpmStability: number                                                // Devir stabilitesi (%)
-    rpmResponse: number                                                 // Devir tepkisi (%)
-    idleQuality: string                                                 // Rölanti kalitesi açıklaması
+    rpmResponse?: number                                                // Devir tepkisi (%)
+    idleQuality?: string                                                // Rölanti kalitesi açıklaması
   }
   soundQuality: {                                                       // Ses kalitesi
     overallQuality: number                                              // Genel kalite (0-100)
     clarity: number                                                     // Netlik (0-100)
     smoothness: number                                                  // Pürüzsüzlük (0-100)
     consistency: number                                                 // Tutarlılık (0-100)
-    soundSignature: string                                              // Ses imzası açıklaması
+    soundSignature?: string                                             // Ses imzası açıklaması
+  }
+  frequencyAnalysis?: {                                                 // Frekans analizi
+    dominantFrequencies: number[]                                       // Baskın frekanslar (Hz)
+    harmonicDistortion: number                                          // Harmonik distorsiyon (%)
+    noiseLevel: number                                                  // Gürültü seviyesi (dB)
+  }
+  acousticFeatures?: {                                                  // Akustik özellikler
+    durationSec: number                                                 // Süre (saniye)
+    rms: number                                                         // RMS değeri
+    zeroCrossingRate: number                                            // Sıfır geçiş oranı
+    dominantFrequencyHz: number                                         // Baskın frekans (Hz)
   }
   detectedIssues: EngineIssue[]                                        // Tespit edilen sorunlar
   performanceMetrics: {                                                 // Performans metrikleri
     engineEfficiency: number                                            // Motor verimliliği (%)
-    fuelEfficiency: number                                              // Yakıt verimliliği (%)
-    overallPerformance: number                                          // Genel performans (%)
-    performanceGrade: string                                            // Performans notu
+    fuelEfficiency?: number                                             // Yakıt verimliliği (%)
+    overallPerformance?: number                                         // Genel performans (%)
+    performanceGrade?: string                                           // Performans notu
+    vibrationLevel?: number                                             // Titreşim seviyesi
+    acousticQuality?: number                                            // Akustik kalite
   }
-  recommendations: {                                                    // Öneriler
-    immediate: string[]                                                 // Acil öneriler
-    shortTerm: string[]                                                 // Kısa vadeli öneriler
-    longTerm: string[]                                                  // Uzun vadeli öneriler
-    maintenance: string[]                                               // Bakım önerileri
+  recommendations: string[] | {                                         // Öneriler (dizi veya nesne)
+    immediate?: string[]                                                // Acil öneriler
+    shortTerm?: string[]                                                // Kısa vadeli öneriler
+    longTerm?: string[]                                                 // Uzun vadeli öneriler
+    maintenance?: string[]                                              // Bakım önerileri
   }
-  costEstimate: {                                                       // Maliyet tahmini
+  costEstimate?: {                                                      // Maliyet tahmini
     totalCost: number                                                   // Toplam maliyet (TL)
-    breakdown: Array<{                                                  // Maliyet detayı
+    breakdown?: Array<{                                                 // Maliyet detayı
       category: string                                                  // Kategori
       cost: number                                                      // Maliyet (TL)
       description: string                                               // Açıklama
     }>
   }
+  analysisSummary?: string                                              // Analiz özeti (Türkçe)
   aiProvider: string                                                    // AI sağlayıcı
   model: string                                                         // AI model
   confidence: number                                                    // Güven seviyesi (0-100)
