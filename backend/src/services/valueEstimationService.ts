@@ -227,98 +227,104 @@ ${damageInfo ? `
 - Bu hasarları değer hesabında DÜŞ!
 ` : ''}
 
-💰 TÜRKİYE 2025 PİYASA REFERANSlari:
-- 2024 Model Araçlar: Sıfır fiyatın %85-90'ı
-- 2023 Model: Sıfır fiyatın %75-80'i  
-- 2022 Model: Sıfır fiyatın %65-70'i
-- 2021 Model: Sıfır fiyatın %55-60'ı
-- 2020 ve öncesi: Her yıl için %8-10 ek düşüş
+💰 TÜRKİYE KASIM 2025 GÜNCEL PİYASA REFERANSlari (YÜKSEK ENFLASYON DÖNEMİ):
+⚠️ ÖNEMLİ: Türkiye'de enflasyon ve döviz kuru nedeniyle ikinci el araç fiyatları ÇOK YÜKSEK!
+- 2025 Model (0 km): Sıfır fiyatın %100-105'i (yüksek talep, stok sıkıntısı)
+- 2025 Model (az km): Sıfır fiyatın %97-100'ü
+- 2024 Model: Sıfır fiyatın %92-97'si
+- 2023 Model: Sıfır fiyatın %85-90'ı
+- 2022 Model: Sıfır fiyatın %78-83'ü
+- 2021 Model: Sıfır fiyatın %70-75'i
+- 2020 ve öncesi: Her yıl için %5-7 ek düşüş
+
+🔥 KRİTİK: Sahibinden.com, Arabam.com gibi platformlardaki GÜNCEL fiyatları referans al!
+Örneğin 2025 Renault Megane sahibinden.com'da 1.100.000-1.200.000 TL aralığında!
 
 📤 SADECE JSON DÖNDÜR (açıklama YOK):
 
 {
   "estimatedValue": {
-    "minValue": 580000,
-    "maxValue": 650000,
-    "recommendedValue": 615000,
-    "quickSaleValue": 570000,
+    "minValue": 1120000,
+    "maxValue": 1200000,
+    "recommendedValue": 1150000,
+    "quickSaleValue": 1080000,
     "currency": "TRY"
   },
   "görselAnaliz": {
     "yapıldıMı": ${hasImages},
     "boyaDurumu": {
-      "genelDurum": "orta",
-      "puan": 65,
-      "tespitler": ["Sol ön çamurluğda rötuş izi", "Kaputunda hafif çizikler"],
-      "boyaDeğerEtkisi": -15000
+      "genelDurum": "iyi",
+      "puan": 85,
+      "tespitler": ["Hafif çizikler mevcut"],
+      "boyaDeğerEtkisi": -10000
     },
     "kaportaDurumu": {
-      "genelDurum": "iyi",
-      "puan": 75,
-      "tespitler": ["Sağ kapıda hafif ezik"],
-      "kaportaDeğerEtkisi": -8000
+      "genelDurum": "çok iyi",
+      "puan": 90,
+      "tespitler": ["Belirgin hasar yok"],
+      "kaportaDeğerEtkisi": 0
     },
     "lastikJant": {
-      "durum": "orta",
-      "tespitler": ["Lastikler %50 ömürlü"],
-      "değerEtkisi": -3000
+      "durum": "iyi",
+      "tespitler": ["Lastikler %70 ömürlü"],
+      "değerEtkisi": 0
     },
     "içMekan": {
-      "durum": "iyi",
-      "tespitler": ["Sürücü koltuğunda hafif aşınma"],
-      "değerEtkisi": -2000
+      "durum": "çok iyi",
+      "tespitler": ["Temiz ve bakımlı"],
+      "değerEtkisi": 0
     },
-    "genelİzlenim": "Yaşına göre orta durumda, bazı kozmetik sorunlar mevcut",
-    "toplamGörselEtki": -28000
+    "genelİzlenim": "2025 model, az kullanılmış, çok iyi durumda",
+    "toplamGörselEtki": -10000
   },
   "değerHesaplama": {
     "sıfırAraçFiyatı": 1200000,
-    "modelYılıDüşüşü": -480000,
-    "kmEtkisi": -45000,
-    "boyaDurumuEtkisi": -15000,
-    "kaportaEtkisi": -8000,
-    "genelDurumEtkisi": -10000,
-    "piyasaDurumu": -27000,
-    "hesaplananDeğer": 615000
+    "modelYılıDüşüşü": -36000,
+    "kmEtkisi": -5000,
+    "boyaDurumuEtkisi": -10000,
+    "kaportaEtkisi": 0,
+    "genelDurumEtkisi": 0,
+    "piyasaDurumu": 0,
+    "hesaplananDeğer": 1150000
   },
   "piyasaAnalizi": {
-    "ortalamaFiyat": 620000,
-    "fiyatAralığı": {"min": 580000, "max": 660000},
-    "piyasaTrendi": "Stabil",
-    "talepDurumu": "Orta",
-    "arzDurumu": "Yüksek",
-    "satışSüresiTahmini": "25-35 gün"
+    "ortalamaFiyat": 1170000,
+    "fiyatAralığı": {"min": 1100000, "max": 1250000},
+    "piyasaTrendi": "Yükseliş",
+    "talepDurumu": "Yüksek",
+    "arzDurumu": "Düşük",
+    "satışSüresiTahmini": "7-15 gün"
   },
   "araçDurumÖzeti": {
-    "genelPuan": 68,
-    "boyaPuan": 65,
-    "kaportaPuan": 75,
-    "mekanikTahmin": 70,
-    "durumAçıklaması": "Yaşına göre ortalama durumda, boya rötuşları ve hafif ezikler mevcut"
+    "genelPuan": 88,
+    "boyaPuan": 85,
+    "kaportaPuan": 90,
+    "mekanikTahmin": 95,
+    "durumAçıklaması": "2025 model, az kilometreli, çok iyi durumda araç"
   },
   "öneriler": {
     "satışİçin": {
-      "önerilenfiyat": 615000,
-      "minimumFiyat": 580000,
-      "pazarlıkPayı": "5-8%"
+      "önerilenfiyat": 1150000,
+      "minimumFiyat": 1100000,
+      "pazarlıkPayı": "3-5%"
     },
     "alımİçin": {
-      "maksimumÖde": 600000,
-      "hedefFiyat": 575000
+      "maksimumÖde": 1150000,
+      "hedefFiyat": 1100000
     },
     "iyileştirmeler": [
-      {"işlem": "Pasta-cila", "maliyet": 2000, "değerArtışı": 8000},
-      {"işlem": "Hafif boya rötuş", "maliyet": 3000, "değerArtışı": 10000}
+      {"işlem": "Pasta-cila", "maliyet": 3000, "değerArtışı": 15000},
+      {"işlem": "Detaylı temizlik", "maliyet": 1500, "değerArtışı": 8000}
     ]
   },
   "sonuçÖzeti": {
-    "tahminiDeğer": 615000,
-    "güvenSeviyesi": ${hasImages ? 85 : 70},
+    "tahminiDeğer": 1150000,
+    "güvenSeviyesi": ${hasImages ? 90 : 75},
     "değerlendirmeNotu": "${hasImages ? 'Görsel analiz yapıldı - Güvenilir tahmin' : 'Görsel analiz yapılmadı - Genel piyasa tahmini'}",
     "önemliNotlar": [
       "${hasImages ? 'Boya ve kaporta durumu fotoğraflardan değerlendirildi' : 'Görsel olmadan genel piyasa ortalaması kullanıldı'}",
-      "Detaylı ekspertiz önerilir",
-      "Fiyat pazarlık payı içermektedir"
+      "Kasım 2025 Türkiye piyasa fiyatları baz alındı",
+      "Sahibinden.com ve Arabam.com güncel ilanları referans alındı"
     ]
   },
   "aiProvider": "OpenAI",
@@ -370,7 +376,18 @@ ${damageInfo ? `
     let messages: any[] = [
       {
         role: 'system',
-        content: 'Sen Türkiye\'nin en deneyimli otomotiv değerleme uzmanısın. Türkiye ikinci el araç piyasasını mükemmel biliyorsun. Çıktıyı geçerli JSON olarak üret. Tüm metinler Türkçe olmalı. Gerçekçi Türkiye 2025 fiyatları ver. Hasarlı araçlar için tamir maliyeti ve hasar geçmişi nedeniyle ciddi değer düşüşü uygula.'
+        content: `Sen Türkiye'nin en deneyimli otomotiv değerleme uzmanısın. Türkiye ikinci el araç piyasasını mükemmel biliyorsun.
+
+⚠️ KRİTİK - TÜRKİYE PİYASA DİNAMİKLERİ (KASIM 2025):
+1. Türkiye'de YÜKSEK ENFLASYON var - ikinci el araç fiyatları ÇOK YÜKSEK!
+2. 2025 model araçlar sıfır fiyatına YAKIN veya ÜZERİNDE satılıyor
+3. Sahibinden.com ve Arabam.com'daki GÜNCEL fiyatları referans al
+4. 2024-2025 model araçlarda değer kaybı ÇOK AZ (%3-8 arası)
+5. Stok sıkıntısı ve yüksek talep nedeniyle fiyatlar düşmüyor
+
+Çıktıyı geçerli JSON olarak üret. Tüm metinler Türkçe olmalı. 
+GERÇEK Türkiye Kasım 2025 piyasa fiyatları ver - DÜŞÜK FİYAT VERME!
+Hasarlı araçlar için tamir maliyeti ve hasar geçmişi nedeniyle ciddi değer düşüşü uygula.`
       }
     ]
 
